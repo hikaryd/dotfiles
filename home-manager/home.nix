@@ -10,11 +10,17 @@
   imports = [
     ./programs/kitty.nix
     ./programs/neovim
-    ./programs/ags
     # ./programs/tmux.nix
     ./programs/starship.nix
-    ./theme.nix
+    ./programs/wut
     ./programs/hyprland
+    ./programs/git
+    ./programs/fastfetch
+    ./programs/lazygit
+    ./programs/easyeffects
+    ./programs/zsh
+    ./programs/opentabletdriver
+    ./theme.nix
   ];
 
   nixpkgs.overlays = [
@@ -44,12 +50,14 @@
   };
 
   systemd.user.services = {
-    xdg-user-dirs-update = { Install.WantedBy = [ ]; };
+    xdg-user-dirs-update.Install.WantedBy = [ ];
+    openTabletDriver.Install.WantedBy = [ ];
   };
 
   home.packages = with pkgs; [
     python312
     python312Packages.uv
+    python312Packages.setuptools
     python3Packages.setuptools
 
     ripgrep
@@ -82,6 +90,27 @@
     xdg-user-dirs
     languagetool
     emptty
+    opentabletdriver
+    speedtest-rs
+    libreoffice
+    nemo
+    osu-lazer-bin
+
+    p7zip
+    lrzip
+    unrar
+    unzip
+    gnutar
+    htop
+    imv
+    mpd
+    noto-fonts-cjk-sans
+    noto-fonts-emoji
+    pamixer
+    qbittorrent
+    rsync
+    xclip
+    tmpmail
   ];
 
   programs.home-manager.enable = true;
