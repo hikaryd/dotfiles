@@ -7,27 +7,27 @@
     settings = {
       # Мониторы
       monitor = [
-        "eDP-1, disable"
+        "eDP-1, 2560x1600@120, -2560x0, 1.25"
         "desc:AOC Q27G2G3R3B RTEMAHA004734, 2560x1440@120, 0x0, 1.25"
       ];
 
       # Рабочие столы
       workspace = [
-        "1, monitor:DP-10, default:true"
-        "2, monitor:DP-10, default:true"
-        "3, monitor:DP-10, default:true"
-        "4, monitor:DP-10, default:true"
-        "5, monitor:DP-10, default:true"
-        "6, monitor:DP-10, default:true"
-        "7, monitor:DP-10, default:true"
-        "8, monitor:DP-10, default:true"
-        "9, monitor:DP-10, default:true"
-        "10, monitor:DP-10, default:true"
+        "1, monitor:desc:AOC Q27G2G3R3B RTEMAHA004734, default:true"
+        "2, monitor:desc:AOC Q27G2G3R3B RTEMAHA004734, default:true"
+        "3, monitor:desc:AOC Q27G2G3R3B RTEMAHA004734, default:true"
+        "4, monitor:desc:AOC Q27G2G3R3B RTEMAHA004734, default:true"
+        "5, monitor:desc:AOC Q27G2G3R3B RTEMAHA004734, default:true"
+        "6, monitor:desc:AOC Q27G2G3R3B RTEMAHA004734, default:true"
+        "7, monitor:desc:AOC Q27G2G3R3B RTEMAHA004734, default:true"
+        "8, monitor:desc:AOC Q27G2G3R3B RTEMAHA004734, default:true"
+        "9, monitor:desc:AOC Q27G2G3R3B RTEMAHA004734, default:true"
+        "10, monitor:desc:AOC Q27G2G3R3B RTEMAHA004734, default:true"
         "11, monitor:eDP-1, default:true"
-        "special:telegram"
+        "special:telegram, on-created-empty:telegram-desktop"
         "special:audio, on-created-empty:audio"
-        "special:music, on-created-empty:music"
-        "special:vpn, on-created-empty:vpn"
+        "special:music, on-created-empty:youtube-music"
+        "special:vpn, on-created-empty:nekobox"
         "special:noi, on-created-empty:noi"
         "special:ai_ide, on-created-empty:windsurf"
       ];
@@ -271,15 +271,16 @@
         "$mainMod SHIFT, B, exec, GDK_BACKEND=x11 dbeaver"
 
         # Hyprpane
-        "$mainMod, B, exec, agsv1 -t bluetoothmenu"
-        "$mainMod, N, exec, agsv1 -t notificationsmenu"
-        "$mainMod, S, exec, agsv1 -t dashboardmenu"
+        "$mainMod, B, exec, hyprpanel -t bluetoothmenu"
+        "$mainMod, N, exec, hyprpanel -t notificationsmenu"
+        "$mainMod, S, exec, hyprpanel -t dashboardmenu"
         "$mainMod SHIFT, S, exec, ${../../../scripts/snapshot.sh}"
         "$mainMod SHIFT, R, exec, gpu-screen-recorder-gtk"
-        "$mainMod, W, exec, agsv1 -t networkmenu"
+        "$mainMod, W, exec, hyprpanel -t networkmenu"
 
         # Tools and Utilities
         "$mainMod, D, exec, wofi --show drun"
+        "$mainMod SHIFT CTRL, T, exec, ${../../../scripts/toggle-display.sh}"
 
         # Window/Session actions
         "$mainMod, Q, killactive"
@@ -383,18 +384,16 @@
 
       # Автозапуск
       exec-once = [
-        "agsv1"
         "nekobox"
         "dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP"
         "${../../../scripts/xdg-portal.sh}"
         "easyeffects"
         "blueman-applet"
-        "nm-applet"
+        "hyprpaper"
         "hyprpaper"
         "hypridle"
         "telegram-desktop"
         "kitty --class pulsemixer -- pulsemixer"
-        "youtube-music"
         "sleep 3 && google-chrome-stable --enable-features=UseOzonePlatform --ozone-platform=wayland --enable-wayland-ime --use-angle=vulkan --enable-features=WebRTCPipeWireCapturer --enable-features=NativeNotifications"
         "sleep 2 && noi-desktop"
       ];

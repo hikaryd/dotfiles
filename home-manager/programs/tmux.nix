@@ -1,4 +1,4 @@
-{pkgs, ...}: {
+{ pkgs, ... }: {
   home.packages = with pkgs; [
     tmux
     tmuxPlugins.sensible
@@ -16,10 +16,10 @@
       executable = true;
       text = ''
         #!/usr/bin/env bash
-        
+
         target="$1"
         current=$(tmux display-message -p '#I')
-        
+
         if [[ "$target" =~ ^[0-9]+$ ]]; then
             if [ "$target" -eq "$current" ]; then
                 exit 0
@@ -46,11 +46,11 @@
       executable = true;
       text = ''
         #!/usr/bin/env bash
-        
+
         DATE_REGEX="[0-9]{4}-[0-9]{2}-[0-9]{2}"
         TIME_REGEX="[0-9]{2}:[0-9]{2}"
         DATETIME_REGEX="''${DATE_REGEX} ''${TIME_REGEX}"
-        
+
         get_calendar_app() {
             if command -v "${pkgs.calcurse}/bin/calcurse" >/dev/null 2>&1; then
                 echo "${pkgs.calcurse}/bin/calcurse"
@@ -58,27 +58,27 @@
                 echo ""
             fi
         }
-        
+
         get_next_meeting() {
             local cal_app
             cal_app=$(get_calendar_app)
-        
+
             if [ -n "$cal_app" ]; then
                 $cal_app -n | \
                     grep -m1 "$DATETIME_REGEX" | \
                     sed -E "s/^[^0-9]*($DATETIME_REGEX)/$1/"
             fi
         }
-        
+
         main() {
             local next_meeting
             next_meeting=$(get_next_meeting)
-        
+
             if [ -n "$next_meeting" ]; then
                 echo "$next_meeting"
             fi
         }
-        
+
         main
       '';
     };
@@ -89,10 +89,10 @@
         bind ^C new-window -c "$HOME"
         bind ^D detach
         bind * list-clients
-        
+
         bind H previous-window
         bind L next-window
-        
+
         bind R source-file ~/.config/tmux/tmux.conf
         bind ^A last-window
         bind ^W list-windows
@@ -141,19 +141,19 @@
     extraConfig = ''
       source-file ~/.config/tmux/tmux.reset.conf
       set-option -g terminal-overrides ',xterm-256color:RGB'
-      
+
       set -g detach-on-destroy off     # don't exit from tmux when closing a session
       set -g renumber-windows on       # renumber all windows when any window is closed
       set -g set-clipboard on          # use system clipboard
       set -g status-position top       # macOS / darwin style
-      
+
       set -g pane-active-border-style 'fg=magenta,bg=default'
       set -g pane-border-style 'fg=brightblack,bg=default'
-      
+
       # Plugin configurations
       set -g @continuum-restore 'on'
       set -g @resurrect-strategy-nvim 'session'
-      
+
       # FZF configurations
       set -g @fzf-url-fzf-options '-p 60%,30% --prompt="   " --border-label=" Open URL "'
       set -g @fzf-url-history-limit '2000'

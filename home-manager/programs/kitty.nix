@@ -1,5 +1,4 @@
-{ pkgs, ... }:
-{
+{ pkgs, lib, ... }: {
   programs.kitty = {
     enable = true;
     package = pkgs.writeShellScriptBin "kitty" ''
@@ -10,7 +9,8 @@
 
       window_padding_width = 0;
       scrollback_lines = 80000;
-      scrollback_pager = "less --chop-long-lines --RAW-CONTROL-CHARS +INPUT_LINE_NUMBER";
+      scrollback_pager =
+        "less --chop-long-lines --RAW-CONTROL-CHARS +INPUT_LINE_NUMBER";
       cursor_blink_interval = 0;
       enable_audio_bell = "no";
       visual_bell_duration = "0.1";
@@ -25,7 +25,7 @@
     };
     font = {
       name = "JetBrains Mono";
-      size = 12;
+      size = lib.mkForce (13);
     };
     keybindings = {
       "ctrl+shift+c" = "copy_to_clipboard";
@@ -37,8 +37,10 @@
       "alt+left" = "send_text all \\x1b\\x62";
       "alt+right" = "send_text all \\x1b\\x66";
       "ctrl+a>r" = "load_config_file";
-      "ctrl+shift+s>w" = "write_config_file ~/.config/kitty/current-session.conf";
-      "ctrl+shift+s>r" = "load_config_file ~/.config/kitty/current-session.conf";
+      "ctrl+shift+s>w" =
+        "write_config_file ~/.config/kitty/current-session.conf";
+      "ctrl+shift+s>r" =
+        "load_config_file ~/.config/kitty/current-session.conf";
       "ctrl+a>y" = "focus_visible_window";
     };
   };

@@ -41,7 +41,6 @@ return {
       'jqls',
       'nushell',
       'nil_ls',
-      'ltex',
     }
 
     for _, server in ipairs(servers) do
@@ -85,23 +84,6 @@ return {
             reportMissingImports = true,
             reportUndefinedVariable = true,
           },
-        },
-      },
-    })
-
-    -- Настройка LTeX (LanguageTool)
-    setup_server('ltex', {
-      settings = {
-        ltex = {
-          language = "ru-RU",
-          additionalRules = {
-            enablePickyRules = true,
-            motherTongue = "ru",
-          },
-          checkFrequency = "edit",
-          enabled = { "latex", "tex", "md", "markdown", "text" },
-          diagnosticSeverity = "information",
-          sentenceCacheSize = 2000,
         },
       },
     })
