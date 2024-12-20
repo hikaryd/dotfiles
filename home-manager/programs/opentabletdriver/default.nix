@@ -1,20 +1,6 @@
 { config, pkgs, ... }:
 
 {
-  nixpkgs.overlays = [
-    (final: prev: {
-      opentabletdriver = prev.opentabletdriver.overrideAttrs (oldAttrs: {
-        version = "0.6.4.0";
-        src = final.fetchFromGitHub {
-          owner = "OpenTabletDriver";
-          repo = "OpenTabletDriver";
-          rev = "v0.6.4.0";
-          sha256 = "sha256-Hs6Zg0QLpP0Zw5eDqkGGXWfgHhfZpRQBvFZbPDrNxcw=";
-        };
-      });
-    })
-  ];
-
   home.packages = with pkgs; [
     opentabletdriver
   ];
