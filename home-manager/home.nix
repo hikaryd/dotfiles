@@ -5,11 +5,31 @@
 
   nixpkgs.config.allowUnfree = true;
 
+  nixpkgs.overlays = [
+    (final: prev: {
+      nixgl = import (builtins.fetchTarball {
+        url = "https://github.com/nix-community/nixGL/archive/main.tar.gz";
+      }) { };
+    })
+  ];
+
   home.sessionPath = [ "$HOME/.nix-profile/bin" ];
+
+  xdg.mimeApps = {
+    enable = true;
+    defaultApplications = {
+      "text/html" = [ "google-chrome.desktop" ];
+      "x-scheme-handler/http" = [ "google-chrome.desktop" ];
+      "x-scheme-handler/https" = [ "google-chrome.desktop" ];
+      "x-scheme-handler/about" = [ "google-chrome.desktop" ];
+      "x-scheme-handler/unknown" = [ "google-chrome.desktop" ];
+    };
+  };
 
   imports = [
     ./programs/kitty.nix
     ./programs/neovim
+    ./programs/zsh
     # ./programs/tmux.nix
     ./programs/starship.nix
     ./programs/wut
@@ -18,17 +38,8 @@
     ./programs/fastfetch
     ./programs/lazygit
     ./programs/easyeffects
-    ./programs/zsh
     ./programs/opentabletdriver
     ./theme.nix
-  ];
-
-  nixpkgs.overlays = [
-    (final: prev: {
-      nixgl = import (builtins.fetchTarball {
-        url = "https://github.com/nix-community/nixGL/archive/main.tar.gz";
-      }) { };
-    })
   ];
 
   home.sessionVariables = { NVIM_APPNAME = "nvim"; };
@@ -49,10 +60,7 @@
     };
   };
 
-  systemd.user.services = {
-    xdg-user-dirs-update.Install.WantedBy = [ ];
-    openTabletDriver.Install.WantedBy = [ ];
-  };
+  systemd.user.services = { xdg-user-dirs-update.Install.WantedBy = [ ]; };
 
   home.packages = with pkgs; [
     python312
@@ -114,4 +122,11 @@
   ];
 
   programs.home-manager.enable = true;
+
+  home.file.".profile".text = ''
+    export SHELL="/home/hikary/.nix-profile/bin/zsh"
+    [ -z "$ZSH_VERSION" ] && exec "$SHELL" -l
+  '';
+
+  xdg.systemDirs.data = [ "/usr/share" "/usr/local/share" ];
 }

@@ -1,19 +1,16 @@
-{ pkgs, config, ... }:
+{ pkgs, config, ... }: {
+  imports = [ ./conf.nix ./hyprpaper.nix ./hypridle.nix ./hyprpanel ];
 
-let
-  flake-compat = builtins.fetchTarball {
-    url = "https://github.com/edolstra/flake-compat/archive/master.tar.gz";
-  };
-
-  hyprpanel = (import flake-compat {
-    src = builtins.fetchTarball {
-      url = "https://github.com/Jas-SinghFSU/HyprPanel/archive/master.tar.gz";
-    };
-  }).defaultNix;
-
-  hyprpanelPkg = (hyprpanel.overlay pkgs pkgs).hyprpanel;
-in {
-  imports = [ ./conf.nix ./hyprpaper.nix ./hypridle.nix ];
+  home.packages = with pkgs; [
+    xdg-desktop-portal-hyprland
+    wofi
+    hypridle
+    grimblast
+    hyprland
+    gtk3
+    glib
+    libdbusmenu-gtk3
+  ];
 
   home.file = {
     ".wallpapers".source = config.lib.file.mkOutOfStoreSymlink
@@ -31,30 +28,11 @@ in {
   wayland.windowManager.hyprland = {
     enable = true;
     package = pkgs.hyprland;
+    systemd = {
+      enable = true;
+      variables = [ ];
+    };
     xwayland.enable = true;
-  };
-
-  home.packages = with pkgs; [
-    xdg-desktop-portal-hyprland
-    wofi
-    hypridle
-    grimblast
-    hyprland
-    gtk3
-    glib
-    libdbusmenu-gtk3
-    hyprpanelPkg
-  ];
-
-  xdg.configFile = {
-    "hyprpanel" = {
-      source = ./hyprpanel;
-      recursive = true;
-    };
-    "wofi" = {
-      source = ./wofi;
-      recursive = true;
-    };
   };
 
   xdg.portal = {
@@ -67,6 +45,13 @@ in {
         "org.freedesktop.impl.portal.Screenshot" = [ "hyprland" ];
         "org.freedesktop.impl.portal.Screencast" = [ "hyprland" ];
       };
+    };
+  };
+
+  xdg.configFile = {
+    "hyprpanel" = {
+      source = ./hyprpanel;
+      recursive = true;
     };
   };
 }

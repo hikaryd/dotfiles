@@ -75,5 +75,7 @@
   "menus.clock.weather.unit": "metric",
   "theme.bar.transparent": true,
   "menus.dashboard.directories.enabled": false,
-  "theme.bar.buttons.radius": "1.5em"
+  "theme.bar.buttons.radius": "1.5em",
+  "notifications.position": "top",
+  "notifications.monitor": 0
 }

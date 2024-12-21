@@ -27,7 +27,7 @@
         "special:telegram, on-created-empty:telegram-desktop"
         "special:audio, on-created-empty:audio"
         "special:music, on-created-empty:youtube-music"
-        "special:vpn, on-created-empty:nekobox"
+        "special:vpn, on-created-empty:nekoray"
         "special:noi, on-created-empty:noi"
         "special:ai_ide, on-created-empty:windsurf"
       ];
@@ -112,7 +112,7 @@
         "workspace special:audio, class:^(pulsemixer)$"
         "workspace special:audio, class:^(com.github.wwmm.easyeffects)$"
         "workspace special:music, class:^(YouTube Music)$"
-        "workspace special:vpn, class:^(nekobox)$"
+        "workspace special:vpn, class:^(nekoray)$"
         "workspace special:noi, class:^(Noi)$"
         "workspace special:ai_ide, class:^(windsurf-url-handler)$"
         "workspace special:ai_ide, class:^(cursor-url-handler)$"
@@ -121,7 +121,7 @@
         "float, class:^(org.telegram.desktop)$"
         "float, class:^(com.github.wwmm.easyeffects)$"
         "float, class:^(pulsemixer)$"
-        "float, class:^(nekobox)$"
+        "float, class:^(nekoray)$"
         "float, class:^(pavucontrol)$"
         "float, class:^(blueman-manager)$"
         "float, class:^(nm-applet)$"
@@ -156,10 +156,10 @@
         "size 760 360, class:^(pulsemixer)$"
         "move 60 752, class:^(pulsemixer)$"
 
-        # nekobox
-        "float, class:^(nekobox)$"
-        "size 480 1000, class:^(nekobox)$"
-        "move 200 80, class:^(nekobox)$"
+        # nekoray
+        "float, class:^(nekoray)$"
+        "size 480 1000, class:^(nekoray)$"
+        "move 200 80, class:^(nekoray)$"
       ];
 
       # Ввод
@@ -384,18 +384,18 @@
 
       # Автозапуск
       exec-once = [
-        "nekobox"
+        "nekoray"
+        "hyprpanel"
         "dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP"
         "${../../../scripts/xdg-portal.sh}"
         "easyeffects"
         "blueman-applet"
         "hyprpaper"
-        "hyprpaper"
         "hypridle"
         "telegram-desktop"
         "kitty --class pulsemixer -- pulsemixer"
-        "sleep 3 && google-chrome-stable --enable-features=UseOzonePlatform --ozone-platform=wayland --enable-wayland-ime --use-angle=vulkan --enable-features=WebRTCPipeWireCapturer --enable-features=NativeNotifications"
-        "sleep 2 && noi-desktop"
+        "sleep 4 && google-chrome-stable --enable-features=UseOzonePlatform --ozone-platform=wayland --enable-wayland-ime --use-angle=vulkan --enable-features=WebRTCPipeWireCapturer --enable-features=NativeNotifications"
+        "sleep 4 && noi-desktop"
       ];
     };
   };
