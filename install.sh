@@ -20,6 +20,6 @@ nix-collect-garbage -d &&
 	nix-channel --update &&
 	nix-shell '"'"'<home-manager>'"'"' -A install
 
-sudo systemctl enable --now auto-cpufreq
+sudo auto-cpufreq --install
 systemctl --user enable --now pipewire.service
 systemctl --user enable --now pipewire-pulse.service
