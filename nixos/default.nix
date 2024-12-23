@@ -1,8 +1,6 @@
-{pkgs, ...}: {
-  imports = [ 
-    ./hardware-configuration.nix
-    ./plymouth-theme.nix
-  ];
+{ pkgs, ... }: {
+  imports =
+    [ ./hardware-configuration.nix ./plymouth-theme.nix ../modules/emptty.nix ];
 
   # Загрузчик
   boot = {
@@ -65,25 +63,22 @@
   # Настройка X11 и Wayland
   services.xserver = {
     enable = true;
-    displayManager.emptty.enable = true;
+    displayManager = { emptty = { enable = true; }; };
     xkb = {
       layout = "us,ru";
       options = "grp:alt_shift_toggle";
     };
   };
 
-  # Поддержка OpenGL
-  hardware.opengl = {
+  # Поддержка графики
+  hardware.graphics = {
     enable = true;
-    driSupport = true;
-    driSupport32Bit = true;
     extraPackages = with pkgs; [
       amdvlk
-      rocm-opencl-icd
-      rocm-opencl-runtime
+      rocmPackages.clr
       libvdpau-va-gl
       vaapiVdpau
-      rocm-runtime
+      rocmPackages.runtime
       clinfo
     ];
   };
@@ -132,6 +127,9 @@
   services.smartd.enable = true;
   services.fwupd.enable = true;
 
+  # Включаем zsh
+  programs.zsh.enable = true;
+
   # Пользователь
   users.users.hikary = {
     isNormalUser = true;
@@ -155,31 +153,31 @@
   # Системные пакеты (только те, которые нужны на системном уровне)
   environment.systemPackages = with pkgs; [
     # Системные утилиты
-    vim  # Базовый редактор, может понадобиться в emergency shell
+    vim # Базовый редактор, может понадобиться в emergency shell
     wget # Базовая утилита для скачивания
-    git  # Нужен для обновления системы
-    
+    git # Нужен для обновления системы
+
     # Драйверы и утилиты для железа
     pciutils
     usbutils
     lshw
     dmidecode
-    
+
     # Утилиты для работы с дисками
     parted
     gparted
     smartmontools
-    
+
     # Системные демоны и их утилиты
     docker-compose
     blueman
     networkmanagerapplet
-    
+
     # AMD утилиты
     radeontop
     corectrl
     zenmonitor
-    rocm-smi
+    rocmPackages.rocm-smi
   ];
 
   # Настройки системы безопасности и PAM

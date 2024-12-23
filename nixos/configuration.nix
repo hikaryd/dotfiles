@@ -5,10 +5,7 @@
 { config, pkgs, ... }:
 
 {
-  imports =
-    [ # Include the results of the hardware scan
-      ./hardware-configuration.nix
-    ];
+  imports = [ ./hardware-configuration.nix ];
 
   # Bootloader
   boot.loader.systemd-boot.enable = true;
@@ -24,10 +21,10 @@
 
   # Time zone and locale settings
   time.timeZone = "Europe/Moscow";
-  
+
   # Select internationalisation properties
   i18n.defaultLocale = "en_US.UTF-8";
-  
+
   i18n.extraLocaleSettings = {
     LC_ADDRESS = "ru_RU.UTF-8";
     LC_IDENTIFICATION = "ru_RU.UTF-8";
@@ -74,12 +71,7 @@
   nixpkgs.config.allowUnfree = true;
 
   # List packages installed in system profile
-  environment.systemPackages = with pkgs; [
-    vim
-    wget
-    git
-    plymouth
-  ];
+  environment.systemPackages = with pkgs; [ vim wget git plymouth ];
 
   # Some programs need SUID wrappers, can be configured further or are
   # started in user sessions.
