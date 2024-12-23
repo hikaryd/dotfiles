@@ -4,6 +4,8 @@
 sudo pacman -S --needed \
 	nix \
 	reflector \
+	hyprland \
+	auto-cpufreq \
 	xf86-input-wacom \
 	pipewire \
 	usbutils
@@ -13,7 +15,6 @@ mkdir -p ~/.config/nix
 cat >~/.config/nix/nix.conf <<EOF
 experimental-features = nix-command flakes
 
-# Оптимизации сборки
 max-jobs = auto
 cores = 0
 EOF
@@ -45,7 +46,6 @@ nix-channel --update
 home-manager switch --flake .#hikary
 
 # Включаем сервисы pipewire
+sudo auto-cpufreq --install
 systemctl --user enable --now pipewire.service
 systemctl --user enable --now pipewire-pulse.service
-
-echo "Installation complete! Please restart your terminal."
