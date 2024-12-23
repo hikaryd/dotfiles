@@ -1,28 +1,16 @@
-{ config, pkgs, inputs, ... }: {
+{pkgs, config, ...}: {
   home.username = "hikary";
   home.homeDirectory = "/home/hikary";
   home.stateVersion = "24.11";
 
+  # Разрешаем unfree пакеты
   nixpkgs.config.allowUnfree = true;
 
-  home.sessionPath = [ "$HOME/.nix-profile/bin" ];
-
-  xdg.mimeApps = {
-    enable = true;
-    defaultApplications = {
-      "text/html" = [ "google-chrome.desktop" ];
-      "x-scheme-handler/http" = [ "google-chrome.desktop" ];
-      "x-scheme-handler/https" = [ "google-chrome.desktop" ];
-      "x-scheme-handler/about" = [ "google-chrome.desktop" ];
-      "x-scheme-handler/unknown" = [ "google-chrome.desktop" ];
-    };
-  };
-
+  # Импортируем все конфиги
   imports = [
     ./programs/kitty.nix
     ./programs/neovim
     ./programs/zsh
-    # ./programs/tmux.nix
     ./programs/starship.nix
     ./programs/wut
     ./programs/hyprland
@@ -34,8 +22,80 @@
     ./theme.nix
   ];
 
-  home.sessionVariables = { NVIM_APPNAME = "nvim"; };
+  home.sessionPath = [ "$HOME/.nix-profile/bin" ];
 
+  # Пакеты для пользователя
+  home.packages = with pkgs; [
+    python312
+    python312Packages.uv
+    nodejs_20
+    gcc
+    shellcheck
+    yamllint
+    hadolint
+
+    # Базовые утилиты
+    curl
+    tree
+    htop
+    rsync
+    less
+    file
+    ncdu
+    duf
+    yazi
+    iotop
+    powertop
+    acpi
+
+    # Архиваторы
+    p7zip
+    lrzip
+    unrar
+    unzip
+    gnutar
+
+    # Сетевые утилиты
+    bind
+    traceroute
+    speedtest-rs
+
+    # Мультимедиа
+    pamixer
+
+    # Графика и 3D
+    vulkan-tools
+    vulkan-loader
+    vulkan-headers
+
+    # XDG утилиты
+    xdg-desktop-portal
+    xdg-desktop-portal-gtk
+    xdg-user-dirs
+
+    # Шрифты
+    noto-fonts-cjk-sans
+    noto-fonts-emoji
+
+    # Утилиты для отпечатков
+    fprintd
+    libfprint
+    python3Packages.validity-sensors-tools
+
+    emptty
+  ];
+
+  # Включаем home-manager
+  programs.home-manager.enable = true;
+
+  # Настройки окружения
+  home.sessionVariables = {
+    EDITOR = "nvim";
+    VISUAL = "nvim";
+    NVIM_APPNAME = "nvim";
+  };
+
+  # XDG настройки
   xdg = {
     enable = true;
     userDirs = {
@@ -50,8 +110,20 @@
       templates = "$HOME/Downloads";
       videos = "$HOME/Downloads";
     };
+    systemDirs.data = [ "/usr/share" "/usr/local/share" ];
+    mimeApps = {
+      enable = true;
+      defaultApplications = {
+        "text/html" = [ "google-chrome.desktop" ];
+        "x-scheme-handler/http" = [ "google-chrome.desktop" ];
+        "x-scheme-handler/https" = [ "google-chrome.desktop" ];
+        "x-scheme-handler/about" = [ "google-chrome.desktop" ];
+        "x-scheme-handler/unknown" = [ "google-chrome.desktop" ];
+      };
+    };
   };
 
+  # Системные сервисы
   systemd.user.services = {
     xdg-user-dirs-update.Install.WantedBy = [ ];
     auto-cpufreq = {
@@ -59,22 +131,18 @@
         Description = "auto-cpufreq - Automatic CPU speed & power optimizer";
         After = [ "network.target" ];
       };
-
       Service = {
         Type = "simple";
         ExecStart = "${pkgs.auto-cpufreq}/bin/auto-cpufreq --daemon";
         Restart = "on-failure";
       };
-
       Install = { WantedBy = [ "default.target" ]; };
     };
-
     emptty = {
       Unit = {
         Description = "EmptTTY Display Manager";
-        After = ["network.target"];
+        After = [ "network.target" ];
       };
-
       Service = {
         Type = "simple";
         ExecStart = "${pkgs.emptty}/bin/emptty";
@@ -86,85 +154,12 @@
           "PATH=${config.home.profileDirectory}/bin:/run/current-system/sw/bin:$PATH"
         ];
       };
-
-      Install = {
-        WantedBy = ["default.target"];
-      };
+      Install = { WantedBy = [ "default.target" ]; };
     };
   };
-
-  home.packages = with pkgs; [
-    python312
-    python312Packages.uv
-    python312Packages.setuptools
-    python3Packages.setuptools
-
-    ripgrep
-    fd
-    tree-sitter
-    curl
-    nodejs_20
-    jq
-    shellcheck
-    yamllint
-    hadolint
-
-    nixfmt-classic
-    stylua
-    shfmt
-    ruff
-    nodePackages.prettier
-
-    google-chrome
-    telegram-desktop
-    vesktop
-    dbeaver-bin
-    easyeffects
-    pulsemixer
-    youtube-music
-    nekoray
-    blueman
-    networkmanagerapplet
-
-    xdg-user-dirs
-    languagetool
-    emptty
-    opentabletdriver
-    speedtest-rs
-    libreoffice
-    nemo
-    osu-lazer-bin
-
-    p7zip
-    lrzip
-    unrar
-    unzip
-    gnutar
-    htop
-    imv
-    mpd
-    noto-fonts-cjk-sans
-    noto-fonts-emoji
-    pamixer
-    qbittorrent
-    rsync
-    xclip
-    tmpmail
-    slurp
-    atuin
-    httpie
-    hurl
-    less
-    emptty
-    yazi
-  ];
-
-  programs.home-manager.enable = true;
 
   home.file.".profile".text = ''
     export SHELL="/home/hikary/.nix-profile/bin/zsh"
     [ -z "$ZSH_VERSION" ] && exec "$SHELL" -l
   '';
-
-  xdg.systemDirs.data = [ "/usr/share" "/usr/local/share" ];
 }
