@@ -3,7 +3,7 @@
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
-    
+
     home-manager = {
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -13,10 +13,7 @@
 
     catppuccin.url = "github:catppuccin/nix";
 
-    stylix = {
-      url = "github:danth/stylix";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
+    stylix.url = "github:danth/stylix";
 
     wut = {
       url = "github:shobrook/wut";
@@ -34,7 +31,7 @@
     };
   };
 
-  outputs = { nixpkgs, home-manager, catppuccin, stylix, wut, nixgl, hyprpanel, hyprland, ... }: 
+  outputs = { self, nixpkgs, home-manager, catppuccin, stylix, wut, nixgl, hyprpanel, hyprland, ... }:
     let
       system = "x86_64-linux";
       pkgs = import nixpkgs {
@@ -43,11 +40,12 @@
         overlays = [
           nixgl.overlay
           (self: super: {
-            hyprpanel = hyprpanel.packages.${system}.default.overrideAttrs (old: {
-              postInstall = ''
-                mv $out/share/README.md $out/share/hyprpanel-README.md
-              '';
-            });
+            hyprpanel = hyprpanel.packages.${system}.default.overrideAttrs
+              (old: {
+                postInstall = ''
+                  mv $out/share/README.md $out/share/hyprpanel-README.md
+                '';
+              });
           })
         ];
       };
@@ -55,6 +53,7 @@
       homeConfigurations."hikary" = home-manager.lib.homeManagerConfiguration {
         inherit pkgs;
         modules = [
+          stylix.homeManagerModules.stylix
           ./home-manager/home.nix
           {
             home = {
@@ -62,13 +61,11 @@
               homeDirectory = "/home/hikary";
               stateVersion = "24.11";
             };
-            # Pass wut source to home-manager configuration
             _module.args = {
               wutSrc = wut;
             };
           }
           catppuccin.homeManagerModules.catppuccin
-          stylix.homeManagerModules.stylix
         ];
       };
     };

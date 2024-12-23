@@ -68,6 +68,29 @@
 
       Install = { WantedBy = [ "default.target" ]; };
     };
+
+    emptty = {
+      Unit = {
+        Description = "EmptTTY Display Manager";
+        After = ["network.target"];
+      };
+
+      Service = {
+        Type = "simple";
+        ExecStart = "${pkgs.emptty}/bin/emptty";
+        Restart = "always";
+        RestartSec = "10";
+        Environment = [
+          "XDG_SESSION_TYPE=wayland"
+          "XDG_CURRENT_DESKTOP=Hyprland"
+          "PATH=${config.home.profileDirectory}/bin:/run/current-system/sw/bin:$PATH"
+        ];
+      };
+
+      Install = {
+        WantedBy = ["default.target"];
+      };
+    };
   };
 
   home.packages = with pkgs; [
@@ -132,6 +155,8 @@
     httpie
     hurl
     less
+    emptty
+    yazi
   ];
 
   programs.home-manager.enable = true;
