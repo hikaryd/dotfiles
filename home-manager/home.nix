@@ -1,4 +1,4 @@
-{ pkgs, ... }: {
+{ config, pkgs, inputs, ... }: {
   home.username = "hikary";
   home.homeDirectory = "/home/hikary";
   home.stateVersion = "24.11";
@@ -62,6 +62,21 @@
 
   systemd.user.services = { xdg-user-dirs-update.Install.WantedBy = [ ]; };
 
+  # Auto-cpufreq configuration from flake
+  services.auto-cpufreq = {
+    enable = true;
+    settings = {
+      charger = {
+        governor = "performance";
+        turbo = "auto";
+      };
+      battery = {
+        governor = "powersave";
+        turbo = "auto";
+      };
+    };
+  };
+
   home.packages = with pkgs; [
     python312
     python312Packages.uv
@@ -119,6 +134,10 @@
     rsync
     xclip
     tmpmail
+    slurp
+    atuin
+    httpie
+    hurl
   ];
 
   programs.home-manager.enable = true;
