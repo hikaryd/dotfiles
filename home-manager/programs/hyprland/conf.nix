@@ -136,8 +136,8 @@
         # Прозрачность
         "opacity 0.80 0.80, class:^(org.freedesktop.impl.portal.desktop.gtk)$"
         "opacity 0.80 0.80, class:^(org.freedesktop.impl.portal.desktop.hyprland)$"
-        # "opacity 0.80 0.80, class:^(Google-chrome)$"
-        # "opacity 0.80 0.80, class:^(google-chrome)$"
+        "opacity 0.80 0.80, class:^(Google-chrome)$"
+        "opacity 0.80 0.80, class:^(google-chrome)$"
         "opacity 0.9 0.9,class:^(neovide)$"
 
         # YTM
@@ -278,6 +278,7 @@
         "$mainMod, N, exec, hyprpanel -t notificationsmenu"
         "$mainMod, S, exec, hyprpanel -t dashboardmenu"
         "$mainMod SHIFT, S, exec, ${../../../scripts/snapshot.sh}"
+        "$mainMod CTRL SHIFT, B, exec, google-chrome-wrapped"
         "$mainMod SHIFT, R, exec, gpu-screen-recorder-gtk"
         "$mainMod, W, exec, hyprpanel -t networkmenu"
 
