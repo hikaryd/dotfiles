@@ -41,6 +41,7 @@ in {
     luajit
     basedpyright
     nixfmt-classic
+    nil
     stylua
     shfmt
     ruff

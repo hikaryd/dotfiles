@@ -13,7 +13,8 @@ map('n', 'v$', 'v$h')
 
 -- File Explorer
 -- map('n', '<leader>e', '<cmd>Neotree toggle<CR>', 'Toggle Neo-tree')
-map('n', '<space>e', ':Telescope file_browser path=%:p:h select_buffer=true<CR>')
+-- map('n', '<space>e', ':Telescope file_browser path=%:p:h select_buffer=true<CR>')
+map('n', '<space>e', ':Yazi<CR>')
 
 map('n', '<leader>b', ':DBUIToggle<CR>')
 

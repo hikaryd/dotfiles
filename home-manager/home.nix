@@ -29,12 +29,11 @@
     gcc
 
     # Базовые утилиты
-    curl
+    httpie
     tree
     htop
     rsync
     less
-    file
     ncdu
     duf
     yazi

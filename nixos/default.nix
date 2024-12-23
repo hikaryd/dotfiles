@@ -1,8 +1,8 @@
-{ pkgs, ... }: {
-  imports =
-    [ ./hardware-configuration.nix ./plymouth-theme.nix ../modules/emptty.nix ];
+{ config, pkgs, ... }:
 
-  # Загрузчик
+{
+  imports = [ ./hardware-configuration.nix ];
+
   boot = {
     loader = {
       systemd-boot = {
@@ -14,19 +14,26 @@
     kernelParams = [
       "quiet"
       "splash"
-      "mitigations=off" # Улучшение производительности (отключение патчей Spectre/Meltdown)
-      "amd_pstate=active" # Активный режим управления питанием AMD
-      "amdgpu.ppfeaturemask=0xffffffff" # Включаем все функции AMD GPU
-      "amdgpu.dcfeaturemask=0xffffffff" # Включаем все функции дисплейного контроллера
+      "mitigations=off"
+      "amd_pstate=active"
+      "amdgpu.ppfeaturemask=0xffffffff"
+      "amdgpu.dcfeaturemask=0xffffffff"
+      "transparent_hugepage=always"
     ];
-    kernelModules = [ "kvm-amd" "amdgpu" ];
+    kernelModules = [ "kvm-amd" ];
     kernel.sysctl = {
-      "vm.swappiness" = 10; # Уменьшаем использование swap
-      "vm.vfs_cache_pressure" = 50; # Оптимизация кэша
-      "net.core.rmem_max" = 2500000; # Увеличиваем буфер приема
-      "net.core.wmem_max" = 2500000; # Увеличиваем буфер отправки
-      "kernel.nmi_watchdog" = 0; # Отключаем watchdog для экономии энергии
+      "vm.swappiness" = 10;
+      "vm.vfs_cache_pressure" = 50;
+      "net.core.rmem_max" = 2500000;
+      "net.core.wmem_max" = 2500000;
+      "kernel.nmi_watchdog" = 0;
     };
+    tmp = {
+      cleanOnBoot = true;
+      useTmpfs = true;
+      tmpfsSize = "50%";
+    };
+    initrd.kernelModules = [ "amdgpu" ];
   };
 
   networking = {
@@ -34,10 +41,7 @@
     hostName = "hikary";
   };
 
-  # Часовой пояс
   time.timeZone = "Europe/Moscow";
-
-  # Локализация
   i18n = {
     defaultLocale = "en_US.UTF-8";
     extraLocaleSettings = {
@@ -53,37 +57,69 @@
     };
   };
 
-  # Настройка консоли
   console = {
     font = "ter-v32n";
     keyMap = "ru";
     packages = [ pkgs.terminus_font ];
   };
 
-  # Настройка X11 и Wayland
   services.xserver = {
     enable = true;
-    displayManager = { emptty = { enable = true; }; };
     xkb = {
       layout = "us,ru";
-      options = "grp:alt_shift_toggle";
+      options = "grp:caps_toggle";
     };
+    videoDrivers = [ "amdgpu" ];
+    displayManager.gdm.enable = false;
+    displayManager.lightdm.enable = false;
+    displayManager.sddm.enable = false;
   };
 
-  # Поддержка графики
-  hardware.graphics = {
+  systemd.services.emptty = {
     enable = true;
-    extraPackages = with pkgs; [
-      amdvlk
-      rocmPackages.clr
-      libvdpau-va-gl
-      vaapiVdpau
-      rocmPackages.runtime
-      clinfo
+    description = "emptty display manager";
+    after = [
+      "systemd-user-sessions.service"
+      "getty@tty1.service"
+      "plymouth-quit.service"
     ];
+    conflicts = [ "getty@tty1.service" ];
+    serviceConfig = {
+      Type = "simple";
+      ExecStart = "${pkgs.emptty}/bin/emptty";
+      TTYPath = "/dev/tty1";
+      TTYReset = "yes";
+      TTYVHangup = "yes";
+      TTYVTDisallocate = "yes";
+      Restart = "always";
+    };
+    wantedBy = [ "multi-user.target" ];
   };
 
-  # Настройка звука через pipewire
+  hardware = {
+    graphics = {
+      enable = true;
+      extraPackages = with pkgs; [
+        rocmPackages.clr
+        amdvlk
+        vaapiVdpau
+        libvdpau-va-gl
+        mesa.drivers
+        vulkan-loader
+        vulkan-validation-layers
+        vulkan-tools
+        mesa-demos
+      ];
+      extraPackages32 = with pkgs.pkgsi686Linux; [
+        libva
+        vaapiVdpau
+        vulkan-loader
+      ];
+    };
+    enableRedistributableFirmware = true;
+  };
+
+  security.rtkit.enable = true;
   services.pipewire = {
     enable = true;
     alsa.enable = true;
@@ -92,29 +128,39 @@
     jack.enable = true;
   };
 
-  # Docker
   virtualisation = {
     docker = {
       enable = true;
       daemon.settings = { features = { buildkit = true; }; };
+      autoPrune = {
+        enable = true;
+        dates = "weekly";
+      };
     };
     oci-containers.backend = "docker";
   };
 
-  # Оптимизации для AMD
   hardware.cpu.amd.updateMicrocode = true;
 
-  # Службы для ноутбука
-  services.thermald.enable = true;
-  services.tlp = {
-    enable = true;
-    settings = {
-      CPU_SCALING_GOVERNOR_ON_AC = "performance";
-      CPU_SCALING_GOVERNOR_ON_BAT = "powersave";
+  services = {
+    thermald.enable = true;
+    tlp = {
+      enable = true;
+      settings = {
+        CPU_SCALING_GOVERNOR_ON_AC = "performance";
+        CPU_SCALING_GOVERNOR_ON_BAT = "powersave";
+      };
     };
+    power-profiles-daemon.enable = false;
+    udisks2.enable = true;
+    dbus.enable = true;
+    upower.enable = true;
+    acpid.enable = true;
+    fstrim.enable = true;
+    smartd.enable = false;
+    fwupd.enable = true;
   };
 
-  # Bluetooth
   hardware.bluetooth = {
     enable = true;
     powerOnBoot = true;
@@ -122,15 +168,8 @@
   };
   services.blueman.enable = true;
 
-  # Фоновые службы
-  services.fstrim.enable = true;
-  services.smartd.enable = true;
-  services.fwupd.enable = true;
-
-  # Включаем zsh
   programs.zsh.enable = true;
 
-  # Пользователь
   users.users.hikary = {
     isNormalUser = true;
     description = "hikary";
@@ -145,66 +184,57 @@
       "lp"
     ];
     shell = pkgs.zsh;
+    initialPassword = "password";
   };
 
-  environment.systemPackages = with pkgs; [
-    # Системные утилиты
-    vim # Базовый редактор, может понадобиться в emergency shell
-    wget # Базовая утилита для скачивания
-    git # Нужен для обновления системы
+  nixpkgs.config.allowUnfree = true;
 
-    # Драйверы и утилиты для железа
+  nix = {
+    settings = {
+      auto-optimise-store = true;
+      experimental-features = [ "nix-command" "flakes" ];
+    };
+    gc = {
+      automatic = true;
+      dates = "weekly";
+      options = "--delete-older-than 7d";
+    };
+  };
+
+  zramSwap = {
+    enable = true;
+    algorithm = "zstd";
+    memoryPercent = 50;
+  };
+
+  services.udev.extraRules = ''
+    ACTION=="add|change", KERNEL=="[sv]d[a-z]", ATTR{queue/scheduler}="bfq"
+    ACTION=="add|change", KERNEL=="nvme[0-9]n[0-9]", ATTR{queue/scheduler}="none"
+  '';
+
+  environment.systemPackages = with pkgs; [
+    vim
+    wget
+    git
     pciutils
     usbutils
     lshw
-    dmidecode
-
-    # Утилиты для работы с дисками
-    parted
-    gparted
     smartmontools
-
-    # Системные демоны и их утилиты
     docker-compose
     blueman
     networkmanagerapplet
-
-    # AMD утилиты
     radeontop
     corectrl
     zenmonitor
     rocmPackages.rocm-smi
+    emptty
   ];
 
-  # Настройки системы безопасности и PAM
   security = {
-    rtkit.enable = true;
     polkit.enable = true;
+    sudo.wheelNeedsPassword = false;
     pam = {
-      services = {
-        login = {
-          enableGnomeKeyring = true;
-          fprintAuth = true;
-        };
-        sudo = {
-          fprintAuth = true;
-          text = ''
-            auth sufficient pam_fprintd.so
-            auth sufficient pam_unix.so try_first_pass nullok
-            auth required pam_deny.so
-          '';
-        };
-        lightdm.fprintAuth = true;
-        xscreensaver.fprintAuth = true;
-        "gdm-fingerprint" = {
-          text = ''
-            auth     required       pam_fprintd.so
-            account  required       pam_unix.so
-            password required       pam_unix.so nullok sha512
-            session  required       pam_unix.so
-          '';
-        };
-      };
+      services = { login = { enableGnomeKeyring = true; }; };
       loginLimits = [
         {
           domain = "@wheel";
@@ -222,5 +252,5 @@
     };
   };
 
-  system.stateVersion = "24.11";
+  system.stateVersion = "24.05";
 }
