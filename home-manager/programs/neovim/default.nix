@@ -35,11 +35,18 @@ in {
     nodePackages.yaml-language-server
     nodePackages.dockerfile-language-server-nodejs
     nodePackages.typescript-language-server
+    nodePackages.prettier
     taplo
-    nil
     ruff-lsp
     luajit
     basedpyright
+    nixfmt-classic
+    stylua
+    shfmt
+    ruff
+    shellcheck
+    yamllint
+    hadolint
   ];
 
   programs.neovim = {

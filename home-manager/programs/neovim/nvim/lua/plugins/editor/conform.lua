@@ -21,7 +21,6 @@ return {
         yaml = { 'prettier' },
         markdown = { 'prettier' },
         toml = { 'taplo' },
-        dockerfile = { 'hadolint' },
         nix = { 'nixfmt' },
       },
       format_on_save = {
