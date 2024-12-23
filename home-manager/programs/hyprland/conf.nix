@@ -7,7 +7,7 @@
     settings = {
       # Мониторы
       monitor = [
-        "eDP-1, 2560x1600@120, -2560x0, 1.25"
+        "eDP-1, disabled"
         "desc:AOC Q27G2G3R3B RTEMAHA004734, 2560x1440@120, 0x0, 1.25"
       ];
 
@@ -28,7 +28,7 @@
         "special:audio, on-created-empty:audio"
         "special:music, on-created-empty:youtube-music"
         "special:vpn, on-created-empty:nekoray"
-        "special:noi, on-created-empty:noi"
+        "special:noi, on-created-empty:google-chrome-stable"
         "special:ai_ide, on-created-empty:windsurf"
       ];
 
@@ -95,6 +95,7 @@
         # Назначение рабочих столов
         "workspace 1 silent, class:^(google-chrome)$"
         "workspace 1 silent, class:^(Google chrome)$"
+        "workspace 11, class:^(google-chrome)$"
         "workspace 2 silent, class:^(dev)$"
         "workspace 3 silent, class:^(other)$"
         "workspace 4 silent, class:^(vesktop)$"
@@ -115,6 +116,7 @@
         "workspace special:music, class:^(YouTube Music)$"
         "workspace special:vpn, class:^(nekoray)$"
         "workspace special:noi, class:^(Noi)$"
+        "workspace special:noi, class:^(google-chrome)$"
         "workspace special:ai_ide, class:^(windsurf-url-handler)$"
         "workspace special:ai_ide, class:^(cursor-url-handler)$"
 
