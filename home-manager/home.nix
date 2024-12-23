@@ -1,9 +1,8 @@
-{pkgs, config, ...}: {
+{ pkgs, config, ... }: {
   home.username = "hikary";
   home.homeDirectory = "/home/hikary";
   home.stateVersion = "24.11";
 
-  # Разрешаем unfree пакеты
   nixpkgs.config.allowUnfree = true;
 
   # Импортируем все конфиги
@@ -12,7 +11,6 @@
     ./programs/neovim
     ./programs/zsh
     ./programs/starship.nix
-    ./programs/wut
     ./programs/hyprland
     ./programs/git
     ./programs/fastfetch
@@ -24,15 +22,11 @@
 
   home.sessionPath = [ "$HOME/.nix-profile/bin" ];
 
-  # Пакеты для пользователя
   home.packages = with pkgs; [
     python312
     python312Packages.uv
     nodejs_20
     gcc
-    shellcheck
-    yamllint
-    hadolint
 
     # Базовые утилиты
     curl
@@ -47,6 +41,7 @@
     iotop
     powertop
     acpi
+    ripgrep
 
     # Архиваторы
     p7zip
@@ -80,7 +75,6 @@
     # Утилиты для отпечатков
     fprintd
     libfprint
-    python3Packages.validity-sensors-tools
 
     emptty
   ];

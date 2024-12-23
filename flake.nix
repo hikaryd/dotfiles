@@ -13,10 +13,6 @@
 
     stylix.url = "github:danth/stylix";
 
-    wut = {
-      url = "github:shobrook/wut";
-      flake = false;
-    };
 
     nixgl = {
       url = "github:nix-community/nixGL";
@@ -27,20 +23,10 @@
       url = "github:Jas-SinghFSU/HyprPanel";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-
-    emptty = {
-      url = "github:tvrzna/emptty";
-      flake = false;
-    };
-
-    nixos-generators = {
-      url = "github:nix-community/nixos-generators";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
   };
 
-  outputs = { nixpkgs, home-manager, catppuccin, stylix, wut, nixgl, hyprpanel
-    , emptty, nixos-generators, ... }:
+  outputs =
+    { nixpkgs, home-manager, catppuccin, stylix, nixgl, hyprpanel, ... }:
     let
       system = "x86_64-linux";
       pkgs = import nixpkgs {
@@ -56,9 +42,6 @@
                 '';
               });
           })
-          (final: prev: {
-            emptty = prev.callPackage ./packages/emptty.nix { src = emptty; };
-          })
         ];
       };
     in {
@@ -73,39 +56,9 @@
               homeDirectory = "/home/hikary";
               stateVersion = "24.11";
             };
-            _module.args = { wutSrc = wut; };
           }
           catppuccin.homeManagerModules.catppuccin
         ];
-      };
-
-      packages.${system} = {
-        iso = nixos-generators.nixosGenerate {
-          inherit system pkgs;
-          modules = [
-            ./nixos/default.nix
-            ./nixos/hardware-configuration.nix
-            {
-              # ISO-specific settings
-              isoImage.squashfsCompression = "zstd -Xcompression-level 6";
-              # Включаем поддержку UEFI
-              isoImage.makeEfiBootable = true;
-              # И legacy BIOS
-              isoImage.makeBiosBootable = true;
-            }
-          ];
-          format = "iso";
-        };
-
-        vm = nixos-generators.nixosGenerate {
-          inherit system pkgs;
-          modules = [
-            ./nixos/default.nix
-            ./nixos/hardware-configuration.nix
-            ./nixos/vm.nix
-          ];
-          format = "vm";
-        };
       };
     };
 }

@@ -140,22 +140,6 @@
         "type": "github"
       }
     },
-    "emptty": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1724653415,
-        "narHash": "sha256-xZfR4sn20fDaTNAxuxVflpr+8AFg5Z7vesO7P8Jxw6A=",
-        "owner": "tvrzna",
-        "repo": "emptty",
-        "rev": "4046552b6f5cc1cf76ce8bf333e04e16c59febca",
-        "type": "github"
-      },
-      "original": {
-        "owner": "tvrzna",
-        "repo": "emptty",
-        "type": "github"
-      }
-    },
     "flake-compat": {
       "flake": false,
       "locked": {
@@ -325,42 +309,6 @@
         "type": "github"
       }
     },
-    "nixlib": {
-      "locked": {
-        "lastModified": 1734829460,
-        "narHash": "sha256-dPhc+f2wkmhMqMIfq+hColJdysgVxKP9ilZ5bR0NRZI=",
-        "owner": "nix-community",
-        "repo": "nixpkgs.lib",
-        "rev": "0a31e8d833173ae63e43fd9dbff1ccf09c4f778c",
-        "type": "github"
-      },
-      "original": {
-        "owner": "nix-community",
-        "repo": "nixpkgs.lib",
-        "type": "github"
-      }
-    },
-    "nixos-generators": {
-      "inputs": {
-        "nixlib": "nixlib",
-        "nixpkgs": [
-          "nixpkgs"
-        ]
-      },
-      "locked": {
-        "lastModified": 1734915500,
-        "narHash": "sha256-A7CTIQ8SW0hfbhKlwK+vSsu4pD+Oaelw3v6goX6go+U=",
-        "owner": "nix-community",
-        "repo": "nixos-generators",
-        "rev": "051d1b2dda3b2e81b38d82e2b691e5c2f4d335f4",
-        "type": "github"
-      },
-      "original": {
-        "owner": "nix-community",
-        "repo": "nixos-generators",
-        "type": "github"
-      }
-    },
     "nixpkgs": {
       "locked": {
         "lastModified": 1733581040,
@@ -428,14 +376,11 @@
     "root": {
       "inputs": {
         "catppuccin": "catppuccin",
-        "emptty": "emptty",
         "home-manager": "home-manager",
         "hyprpanel": "hyprpanel",
         "nixgl": "nixgl",
-        "nixos-generators": "nixos-generators",
         "nixpkgs": "nixpkgs_3",
-        "stylix": "stylix",
-        "wut": "wut"
+        "stylix": "stylix"
       }
     },
     "stylix": {
@@ -530,22 +475,6 @@
       "original": {
         "owner": "tinted-theming",
         "repo": "tinted-tmux",
-        "type": "github"
-      }
-    },
-    "wut": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1734732220,
-        "narHash": "sha256-vn/LBvwYcEsHTr91sXn8SJtYROzp0mqmNMUvo733UDY=",
-        "owner": "shobrook",
-        "repo": "wut",
-        "rev": "af430931c6b12df3afb742eb3f85e2ffb681a7d7",
-        "type": "github"
-      },
-      "original": {
-        "owner": "shobrook",
-        "repo": "wut",
         "type": "github"
       }
     }
