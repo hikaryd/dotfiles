@@ -1,4 +1,4 @@
-{ pkgs, lib, ... }: {
+{ config, pkgs, lib, inputs, ... }: {
   home.packages = with pkgs; [
     jetbrains-mono
     noto-fonts
@@ -7,6 +7,7 @@
 
     bibata-cursors
     base16-schemes
+    catppuccin-gtk
   ];
 
   fonts.fontconfig.enable = true;

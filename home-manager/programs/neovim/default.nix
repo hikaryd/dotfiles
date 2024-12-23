@@ -39,6 +39,7 @@ in {
     nil
     ruff-lsp
     luajit
+    basedpyright
   ];
 
   programs.neovim = {
