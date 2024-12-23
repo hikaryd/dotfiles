@@ -60,19 +60,22 @@
     };
   };
 
-  systemd.user.services = { xdg-user-dirs-update.Install.WantedBy = [ ]; };
-
-  # Auto-cpufreq configuration from flake
-  services.auto-cpufreq = {
-    enable = true;
-    settings = {
-      charger = {
-        governor = "performance";
-        turbo = "auto";
+  systemd.user.services = { 
+    xdg-user-dirs-update.Install.WantedBy = [ ]; 
+    auto-cpufreq = {
+      Unit = {
+        Description = "auto-cpufreq - Automatic CPU speed & power optimizer";
+        After = ["network.target"];
       };
-      battery = {
-        governor = "powersave";
-        turbo = "auto";
+
+      Service = {
+        Type = "simple";
+        ExecStart = "${pkgs.auto-cpufreq}/bin/auto-cpufreq --daemon";
+        Restart = "on-failure";
+      };
+
+      Install = {
+        WantedBy = ["default.target"];
       };
     };
   };

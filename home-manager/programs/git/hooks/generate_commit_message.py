@@ -1,8 +1,10 @@
 import argparse
+import json
 import os
 import subprocess
-
-import requests
+import urllib.error
+import urllib.parse
+import urllib.request
 
 COMMIT_MESSAGE_PROMPT = """
 Создайте сообщение коммита на русском языке на основе следующего diff:
@@ -66,6 +68,35 @@ def get_git_diff():
     return result.stdout.decode('utf-8')
 
 
+def make_request(url, headers, data, proxy_host='127.0.0.1', proxy_port='2080'):
+    proxy_handler = urllib.request.ProxyHandler(
+        {
+            'http': f'http://{proxy_host}:{proxy_port}',
+            'https': f'http://{proxy_host}:{proxy_port}',
+        }
+    )
+    opener = urllib.request.build_opener(proxy_handler)
+    urllib.request.install_opener(opener)
+
+    req = urllib.request.Request(
+        url,
+        data=json.dumps(data).encode('utf-8'),
+        headers=headers,
+        method='POST',
+    )
+
+    try:
+        with urllib.request.urlopen(req) as response:
+            return json.loads(response.read().decode('utf-8'))
+    except urllib.error.HTTPError as e:
+        print(f'Ошибка HTTP: {e.code} {e.reason}')
+        print(e.read().decode('utf-8'))
+        return None
+    except urllib.error.URLError as e:
+        print(f'Ошибка URL: {e.reason}')
+        return None
+
+
 def generate_commit_message_claude(diff, api_key):
     headers = {
         'Content-Type': 'application/json',
@@ -82,14 +113,14 @@ def generate_commit_message_claude(diff, api_key):
         'max_tokens': 3000,
         'model': 'claude-3-5-sonnet-20241022',
     }
-    response = requests.post(
-        'https://api.anthropic.com/v1/messages',
-        proxies={'http': '127.0.0.1:2080', 'https': '127.0.0.1:2080'},
-        headers=headers,
-        json=data,
+
+    response = make_request(
+        'https://api.anthropic.com/v1/messages', headers=headers, data=data
     )
-    completion = response.json().get('content', [{}])[0].get('text', '').strip()
-    return completion
+
+    if response:
+        return response.get('content', [{}])[0].get('text', '').strip()
+    return ''
 
 
 def generate_commit_message_openrouter(diff, api_key):
@@ -105,26 +136,24 @@ def generate_commit_message_openrouter(diff, api_key):
         ],
         'model': 'anthropic/claude-3.5-haiku:beta',
     }
-    response = requests.post(
+
+    response = make_request(
         'https://openrouter.ai/api/v1/chat/completions',
         headers=headers,
-        json=data,
-        proxies={'http': '127.0.0.1:2080', 'https': '127.0.0.1:2080'},
+        data=data,
     )
-    try:
-        completion = (
-            response.json()
-            .get('choices', [{}])[0]
-            .get('message', '')
-            .get('content', '')
-            .strip()
-        )
-        return completion
-    except Exception as e:
-        print(
-            f'Ошибка при генерации сообщения коммита: {e}.\n\n{response.json()}'
-        )
-        return ''
+
+    if response:
+        try:
+            return (
+                response.get('choices', [{}])[0]
+                .get('message', '')
+                .get('content', '')
+                .strip()
+            )
+        except Exception as e:
+            print(f'Ошибка при генерации сообщения коммита: {e}.\n\n{response}')
+    return ''
 
 
 def generate_commit_message_openai(diff, api_key):
@@ -133,7 +162,7 @@ def generate_commit_message_openai(diff, api_key):
         'Authorization': f'Bearer {api_key}',
     }
     data = {
-        'model': 'gpt-4o',
+        'model': 'gpt-4',
         'messages': [
             {
                 'role': 'system',
@@ -146,14 +175,16 @@ def generate_commit_message_openai(diff, api_key):
         ],
         'max_tokens': 3000,
     }
-    response = requests.post(
+
+    response = make_request(
         'https://api.openai.com/v1/chat/completions',
-        proxies={'http': '127.0.0.1:2080', 'https': '127.0.0.1:2080'},
         headers=headers,
-        json=data,
+        data=data,
     )
-    response_json = response.json()
-    return response_json['choices'][0]['message']['content'].strip()
+
+    if response:
+        return response['choices'][0]['message']['content'].strip()
+    return ''
 
 
 def format_commit_message(message):
