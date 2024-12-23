@@ -1,15 +1,18 @@
-{ pkgs, config, ... }: {
-  imports = [ ./conf.nix ./hyprpaper.nix ./hypridle.nix ./hyprpanel ];
+{ pkgs, config, inputs, ... }: {
+  imports = [ ./conf.nix ./hyprpaper.nix ./hypridle.nix ];
 
   home.packages = with pkgs; [
     xdg-desktop-portal-hyprland
     wofi
     hypridle
     grimblast
-    hyprland
     gtk3
     glib
     libdbusmenu-gtk3
+    pkgs.hyprpanel
+    wlroots
+    xwayland
+    libinput
   ];
 
   home.file = {
@@ -27,12 +30,11 @@
 
   wayland.windowManager.hyprland = {
     enable = true;
-    package = pkgs.hyprland;
+    xwayland.enable = true;
     systemd = {
       enable = true;
       variables = [ ];
     };
-    xwayland.enable = true;
   };
 
   xdg.portal = {

@@ -1,24 +1,17 @@
-{ pkgs, ... }: {
+{ pkgs, wutSrc, ... }: {
   home.packages = let
-    wutSrc = builtins.fetchTarball {
-      url = "https://github.com/shobrook/wut/archive/master.tar.gz";
-    };
-
-    wut = pkgs.python3.pkgs.buildPythonApplication {
+    wut = pkgs.python3Packages.buildPythonPackage {
       pname = "wut";
       version = "0.1.0";
       src = wutSrc;
 
-      propagatedBuildInputs = with pkgs.python3.pkgs; [
+      propagatedBuildInputs = with pkgs.python3Packages; [
         requests
-        openai
-        anthropic
-        python-dotenv
-        rich
-        typer
-        ollama
-        psutil
+        beautifulsoup4
+        lxml
       ];
+
+      doCheck = false;
     };
   in [ wut ];
 }

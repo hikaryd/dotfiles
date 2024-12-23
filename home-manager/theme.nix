@@ -9,13 +9,6 @@
     base16-schemes
   ];
 
-  imports = [
-    (import (builtins.fetchTarball {
-      url = "https://github.com/danth/stylix/archive/master.tar.gz";
-      sha256 = "sha256:1fv5clwfq9b2i8jnsrvy4z0r3wzjsqv2im7rvdg2jpzff8k3h41p";
-    })).homeManagerModules.stylix
-  ];
-
   fonts.fontconfig.enable = true;
 
   stylix = {
