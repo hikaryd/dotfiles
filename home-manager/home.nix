@@ -5,14 +5,6 @@
 
   nixpkgs.config.allowUnfree = true;
 
-  nixpkgs.overlays = [
-    (final: prev: {
-      nixgl = import (builtins.fetchTarball {
-        url = "https://github.com/nix-community/nixGL/archive/main.tar.gz";
-      }) { };
-    })
-  ];
-
   home.sessionPath = [ "$HOME/.nix-profile/bin" ];
 
   xdg.mimeApps = {
@@ -60,12 +52,12 @@
     };
   };
 
-  systemd.user.services = { 
-    xdg-user-dirs-update.Install.WantedBy = [ ]; 
+  systemd.user.services = {
+    xdg-user-dirs-update.Install.WantedBy = [ ];
     auto-cpufreq = {
       Unit = {
         Description = "auto-cpufreq - Automatic CPU speed & power optimizer";
-        After = ["network.target"];
+        After = [ "network.target" ];
       };
 
       Service = {
@@ -74,9 +66,7 @@
         Restart = "on-failure";
       };
 
-      Install = {
-        WantedBy = ["default.target"];
-      };
+      Install = { WantedBy = [ "default.target" ]; };
     };
   };
 
@@ -141,6 +131,7 @@
     atuin
     httpie
     hurl
+    less
   ];
 
   programs.home-manager.enable = true;

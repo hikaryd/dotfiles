@@ -1,33 +1,51 @@
 #!/bin/bash
 
-# Install system packages
+# Устанавливаем только Nix и базовые системные утилиты
 sudo pacman -S --needed \
 	nix \
-	hyprland \
-	xdg-desktop-portal-hyprland \
-	xdg-desktop-portal \
-	xdg-utils \
 	reflector \
 	xf86-input-wacom \
-	cpupower \
-	networkmanager \
 	pipewire \
-	rsync \
-	nvim \
-	wireplumber \
 	usbutils
 
-# Enable flakes
 mkdir -p ~/.config/nix
-echo "experimental-features = nix-command flakes" >~/.config/nix/nix.conf
 
-# Setup home-manager with flakes
-ln -sf ~/dotfiles/home-manager ~/.config/home-manager
+cat >~/.config/nix/nix.conf <<EOF
+experimental-features = nix-command flakes
 
-nix run home-manager/master -- init --switch
-nix build .#homeConfigurations.hikary.activationPackage
-./result/activate
+# Оптимизации сборки
+max-jobs = auto
+cores = 0
+EOF
 
-# Enable services
+sudo tee /etc/nix/nix.conf >/dev/null <<EOF
+#
+# https://nixos.org/manual/nix/stable/#sec-conf-file
+#
+
+# Unix group containing the Nix build user accounts
+build-users-group = nixbld
+
+# Build optimizations
+builders-use-substitutes = true
+narinfo-cache-negative-ttl = 0
+
+# Binary cache
+substituters = https://cache.nixos.org
+trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=
+EOF
+
+sudo systemctl restart nix-daemon
+
+# Добавляем home-manager в NIX_PATH
+export NIX_PATH=$HOME/.nix-defexpr/channels:/nix/var/nix/profiles/per-user/root/channels${NIX_PATH:+:$NIX_PATH}
+nix-channel --add https://github.com/nix-community/home-manager/archive/master.tar.gz home-manager
+nix-channel --update
+
+home-manager switch --flake .#hikary
+
+# Включаем сервисы pipewire
 systemctl --user enable --now pipewire.service
 systemctl --user enable --now pipewire-pulse.service
+
+echo "Installation complete! Please restart your terminal."

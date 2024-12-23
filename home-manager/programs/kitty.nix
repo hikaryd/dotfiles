@@ -2,7 +2,7 @@
   programs.kitty = {
     enable = true;
     package = pkgs.writeShellScriptBin "kitty" ''
-      ${pkgs.nixgl.auto.nixGLDefault}/bin/nixGL ${pkgs.kitty}/bin/kitty "$@"
+      ${pkgs.nixgl.nixGLMesa}/bin/nixGLMesa ${pkgs.kitty}/bin/kitty "$@"
     '';
     settings = {
       background = "#141318";
