@@ -12,9 +12,11 @@
   imports = [
     (import (builtins.fetchTarball {
       url = "https://github.com/danth/stylix/archive/master.tar.gz";
-      sha256 = "sha256:0g06shcr8nwxadj8nrggz10z7vgddkmwj6yma6frp6cn1160jv05";
+      sha256 = "sha256:1fv5clwfq9b2i8jnsrvy4z0r3wzjsqv2im7rvdg2jpzff8k3h41p";
     })).homeManagerModules.stylix
   ];
+
+  fonts.fontconfig.enable = true;
 
   stylix = {
     enable = true;

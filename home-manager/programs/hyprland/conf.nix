@@ -94,6 +94,7 @@
       windowrulev2 = [
         # Назначение рабочих столов
         "workspace 1 silent, class:^(google-chrome)$"
+        "workspace 1 silent, class:^(Google chrome)$"
         "workspace 2 silent, class:^(dev)$"
         "workspace 3 silent, class:^(other)$"
         "workspace 4 silent, class:^(vesktop)$"
@@ -133,6 +134,7 @@
         # Прозрачность
         "opacity 0.80 0.80, class:^(org.freedesktop.impl.portal.desktop.gtk)$"
         "opacity 0.80 0.80, class:^(org.freedesktop.impl.portal.desktop.hyprland)$"
+        "opacity 0.80 0.80, class:^(Google-chrome)$"
         "opacity 0.80 0.80, class:^(google-chrome)$"
         "opacity 0.9 0.9,class:^(neovide)$"
 
@@ -267,7 +269,6 @@
         # Application shortcuts
         "$mainMod, RETURN, exec, kitty"
         "$mainMod SHIFT, D, exec, vesktop"
-        "$mainMod CTRL SHIFT, J, exec, kitty --class jira -- jirust"
         "$mainMod SHIFT, B, exec, GDK_BACKEND=x11 dbeaver"
 
         # Hyprpane
@@ -394,7 +395,7 @@
         "hypridle"
         "telegram-desktop"
         "kitty --class pulsemixer -- pulsemixer"
-        "sleep 4 && google-chrome-stable --enable-features=UseOzonePlatform --ozone-platform=wayland --enable-wayland-ime --use-angle=vulkan --enable-features=WebRTCPipeWireCapturer --enable-features=NativeNotifications"
+        "sleep 4 && google-chrome-stable"
         "sleep 4 && noi-desktop"
       ];
     };

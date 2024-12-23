@@ -53,5 +53,9 @@
       source = ./hyprpanel;
       recursive = true;
     };
+    "wofi" = {
+      source = ./wofi;
+      recursive = true;
+    };
   };
 }
