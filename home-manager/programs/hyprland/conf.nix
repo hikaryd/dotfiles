@@ -7,7 +7,7 @@
     settings = {
       # Мониторы
       monitor = [
-        "eDP-1, disabled"
+        "eDP-1, 2560x1600@120, -2560x0, 1.25"
         "desc:AOC Q27G2G3R3B RTEMAHA004734, 2560x1440@120, 0x0, 1.25"
       ];
 
@@ -136,8 +136,8 @@
         # Прозрачность
         "opacity 0.80 0.80, class:^(org.freedesktop.impl.portal.desktop.gtk)$"
         "opacity 0.80 0.80, class:^(org.freedesktop.impl.portal.desktop.hyprland)$"
-        "opacity 0.80 0.80, class:^(Google-chrome)$"
-        "opacity 0.80 0.80, class:^(google-chrome)$"
+        # "opacity 0.80 0.80, class:^(Google-chrome)$"
+        # "opacity 0.80 0.80, class:^(google-chrome)$"
         "opacity 0.9 0.9,class:^(neovide)$"
 
         # YTM
