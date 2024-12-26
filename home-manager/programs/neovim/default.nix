@@ -48,6 +48,7 @@ in {
     shellcheck
     yamllint
     hadolint
+    hurl
   ];
 
   programs.neovim = {

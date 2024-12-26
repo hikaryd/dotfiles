@@ -1,4 +1,4 @@
-{ config, pkgs, ... }:
+{ inputs, pkgs, ... }:
 
 {
   imports = [ ./hardware-configuration.nix ];
@@ -59,20 +59,19 @@
 
   console = {
     font = "ter-v32n";
-    keyMap = "ru";
+    keyMap = "us";
     packages = [ pkgs.terminus_font ];
   };
 
-  services.xserver = {
+  services.xserver.enable = false;
+
+  programs.hyprland = {
     enable = true;
-    xkb = {
-      layout = "us,ru";
-      options = "grp:caps_toggle";
-    };
-    videoDrivers = [ "amdgpu" ];
-    displayManager.gdm.enable = false;
-    displayManager.lightdm.enable = false;
-    displayManager.sddm.enable = false;
+    xwayland.enable = true;
+    package =
+      inputs.hyprland.packages.${pkgs.stdenv.hostPlatform.system}.hyprland;
+    portalPackage =
+      inputs.hyprland.packages.${pkgs.stdenv.hostPlatform.system}.xdg-desktop-portal-hyprland;
   };
 
   systemd.services.emptty = {
@@ -80,14 +79,15 @@
     description = "emptty display manager";
     after = [
       "systemd-user-sessions.service"
-      "getty@tty1.service"
+      "getty@tty7.service"
       "plymouth-quit.service"
     ];
-    conflicts = [ "getty@tty1.service" ];
+    conflicts = [ "getty@tty7.service" ];
     serviceConfig = {
       Type = "simple";
+      Environment = "XDG_SESSION_TYPE=wayland";
       ExecStart = "${pkgs.emptty}/bin/emptty";
-      TTYPath = "/dev/tty1";
+      TTYPath = "/dev/tty7";
       TTYReset = "yes";
       TTYVHangup = "yes";
       TTYVTDisallocate = "yes";
@@ -96,9 +96,44 @@
     wantedBy = [ "multi-user.target" ];
   };
 
+  environment.systemPackages = with pkgs; [
+    emptty
+    wayland
+    xdg-utils
+    grim
+    slurp
+    wl-clipboard
+    vim
+    wget
+    git
+    pciutils
+    usbutils
+    docker-compose
+    blueman
+    networkmanagerapplet
+    radeontop
+    corectrl
+    zenmonitor
+    rocmPackages.rocm-smi
+
+    python312
+    python312Packages.uv
+    python312Packages.greenlet
+    nodejs_20
+    gcc
+    stdenv.cc.cc.lib
+  ];
+
+  environment.sessionVariables = {
+    NIXOS_OZONE_WL = "1";
+    XDG_SESSION_TYPE = "wayland";
+    WLR_NO_HARDWARE_CURSORS = "1";
+  };
+
   hardware = {
     graphics = {
       enable = true;
+      enable32Bit = true;
       extraPackages = with pkgs; [
         rocmPackages.clr
         amdvlk
@@ -108,6 +143,7 @@
         vulkan-loader
         vulkan-validation-layers
         vulkan-tools
+        vulkan-headers
         mesa-demos
       ];
       extraPackages32 = with pkgs.pkgsi686Linux; [
@@ -183,8 +219,8 @@
       "scanner"
       "lp"
     ];
+    initialPassword = "password123";
     shell = pkgs.zsh;
-    initialPassword = "password";
   };
 
   nixpkgs.config.allowUnfree = true;
@@ -211,24 +247,6 @@
     ACTION=="add|change", KERNEL=="[sv]d[a-z]", ATTR{queue/scheduler}="bfq"
     ACTION=="add|change", KERNEL=="nvme[0-9]n[0-9]", ATTR{queue/scheduler}="none"
   '';
-
-  environment.systemPackages = with pkgs; [
-    vim
-    wget
-    git
-    pciutils
-    usbutils
-    lshw
-    smartmontools
-    docker-compose
-    blueman
-    networkmanagerapplet
-    radeontop
-    corectrl
-    zenmonitor
-    rocmPackages.rocm-smi
-    emptty
-  ];
 
   security = {
     polkit.enable = true;

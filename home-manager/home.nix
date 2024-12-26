@@ -17,17 +17,13 @@
     ./programs/lazygit
     ./programs/easyeffects
     ./programs/opentabletdriver
+    ./programs/windsurf.nix
     ./theme.nix
   ];
 
   home.sessionPath = [ "$HOME/.nix-profile/bin" ];
 
   home.packages = with pkgs; [
-    python312
-    python312Packages.uv
-    nodejs_20
-    gcc
-
     # Базовые утилиты
     httpie
     tree
@@ -41,6 +37,8 @@
     powertop
     acpi
     ripgrep
+    libreoffice
+    nemo
 
     # Архиваторы
     p7zip
@@ -50,17 +48,10 @@
     gnutar
 
     # Сетевые утилиты
-    bind
-    traceroute
     speedtest-rs
 
     # Мультимедиа
-    pamixer
-
-    # Графика и 3D
-    vulkan-tools
-    vulkan-loader
-    vulkan-headers
+    pulsemixer
 
     # XDG утилиты
     xdg-desktop-portal
@@ -71,11 +62,8 @@
     noto-fonts-cjk-sans
     noto-fonts-emoji
 
-    # Утилиты для отпечатков
-    fprintd
-    libfprint
-
-    emptty
+    osu-lazer-bin
+    telegram-desktop
   ];
 
   # Включаем home-manager
