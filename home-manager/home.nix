@@ -5,7 +5,6 @@
 
   nixpkgs.config.allowUnfree = true;
 
-  # Импортируем все конфиги
   imports = [
     ./programs/kitty.nix
     ./programs/neovim
@@ -13,11 +12,14 @@
     ./programs/starship.nix
     ./programs/hyprland
     ./programs/git
-    ./programs/fastfetch
     ./programs/lazygit
     ./programs/easyeffects
     ./programs/opentabletdriver
     ./programs/windsurf.nix
+    ./programs/ghostty.nix
+    ./programs/tmux.nix
+    ./programs/yazi.nix
+    ./programs/fastfetch.nix
     ./theme.nix
   ];
 
@@ -32,7 +34,6 @@
     less
     ncdu
     duf
-    yazi
     iotop
     powertop
     acpi
@@ -64,6 +65,9 @@
 
     osu-lazer-bin
     telegram-desktop
+    nekoray
+    youtube-music
+    dbeaver-bin
   ];
 
   # Включаем home-manager

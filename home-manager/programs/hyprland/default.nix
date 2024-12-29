@@ -1,5 +1,5 @@
-{ pkgs, config, inputs, ... }: {
-  imports = [ ./conf.nix ./hyprpaper.nix ./hypridle.nix ];
+{ pkgs, config, ... }: {
+  imports = [ ./conf.nix ./hypridle.nix ./hyprpaper.nix ./hyprpanel.nix ];
 
   home.packages = with pkgs; [
     xdg-desktop-portal-hyprland
@@ -9,7 +9,6 @@
     gtk3
     glib
     libdbusmenu-gtk3
-    pkgs.hyprpanel
     wlroots
     xwayland
     libinput
@@ -51,10 +50,6 @@
   };
 
   xdg.configFile = {
-    "hyprpanel" = {
-      source = ./hyprpanel;
-      recursive = true;
-    };
     "wofi" = {
       source = ./wofi;
       recursive = true;
