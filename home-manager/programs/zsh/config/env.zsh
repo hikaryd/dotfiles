@@ -16,3 +16,5 @@ export LESSHISTFILE="$XDG_STATE_HOME"/less/history
 export ANTHROPIC_API_KEY=$(cat ~/creds/claude)
 export OPENROUTER_API_KEY=$(cat ~/creds/open_router)
 export CARGO_HOME="$HOME/.cargo"
+export LANG=en_US.UTF-8
+export LC_CTYPE=ru_RU.UTF-8

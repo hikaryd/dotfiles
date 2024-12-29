@@ -6,6 +6,7 @@
     '';
     settings = {
       background = "#141318";
+      background_opacity = lib.mkForce (0.8);
 
       window_padding_width = 0;
       scrollback_lines = 80000;

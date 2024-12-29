@@ -63,7 +63,8 @@
         animate_manual_resizes = true;
         animate_mouse_windowdragging = false;
         enable_swallow = false;
-        swallow_regex = "(foot|kitty|allacritty|Alacritty|wzterm)";
+        swallow_regex =
+          "(foot|kitty|allacritty|Alacritty|wzterm|com.mitchellh.ghostty)";
         disable_splash_rendering = true;
         disable_hyprland_logo = true;
         force_default_wallpaper = 0;
@@ -185,7 +186,7 @@
 
       # Переменные окружения
       env = [
-        "TERM,kitty"
+        "TERM,ghostty"
         "WLR_DRM_NO_ATOMIC,1"
         "XDG_CURRENT_DESKTOP,Hyprland"
         "XDG_SESSION_TYPE,wayland"
@@ -269,7 +270,7 @@
       "$mainMod" = "SUPER";
       bind = [
         # Application shortcuts
-        "$mainMod, RETURN, exec, kitty"
+        "$mainMod, RETURN, exec, ghostty"
         "$mainMod SHIFT, D, exec, vesktop"
         "$mainMod SHIFT, B, exec, GDK_BACKEND=x11 dbeaver"
 
@@ -389,12 +390,11 @@
       # Автозапуск
       exec-once = [
         "nekoray"
-        "hyprpanel"
+        "hyprpaper"
         "dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP"
         "${../../../scripts/xdg-portal.sh}"
         "easyeffects"
         "blueman-applet"
-        "hyprpaper"
         "hypridle"
         "telegram-desktop"
         "kitty --class pulsemixer -- pulsemixer"

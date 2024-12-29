@@ -15,7 +15,7 @@ return {
         open_link = 'gx',
       },
       diagnostic = {
-        on_insert = false,
+        on_insert = true,
         on_insert_follow = false,
         insert_winblend = 0,
         show_code_action = true,
@@ -45,20 +45,6 @@ return {
     }
 
     vim.o.updatetime = 250
-    vim.api.nvim_create_autocmd('CursorHold', {
-      buffer = bufnr,
-      callback = function()
-        local opts = {
-          focusable = false,
-          close_events = { 'BufLeave', 'CursorMoved', 'InsertEnter', 'FocusLost' },
-          border = 'rounded',
-          source = 'always',
-          prefix = ' ',
-          scope = 'cursor',
-        }
-        vim.diagnostic.open_float(nil, opts)
-      end,
-    })
   end,
   dependencies = {
     'nvim-treesitter/nvim-treesitter',

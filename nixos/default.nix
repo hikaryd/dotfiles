@@ -203,6 +203,7 @@
     settings = { General = { Enable = "Source,Sink,Media,Socket"; }; };
   };
   services.blueman.enable = true;
+  hardware.pulseaudio.enable = false;
 
   programs.zsh.enable = true;
 

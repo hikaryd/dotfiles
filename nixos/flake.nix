@@ -25,10 +25,11 @@
       url = "github:hyprwm/Hyprland";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    ghostty.url = "github:mitchellh/ghostty";
   };
 
   outputs = inputs@{ self, nixpkgs, nixos-generators, home-manager, catppuccin
-    , stylix, nixgl, hyprpanel, hyprland, ... }:
+    , stylix, nixgl, hyprpanel, hyprland, ghostty, ... }:
     let
       system = "x86_64-linux";
       baseModules = [
@@ -37,17 +38,7 @@
         {
           nixpkgs = {
             config.allowUnfree = true;
-            overlays = [
-              nixgl.overlay
-              (final: prev: {
-                hyprpanel = hyprpanel.packages.${system}.default.overrideAttrs
-                  (old: {
-                    postInstall = ''
-                      mv $out/share/README.md $out/share/hyprpanel-README.md
-                    '';
-                  });
-              })
-            ];
+            overlays = [ nixgl.overlay inputs.hyprpanel.overlay ];
           };
         }
         home-manager.nixosModules.home-manager
@@ -55,7 +46,7 @@
           home-manager = {
             useGlobalPkgs = true;
             useUserPackages = true;
-            extraSpecialArgs = inputs;
+            extraSpecialArgs = { inherit inputs; };
             users.hikary = {
               imports = [
                 ../home-manager/home.nix

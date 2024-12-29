@@ -9,17 +9,26 @@
       palette = "catppuccin_mocha";
 
       character = {
-        vicmd_symbol = "[N] >>>";
+        vicmd_symbol = "[N] ❯❯❯";
         success_symbol = "[➜](bold green)";
+        error_symbol = "[✗](bold red)";
       };
 
-      directory.substitutions = { "~/tests/starship-custom" = "work-project"; };
+      directory = {
+        substitutions = { "~/tests/starship-custom" = "work-project"; };
+        style = "bold blue";
+        truncation_length = 3;
+        truncation_symbol = "…/";
+        read_only = " ";
+      };
 
-      git_branch = { format = "[$symbol$branch(:$remote_branch)]($style)"; };
+      git_branch = {
+        format = "[$symbol$branch(:$remote_branch)]($style)";
+        symbol = " ";
+      };
 
       aws = {
-        format =
-          ''[$symbol(profile: "$profile" )(\(region: $region\) )]($style)'';
+        format = ''[$symbol(profile: "$profile" )(\(region: $region\) )]($style)'';
         disabled = false;
         style = "bold blue";
         symbol = " ";
@@ -33,11 +42,10 @@
         detect_files = [ "Dockerfile" ];
         format = "[$symbol$context( \\($namespace\\))]($style) ";
         contexts = [{
-          context_pattern =
-            "arn:aws:eks:us-west-2:577926974532:cluster/zd-pvc-omer";
+          context_pattern = "arn:aws:eks:us-west-2:577926974532:cluster/zd-pvc-omer";
           style = "green";
           context_alias = "omerxx";
-          symbol = " ";
+          symbol = "⎈ ";
         }];
       };
 

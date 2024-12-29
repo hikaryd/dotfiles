@@ -87,23 +87,6 @@ return {
         },
       },
     })
-
-    local function show_line_diagnostics()
-      local opts = {
-        focusable = false,
-        close_events = { 'BufLeave', 'CursorMoved', 'InsertEnter', 'FocusLost' },
-        border = 'rounded',
-        source = 'always',
-        prefix = ' ',
-      }
-      vim.diagnostic.open_float(nil, opts)
-    end
-
-    vim.api.nvim_create_autocmd('CursorHold', {
-      callback = function()
-        show_line_diagnostics()
-      end,
-    })
   end,
   dependencies = {
     'glepnir/lspsaga.nvim',
