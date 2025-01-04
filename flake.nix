@@ -5,11 +5,16 @@
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
     catppuccin.url = "github:catppuccin/nix";
     stylix.url = "github:danth/stylix";
+    zen-browser.url = "github:0xc000022070/zen-browser-flake";
     ghostty = { url = "github:ghostty-org/ghostty"; };
 
     home-manager = {
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
+    };
+    yazi-plugins = {
+      url = "github:yazi-rs/plugins";
+      flake = false;
     };
     nixgl = {
       url = "github:nix-community/nixGL";
@@ -19,26 +24,28 @@
       url = "github:Jas-SinghFSU/HyprPanel";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    hyprland = {
+      url = "github:hyprwm/Hyprland";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
-  outputs = inputs@{ nixpkgs, home-manager, catppuccin, stylix, nixgl, hyprpanel, ghostty, ... }:
+  outputs = { nixpkgs, home-manager, catppuccin, stylix, ... }@inputs:
     let
       system = "x86_64-linux";
       pkgs = import nixpkgs {
         inherit system;
         config.allowUnfree = true;
-        overlays = [ nixgl.overlay inputs.hyprpanel.overlay ];
+        overlays = [ inputs.nixgl.overlay inputs.hyprpanel.overlay ];
       };
-    in {
+    in
+    {
       homeConfigurations."hikary" = home-manager.lib.homeManagerConfiguration {
         inherit pkgs;
-        extraSpecialArgs = {
-          inherit inputs;
-          inherit stylix nixgl ghostty;
-        };
+        extraSpecialArgs = { inherit inputs; };
         modules = [
-          stylix.homeManagerModules.stylix
           ./home-manager/home.nix
+          stylix.homeManagerModules.stylix
           catppuccin.homeManagerModules.catppuccin
         ];
       };
