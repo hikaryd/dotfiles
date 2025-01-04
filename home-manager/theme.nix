@@ -1,8 +1,11 @@
-{ config, pkgs, lib, inputs, ... }: {
+{ pkgs, lib, ... }: {
   home.packages = with pkgs; [
     jetbrains-mono
     noto-fonts
     noto-fonts-emoji
+    noto-fonts-cjk-sans
+    bemoji
+    maple-mono
     nerd-fonts.jetbrains-mono
 
     bibata-cursors
@@ -38,7 +41,8 @@
 
     targets = {
       gtk.enable = true;
-      kitty.enable = true;
+      kitty.enable = false;
+      bat.enable = false;
     };
   };
 

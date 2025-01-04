@@ -1,9 +1,0 @@
-#!/bin/zsh
-
-COMMIT_MSG_FILE=$1
-
-COMMIT_MSG=$(/usr/bin/python3 ~/.config/git/hooks/generate_commit_message.py --operouter)
-
-if [ -n "$COMMIT_MSG" ]; then
-  echo "$COMMIT_MSG" >"$COMMIT_MSG_FILE"
-fi
