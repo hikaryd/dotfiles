@@ -6,7 +6,6 @@
     tree
     htop
     rsync
-    openssh_hpn
     less
     ncdu
     duf
@@ -18,6 +17,7 @@
     nemo
     fd
     imagemagick
+    uv
 
     p7zip
     lrzip
@@ -33,6 +33,7 @@
     osu-lazer-bin
     telegram-desktop
     nekoray
+    sing-geosite
     youtube-music
     dbeaver-bin
     python312
@@ -43,5 +44,9 @@
     '')
 
     nix-prefetch-scripts
+
+    docker
+    docker-compose
+    docker-buildx
   ];
 }

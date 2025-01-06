@@ -1,11 +1,11 @@
 { pkgs, ... }: {
+  catppuccin.kitty.enable = true;
   programs.kitty = {
     enable = true;
     package = pkgs.writeShellScriptBin "kitty" ''
       ${pkgs.nixgl.nixGLMesa}/bin/nixGLMesa ${pkgs.kitty}/bin/kitty "$@"
     '';
     settings = {
-      background = "#141318";
       background_opacity = 0.8;
 
       window_padding_width = 0;
@@ -25,8 +25,8 @@
       shell_integration = "enabled no-cursor";
     };
     font = {
-      name = "JetBrains Mono";
-      size = 13;
+      name = "Maple Mono";
+      size = 17;
     };
     keybindings = {
       "ctrl+shift+c" = "copy_to_clipboard";

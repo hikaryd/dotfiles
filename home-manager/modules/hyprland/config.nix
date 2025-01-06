@@ -104,7 +104,7 @@
         "workspace special:music, class:^(YouTube Music)$"
         "workspace special:vpn, class:^(nekoray)$"
         "workspace special:noi, class:^(zen-beta)$"
-        "workspace special:ai_ide, class:^(windsurf-url-handler)$"
+        "workspace special:ai_ide, class:^(codium)$"
         "workspace special:ai_ide, class:^(cursor-url-handler)$"
 
         "float, class:^(org.telegram.desktop)$"
@@ -128,15 +128,15 @@
         "center, class:^(YouTube Music)$"
 
         "float, class:^(org.telegram.desktop)$"
-        "size 800 1000, class:^(org.telegram.desktop)$"
+        "size 700 1000, class:^(org.telegram.desktop)$"
         "center, class:^(org.telegram.desktop)$"
 
         "float, class:^(com.github.wwmm.easyeffects)$"
-        "size 480 560, class:^(com.github.wwmm.easyeffects)$"
-        "move 300 120, class:^(com.github.wwmm.easyeffects)$"
+        "size 780 560, class:^(com.github.wwmm.easyeffects)$"
+        "move 160 120, class:^(com.github.wwmm.easyeffects)$"
 
         "float, class:^(pulsemixer)$"
-        "size 760 560, class:^(pulsemixer)$"
+        "size 970 460, class:^(pulsemixer)$"
         "move 60 752, class:^(pulsemixer)$"
 
         "float, class:^(nekoray)$"

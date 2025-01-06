@@ -134,8 +134,8 @@ def generate_commit_message_openrouter(diff, api_key):
                 'content': COMMIT_MESSAGE_PROMPT.format(diff=diff),
             }
         ],
-        # 'model': 'anthropic/claude-3.5-haiku:beta',
-        'model': 'deepseek/deepseek-chat',
+        'model': 'anthropic/claude-3.5-haiku:beta',
+        # 'model': 'deepseek/deepseek-chat',
     }
 
     response = make_request(

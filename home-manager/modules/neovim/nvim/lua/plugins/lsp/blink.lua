@@ -5,6 +5,7 @@ return {
   dependencies = {
     'rafamadriz/friendly-snippets',
     'L3MON4D3/LuaSnip',
+    'xzbdmw/colorful-menu.nvim',
   },
   opts = {
     fuzzy = {},
@@ -35,25 +36,43 @@ return {
         require('luasnip').jump(direction)
       end,
     },
+    signature = { enabled = true },
     completion = {
       menu = {
         draw = {
-          columns = {
-            { 'kind_icon' },
-            { 'label', 'label_description', gap = 1 },
-          },
           components = {
-            item_idx = {
+            label = {
+              width = { fill = true, max = 60 },
               text = function(ctx)
-                return tostring(ctx.idx)
+                local highlights_info = require('colorful-menu').highlights(ctx.item, vim.bo.filetype)
+                if highlights_info ~= nil then
+                  return highlights_info.text
+                else
+                  return ctx.label
+                end
               end,
-              highlight = 'BlinkCmpItemIdx',
+              highlight = function(ctx)
+                local highlights_info = require('colorful-menu').highlights(ctx.item, vim.bo.filetype)
+                local highlights = {}
+                if highlights_info ~= nil then
+                  for _, info in ipairs(highlights_info.highlights) do
+                    table.insert(highlights, {
+                      info.range[1],
+                      info.range[2],
+                      group = ctx.deprecated and 'BlinkCmpLabelDeprecated' or info[1],
+                    })
+                  end
+                end
+                for _, idx in ipairs(ctx.label_matched_indices) do
+                  table.insert(highlights, { idx, idx + 1, group = 'BlinkCmpLabelMatch' })
+                end
+                return highlights
+              end,
             },
           },
         },
       },
     },
-    signature = { enabled = true },
   },
   opts_extend = { 'sources.default' },
 }
