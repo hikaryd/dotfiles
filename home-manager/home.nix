@@ -13,5 +13,6 @@
     EDITOR = "nvim";
     VISUAL = "nvim";
     NVIM_APPNAME = "nvim";
+    SSH_AUTH_SOCK = "$XDG_RUNTIME_DIR/ssh-agent.socket";
   };
 }

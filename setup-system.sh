@@ -211,6 +211,23 @@ install_emptty() {
 	fi
 }
 
+install_docker() {
+	log "INFO" "Установка docker..."
+
+	if check_command pacman; then
+		sudo pacman -S --needed --noconfirm docker
+		check_error "Ошибка при установке docker через pacman"
+
+		sudo usermod -aG docker $USER
+		sudo systemctl enable --now docker
+		check_error "Ошибка при активации службы docker"
+
+		log "SUCCESS" "docker успешно установлен"
+	else
+		log "WARNING" "Pacman не найден, пропуск установки docker"
+	fi
+}
+
 install_auto_cpufreq() {
 	log "INFO" "Установка auto-cpufreq..."
 
@@ -237,6 +254,7 @@ main() {
 	install_paru
 	install_amd_drivers
 	install_nix
+	install_docker
 	install_home_manager
 	install_emptty
 	install_auto_cpufreq

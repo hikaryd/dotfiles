@@ -1,9 +1,8 @@
-{ inputs, pkgs, ... }: {
+{ config, pkgs, ... }: {
   programs.git = {
     enable = true;
     userName = "Hikary";
     userEmail = "hikary@proton.me";
-
     delta = {
       enable = true;
       options = {
@@ -14,7 +13,6 @@
         line-numbers = true;
       };
     };
-
     aliases = {
       st = "status";
       ci = "commit";
@@ -26,12 +24,12 @@
       lg =
         "log --color --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit";
     };
-
     extraConfig = {
       init.defaultBranch = "main";
       core = {
         editor = "nvim";
         whitespace = "trailing-space,space-before-tab";
+        hooksPath = "${config.xdg.configHome}/git/hooks";
       };
       color = {
         ui = true;
@@ -44,7 +42,6 @@
       merge.conflictstyle = "diff3";
       diff.colorMoved = "default";
     };
-
     ignores = [
       ".DS_Store"
       "*.swp"
@@ -55,35 +52,39 @@
       ".direnv/"
       "result"
       "result-*"
+      ".pre-commit-config.yaml"
     ];
-  };
-  programs.git.pre-commit = {
-    enable = true;
-    package = inputs.pre-commit-hooks.packages.${pkgs.system}.pre-commit;
-    hooks = {
-      nixpkgs-fmt.enable = true;
-      statix.enable = true;
-      ruff.enable = true;
-      shellcheck.enable = true;
-      shfmt.enable = true;
-      generate-commit-message = {
-        enable = true;
-        name = "Generate commit message";
-        entry = "${pkgs.python3}/bin/python ${
-            ./scripts/generate_commit_message.py
-          } --operouter";
-        types = [ "text" ];
-        language = "system";
-        pass_filenames = true;
-        stages = [ "prepare-commit-msg" ];
-      };
-    };
   };
 
   xdg.configFile = {
     "git/gitk" = { source = ./gitk; };
     "git/scripts/generate_commit_message.py" = {
+      executable = true;
       source = ./scripts/generate_commit_message.py;
+    };
+    "git/hooks/pre-commit" = {
+      executable = true;
+      text = ''
+        #!/usr/bin/env bash
+        python_files=$(git diff --cached --name-only --diff-filter=ACM | grep '\.py$' || true)
+        if [ -n "$python_files" ]; then
+          ${pkgs.ruff}/bin/ruff check --fix $python_files
+          git add $python_files
+        fi
+        exit 0
+      '';
+    };
+    "git/hooks/prepare-commit-msg" = {
+      executable = true;
+      text = ''
+        #!/usr/bin/env zsh
+        COMMIT_MSG_FILE=$1
+        COMMIT_MSG=$(${pkgs.python312}/bin/python ${config.xdg.configHome}/git/scripts/generate_commit_message.py --operouter)
+        if [ -n "$COMMIT_MSG" ]; then
+          echo "$COMMIT_MSG" > "$COMMIT_MSG_FILE"
+        fi
+      '';
     };
   };
 }
+
