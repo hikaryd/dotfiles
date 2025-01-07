@@ -23,7 +23,7 @@
       };
 
       git_branch = {
-        format = "[$symbol$branch(:$remote_branch)]($style)";
+        format = "[$symbol$branch(:$remote_branch)]($style) ";
         symbol = " ";
       };
 

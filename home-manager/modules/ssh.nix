@@ -1,20 +1,18 @@
-{ pkgs, ... }: {
+{ pkgs, ... }:
+let hosts = import ./ssh-hosts.nix;
+in {
   programs.ssh = {
     enable = true;
     package = pkgs.openssh_hpn;
-
     forwardAgent = true;
-
     extraConfig = ''
       AddKeysToAgent yes
     '';
 
     matchBlocks = {
       "nexus" = {
-        hostname = "109.120.137.85";
-        user = "hikary";
+        inherit (hosts.nexus) hostname user port;
         identityFile = "~/.ssh/nexus";
-        port = 22132;
       };
 
       "github.com" = {
@@ -36,26 +34,22 @@
       };
 
       "misc" = {
-        hostname = "38.180.199.244";
-        user = "www";
+        inherit (hosts.misc) hostname user;
         identityFile = "~/.ssh/hikary";
       };
 
       "vpn_timur" = {
-        hostname = "5.61.60.229";
-        user = "root";
+        inherit (hosts.vpn_timur) hostname user;
         identityFile = "~/.ssh/hikary";
       };
 
       "warden" = {
-        hostname = "176.57.220.127";
-        user = "root";
+        inherit (hosts.warden) hostname user;
         identityFile = "~/.ssh/hikary";
       };
 
       "kvant-mgmt" = {
-        hostname = "84.201.184.187";
-        user = "egor";
+        inherit (hosts.kvant-mgmt) hostname user;
         identityFile = "~/.ssh/hikary";
         forwardAgent = true;
         extraOptions = { AddKeysToAgent = "yes"; };

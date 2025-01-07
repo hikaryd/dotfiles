@@ -79,6 +79,8 @@
       text = ''
         #!/usr/bin/env zsh
         COMMIT_MSG_FILE=$1
+        export OPENROUTER_API_KEY=$(cat ~/creds/open_router)
+
         COMMIT_MSG=$(${pkgs.python312}/bin/python ${config.xdg.configHome}/git/scripts/generate_commit_message.py --operouter)
         if [ -n "$COMMIT_MSG" ]; then
           echo "$COMMIT_MSG" > "$COMMIT_MSG_FILE"
