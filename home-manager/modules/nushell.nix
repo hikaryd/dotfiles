@@ -20,7 +20,6 @@
       # XDG
       DOCKER_CONFIG = "$XDG_CONFIG_HOME/docker";
       PYTHONSTARTUP = "$XDG_CONFIG_HOME/python/pythonrc";
-      CARGO_HOME = "$XDG_DATA_HOME/cargo";
       LESSHISTFILE = "$XDG_STATE_HOME/less/history";
 
       # Локали
@@ -30,18 +29,15 @@
       # Основные
       EDITOR = "nvim";
       VISUAL = "nvim";
-
-      TERM = "tmux-256color";
     };
 
     shellAliases = {
       v = "nvim";
-      s = "sudo";
+      ssh = ''env TERM="xterm-256color" ssh'';
+      cat = "bat --style=plain";
       ".." = "cd ..";
       l = "ls";
-      tree = "eza --tree --level=2 --icons";
-      "csv-view" = "csvlens";
-
+      cd = "z";
       parse_dir =
         "repomix --ignore '*.lock,docs/*,.git/*,.idea/*,.vscode/*,__pycache__'";
 
@@ -49,12 +45,39 @@
       dc = "docker compose";
       dcl = "docker compose logs -f";
       dcub = "docker compose up --build -d --force-recreate";
-
-      # Python
-      # vs = "source .venv/bin/activate";
+      dcd = "docker compose down";
+      dcr = "docker compose restart";
+      dps = "docker ps";
+      dpsa = "docker ps -a";
+      di = "docker images";
+      dprune = "docker system prune -af";
+      dcp = "docker container prune -f";
+      dip = "docker image prune -af";
+      dvp = "docker volume prune -f";
 
       # Git
       lg = "lazygit";
+      gs = "git status";
+      ga = "git add";
+      gaa = "git add --all";
+      gc = "git commit -m";
+      gp = "git push";
+      gpl = "git pull";
+      gf = "git fetch --all";
+      gb = "git branch";
+      gco = "git checkout";
+      gcb = "git checkout -b";
+      gd = "git diff";
+      gl = "git log --oneline";
+      grs = "git restore --staged";
+      grh = "git reset --hard";
+      gst = "git stash";
+      gstp = "git stash pop";
+      gm = "git merge";
+      grb = "git rebase";
+      gcp = "git cherry-pick";
+      gtl = "git tag -l";
+      gta = "git tag -a";
 
       # Nix
       hms = "home-manager switch --flake '.#hikary'";
@@ -63,8 +86,13 @@
         "do { nix-collect-garbage -d; home-manager expire-generations '-30 days' }";
     };
 
+    extraEnv = ''
+      mkdir ~/.cache/zoxide
+      zoxide init nushell | str replace --all "-- $rest" "-- ...$rest" | str replace --all "def-env" "def --env" | save -f ~/.cache/zoxide/init.nu
+    '';
+
     extraConfig = ''
-      # Базовые функции
+      $env.OPENROUTER_API_KEY = (open ($env.HOME + '/creds/open_router') | str trim)
       def extract [file: string] {
         if ($file | is-empty) {
           echo "Usage: extract <file>"
@@ -92,19 +120,6 @@
         }
       }
 
-      def detect-project-type [] {
-        if ("package.json" | path exists) {
-          "node"
-        } else if (["requirements.txt" "Pipfile" "pyproject.toml"] | any { |it| $it | path exists }) {
-          "python"
-        } else if (["docker-compose.yml" "Dockerfile"] | any { |it| $it | path exists }) {
-          "docker"
-        } else {
-          "default"
-        }
-      }
-
-      # Git функции
       def git-cleanup [] {
         let branches = (run-external "git" "branch" "--merged" "main" 
           | lines 
@@ -125,7 +140,6 @@
         run-external "git" "shortlog" "-sn" "--all" "--no-merges"
       }
 
-      # Docker утилиты
       def docker-cleanup [] {
         run-external "docker" "system" "prune" "-af"
         run-external "docker" "volume" "prune" "-f"
@@ -138,7 +152,6 @@
         }
       }
 
-      # Конфигурация окружения
       $env.config = {
         show_banner: false
         table: {
@@ -160,8 +173,9 @@
           format: "auto"
         }
       }
+      source ~/.cache/zoxide/init.nu
     '';
   };
 
-  home.packages = with pkgs; [ nu_scripts ];
+  home.packages = with pkgs; [ nu_scripts zoxide ];
 }
