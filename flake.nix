@@ -38,8 +38,7 @@
         config.allowUnfree = true;
         overlays = [ inputs.nixgl.overlay inputs.hyprpanel.overlay ];
       };
-    in
-    {
+    in {
       homeConfigurations."hikary" = home-manager.lib.homeManagerConfiguration {
         inherit pkgs;
         extraSpecialArgs = { inherit inputs; };

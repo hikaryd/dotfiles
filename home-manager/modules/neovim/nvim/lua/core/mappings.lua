@@ -32,12 +32,12 @@ map('n', '<A-k>', ':m .-2<CR>==', 'Move current line up')
 map('n', '<A-j>', ':m .+1<CR>==', 'Move current line down')
 
 -- Aerial
-map('n', '<leader>a', '<cmd>AerialToggle!<CR>', 'Toggle Aerial')
+map('n', '<leader>aet', '<cmd>AerialToggle!<CR>', 'Toggle Aerial')
 
 -- Telescope
-map('n', '<leader>fw', '<cmd>Telescope live_grep<CR>', 'Search for text in files')
-map('n', '<leader>fo', '<cmd>Telescope oldfiles<CR>', 'Open recent files')
-map('n', '<leader>ff', '<cmd>Telescope find_files<CR>', 'Open recent files')
+map('n', '<leader>fw', '<cmd>FzfLua live_grep<CR>', 'Search for text in files')
+map('n', '<leader>fo', '<cmd>FzfLua oldfiles<CR>', 'Open recent files')
+map('n', '<leader>ff', '<cmd>FzfLua files<CR>', 'Open recent files')
 
 -- Parrot (AI)
 map('n', '<leader>pc', ':PrtChatToggle<CR>', 'Toggle current chat')

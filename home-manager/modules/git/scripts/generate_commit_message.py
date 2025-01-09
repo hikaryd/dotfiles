@@ -64,8 +64,20 @@ def get_api_key(api_type):
 
 
 def get_git_diff():
-    result = subprocess.run(['git', 'diff', '--cached'], stdout=subprocess.PIPE)
-    return result.stdout.decode('utf-8')
+    result = subprocess.run(
+        [
+            'git',
+            '--no-pager',
+            '-c',
+            'delta.enable=false',
+            'diff',
+            '--cached',
+            '--text',
+        ],
+        stdout=subprocess.PIPE,
+        text=True,
+    )
+    return result.stdout
 
 
 def make_request(url, headers, data, proxy_host='127.0.0.1', proxy_port='2080'):
@@ -134,8 +146,8 @@ def generate_commit_message_openrouter(diff, api_key):
                 'content': COMMIT_MESSAGE_PROMPT.format(diff=diff),
             }
         ],
-        'model': 'anthropic/claude-3.5-haiku:beta',
-        # 'model': 'deepseek/deepseek-chat',
+        # 'model': 'anthropic/claude-3.5-haiku:beta',
+        'model': 'deepseek/deepseek-chat',
     }
 
     response = make_request(

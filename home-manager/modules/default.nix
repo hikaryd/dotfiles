@@ -1,6 +1,5 @@
 { ... }: {
   imports = [
-    ./zsh
     ./opentabletdriver
     ./neovim
     ./lazygit

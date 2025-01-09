@@ -2,7 +2,6 @@
   nixpkgs.config.allowUnfree = true;
 
   home.packages = with pkgs; [
-    httpie
     tree
     htop
     rsync
@@ -30,13 +29,12 @@
     xdg-desktop-portal
     xdg-user-dirs
 
-    osu-lazer-bin
     telegram-desktop
     nekoray
     sing-geosite
     youtube-music
     dbeaver-bin
-    python312
+
     (pkgs.writeShellScriptBin "zen" ''
       ${pkgs.nixgl.nixGLMesa}/bin/nixGLMesa ${
         inputs.zen-browser.packages.${system}.default
