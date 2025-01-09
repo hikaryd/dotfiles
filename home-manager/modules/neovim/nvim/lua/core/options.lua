@@ -1,5 +1,5 @@
 -- Basic options that should be set first
-vim.cmd('set modifiable')
+vim.cmd 'set modifiable'
 
 -- UI and Display
 vim.opt.termguicolors = true
@@ -10,6 +10,7 @@ vim.opt.colorcolumn = '80'
 vim.opt.pumblend = 0
 vim.opt.winblend = 0
 vim.opt.clipboard = 'unnamedplus'
+vim.opt.laststatus = 3
 
 -- Cursor Styles
 vim.opt.guicursor = {

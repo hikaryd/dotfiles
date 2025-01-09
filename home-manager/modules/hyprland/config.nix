@@ -132,12 +132,12 @@
         "center, class:^(org.telegram.desktop)$"
 
         "float, class:^(com.github.wwmm.easyeffects)$"
-        "size 780 560, class:^(com.github.wwmm.easyeffects)$"
+        "size 780 460, class:^(com.github.wwmm.easyeffects)$"
         "move 160 120, class:^(com.github.wwmm.easyeffects)$"
 
         "float, class:^(pulsemixer)$"
         "size 970 460, class:^(pulsemixer)$"
-        "move 60 752, class:^(pulsemixer)$"
+        "move 60 652, class:^(pulsemixer)$"
 
         "float, class:^(nekoray)$"
         "size 480 1000, class:^(nekoray)$"

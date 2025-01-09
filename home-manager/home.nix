@@ -1,4 +1,4 @@
-{ ... }: {
+{ config, lib, pkgs, ... }: {
   home = {
     username = "hikary";
     homeDirectory = "/home/hikary";
@@ -14,5 +14,8 @@
     VISUAL = "nvim";
     NVIM_APPNAME = "nvim";
     SSH_AUTH_SOCK = "$XDG_RUNTIME_DIR/ssh-agent.socket";
+    GI_TYPELIB_PATH =
+      "${pkgs.gtk3}/lib/girepository-1.0:${pkgs.pango}/lib/girepository-1.0";
+    LD_LIBRARY_PATH = "${pkgs.glib}/lib:${pkgs.gtk3}/lib:$LD_LIBRARY_PATH";
   };
 }

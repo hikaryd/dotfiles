@@ -1,4 +1,4 @@
 result
 result-*
 .direnv
-home-manager/modules/ssh-hosts.nix
+secrets/ssh.nix

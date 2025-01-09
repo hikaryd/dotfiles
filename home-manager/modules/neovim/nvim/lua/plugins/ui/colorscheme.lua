@@ -12,7 +12,6 @@ return {
         integrations = {
           aerial = true,
           alpha = true,
-          cmp = true,
           gitsigns = true,
           illuminate = true,
           indent_blankline = { enabled = true },

@@ -22,6 +22,7 @@
     xdg-desktop-portal-hyprland
     glib
     wlroots
+    grim
     xwayland
     libinput
   ];
