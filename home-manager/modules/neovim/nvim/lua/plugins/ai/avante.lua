@@ -7,11 +7,12 @@ return {
     provider = 'openrouterdeepseek',
     auto_suggestions_provider = 'openrouterdeepseek',
     claude = {
+      __inherited_from = 'openai',
       endpoint = 'https://openrouter.ai/api/v1',
-      model = 'anthropic/claude-3.5-sonnet:beta',
-      temperature = 0,
-      max_tokens = 8192,
+      model = 'deepseek/deepseek-chat',
       api_key_name = 'OPENROUTER_API_KEY',
+      temperature = 0.0,
+      max_tokens = 8192,
     },
     vendors = {
       openrouterdeepseek = {
