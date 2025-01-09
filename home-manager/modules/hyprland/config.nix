@@ -342,6 +342,7 @@
         "hyprpaper"
         "dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP"
         "${../../../scripts/xdg-portal.sh}"
+        "${../../../scripts/check-airpods.sh}"
         "easyeffects"
         "blueman-applet"
         "hypridle"

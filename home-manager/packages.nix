@@ -17,6 +17,7 @@
     fd
     imagemagick
     uv
+    libnotify
 
     p7zip
     lrzip

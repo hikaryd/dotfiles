@@ -85,6 +85,11 @@
           ];
         };
       };
+      "menus.clock.time.military" = true;
+      "menus.clock.time.hideSeconds" = true;
+      "menus.clock.weather.location" = "Moscow";
+      "menus.clock.weather.key" = "d6f93bf44c7ae06b56225112ee80901d";
+      "menus.clock.weather.unit" = "metric";
     };
     force = true;
   };
