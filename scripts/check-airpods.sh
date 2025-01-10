@@ -1,16 +1,9 @@
 #!/bin/bash
 
-linux_notify() {
-	echo -e "\007"
-	echo "🎧 AirPods Max Update: $1"
-}
-
-terminal_notify() {
+notify() {
+	paplay /usr/share/sounds/freedesktop/stereo/message.oga 2>/dev/null || echo -e "\007"
 	notify-send "🎧 AirPods" "$1"
-}
-
-macos_notify() {
-	osascript -e "display notification \"$1\" with title \"AirPods Max\""
+	echo "🎧 AirPods Update: $1"
 }
 
 if [[ "$OSTYPE" == "darwin"* ]]; then
@@ -31,7 +24,7 @@ while true; do
 	AIRPODS_DATA=$(python3 $HOME/dotfiles/scripts/airpods.py --json)
 
 	if [ $? -ne 0 ]; then
-		notify "Error reading AirPods data"
+		notify "Ошибка чтения данных AirPods"
 		sleep 30
 		continue
 	fi
@@ -46,9 +39,9 @@ while true; do
 	CURRENT_CHARGING=$(echo $AIRPODS_DATA | jq -r '.charging_left')
 
 	if [ "$CURRENT_BATTERY" != "$LAST_BATTERY" ] || [ "$CURRENT_CHARGING" != "$LAST_CHARGING" ]; then
-		MESSAGE="Battery: ${CURRENT_BATTERY}%"
+		MESSAGE="Заряд: ${CURRENT_BATTERY}%"
 		if [ "$CURRENT_CHARGING" = "true" ]; then
-			MESSAGE="$MESSAGE (Charging)"
+			MESSAGE="$MESSAGE (Заряжается)"
 		fi
 
 		notify "$MESSAGE"
