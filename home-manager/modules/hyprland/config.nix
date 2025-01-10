@@ -93,7 +93,6 @@
         "workspace 4 silent, class:^(discord)$"
         "workspace 7 silent, class:^(DBeaver)$"
 
-        "float, class:^()$"
         "immediate, class:^(mpv)$"
         "float,title:^(Google Chrome)(.*)$"
         "float,title:^(Untitled - Google Chrome)(.*)$"
@@ -142,6 +141,8 @@
         "float, class:^(nekoray)$"
         "size 480 1000, class:^(nekoray)$"
         "move 200 80, class:^(nekoray)$"
+
+        "opacity 0.9 0.9,class:^(zen-beta)$"
       ];
 
       input = {
@@ -191,21 +192,13 @@
 
       animations = {
         enabled = true;
-        bezier = [
-          "wind, 0.05, 0.9, 0.1, 1.05"
-          "winIn, 0.1, 1.1, 0.1, 1.1"
-          "winOut, 0.3, -0.3, 0, 1"
-          "liner, 1, 1, 1, 1"
-        ];
+        bezier = [ "linear, 0,0,1,1" "swirl, 0.04, 1, 0.2, 1.2" ];
         animation = [
-          "windows, 1, 6, wind, slide"
-          "windowsIn, 1, 6, winIn, slide"
-          "windowsOut, 1, 5, winOut, slide"
-          "windowsMove, 1, 5, wind, slide"
-          "border, 1, 1, liner"
-          "borderangle, 1, 30, liner, loop"
-          "fade, 1, 10, default"
-          "workspaces, 1, 5, wind"
+          "windows, 1, 4, swirl, popin 0%"
+          "windowsOut, 1, 3, linear, popin 0%"
+          "fade, 1, 2, linear"
+          "workspaces, 1, 1, linear"
+          "specialWorkspace, 1, 5, swirl, slidefadevert -50%"
         ];
       };
 
@@ -217,9 +210,9 @@
         };
         blur = {
           enabled = true;
-          xray = false;
+          xray = true;
           size = 4;
-          passes = 3;
+          passes = 5;
           ignore_opacity = true;
           brightness = 1.4;
           vibrancy = 0.3;

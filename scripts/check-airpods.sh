@@ -6,22 +6,11 @@ notify() {
 	echo "🎧 AirPods Update: $1"
 }
 
-if [[ "$OSTYPE" == "darwin"* ]]; then
-	notify() {
-		macos_notify "$1"
-	}
-else
-	notify() {
-		terminal_notify "$1"
-		linux_notify "$1"
-	}
-fi
-
 LAST_BATTERY=-1
 LAST_CHARGING="false"
 
 while true; do
-	AIRPODS_DATA=$(python3 $HOME/dotfiles/scripts/airpods.py --json)
+	AIRPODS_DATA=$(python $HOME/dotfiles/scripts/airpods.py --json)
 
 	if [ $? -ne 0 ]; then
 		notify "Ошибка чтения данных AirPods"
