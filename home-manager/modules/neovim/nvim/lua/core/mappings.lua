@@ -36,7 +36,7 @@ map('n', '<leader>aet', '<cmd>AerialToggle!<CR>', 'Toggle Aerial')
 
 -- Telescope
 map('n', '<leader>fw', '<cmd>FzfLua live_grep<CR>', 'Search for text in files')
-map('n', '<leader>fo', '<cmd>FzfLua oldfiles<CR>', 'Open recent files')
+map('n', '<leader>fo', '<cmd>Telescope oldfiles<CR>', 'Open recent files')
 map('n', '<leader>ff', '<cmd>FzfLua files<CR>', 'Open recent files')
 
 -- Parrot (AI)

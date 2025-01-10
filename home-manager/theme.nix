@@ -18,7 +18,7 @@
   stylix = {
     enable = true;
     base16Scheme = "${pkgs.base16-schemes}/share/themes/catppuccin-mocha.yaml";
-    image = ../wallpapers/birdandcat.jpg;
+    image = ../wallpapers/bsod.png;
 
     fonts = {
       serif = {

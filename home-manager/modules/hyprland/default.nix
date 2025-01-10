@@ -1,4 +1,4 @@
-{ pkgs, inputs, config, ... }: {
+{ pkgs, inputs, ... }: {
   imports = [
     ./config.nix
     ./hypridle.nix
@@ -27,12 +27,6 @@
     libinput
   ];
 
-  wayland.windowManager.hyprland = {
-    enable = true;
-    xwayland.enable = true;
-    systemd.enable = true;
-  };
-
   home.file.".local/share/wayland-sessions/hyprland.desktop".text = ''
     [Desktop Entry]
     Name=Hyprland
@@ -43,8 +37,8 @@
   '';
 
   xdg.configFile."hypr/hyprpaper.conf".text = ''
-    preload = ${config.home.homeDirectory}/dotfiles/wallpapers/minimalist-moon-night-mountains.jpg
-    wallpaper = ,${config.home.homeDirectory}/dotfiles/wallpapers/minimalist-moon-night-mountains.jpg
+    preload = ${../../../wallpapers/nix-tux.png}
+    wallpaper = ,${../../../wallpapers/nix-tux.png}
     ipc = off
   '';
 }

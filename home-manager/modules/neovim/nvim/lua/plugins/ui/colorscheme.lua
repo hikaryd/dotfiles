@@ -13,11 +13,16 @@ return {
           aerial = true,
           alpha = true,
           gitsigns = true,
+          diffview = true,
+          blink_cmp = true,
           illuminate = true,
           indent_blankline = { enabled = true },
           lsp_trouble = true,
           mason = true,
-          mini = true,
+          mini = {
+            enabled = true,
+            indentscope_color = '',
+          },
           native_lsp = {
             enabled = true,
             underlines = {
@@ -30,6 +35,8 @@ return {
           navic = { enabled = true, custom_bg = 'NONE' },
           neotest = true,
           noice = true,
+          snacks = true,
+          harpoon = false,
           notify = true,
           neotree = true,
           semantic_tokens = true,
