@@ -245,7 +245,7 @@
         "$mainMod SHIFT, R, exec, gpu-screen-recorder-gtk"
         "$mainMod, W, exec, hyprpanel -t networkmenu"
 
-        "$mainMod, D, exec, wofi --show drun"
+        "$mainMod, D, exec, anyrun"
         "$mainMod SHIFT CTRL, T, exec, ${../../../scripts/toggle-display.sh}"
 
         "$mainMod, Q, killactive"

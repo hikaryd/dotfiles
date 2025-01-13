@@ -5,7 +5,8 @@
     catppuccin.url = "github:catppuccin/nix";
     stylix.url = "github:danth/stylix";
     zen-browser.url = "github:0xc000022070/zen-browser-flake";
-    ghostty = { url = "github:ghostty-org/ghostty"; };
+    ghostty.url = "github:ghostty-org/ghostty";
+    anyrun.url = "github:fufexan/anyrun/launch-prefix";
     home-manager = {
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
