@@ -1,6 +1,7 @@
 return {
   {
     'okuuva/auto-save.nvim',
+    enabled = false,
     cmd = 'ASToggle',
     event = { 'BufLeave', 'FocusLost' },
     opts = {

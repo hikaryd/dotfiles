@@ -37,8 +37,8 @@
   '';
 
   xdg.configFile."hypr/hyprpaper.conf".text = ''
-    preload = ${../../../wallpapers/nix-tux.png}
-    wallpaper = ,${../../../wallpapers/nix-tux.png}
+    preload = ${../../../wallpapers/hollow-knight.jpg}
+    wallpaper = ,${../../../wallpapers/hollow-knight.jpg}
     ipc = off
   '';
 }

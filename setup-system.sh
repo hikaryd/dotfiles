@@ -73,7 +73,7 @@ setup_capabilities() {
 
 update_system() {
 	log "INFO" "Обновление системы..."
-	sudo pacman -Syu --noconfirm
+	sudo pacman -Syu --noconfirm python
 	check_error "Ошибка при обновлении системы"
 }
 
