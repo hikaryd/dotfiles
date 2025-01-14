@@ -234,8 +234,8 @@
             "Tablet": {
               "Width": 58.0,
               "Height": 45.0,
-              "X": 33.3,
-              "Y": 63.512413,
+              "X": 180.0,
+              "Y": 90.0,
               "Rotation": 0.0
             },
             "EnableClipping": true,
@@ -277,5 +277,6 @@
       "LockUsableAreaTablet": false,
       "Tools": []
     }
+
   '';
 }
