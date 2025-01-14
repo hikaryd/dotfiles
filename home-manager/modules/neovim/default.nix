@@ -49,6 +49,7 @@ in {
     yamllint
     hadolint
     hurl
+    go
   ];
 
   programs.neovim = {

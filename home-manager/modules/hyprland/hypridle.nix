@@ -3,10 +3,10 @@
     enable = true;
     settings = {
       general = {
-        lock_cmd = "";
-        before_sleep_cmd = "";
-        after_sleep_cmd = "hyprctl dispatch dpms on";
         ignore_dbus_inhibit = false;
+        lock_cmd = "pgrep hyprlock || hyprlock";
+        before_sleep_cmd = "loginctl lock-session";
+        after_sleep_cmd = "hyprctl dispatch dpms on";
       };
 
       listener = [{

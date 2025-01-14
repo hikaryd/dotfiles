@@ -147,7 +147,6 @@ def generate_commit_message_openrouter(diff, api_key):
             }
         ],
         'model': 'deepseek/deepseek-chat',
-        # 'model': 'microsoft/phi-4',
     }
 
     response = make_request(
