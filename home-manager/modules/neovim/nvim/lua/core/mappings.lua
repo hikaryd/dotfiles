@@ -12,8 +12,8 @@ map('n', '<Esc>', '<cmd>noh<CR>', 'Clear search highlights')
 map('n', 'v$', 'v$h')
 
 -- File Explorer
--- map('n', '<space>e', ':Yazi<CR>')
-map('n', '<space>e', ':Oil<CR>')
+map('n', '<space>e', ':Yazi<CR>')
+-- map('n', '<space>e', ':Oil<CR>')
 
 map('n', '<leader>b', ':DBUIToggle<CR>')
 
@@ -35,8 +35,3 @@ map('n', '<A-j>', ':m .+1<CR>==', 'Move current line down')
 
 -- Aerial
 map('n', '<leader>aet', '<cmd>AerialToggle!<CR>', 'Toggle Aerial')
-
--- Telescope
-map('n', '<leader>fw', '<cmd>FzfLua live_grep<CR>', 'Search for text in files')
-map('n', '<leader>fo', '<cmd>Telescope oldfiles<CR>', 'Open recent files')
-map('n', '<leader>ff', '<cmd>FzfLua files<CR>', 'Open recent files')

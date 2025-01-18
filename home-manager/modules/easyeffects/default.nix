@@ -1,9 +1,9 @@
-{ pkgs, ... }: {
+{ pkgs, config, ... }: {
   home.packages = with pkgs;
     [
       (writeShellScriptBin "easyeffects" ''
         export GSK_RENDERER=cairo
-        exec ${easyeffects}/bin/easyeffects "$@"
+        exec ${(config.lib.nixGL.wrap easyeffects)}/bin/easyeffects "$@"
       '')
     ];
 

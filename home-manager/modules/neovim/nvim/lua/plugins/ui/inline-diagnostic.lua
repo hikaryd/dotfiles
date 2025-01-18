@@ -5,7 +5,8 @@ return {
   config = function()
     require('tiny-inline-diagnostic').setup {
       options = {
-        show_source = false,
+        preset = 'simple',
+        show_source = true,
         use_icons_from_diagnostic = true,
         multilines = {
           enabled = true,

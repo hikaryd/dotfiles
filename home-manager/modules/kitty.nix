@@ -1,10 +1,8 @@
-{ pkgs, ... }: {
+{ pkgs, config, ... }: {
   catppuccin.kitty.enable = true;
   programs.kitty = {
     enable = true;
-    package = pkgs.writeShellScriptBin "kitty" ''
-      ${pkgs.nixgl.nixGLMesa}/bin/nixGLMesa ${pkgs.kitty}/bin/kitty "$@"
-    '';
+    package = config.lib.nixGL.wrap pkgs.kitty;
     settings = {
       background_opacity = 0.8;
 

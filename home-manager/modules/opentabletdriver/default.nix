@@ -232,10 +232,10 @@
               "Rotation": 0.0
             },
             "Tablet": {
-              "Width": 58.0,
-              "Height": 45.0,
-              "X": 180.0,
-              "Y": 90.0,
+              "Width": 52.0,
+              "Height": 40.0,
+              "X": 128.42763,
+              "Y": 66.775406,
               "Rotation": 0.0
             },
             "EnableClipping": true,

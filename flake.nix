@@ -7,6 +7,7 @@
     zen-browser.url = "github:0xc000022070/zen-browser-flake";
     ghostty.url = "github:ghostty-org/ghostty";
     anyrun.url = "github:fufexan/anyrun/launch-prefix";
+    hyprland.url = "github:hyprwm/Hyprland";
     home-manager = {
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -23,32 +24,26 @@
       url = "github:Jas-SinghFSU/HyprPanel";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    hyprland = {
-      url = "github:hyprwm/Hyprland";
+    niri = {
+      url = "github:sodiboo/niri-flake";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
   outputs =
-    { nixpkgs, home-manager, catppuccin, stylix, hyprpanel, ... }@inputs:
+    { nixpkgs, home-manager, catppuccin, stylix, hyprpanel, nixgl, ... }@inputs:
     let
       system = "x86_64-linux";
-
-      overlays = [ inputs.nixgl.overlay inputs.hyprpanel.overlay ];
-
       pkgs = import nixpkgs {
         inherit system;
-        config = { allowUnfree = true; };
+        config = {
+          allowUnfree = true;
+          allowUnfreePredicate = _: true;
+        };
       };
     in {
       homeConfigurations."hikary" = home-manager.lib.homeManagerConfiguration {
         inherit pkgs;
-        extraSpecialArgs = {
-          inherit inputs system;
-          pkgs = import nixpkgs {
-            inherit system overlays;
-            config.allowUnfree = true;
-          };
-        };
+        extraSpecialArgs = { inherit inputs; };
         modules = [
           ./home-manager/home.nix
           stylix.homeManagerModules.stylix

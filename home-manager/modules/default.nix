@@ -1,13 +1,12 @@
 { ... }: {
   imports = [
     ./easyeffects
+    ./wayland
     ./git
-    ./hyprland
     ./lazygit
     ./neovim
     ./opentabletdriver
     ./yazi.nix
-    ./wofi.nix
     # ./windsurf.nix
     ./vscodium.nix
     ./tmux.nix
@@ -19,6 +18,5 @@
     ./fzf.nix
     ./fastfetch.nix
     ./bat.nix
-    ./anyrun
   ];
 }

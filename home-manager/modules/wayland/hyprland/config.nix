@@ -1,6 +1,8 @@
-{ ... }: {
+{ inputs, config, pkgs, ... }: {
   wayland.windowManager.hyprland = {
     enable = true;
+    package = config.lib.nixGL.wrap
+      inputs.hyprland.packages.${pkgs.stdenv.hostPlatform.system}.hyprland;
     systemd.enable = true;
     xwayland.enable = true;
 
@@ -84,13 +86,14 @@
       xwayland = { force_zero_scaling = true; };
 
       windowrulev2 = [
-        "workspace 1 silent, class:^(zen-beta)$"
+        "workspace 1 silent, class:^(zen)$"
         "workspace 1 silent, class:^(Google chrome)$"
-        "workspace 11, class:^(zen-beta)$"
+        "workspace 11, class:^(zen)$"
         "workspace 2 silent, class:^(dev)$"
         "workspace 3 silent, class:^(other)$"
         "workspace 4 silent, class:^(vesktop)$"
         "workspace 4 silent, class:^(discord)$"
+        "workspace 6 silent, class:^(zoom)$"
         "workspace 7 silent, class:^(DBeaver)$"
 
         "immediate, class:^(mpv)$"
@@ -102,7 +105,7 @@
         "workspace special:audio, class:^(com.github.wwmm.easyeffects)$"
         "workspace special:music, class:^(YouTube Music)$"
         "workspace special:vpn, class:^(nekoray)$"
-        "workspace special:noi, class:^(zen-beta)$"
+        "workspace special:noi, class:^(zen)$"
         "workspace special:ai_ide, class:^(codium)$"
         "workspace special:ai_ide, class:^(cursor-url-handler)$"
 
@@ -122,8 +125,8 @@
         "opacity 0.80 0.80, class:^(org.freedesktop.impl.portal.desktop.hyprland)$"
         "opacity 0.9 0.9,class:^(neovide)$"
 
-        "float, class:^(YouTube Music)$"
-        "size 800 1000, class:^(YouTube Music)$"
+        "float, class:^(com.github.th_ch.youtube_music)$"
+        "size 800 1000, class:^(com.github.th_ch.youtube_music)$"
         "center, class:^(YouTube Music)$"
 
         "float, class:^(org.telegram.desktop)$"
@@ -142,7 +145,7 @@
         "size 480 1000, class:^(nekoray)$"
         "move 200 80, class:^(nekoray)$"
 
-        "opacity 0.9 0.9,class:^(zen-beta)$"
+        "opacity 0.9 0.9,class:^(zen)$"
       ];
 
       input = {
@@ -161,6 +164,7 @@
         force_no_accel = false;
       };
 
+      cursor = { no_hardware_cursors = true; };
       env = [
         "TERM,ghostty"
         "WLR_DRM_NO_ATOMIC,1"
@@ -168,7 +172,6 @@
         "XDG_SESSION_TYPE,wayland"
         "XDG_SESSION_DESKTOP,Hyprland"
         "XDG_DATA_DIRS,$HOME/.nix-profile/share:/usr/local/share:/usr/share"
-        "PATH,$HOME/.nix-profile/bin:$PATH"
 
         "QT_QPA_PLATFORM,wayland;xcb"
         "QT_WAYLAND_DISABLE_WINDOWDECORATION,1"
@@ -177,12 +180,15 @@
         "QT_SCALE_FACTOR_ROUNDING_POLICY,RoundPreferFloor"
         "QT_WAYLAND_DISABLED_INTERFACES,wp_fractional_scale_manager_v1"
 
+        "WLR_DRM_NO_ATOMIC,1"
         "MOZ_ENABLE_WAYLAND,1"
         "GDK_SCALE,1"
         "SDL_VIDEODRIVER,wayland"
         "ELECTRON_ENABLE_WAYLAND,1"
         "ELECTRON_OZONE_PLATFORM_HINT,wayland"
         "WINIT_UNIX_BACKEND,wayland"
+        "WLR_RENDERER,vulkan"
+        "WLR_RENDERER_ALLOW_SOFTWARE,1"
 
         "XCURSOR_THEME,Bibata-Modern-Ice"
         "XCURSOR_SIZE,20"
@@ -203,9 +209,9 @@
       };
 
       decoration = {
-        rounding = 12;
+        rounding = 0;
         shadow = {
-          enabled = false;
+          enabled = true;
           scale = 0.3;
         };
         blur = {
@@ -238,21 +244,21 @@
         "$mainMod SHIFT, D, exec, vesktop"
         "$mainMod SHIFT, B, exec, GDK_BACKEND=x11 dbeaver"
 
-        "$mainMod, B, exec, hyprpanel -t bluetoothmenu"
-        "$mainMod, N, exec, hyprpanel -t notificationsmenu"
-        "$mainMod, S, exec, hyprpanel -t dashboardmenu"
-        "$mainMod SHIFT, S, exec, ${../../../scripts/snapshot.sh}"
+        "$mainMod, B, exec, hyprpanel t bluetoothmenu"
+        "$mainMod, N, exec, hyprpanel t notificationsmenu"
+        "$mainMod, S, exec, hyprpanel t dashboardmenu"
+        "$mainMod SHIFT, S, exec, ${../../../../scripts/snapshot.sh}"
         "$mainMod SHIFT, R, exec, gpu-screen-recorder-gtk"
-        "$mainMod, W, exec, hyprpanel -t networkmenu"
+        "$mainMod, W, exec, hyprpanel t networkmenu"
 
         "$mainMod, D, exec, anyrun"
-        "$mainMod SHIFT CTRL, T, exec, ${../../../scripts/toggle-display.sh}"
+        "$mainMod SHIFT CTRL, T, exec, ${../../../../scripts/toggle-display.sh}"
 
         "$mainMod, Q, killactive"
         "$mainMod, delete, exit"
         "$mainMod, Space, togglefloating"
         "$mainMod SHIFT, F, fullscreen"
-        "$mainMod CTRL, L, exec, systemctl suspend && hyprlock"
+        "$mainMod CTRL, L, exec, sh -c pgrep hyprlock || hyprlock"
 
         "$mainMod, T, togglespecialworkspace, telegram"
         "$mainMod, P, togglespecialworkspace, music"
@@ -331,19 +337,19 @@
       ];
 
       exec-once = [
+        "${pkgs.polkit_gnome}/libexec/polkit-gnome-authentication-agent-1"
         "nekoray"
-        "hyprpaper"
         "dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP"
-        "${../../../scripts/xdg-portal.sh}"
-        "${../../../scripts/check-airpods.sh}"
+        "${../../../../scripts/xdg-portal.sh}"
         "easyeffects"
         "blueman-applet"
-        "hypridle"
         "telegram-desktop"
-        "wl-paste -t text -w xclip -selection clipboard"
+        "wl-paste -t text -w xclip -selection clipboard --watch cliphist store"
+        "wl-paste --type image --watch cliphist store"
         "kitty --class pulsemixer -- pulsemixer"
         "sleep 4 && zen"
       ];
+
     };
   };
 
