@@ -3,15 +3,15 @@ return {
   event = 'VeryLazy',
   version = false,
   opts = {
-    provider = 'openrouterdeepseek',
+    provider = 'mistral',
     auto_suggestions_provider = 'openrouterdeepseek',
     claude = {
       __inherited_from = 'openai',
       endpoint = 'https://openrouter.ai/api/v1',
-      model = 'deepseek/deepseek-chat',
+      model = 'qwen/qvq-72b-preview',
       api_key_name = 'OPENROUTER_API_KEY',
       temperature = 0.0,
-      max_tokens = 8192,
+      max_tokens = 20000,
     },
     vendors = {
       openrouterdeepseek = {
@@ -38,38 +38,54 @@ return {
         temperature = 0.0,
         max_tokens = 8192,
       },
+      mistral = {
+        __inherited_from = 'openai',
+        endpoint = 'https://openrouter.ai/api/v1',
+        model = 'mistralai/codestral-2501',
+        api_key_name = 'OPENROUTER_API_KEY',
+        temperature = 0.0,
+        max_tokens = 8192,
+      },
+      openrouterqwen = {
+        __inherited_from = 'openai',
+        endpoint = 'https://openrouter.ai/api/v1',
+        model = 'qwen/qvq-72b-preview',
+        api_key_name = 'OPENROUTER_API_KEY',
+        temperature = 0.0,
+        max_tokens = 20000,
+      },
     },
     behaviour = {
-      auto_suggestions = false, -- Experimental stage
+      auto_suggestions = false,
       auto_set_highlight_group = true,
       auto_set_keymaps = true,
       auto_apply_diff_after_generation = true,
-      support_paste_from_clipboard = false,
-      minimize_diff = true, -- Whether to remove unchanged lines when applying a code block
+      support_paste_from_clipboard = true,
+      minimize_diff = true,
     },
     hints = { enabled = true },
     windows = {
-      position = 'right', -- the position of the sidebar
-      wrap = true, -- similar to vim.o.wrap
-      width = 30, -- default % based on available width
+      position = 'right',
+      wrap = true,
+      width = 30,
       sidebar_header = {
         enabled = true,
-        align = 'center', -- left, center, right for title
+        align = 'center',
         rounded = true,
       },
       input = {
         prefix = '> ',
-        height = 8, -- Height of the input window in vertical layout
+        height = 8,
       },
       edit = {
         border = 'rounded',
-        start_insert = true, -- Start insert mode when opening the edit window
+        start_insert = true,
       },
       ask = {
-        floating = false, -- Open the 'AvanteAsk' prompt in a floating window
-        start_insert = true, -- Start insert mode when opening the ask window
+        floating = true,
+        start_insert = true,
         border = 'rounded',
-        focus_on_apply = 'ours', -- which diff to focus after applying
+        focus_on_apply = 'ours',
       },
     },
     highlights = {

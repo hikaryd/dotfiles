@@ -1,4 +1,4 @@
-{ pkgs, lib, ... }: {
+{ pkgs, ... }: {
   home.packages = with pkgs; [
     jetbrains-mono
     noto-fonts
@@ -18,7 +18,7 @@
   stylix = {
     enable = true;
     base16Scheme = "${pkgs.base16-schemes}/share/themes/catppuccin-mocha.yaml";
-    image = ../wallpapers/bsod.png;
+    image = ../wallpapers/hollow-knight.jpg;
 
     fonts = {
       serif = {
@@ -43,14 +43,14 @@
       gtk.enable = true;
       kitty.enable = false;
       bat.enable = false;
+      hyprlock.enable = true;
+      hyprpaper.enable = true;
+    };
+    cursor = {
+      size = 20;
+      name = "Bibata-Modern-Ice";
+      package = pkgs.bibata-cursors;
     };
   };
-
-  home.pointerCursor = {
-    package = lib.mkForce pkgs.bibata-cursors;
-    name = lib.mkForce "Bibata-Modern-Ice";
-    size = lib.mkForce 20;
-    gtk.enable = lib.mkForce true;
-    x11.enable = lib.mkForce true;
-  };
 }
+

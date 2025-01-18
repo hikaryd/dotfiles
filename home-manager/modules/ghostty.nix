@@ -1,11 +1,5 @@
-{ inputs, pkgs, ... }: {
-  home.packages = [
-    (pkgs.writeShellScriptBin "ghostty" ''
-      ${pkgs.nixgl.nixGLMesa}/bin/nixGLMesa ${
-        inputs.ghostty.packages.${pkgs.system}.default
-      }/bin/ghostty "$@"
-    '')
-  ];
+{ config, pkgs, ... }: {
+  home.packages = with pkgs; [ (config.lib.nixGL.wrap ghostty) ];
 
   xdg.configFile."ghostty/tmux-session.sh" = {
     executable = true;
@@ -33,19 +27,22 @@
   xdg.configFile."ghostty/config".text = ''
     # Font
     font-family = "Maple Mono"
-    font-size = 17
+    font-size = 13
     font-thicken = true
     font-feature = ss01
     font-feature = ss04
 
-    bold-is-bright = false
+    bold-is-bright = true
     adjust-box-thickness = 1
     command = ~/.config/ghostty/tmux-session.sh
     shell-integration = none
 
     # Theme
     theme = "catppuccin-mocha"
-    background-opacity = 0.66
+    # background-opacity = 0.66
+    background-opacity = 0.75
+
+    background-blur-radius = 40
 
     cursor-style = block
     cursor-style-blink = true

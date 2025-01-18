@@ -171,6 +171,7 @@ install_nix() {
 	check_error "Ошибка при настройке каналов Nix"
 
 	echo "max-jobs = auto" | sudo tee -a /etc/nix/nix.conf
+	echo "experimental-features = nix-command flakes" | sudo tee -a /etc/nix/nix.conf
 	check_error "Ошибка при настройке max-jobs"
 
 	log "SUCCESS" "Nix успешно установлен"
@@ -228,22 +229,6 @@ install_docker() {
 	fi
 }
 
-install_auto_cpufreq() {
-	log "INFO" "Установка auto-cpufreq..."
-
-	if check_command pacman; then
-		sudo pacman -S --needed --noconfirm auto-cpufreq
-		check_error "Ошибка при установке auto-cpufreq через pacman"
-
-		sudo systemctl enable --now auto-cpufreq
-		check_error "Ошибка при активации службы auto-cpufreq"
-
-		log "SUCCESS" "auto-cpufreq успешно установлен"
-	else
-		log "WARNING" "Pacman не найден, пропуск установки auto-cpufreq"
-	fi
-}
-
 main() {
 	log "INFO" "Начало установки и настройки системы..."
 
@@ -257,7 +242,6 @@ main() {
 	install_docker
 	install_home_manager
 	install_emptty
-	install_auto_cpufreq
 
 	if [ -f "/home/$USER/.config/nekoray/config/vpn-run-root.sh" ]; then
 		setup_capabilities "/home/$USER/.config/nekoray/config/vpn-run-root.sh"

@@ -15,10 +15,14 @@
       };
     };
 
-    plugins = { full-border = "${inputs.yazi-plugins}/full-border.yazi"; };
+    plugins = {
+      full-border = "${inputs.yazi-plugins}/full-border.yazi";
+      git = "${inputs.yazi-plugins}/git.yazi";
+    };
   };
 
   xdg.configFile."yazi/init.lua".text = ''
     require("full-border"):setup()
+    require("git"):setup()
   '';
 }
