@@ -26,7 +26,8 @@
 
   xdg.configFile."ghostty/config".text = ''
     # Font
-    font-family = "Maple Mono"
+    # font-family = "Maple Mono"
+    font-family = "Monospace Mono"
     font-size = 13
     font-thicken = true
     font-feature = ss01

@@ -1,7 +1,7 @@
 { pkgs, ... }: {
   programs.tmux = {
     enable = true;
-    terminal = "screen-256color";
+    terminal = "tmux-256color";
     prefix = "C-a";
     baseIndex = 1;
     escapeTime = 0;

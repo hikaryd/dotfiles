@@ -12,26 +12,6 @@
         "desc:AOC Q27G2G3R3B RTEMAHA004734, 2560x1440@120, 0x0, 1.25"
       ];
 
-      workspace = [
-        "1, monitor:desc:AOC Q27G2G3R3B RTEMAHA004734, default:true"
-        "2, monitor:desc:AOC Q27G2G3R3B RTEMAHA004734, default:true"
-        "3, monitor:desc:AOC Q27G2G3R3B RTEMAHA004734, default:true"
-        "4, monitor:desc:AOC Q27G2G3R3B RTEMAHA004734, default:true"
-        "5, monitor:desc:AOC Q27G2G3R3B RTEMAHA004734, default:true"
-        "6, monitor:desc:AOC Q27G2G3R3B RTEMAHA004734, default:true"
-        "7, monitor:desc:AOC Q27G2G3R3B RTEMAHA004734, default:true"
-        "8, monitor:desc:AOC Q27G2G3R3B RTEMAHA004734, default:true"
-        "9, monitor:desc:AOC Q27G2G3R3B RTEMAHA004734, default:true"
-        "10, monitor:desc:AOC Q27G2G3R3B RTEMAHA004734, default:true"
-        "11, monitor:eDP-1, default:true"
-        "special:telegram, on-created-empty:telegram-desktop"
-        "special:audio, on-created-empty:audio"
-        "special:music, on-created-empty:youtube-music"
-        "special:vpn, on-created-empty:nekoray"
-        "special:noi, on-created-empty:zen"
-        "special:ai_ide"
-      ];
-
       general = {
         gaps_in = 5;
         gaps_out = 14;
@@ -86,28 +66,22 @@
       xwayland = { force_zero_scaling = true; };
 
       windowrulev2 = [
-        "workspace 1 silent, class:^(zen)$"
-        "workspace 1 silent, class:^(Google chrome)$"
-        "workspace 11, class:^(zen)$"
-        "workspace 2 silent, class:^(dev)$"
-        "workspace 3 silent, class:^(other)$"
-        "workspace 4 silent, class:^(vesktop)$"
-        "workspace 4 silent, class:^(discord)$"
-        "workspace 6 silent, class:^(zoom)$"
-        "workspace 7 silent, class:^(DBeaver)$"
-
-        "immediate, class:^(mpv)$"
-        "float,title:^(Google Chrome)(.*)$"
-        "float,title:^(Untitled - Google Chrome)(.*)$"
+        "workspace name:dev-terminal, class:^(ghostty)$"
+        "workspace name:conf-terminal, class:^(ghostty)$"
+        "workspace name:terminal, class:^(ghostty)$"
+        "workspace name:database, class:^(DBeaver)$"
+        "workspace name:other, class:^(zoom)$"
 
         "workspace special:telegram, class:^(org.telegram.desktop)$"
         "workspace special:audio, class:^(pulsemixer)$"
         "workspace special:audio, class:^(com.github.wwmm.easyeffects)$"
         "workspace special:music, class:^(YouTube Music)$"
         "workspace special:vpn, class:^(nekoray)$"
-        "workspace special:noi, class:^(zen)$"
         "workspace special:ai_ide, class:^(codium)$"
-        "workspace special:ai_ide, class:^(cursor-url-handler)$"
+
+        "immediate, class:^(mpv)$"
+        "float,title:^(Google Chrome)(.*)$"
+        "float,title:^(Untitled - Google Chrome)(.*)$"
 
         "float, class:^(org.telegram.desktop)$"
         "float, class:^(com.github.wwmm.easyeffects)$"
@@ -172,6 +146,7 @@
         "XDG_SESSION_TYPE,wayland"
         "XDG_SESSION_DESKTOP,Hyprland"
         "XDG_DATA_DIRS,$HOME/.nix-profile/share:/usr/local/share:/usr/share"
+        "PATH,$HOME/.nix-profile/bin:$PATH"
 
         "QT_QPA_PLATFORM,wayland;xcb"
         "QT_WAYLAND_DISABLE_WINDOWDECORATION,1"
@@ -238,97 +213,87 @@
         dim_strength = 0.3;
       };
 
+      workspace = [
+        # Основные рабочие пространства
+        "name:browser, monitor:desc:AOC Q27G2G3R3B RTEMAHA004734, on-created-empty:zen"
+        "name:dev-terminal, monitor:desc:AOC Q27G2G3R3B RTEMAHA004734, on-created-empty:ghostty, default:true"
+        "name:conf-terminal, monitor:desc:AOC Q27G2G3R3B RTEMAHA004734, on-created-empty:ghostty"
+        "name:terminal, monitor:desc:AOC Q27G2G3R3B RTEMAHA004734, on-created-empty:ghostty"
+        "name:database, monitor:desc:AOC Q27G2G3R3B RTEMAHA004734, on-created-empty:dbeaver, default:true"
+        "name:other, monitor:desc:AOC Q27G2G3R3B RTEMAHA004734, default:true"
+        "name:other2, monitor:eDP-1, default:true"
+
+        # Специальные рабочие пространства
+        "special:telegram, on-created-empty:telegram-desktop, default:true"
+        "special:misc, default:true"
+        "special:audio, on-created-empty:audio, default:true"
+        "special:music, on-created-empty:youtube-music, default:true"
+        "special:vpn, on-created-empty:nekoray, default:true"
+        "special:browser2, on-created-empty:zen"
+      ];
+
       "$mainMod" = "SUPER";
+      "$base" = "SUPER";
+      "$window" = "SUPER SHIFT"; # Управление окнами
+      "$layout" = "SUPER ALT"; # Управление расположением
+      "$system" = "SUPER CTRL"; # Системные функции
+      "$launch" = "SUPER SHIFT ALT"; # Запуск приложений
       bind = [
-        "$mainMod, RETURN, exec, ghostty"
-        "$mainMod SHIFT, D, exec, vesktop"
-        "$mainMod SHIFT, B, exec, GDK_BACKEND=x11 dbeaver"
+        # ===== Основные рабочие пространства =====
+        "$base, B, workspace, name:browser"
+        "$base, D, workspace, name:dev-terminal"
+        "$base, C, workspace, name:conf-terminal"
+        "$base, T, workspace, name:terminal"
+        "$base, M, workspace, name:misc"
+        "$base, O, workspace, name:other"
+        "$system, O, workspace, name:other2"
+        "$system, M, workspace, name:database"
 
-        "$mainMod, B, exec, hyprpanel t bluetoothmenu"
-        "$mainMod, N, exec, hyprpanel t notificationsmenu"
-        "$mainMod, S, exec, hyprpanel t dashboardmenu"
-        "$mainMod SHIFT, S, exec, ${../../../../scripts/snapshot.sh}"
-        "$mainMod SHIFT, R, exec, gpu-screen-recorder-gtk"
-        "$mainMod, W, exec, hyprpanel t networkmenu"
+        # ===== Управление окнами =====
+        "$window, B, movetoworkspacesilent, name:browser"
+        "$window, D, movetoworkspacesilent, name:dev-terminal"
+        "$window, C, movetoworkspacesilent, name:conf-terminal"
+        "$window, T, movetoworkspacesilent, name:terminal"
+        "$window, M, movetoworkspacesilent, name:misc"
+        "$window, O, movetoworkspacesilent, name:other"
 
-        "$mainMod, D, exec, anyrun"
-        "$mainMod SHIFT CTRL, T, exec, ${../../../../scripts/toggle-display.sh}"
+        "$window, Q, killactive"
+        "$window, Space, togglefloating"
+        "$window, F, fullscreen"
+        "$window, Period, movewindow, mon:+1"
+        "$window, Comma, movewindow, mon:-1"
 
-        "$mainMod, Q, killactive"
-        "$mainMod, delete, exit"
-        "$mainMod, Space, togglefloating"
-        "$mainMod SHIFT, F, fullscreen"
-        "$mainMod CTRL, L, exec, sh -c pgrep hyprlock || hyprlock"
+        "$window, H, movewindow, l"
+        "$window, J, movewindow, d"
+        "$window, K, movewindow, u"
+        "$window, L, movewindow, r"
+        "$base, h, movefocus, l"
+        "$base, l, movefocus, r"
+        "$base, k, movefocus, u"
+        "$base, j, movefocus, d"
 
-        "$mainMod, T, togglespecialworkspace, telegram"
-        "$mainMod, P, togglespecialworkspace, music"
-        "$mainMod, A, togglespecialworkspace, audio"
-        "$mainMod, V, togglespecialworkspace, vpn"
-        "$mainMod, G, togglespecialworkspace, noi"
-        "$mainMod SHIFT, W, togglespecialworkspace, ai_ide"
+        # ===== Системные функции =====
+        # Системное управление
+        "$system, L, exec, hyprlock"
 
-        "$mainMod, J, focuswindow, next"
-        "$mainMod, K, focuswindow, previous"
-        "$mainMod SHIFT, j, movewindow, d"
-        "$mainMod SHIFT, k, movewindow, u"
-        "$mainMod SHIFT, h, movewindow, l"
-        "$mainMod SHIFT, l, movewindow, r"
+        # Специальные рабочие пространства
+        "$system, P, togglespecialworkspace, music"
+        "$system, A, togglespecialworkspace, audio"
+        "$system, V, togglespecialworkspace, vpn"
+        "$system, T, togglespecialworkspace, telegram"
+        "$system, G, togglespecialworkspace, browser2"
 
-        "$mainMod ALT, H, moveactive, -100 0"
-        "$mainMod ALT, J, moveactive, 0 100"
-        "$mainMod ALT, K, moveactive, 0 -100"
-        "$mainMod ALT, L, moveactive, 100 0"
+        # Системные панели и меню
+        "$system, S, exec, hyprpanel t dashboardmenu"
+        "$system, B, exec, hyprpanel t bluetoothmenu"
+        "$system, N, exec, hyprpanel t notificationsmenu"
+        "$system, W, exec, hyprpanel t networkmenu"
 
-        "$mainMod ALT CTRL, H, movewindow, l"
-        "$mainMod ALT CTRL, J, movewindow, d"
-        "$mainMod ALT CTRL, K, movewindow, u"
-        "$mainMod ALT CTRL, L, movewindow, r"
-
-        "$mainMod, Period, focusmonitor, +1"
-        "$mainMod, Comma, focusmonitor, -1"
-        "$mainMod SHIFT, Period, movewindow, mon:+1"
-        "$mainMod SHIFT, Comma, movewindow, mon:-1"
-
-        "$mainMod SHIFT ALT, k, exec, hyprctl dispatch moveintogroup l"
-        "$mainMod SHIFT ALT, j, exec, hyprctl dispatch moveintogroup r"
-        "$mainMod CTRL, p, pin, active"
-
-        "$mainMod, 1, workspace, 1"
-        "$mainMod, 2, workspace, 2"
-        "$mainMod, 3, workspace, 3"
-        "$mainMod, 4, workspace, 4"
-        "$mainMod, 5, workspace, 5"
-        "$mainMod, 6, workspace, 6"
-        "$mainMod, 7, workspace, 7"
-        "$mainMod, 8, workspace, 8"
-        "$mainMod, 9, workspace, 9"
-        "$mainMod, 0, workspace, 10"
-        "$mainMod CTRL SHIFT, L, workspace, 11"
-
-        "$mainMod SHIFT, 1, movetoworkspacesilent, 1"
-        "$mainMod SHIFT, 2, movetoworkspacesilent, 2"
-        "$mainMod SHIFT, 3, movetoworkspacesilent, 3"
-        "$mainMod SHIFT, 4, movetoworkspacesilent, 4"
-        "$mainMod SHIFT, 5, movetoworkspacesilent, 5"
-        "$mainMod SHIFT, 6, movetoworkspacesilent, 6"
-        "$mainMod SHIFT, 7, movetoworkspacesilent, 7"
-        "$mainMod SHIFT, 8, movetoworkspacesilent, 8"
-        "$mainMod SHIFT, 9, movetoworkspacesilent, 9"
-        "$mainMod SHIFT, 0, movetoworkspacesilent, 10"
-
-        "$mainMod CTRL, right, workspace, r+1"
-        "$mainMod CTRL, left, workspace, r-1"
-        "$mainMod CTRL, down, workspace, empty"
-
-        "$mainMod, h, movefocus, l"
-        "$mainMod, l, movefocus, r"
-        "$mainMod, k, movefocus, u"
-        "$mainMod, j, movefocus, d"
-
-        "$mainMod SHIFT, h, movewindow, l"
-        "$mainMod SHIFT, l, movewindow, r"
-        "$mainMod SHIFT, k, movewindow, u"
-        "$mainMod SHIFT, j, movewindow, d"
+        # ===== Запуск приложений =====
+        "$base, Return, exec, ghostty"
+        "$launch, S, exec, ${../../../../scripts/snapshot.sh}"
+        "$base, A, exec, anyrun"
+        "$launch, B, exec, GDK_BACKEND=x11 dbeaver"
       ];
 
       bindm = [
@@ -342,14 +307,11 @@
         "dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP"
         "${../../../../scripts/xdg-portal.sh}"
         "easyeffects"
+        "kitty --class pulsemixer -- pulsemixer"
         "blueman-applet"
-        "telegram-desktop"
         "wl-paste -t text -w xclip -selection clipboard --watch cliphist store"
         "wl-paste --type image --watch cliphist store"
-        "kitty --class pulsemixer -- pulsemixer"
-        "sleep 4 && zen"
       ];
-
     };
   };
 

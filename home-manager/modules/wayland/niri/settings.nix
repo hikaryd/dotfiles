@@ -9,7 +9,7 @@ in {
     settings = {
       environment = {
         CLUTTER_BACKEND = "wayland";
-        DISPLAY = ":0";
+        DISPLAY = ":1";
         GDK_BACKEND = "wayland,x11";
         MOZ_ENABLE_WAYLAND = "1";
         NIXOS_OZONE_WL = "1";
@@ -17,6 +17,7 @@ in {
         QT_WAYLAND_DISABLE_WINDOWDECORATION = "1";
         SDL_VIDEODRIVER = "wayland";
         XDG_DATA_DIRS = "$HOME/.nix-profile/share:/usr/local/share:/usr/share";
+        PATH = "$HOME/.nix-profile/bin:$PATH";
       };
       spawn-at-startup = [
         (makeCommand
@@ -26,6 +27,11 @@ in {
         (makeCommand "wl-paste --type text --watch cliphist store")
         (makeCommand
           "dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP")
+
+        (makeCommand "telegram-desktop")
+        (makeCommand "nekoray")
+        (makeCommand "easyeffects")
+        (makeCommand "sleep 4 && zen")
       ];
       input = {
         keyboard = {
