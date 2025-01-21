@@ -3,37 +3,13 @@ return {
   event = 'VeryLazy',
   version = false,
   opts = {
-    provider = 'mistral',
+    provider = 'deepseek_r1',
     auto_suggestions_provider = 'openrouterdeepseek',
-    claude = {
-      __inherited_from = 'openai',
-      endpoint = 'https://openrouter.ai/api/v1',
-      model = 'qwen/qvq-72b-preview',
-      api_key_name = 'OPENROUTER_API_KEY',
-      temperature = 0.0,
-      max_tokens = 20000,
-    },
     vendors = {
       openrouterdeepseek = {
         __inherited_from = 'openai',
         endpoint = 'https://openrouter.ai/api/v1',
         model = 'deepseek/deepseek-chat',
-        api_key_name = 'OPENROUTER_API_KEY',
-        temperature = 0.0,
-        max_tokens = 8192,
-      },
-      openrouterclaude = {
-        __inherited_from = 'openai',
-        endpoint = 'https://openrouter.ai/api/v1',
-        model = 'anthropic/claude-3.5-sonnet:beta',
-        api_key_name = 'OPENROUTER_API_KEY',
-        temperature = 0.0,
-        max_tokens = 8192,
-      },
-      openrouterllama = {
-        __inherited_from = 'anthropic',
-        endpoint = 'https://openrouter.ai/api/v1',
-        model = 'meta-llama/llama-3.3-70b-instruct',
         api_key_name = 'OPENROUTER_API_KEY',
         temperature = 0.0,
         max_tokens = 8192,
@@ -46,13 +22,13 @@ return {
         temperature = 0.0,
         max_tokens = 8192,
       },
-      openrouterqwen = {
+      deepseek_r1 = {
         __inherited_from = 'openai',
         endpoint = 'https://openrouter.ai/api/v1',
-        model = 'qwen/qvq-72b-preview',
+        model = 'deepseek/deepseek-r1',
         api_key_name = 'OPENROUTER_API_KEY',
         temperature = 0.0,
-        max_tokens = 20000,
+        max_tokens = 50000,
       },
     },
     behaviour = {
@@ -82,7 +58,7 @@ return {
         start_insert = true,
       },
       ask = {
-        floating = true,
+        floating = false,
         start_insert = true,
         border = 'rounded',
         focus_on_apply = 'ours',
@@ -100,7 +76,6 @@ return {
       override_timeoutlen = 500,
     },
     file_selector = {
-      --- @alias FileSelectorProvider "native" | "fzf" | "telescope" | string
       provider = 'fzf',
       provider_opts = {},
     },

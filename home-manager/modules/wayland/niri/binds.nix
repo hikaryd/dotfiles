@@ -1,4 +1,4 @@
-{ config, inputs, pkgs, ... }: {
+{ config, pkgs, ... }: {
   programs.niri.settings.binds = with config.lib.niri.actions;
     let
       set-volume = spawn "wpctl" "set-volume" "@DEFAULT_AUDIO_SINK@";
@@ -22,12 +22,13 @@
       "XF86MonBrightnessUp".action = brillo "-A" "5";
       "XF86MonBrightnessDown".action = brillo "-U" "5";
 
+      "Mod+Shift+Q".action = spawn "pkill niri";
       "Print".action = screenshot-screen;
       "Mod+Shift+Alt+S".action = screenshot-window;
       "Mod+Shift+S".action = screenshot;
       "Mod+D".action = spawn "${pkgs.anyrun}/bin/anyrun";
-      "Mod+Return".action =
-        spawn "${inputs.ghostty.packages.${pkgs.system}.default}/bin/ghostty";
+      # "Mod+Return".action = spawn "ghostty";
+      "Mod+Return".action = spawn "alacritty";
       "Ctrl+Alt+L".action = spawn "sh -c pgrep hyprlock || hyprlock";
 
       "Mod+U".action =
@@ -63,8 +64,7 @@
       "Mod+Shift+K".action = move-column-to-workspace-up;
       "Mod+Shift+J".action = move-column-to-workspace-down;
 
-      "Mod+Shift+Ctrl+J".action = move-column-to-monitor-down;
-      "Mod+Shift+Ctrl+K".action = move-column-to-monitor-up;
-
+      "Mod+Shift+Ctrl+H".action = move-column-to-monitor-left;
+      "Mod+Shift+Ctrl+L".action = move-column-to-monitor-right;
     };
 }

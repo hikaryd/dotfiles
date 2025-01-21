@@ -9,28 +9,14 @@
     layout = {
       "bar.layouts" = {
         "0" = {
-          left = [ "dashboard" "workspaces" ];
-          middle = [ "media" ];
-          right = [
-            "volume"
-            "network"
-            "bluetooth"
-            "battery"
-            "clock"
-            "notifications"
-          ];
+          left = [ "dashboard" "media" ];
+          middle = [ "clock" ];
+          right = [ "volume" "network" "bluetooth" "battery" "notifications" ];
         };
         "1" = {
-          left = [ "dashboard" "workspaces" ];
-          middle = [ "media" ];
-          right = [
-            "volume"
-            "network"
-            "bluetooth"
-            "battery"
-            "clock"
-            "notifications"
-          ];
+          left = [ "dashboard" "media" ];
+          middle = [ "clock" ];
+          right = [ "volume" "network" "bluetooth" "battery" "notifications" ];
         };
       };
     };
@@ -48,10 +34,10 @@
           workspaces = 10;
           monitorSpecific = false;
           # hideUnoccupied = false;
-          workspaceMask = false;
+          workspaceMask = true;
           reverse_scroll = false;
           ignored = "-\\\\d+";
-          showApplicationIcons = false;
+          showApplicationIcons = true;
           showWsIcons = true;
         };
       };
@@ -82,6 +68,7 @@
       theme = {
         matugen = false;
         bar = {
+          floating = true;
           transparent = true;
           scaling = 70;
 
@@ -124,4 +111,3 @@
     };
   };
 }
-

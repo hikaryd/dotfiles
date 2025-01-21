@@ -13,7 +13,7 @@
   };
 
   xdg.configFile."environment.d/envvars.conf".text = ''
-    PATH="$HOME/.nix-profile/bin:$PATH"
+    PATH="$HOME/.nix-profile/bin:/nix/var/nix/profiles/default/bin:$PATH"
   '';
 
   home.sessionPath = [ "$HOME/.nix-profile/bin" ];
