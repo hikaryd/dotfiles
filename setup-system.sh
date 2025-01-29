@@ -65,12 +65,6 @@ check_command() {
 	return 0
 }
 
-setup_capabilities() {
-	log "INFO" "Настройка capabilities для $1"
-	sudo setcap CAP_NET_ADMIN=ep "$1"
-	check_error "Ошибка при установке capabilities для $1"
-}
-
 update_system() {
 	log "INFO" "Обновление системы..."
 	sudo pacman -Syu --noconfirm python
@@ -242,12 +236,6 @@ main() {
 	install_docker
 	install_home_manager
 	install_emptty
-
-	if [ -f "/home/$USER/.config/nekoray/config/vpn-run-root.sh" ]; then
-		setup_capabilities "/home/$USER/.config/nekoray/config/vpn-run-root.sh"
-	else
-		log "WARNING" "Скрипт vpn-run-root.sh не найден"
-	fi
 
 	log "SUCCESS" "Установка и настройка завершены успешно!"
 	log "INFO" "Пожалуйста, перезагрузите систему для применения всех изменений"

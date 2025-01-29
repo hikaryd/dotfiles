@@ -4,7 +4,6 @@ function M.setup()
   local autocmd = vim.api.nvim_create_autocmd
   local augroup = vim.api.nvim_create_augroup
 
-  -- General Settings
   local general = augroup('General Settings', { clear = true })
 
   -- Highlight on yank

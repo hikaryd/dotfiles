@@ -11,7 +11,6 @@ return {
       },
     },
     opts = {
-      fuzzy = {},
       keymap = {
         preset = 'default',
         ['<C-k>'] = { 'select_prev', 'fallback' },
@@ -25,7 +24,7 @@ return {
         providers = {
           lsp = {
             min_keyword_length = function(ctx)
-              return ctx.trigger.kind == 'manual' and 0 or 2 -- trigger when invoking with shortcut
+              return ctx.trigger.kind == 'manual' and 0 or 2
             end,
             score_offset = 0,
           },
@@ -62,7 +61,6 @@ return {
           },
         },
       },
-      -- completion = { accept = { auto_brackets = { enabled = true } } },
       signature = { enabled = true },
     },
     opts_extend = {
@@ -94,31 +92,5 @@ return {
 
       require('blink.cmp').setup(opts)
     end,
-  },
-  {
-    'saghen/blink.cmp',
-    opts = {
-      sources = {
-        default = { 'lazydev' },
-        providers = {
-          lsp = {
-            fallbacks = { 'buffer' },
-          },
-          lazydev = {
-            name = 'LazyDev',
-            module = 'lazydev.integrations.blink',
-          },
-        },
-      },
-    },
-  },
-  {
-    'folke/lazydev.nvim',
-    ft = 'lua',
-    opts = {
-      library = {
-        { path = '${3rd}/luv/library', words = { 'vim%.uv' } },
-      },
-    },
   },
 }

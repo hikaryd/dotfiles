@@ -3,6 +3,24 @@ return {
   priority = 1000,
   lazy = false,
   opts = {
+    dim = {
+      scope = {
+        min_size = 10,
+        max_size = 30,
+        siblings = true,
+      },
+      animate = {
+        enabled = true,
+        easing = 'outQuad',
+        duration = {
+          step = 20,
+          total = 300,
+        },
+      },
+      filter = function(buf)
+        return vim.g.snacks_dim ~= false and vim.b[buf].snacks_dim ~= false and vim.bo[buf].buftype == ''
+      end,
+    },
     bigfile = { enabled = true },
     notifier = {
       enabled = true,
@@ -12,22 +30,38 @@ return {
     statuscolumn = { enabled = true },
     words = { enabled = true },
     picker = {
-      layout = {
-        backdrop = false,
-        row = 1,
-        width = 0.4,
-        min_width = 80,
-        height = 0.8,
-        border = 'none',
-        box = 'vertical',
-        { win = 'preview', height = 0.4, border = 'rounded' },
-        {
-          box = 'vertical',
-          border = 'rounded',
-          title = '{source} {live}',
-          title_pos = 'center',
-          { win = 'input', height = 1, border = 'bottom' },
-          { win = 'list', border = 'none' },
+      ui_select = true,
+      layouts = {
+        select = {
+          layout = {
+            {
+              border = 'bottom',
+              depth = 1,
+              height = 1,
+              win = 'input',
+            },
+            {
+              border = 'none',
+              depth = 1,
+              win = 'list',
+            },
+            {
+              border = 'top',
+              depth = 1,
+              height = 0.4,
+              win = 'preview',
+            },
+            backdrop = false,
+            border = 'rounded',
+            box = 'vertical',
+            height = 15,
+            min_height = 10,
+            min_width = 80,
+            title = ' Code actions ',
+            title_pos = 'center',
+            width = 0.5,
+            relative = 'cursor',
+          },
         },
       },
     },
@@ -330,13 +364,6 @@ return {
       desc = 'Quickfix List',
     },
     {
-      '<leader>uC',
-      function()
-        Snacks.picker.colorschemes()
-      end,
-      desc = 'Colorschemes',
-    },
-    {
       '<leader>qp',
       function()
         Snacks.picker.projects()
@@ -384,26 +411,8 @@ return {
     vim.api.nvim_create_autocmd('User', {
       pattern = 'VeryLazy',
       callback = function()
+        Snacks.dim.disable()
         Snacks.toggle.option('spell', { name = 'Spelling' }):map '<leader>us'
-        Snacks.toggle.option('wrap', { name = 'Wrap' }):map '<leader>uw'
-        Snacks.toggle.option('relativenumber', { name = 'Relative Number' }):map '<leader>uL'
-        Snacks.toggle.diagnostics():map '<leader>ud'
-        Snacks.toggle.line_number():map '<leader>ul'
-        Snacks.toggle
-          .option('conceallevel', {
-            off = 0,
-            on = vim.o.conceallevel > 0 and vim.o.conceallevel or 2,
-          })
-          :map '<leader>uc'
-        Snacks.toggle.treesitter():map '<leader>uT'
-        Snacks.toggle
-          .option('background', {
-            off = 'light',
-            on = 'dark',
-            name = 'Dark Background',
-          })
-          :map '<leader>ub'
-        Snacks.toggle.inlay_hints():map '<leader>uh'
       end,
     })
   end,

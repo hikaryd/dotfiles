@@ -27,12 +27,14 @@
       LC_CTYPE = "ru_RU.UTF-8";
 
       # Основные
+      TERM = "xterm-256color";
       EDITOR = "nvim";
       VISUAL = "nvim";
     };
 
     shellAliases = {
       v = "nvim";
+      nv = ''env NEOVIDE_APP_ID="neovide" neovide .'';
       ssh = ''env TERM="xterm-256color" ssh'';
       cat = "bat --style=plain";
       ".." = "cd ..";

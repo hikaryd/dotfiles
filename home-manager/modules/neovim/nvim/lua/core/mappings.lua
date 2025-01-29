@@ -17,15 +17,27 @@ map('n', '<space>e', ':Yazi<CR>')
 
 map('n', '<leader>b', ':DBUIToggle<CR>')
 
+map('n', '<leader>tt', ':BufTermEnter<CR>')
+
 --Gitlab
 map('n', '<leader>gcm', ':lua require("gitlab").choose_merge_request()<CR>')
 
 -- Window Management
-map('n', '<C-h>', '<C-w>h', 'Move to left window')
-map('n', '<C-k>', '<C-w>k', 'Move to upper window')
-map('n', '<C-j>', '<C-w>j', 'Move to lower window')
-map('n', '<C-l>', '<C-w>l', 'Move to right window')
 map('n', '<leader>sv', '<cmd>:vsplit<CR>', 'Vertical split window')
+map('n', '<leader>ss', '<cmd>:split<CR>', 'Vertical split window')
+map('n', '<A-h>', require('smart-splits').resize_left)
+map('n', '<A-j>', require('smart-splits').resize_down)
+map('n', '<A-k>', require('smart-splits').resize_up)
+map('n', '<A-l>', require('smart-splits').resize_right)
+-- moving between splits
+map('n', '<C-h>', require('smart-splits').move_cursor_left)
+map('n', '<C-j>', require('smart-splits').move_cursor_down)
+map('n', '<C-k>', require('smart-splits').move_cursor_up)
+map('n', '<C-l>', require('smart-splits').move_cursor_right)
+map('t', '<C-h>', require('smart-splits').move_cursor_left)
+map('t', '<C-j>', require('smart-splits').move_cursor_down)
+map('t', '<C-k>', require('smart-splits').move_cursor_up)
+map('t', '<C-l>', require('smart-splits').move_cursor_right)
 
 -- Line Movement
 map('v', '<A-j>', ":m '>+1<CR>gv=gv", 'Move selected lines down')

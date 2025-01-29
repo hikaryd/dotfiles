@@ -1,7 +1,9 @@
 return {
   'rachartier/tiny-inline-diagnostic.nvim',
   event = 'LspAttach',
-  priority = 1000,
+  disable = true,
+  enabled = false,
+  priority = 100,
   config = function()
     require('tiny-inline-diagnostic').setup {
       options = {
