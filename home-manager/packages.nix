@@ -6,7 +6,8 @@
   home.packages = with pkgs; [
     inputs.nixgl.packages.${system}.nixGLDefault
     inputs.nixgl.packages.${system}.nixVulkanIntel
-    zoom-us
+    (config.lib.nixGL.wrap zoom-us)
+    stu
     tree
     htop
     rsync
@@ -43,12 +44,13 @@
 
     (config.lib.nixGL.wrap inputs.zen-browser.packages.${system}.default)
 
-    nekoray
     nix-prefetch-scripts
     luajitPackages.luarocks
 
     docker
     docker-compose
     docker-buildx
+    nekoray
+    amdvlk
   ];
 }

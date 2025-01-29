@@ -3,7 +3,7 @@ return {
   event = 'VeryLazy',
   version = false,
   opts = {
-    provider = 'deepseek_r1',
+    provider = 'mistral',
     auto_suggestions_provider = 'openrouterdeepseek',
     vendors = {
       openrouterdeepseek = {

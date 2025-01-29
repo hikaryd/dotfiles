@@ -4,7 +4,7 @@
     hyprland.enable = true;
     overwrite.enable = true;
 
-    theme = "catppuccin_mocha_split";
+    theme = "tokyo_night";
 
     layout = {
       "bar.layouts" = {

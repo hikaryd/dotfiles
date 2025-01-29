@@ -4,6 +4,7 @@
     noto-fonts
     noto-fonts-emoji
     noto-fonts-cjk-sans
+    hack-font
     bemoji
     maple-mono
     nerd-fonts.jetbrains-mono

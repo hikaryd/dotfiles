@@ -68,8 +68,7 @@
         #!/usr/bin/env bash
         python_files=$(git diff --cached --name-only --diff-filter=ACM | grep '\.py$' || true)
         if [ -n "$python_files" ]; then
-          ${pkgs.ruff}/bin/ruff check --fix $python_files
-          git add $python_files
+          ${pkgs.ruff}/bin/ruff check $python_files
         fi
         exit 0
       '';

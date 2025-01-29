@@ -15,9 +15,6 @@ return {
         open_link = 'gx',
       },
       diagnostic = {
-        on_insert = true,
-        on_insert_follow = false,
-        insert_winblend = 0,
         show_code_action = true,
         show_source = true,
         jump_num_shortcut = true,
@@ -45,6 +42,19 @@ return {
     }
 
     vim.o.updatetime = 250
+
+    vim.api.nvim_create_autocmd('CursorHold', {
+      callback = function()
+        local diag = vim.diagnostic.get(0, { lnum = vim.fn.line '.' - 1 })
+        if #diag > 0 then
+          vim.diagnostic.open_float {
+            scope = 'line',
+            border = 'rounded',
+            focusable = false,
+          }
+        end
+      end,
+    })
   end,
   dependencies = {
     'nvim-treesitter/nvim-treesitter',

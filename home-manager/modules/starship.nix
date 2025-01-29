@@ -3,7 +3,11 @@
     enable = true;
     settings = {
       add_newline = false;
-      format = "$directory$character";
+      # format = "$directory$character";
+      format = ''
+        $directory
+        $character
+      '';
       right_format = "$all";
       command_timeout = 1000;
       palette = "catppuccin_mocha";

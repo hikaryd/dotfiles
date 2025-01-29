@@ -8,8 +8,10 @@
 
     settings = {
       monitor = [
-        "eDP-1, 2560x1600@120, -2560x0, 1.25"
-        "desc:AOC Q27G2G3R3B RTEMAHA004734, 2560x1440@120, 0x0, 1.25"
+        "eDP-1, 2560x1600@120, -2560x0, 1.6"
+        "HDMI-A-1, 2560x1440@120, 0x0, 1.25"
+        # "HDMI-A-1, 1920x1080@120, 0x0, 1.25"
+        # ", preferred, auto, 1, mirror, eDP-1"
       ];
 
       general = {
@@ -67,22 +69,23 @@
 
       windowrulev2 = [
         "workspace name:dev-terminal, class:^(ghostty)$"
+        "workspace name:dev-terminal, class:^(neovide)$"
         "workspace name:conf-terminal, class:^(ghostty)$"
         "workspace name:terminal, class:^(ghostty)$"
         "workspace name:database, class:^(DBeaver)$"
         "workspace name:other, class:^(zoom)$"
+        "workspace name:other, class:^(codium)$"
 
         "workspace special:telegram, class:^(org.telegram.desktop)$"
         "workspace special:audio, class:^(pulsemixer)$"
         "workspace special:audio, class:^(com.github.wwmm.easyeffects)$"
         "workspace special:music, class:^(YouTube Music)$"
         "workspace special:vpn, class:^(nekoray)$"
-        "workspace special:ai_ide, class:^(codium)$"
 
         "immediate, class:^(mpv)$"
+
         "float,title:^(Google Chrome)(.*)$"
         "float,title:^(Untitled - Google Chrome)(.*)$"
-
         "float, class:^(org.telegram.desktop)$"
         "float, class:^(com.github.wwmm.easyeffects)$"
         "float, class:^(pulsemixer)$"
@@ -94,31 +97,15 @@
         "float, class:^(org.kde.polkit-kde-authentication-agent-1)$"
         "float, class:^(bluetooth-manager)$"
         "float, class:^(iwgtk)$"
+        "float, class:^(com.github.th_ch.youtube_music)$"
+        "float, class:^(org.telegram.desktop)$"
+        "float, class:^(com.github.wwmm.easyeffects)$"
+        "float, class:^(pulsemixer)$"
+        "float, class:^(nekoray)$"
 
         "opacity 0.80 0.80, class:^(org.freedesktop.impl.portal.desktop.gtk)$"
         "opacity 0.80 0.80, class:^(org.freedesktop.impl.portal.desktop.hyprland)$"
         "opacity 0.9 0.9,class:^(neovide)$"
-
-        "float, class:^(com.github.th_ch.youtube_music)$"
-        "size 800 1000, class:^(com.github.th_ch.youtube_music)$"
-        "center, class:^(YouTube Music)$"
-
-        "float, class:^(org.telegram.desktop)$"
-        "size 700 1000, class:^(org.telegram.desktop)$"
-        "center, class:^(org.telegram.desktop)$"
-
-        "float, class:^(com.github.wwmm.easyeffects)$"
-        "size 780 460, class:^(com.github.wwmm.easyeffects)$"
-        "move 160 120, class:^(com.github.wwmm.easyeffects)$"
-
-        "float, class:^(pulsemixer)$"
-        "size 970 460, class:^(pulsemixer)$"
-        "move 60 652, class:^(pulsemixer)$"
-
-        "float, class:^(nekoray)$"
-        "size 480 1000, class:^(nekoray)$"
-        "move 200 80, class:^(nekoray)$"
-
         "opacity 0.9 0.9,class:^(zen)$"
       ];
 
@@ -215,13 +202,13 @@
 
       workspace = [
         # Основные рабочие пространства
-        "name:browser, monitor:desc:AOC Q27G2G3R3B RTEMAHA004734, on-created-empty:zen"
-        "name:dev-terminal, monitor:desc:AOC Q27G2G3R3B RTEMAHA004734, on-created-empty:ghostty, default:true"
-        "name:conf-terminal, monitor:desc:AOC Q27G2G3R3B RTEMAHA004734, on-created-empty:ghostty"
-        "name:terminal, monitor:desc:AOC Q27G2G3R3B RTEMAHA004734, on-created-empty:ghostty"
-        "name:database, monitor:desc:AOC Q27G2G3R3B RTEMAHA004734, on-created-empty:dbeaver, default:true"
-        "name:other, monitor:desc:AOC Q27G2G3R3B RTEMAHA004734, default:true"
-        "name:other2, monitor:eDP-1, default:true"
+        "name:browser, monitor:HDMI-A-1, on-created-empty:zen"
+        "name:dev-terminal, monitor:HDMI-A-1"
+        "name:conf-terminal, monitor:HDMI-A-1, on-created-empty:ghostty"
+        "name:terminal, monitor:HDMI-A-1, on-created-empty:ghostty, default:true"
+        "name:database, monitor:HDMI-A-1, on-created-empty:dbeaver, default:true"
+        "name:other, monitor:HDMI-A-1, default:true"
+        "special:xreal,monitor:xreal"
 
         # Специальные рабочие пространства
         "special:telegram, on-created-empty:telegram-desktop, default:true"
@@ -246,7 +233,6 @@
         "$base, T, workspace, name:terminal"
         "$base, M, workspace, name:misc"
         "$base, O, workspace, name:other"
-        "$system, O, workspace, name:other2"
         "$system, M, workspace, name:database"
 
         # ===== Управление окнами =====

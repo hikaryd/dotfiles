@@ -5,12 +5,13 @@ vim.cmd 'set modifiable'
 vim.opt.termguicolors = true
 vim.opt.number = true
 vim.opt.relativenumber = true
-vim.opt.signcolumn = 'yes'
-vim.opt.colorcolumn = '80'
+-- vim.opt.signcolumn = 'yes'
+-- vim.opt.colorcolumn = '80'
 vim.opt.pumblend = 0
 vim.opt.winblend = 0
 vim.opt.clipboard = 'unnamedplus'
 vim.opt.laststatus = 3
+vim.opt.equalalways = false
 
 -- Cursor Styles
 vim.opt.guicursor = {

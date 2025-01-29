@@ -26,12 +26,10 @@
 
   xdg.configFile."ghostty/config".text = ''
     # Font
-    # font-family = "Maple Mono"
-    font-family = "Monospace Mono"
-    font-size = 13
+    font-family = "Hack"
+    font-size = 10
     font-thicken = true
-    font-feature = ss01
-    font-feature = ss04
+    term = "xterm-256color"
 
     bold-is-bright = true
     adjust-box-thickness = 1
@@ -39,11 +37,11 @@
     shell-integration = none
 
     # Theme
-    theme = "catppuccin-mocha"
-    # background-opacity = 0.66
-    background-opacity = 0.75
+    # theme = "catppuccin-mocha"
+    theme = "iTerm2 Pastel Dark Background"
+    background-opacity = 0.66
 
-    background-blur-radius = 40
+    background-blur-radius = 20
 
     cursor-style = block
     cursor-style-blink = true
@@ -54,8 +52,8 @@
     mouse-hide-while-typing = true
 
     window-theme = ghostty
-    window-padding-x = 4
-    window-padding-y = 6
+    window-padding-x = 10
+    window-padding-y = 10
     window-padding-balance = true
     window-padding-color = background
     window-inherit-working-directory = true

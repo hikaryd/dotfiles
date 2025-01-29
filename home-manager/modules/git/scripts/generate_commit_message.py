@@ -146,7 +146,8 @@ def generate_commit_message_openrouter(diff, api_key):
                 'content': COMMIT_MESSAGE_PROMPT.format(diff=diff),
             }
         ],
-        'model': 'deepseek/deepseek-chat',
+        # 'model': 'deepseek/deepseek-chat',
+        'model': 'minimax/minimax-01',
     }
 
     response = make_request(

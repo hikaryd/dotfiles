@@ -1,7 +1,7 @@
 { pkgs, ... }: {
   programs.tmux = {
     enable = true;
-    terminal = "tmux-256color";
+    terminal = "xterm-256color";
     prefix = "C-a";
     baseIndex = 1;
     escapeTime = 0;
@@ -52,14 +52,16 @@
       bind s split-window -v -c "#{pane_current_path}"
       bind v split-window -h -c "#{pane_current_path}"
       bind '"' choose-window
-      bind h select-pane -L
-      bind j select-pane -D
-      bind k select-pane -U
-      bind l select-pane -R
-      bind -r -T prefix - resize-pane -L 20
-      bind -r -T prefix = resize-pane -R 20
-      bind -r -T prefix _ resize-pane -D 7
-      bind -r -T prefix + resize-pane -U 7
+
+      # bind h select-pane -L
+      # bind j select-pane -D
+      # bind k select-pane -U
+      # bind l select-pane -R
+      # bind -r -T prefix - resize-pane -L 20
+      # bind -r -T prefix = resize-pane -R 20
+      # bind -r -T prefix _ resize-pane -D 7
+      # bind -r -T prefix + resize-pane -U 7
+
       bind : command-prompt
       bind * setw synchronize-panes
       bind P set pane-border-status
@@ -80,6 +82,21 @@
       bind s split-window -v -c "#{pane_current_path}"
       bind v split-window -h -c "#{pane_current_path}"
 
+      bind-key -T copy-mode-vi 'C-h' select-pane -L
+      bind-key -T copy-mode-vi 'C-j' select-pane -D
+      bind-key -T copy-mode-vi 'C-k' select-pane -U
+      bind-key -T copy-mode-vi 'C-l' select-pane -R
+
+      bind-key -n C-h if -F "#{@pane-is-vim}" 'send-keys C-h'  'select-pane -L'
+      bind-key -n C-j if -F "#{@pane-is-vim}" 'send-keys C-j'  'select-pane -D'
+      bind-key -n C-k if -F "#{@pane-is-vim}" 'send-keys C-k'  'select-pane -U'
+      bind-key -n C-l if -F "#{@pane-is-vim}" 'send-keys C-l'  'select-pane -R'
+
+      bind-key -n M-h if -F "#{@pane-is-vim}" 'send-keys M-h' 'resize-pane -L 3'
+      bind-key -n M-j if -F "#{@pane-is-vim}" 'send-keys M-j' 'resize-pane -D 3'
+      bind-key -n M-k if -F "#{@pane-is-vim}" 'send-keys M-k' 'resize-pane -U 3'
+      bind-key -n M-l if -F "#{@pane-is-vim}" 'send-keys M-l' 'resize-pane -R 3'
+
       bind-key -n M-H swap-window -t -1\; select-window -t -1
       bind-key -n M-L swap-window -t +1\; select-window -t +1
       bind h select-pane -L
@@ -94,7 +111,6 @@
       tmuxPlugins.resurrect
       tmuxPlugins.continuum
       tmuxPlugins.tmux-fzf
-      tmuxPlugins.tmux-floax
       tmuxPlugins.tmux-thumbs
       {
         plugin = tmuxPlugins.resurrect;
@@ -111,17 +127,17 @@
           set -g @fzf-url-history-limit '2000'
         '';
       }
-      {
-        plugin = tmuxPlugins.tmux-floax;
-        extraConfig = ''
-          set -g @floax-width '80%'
-          set -g @floax-height '80%'
-          set -g @floax-border-color 'magenta'
-          set -g @floax-text-color 'blue'
-          set -g @floax-bind 'p'
-          set -g @floax-change-path 'true'
-        '';
-      }
+      # {
+      #   plugin = tmuxPlugins.tmux-floax;
+      #   extraConfig = ''
+      #     set -g @floax-width '80%'
+      #     set -g @floax-height '80%'
+      #     set -g @floax-border-color 'magenta'
+      #     set -g @floax-text-color 'blue'
+      #     set -g @floax-bind 'p'
+      #     set -g @floax-change-path 'true'
+      #   '';
+      # }
     ];
   };
 
