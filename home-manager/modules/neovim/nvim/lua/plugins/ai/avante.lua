@@ -3,13 +3,21 @@ return {
   event = 'VeryLazy',
   version = false,
   opts = {
-    provider = 'mistral',
+    provider = 'o3',
     auto_suggestions_provider = 'openrouterdeepseek',
     vendors = {
       openrouterdeepseek = {
         __inherited_from = 'openai',
         endpoint = 'https://openrouter.ai/api/v1',
         model = 'deepseek/deepseek-chat',
+        api_key_name = 'OPENROUTER_API_KEY',
+        temperature = 0.0,
+        max_tokens = 8192,
+      },
+      openrouterclaude = {
+        __inherited_from = 'openai',
+        endpoint = 'https://openrouter.ai/api/v1',
+        model = 'anthropic/claude-3.5-sonnet',
         api_key_name = 'OPENROUTER_API_KEY',
         temperature = 0.0,
         max_tokens = 8192,
@@ -22,13 +30,13 @@ return {
         temperature = 0.0,
         max_tokens = 8192,
       },
-      deepseek_r1 = {
+      o3 = {
         __inherited_from = 'openai',
         endpoint = 'https://openrouter.ai/api/v1',
-        model = 'deepseek/deepseek-r1',
+        model = 'openai/o3-mini',
         api_key_name = 'OPENROUTER_API_KEY',
         temperature = 0.0,
-        max_tokens = 50000,
+        max_tokens = 200000,
       },
     },
     behaviour = {

@@ -12,8 +12,7 @@ map('n', '<Esc>', '<cmd>noh<CR>', 'Clear search highlights')
 map('n', 'v$', 'v$h')
 
 -- File Explorer
-map('n', '<space>e', ':Yazi<CR>')
--- map('n', '<space>e', ':Oil<CR>')
+-- map('n', '<space>e', ':Yazi<CR>')
 
 map('n', '<leader>b', ':DBUIToggle<CR>')
 
@@ -47,3 +46,9 @@ map('n', '<A-j>', ':m .+1<CR>==', 'Move current line down')
 
 -- Aerial
 map('n', '<leader>aet', '<cmd>AerialToggle!<CR>', 'Toggle Aerial')
+
+-- CodeCompanion
+map('n', '<leader>at', '<cmd>CodeCompanion<CR>', 'CodeCompanion')
+map('v', '<leader>at', '<cmd>CodeCompanion<CR>', 'CodeCompanion')
+map('n', '<leader>aa', '<cmd>CodeCompanionChat<CR>', 'CodeCompanion')
+map('n', '<leader>ac', '<cmd>CodeCompanionActions<CR>', 'CodeCompanion')

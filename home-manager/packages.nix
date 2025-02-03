@@ -6,7 +6,6 @@
   home.packages = with pkgs; [
     inputs.nixgl.packages.${system}.nixGLDefault
     inputs.nixgl.packages.${system}.nixVulkanIntel
-    (config.lib.nixGL.wrap zoom-us)
     stu
     tree
     htop
@@ -52,5 +51,16 @@
     docker-buildx
     nekoray
     amdvlk
+    bluez
+    bluez-tools
+    gnome-bluetooth
+    networkmanagerapplet
+    networkmanager
+    wf-recorder
+
+    # bar
+    dart-sass
+    gtk-layer-shell
+    gobject-introspection
   ];
 }

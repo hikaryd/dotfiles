@@ -1,6 +1,6 @@
 return {
   'folke/snacks.nvim',
-  priority = 1000,
+  priority = 10000,
   lazy = false,
   opts = {
     dim = {
@@ -85,6 +85,34 @@ return {
           { desc = ' dotfiles', group = '@property', key = 'd', action = 'Telescope dotfiles' },
         },
         packages = { enabled = true },
+        sections = {
+          { section = 'header' },
+          {
+            pane = 2,
+            section = 'terminal',
+            cmd = 'colorscript -e square',
+            height = 5,
+            padding = 1,
+          },
+          { section = 'keys', gap = 1, padding = 1 },
+          { pane = 2, icon = ' ', title = 'Recent Files', section = 'recent_files', indent = 2, padding = 1 },
+          { pane = 2, icon = ' ', title = 'Projects', section = 'projects', indent = 2, padding = 1 },
+          {
+            pane = 2,
+            icon = ' ',
+            title = 'Git Status',
+            section = 'terminal',
+            enabled = function()
+              return Snacks.git.get_root() ~= nil
+            end,
+            cmd = 'git status --short --branch --renames',
+            height = 5,
+            padding = 1,
+            ttl = 5 * 60,
+            indent = 3,
+          },
+          { section = 'startup' },
+        },
         footer = function()
           local stats = require('lazy').stats()
           return { '⚡ Neovim loaded ' .. stats.loaded .. '/' .. stats.count .. ' plugins' }
@@ -405,6 +433,43 @@ return {
         Snacks.picker.lsp_symbols()
       end,
       desc = 'LSP Symbols',
+    },
+    {
+      '<leader>e',
+      function()
+        Snacks.picker.explorer {
+          finder = 'explorer',
+          sort = { fields = { 'sort' } },
+          tree = true,
+          supports_live = true,
+          follow_file = true,
+          focus = 'list',
+          auto_close = true,
+          jump = { close = true },
+          formatters = { file = { filename_only = true } },
+          layout = { preset = 'default', preview = true },
+          matcher = { sort_empty = true },
+          config = function(opts)
+            return require('snacks.picker.source.explorer').setup(opts)
+          end,
+          win = {
+            list = {
+              keys = {
+                ['<BS>'] = 'explorer_up',
+                ['a'] = 'explorer_add',
+                ['d'] = 'explorer_del',
+                ['r'] = 'explorer_rename',
+                ['c'] = 'explorer_copy',
+                ['m'] = 'explorer_move',
+                ['y'] = 'explorer_yank',
+                ['<c-c>'] = 'explorer_cd',
+                ['.'] = 'explorer_focus',
+              },
+            },
+          },
+        }
+      end,
+      desc = 'Explorer',
     },
   },
   init = function()

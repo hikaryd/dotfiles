@@ -1,4 +1,4 @@
-{ pkgs, inputs, ... }: {
+{ pkgs, inputs, lib, ... }: {
   home = {
     username = "hikary";
     homeDirectory = "/home/hikary";
@@ -6,18 +6,31 @@
   };
   imports = [ ./modules ./theme.nix ./packages.nix ];
   programs.home-manager.enable = true;
-
   nixGL = {
     packages = inputs.nixgl.packages.${pkgs.system};
     defaultWrapper = "mesa";
   };
 
   xdg.configFile."environment.d/envvars.conf".text = ''
-    PATH="$HOME/.nix-profile/bin:/nix/var/nix/profiles/default/bin:$PATH"
+    PATH="$HOME/.nix-profile/bin:/nix/var/nix/profiles/default/bin:/home/hikary/.local/nin:$PATH"
+  '';
+
+  programs.bash = {
+    enable = true;
+    bashrcExtra = ''
+      export PATH="$HOME/.nix-profile/bin:$PATH"
+    '';
+  };
+
+  home.file.".xprofile".text = ''
+    if [ -f "$HOME/.nix-profile/etc/profile.d/hm-session-vars.sh" ]; then
+      . "$HOME/.nix-profile/etc/profile.d/hm-session-vars.sh"
+    fi
   '';
 
   home.sessionPath = [ "$HOME/.nix-profile/bin" ];
   home.sessionVariables = {
+    PATH = "$HOME/.nix-profile/bin:$PATH";
     LANG = "en_US.UTF-8";
     LC_ALL = "en_US.UTF-8";
     SSH_AUTH_SOCK = "$XDG_RUNTIME_DIR/ssh-agent.socket";

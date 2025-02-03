@@ -97,19 +97,19 @@
 
     extraConfig = ''
       def --env setup_path [] {
-      let base_paths = [
-      ($env.HOME + "/.nix-profile/bin")
-      "/nix/var/nix/profiles/default/bin"
-      "/run/current-system/sw/bin"
-      "/usr/local/sbin"
-      "/usr/local/bin"
-      "/usr/bin"
-      ($env.HOME + "/.config/carapace/bin")
-      ]
-
-      $env.PATH = ($base_paths | uniq)
+        let base_paths = [
+          ($env.HOME + "/.nix-profile/bin")
+          "/nix/var/nix/profiles/default/bin"
+          "/run/current-system/sw/bin"
+          "/usr/local/sbin"
+          "/usr/local/bin"
+          "/usr/bin"
+          "/home/hikary/.local/bin"
+          ($env.HOME + "/.config/carapace/bin")
+        ]
+        let joined = ($base_paths | uniq | str join ":")
+        $env.PATH = $joined
       }
-
       setup_path
 
       $env.OPENROUTER_API_KEY = (open ($env.HOME + '/creds/open_router') | str trim)
@@ -200,3 +200,4 @@
 
   home.packages = with pkgs; [ nu_scripts zoxide ];
 }
+

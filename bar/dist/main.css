@@ -1,0 +1,837 @@
+/* ---------------------------- */
+/* Base Colors                  */
+/* ---------------------------- */
+/* Text Colors */
+/* Surface Colors */
+/* Accent Colors */
+/* Overlay Colors */
+/* Additional UI Elements */
+tooltip, tooltip label {
+  outline: none;
+  border: none;
+  box-shadow: none;
+}
+
+#date-menu #notification-column .header #clear-button:hover #clear-icon, #notification-eventbox #notification .close-button:hover #close-icon {
+  -gtk-icon-transform: scale(1.05);
+  -gtk-icon-effect: highlight;
+}
+
+.panel-button:hover {
+  background-color: #1e1e2e;
+  transition: border-color 400ms ease-in-out;
+}
+
+/* General Typography */
+#batterymenu .power-profile-title, #notification-eventbox #notification .notification-header .summary {
+  font-weight: 700;
+  font-size: 14.6px;
+}
+
+#notification-eventbox #notification .notification-body .body {
+  font-weight: 700;
+  font-size: 13px;
+}
+
+#date-menu #notification-column .header label {
+  font-weight: 400;
+  font-size: 12px;
+}
+
+#date-menu .date-column .calendar {
+  transition: 200ms;
+  border-radius: 10px;
+  color: #cdd6f4;
+  background-color: #181825;
+  border: 1px solid #313244;
+}
+
+label {
+  font-size: 1rem;
+}
+
+#panel {
+  background-color: rgba(46, 46, 46, 0.1);
+}
+#panel-inner {
+  padding: 0.6em 1.8em 0.35em 1.8em;
+  border-color: #313244;
+}
+
+.panel-box,
+.panel-button {
+  border-radius: 100px;
+  background-color: #11111b;
+}
+
+.panel-box {
+  padding: 0.1em 0.9em;
+  color: #cdd6f4;
+  font-weight: 700;
+}
+
+.panel-button {
+  padding: 0 1.25em;
+}
+.panel-button label {
+  color: #cdd6f4;
+}
+.flat {
+  border-radius: 4px;
+}
+
+.shadow {
+  border-radius: 4px;
+  box-shadow: black 0px 4px;
+}
+
+.wave1 {
+  border-bottom-left-radius: 1.3em;
+  border-top-right-radius: 1.3em;
+}
+
+.wave2 {
+  border-bottom-right-radius: 1.3em;
+  border-top-left-radius: 1.3em;
+}
+
+.popover {
+  color: #cdd6f4;
+  background-color: #11111b;
+  border-radius: 20px;
+  border: 1px solid #313244;
+}
+
+.panel-text {
+  font-weight: 700;
+  margin-left: 10px;
+}
+
+.panel-text-icon {
+  color: #cdd6f4;
+}
+
+.overlay-progress-bar {
+  color: transparent;
+  background-color: transparent;
+  border-color: #313244;
+}
+
+.overlay-icon {
+  margin: 0px 6px 0px 0px;
+}
+
+#language,
+#window,
+#date-time {
+  padding: 0.19em 0.625em;
+  font-weight: 600;
+}
+
+tooltip {
+  background-color: #11111b;
+  border-radius: 10px;
+  box-shadow: 0 0 3px 0 rgba(0, 0, 0, 0.6);
+  animation: tooltipShow 0.25s cubic-bezier(0.5, 0.25, 0, 1);
+}
+tooltip label {
+  color: #cdd6f4;
+  font-weight: normal;
+}
+
+tooltip > * {
+  padding: 0.125em 0.25em;
+}
+
+menu {
+  margin: 6px;
+  padding: 0.375em;
+  background-color: #181825;
+  background-clip: border-box;
+  border-radius: 12px;
+  border: 1px solid #313244;
+}
+
+menuitem {
+  transition: background-color 75ms cubic-bezier(0, 0, 0.2, 1);
+  min-height: 20px;
+  min-width: 40px;
+  background-clip: border-box;
+}
+menuitem arrow {
+  min-height: 16px;
+  min-width: 16px;
+  -gtk-icon-source: -gtk-icontheme("pan-end-symbolic");
+  margin-left: 8px;
+}
+menuitem separator {
+  min-height: 1px;
+  margin: 4px 0;
+  background-color: #1e1e2e;
+}
+
+menu > arrow {
+  min-height: 16px;
+  min-width: 16px;
+  padding: 0.25em;
+  color: #181825;
+}
+
+menu > arrow.top {
+  margin-top: 0;
+  border-radius: 6px;
+  -gtk-icon-source: -gtk-icontheme("pan-up-symbolic");
+}
+
+menu > arrow.bottom {
+  margin-top: 8px;
+  margin-bottom: -12px;
+  border-radius: 6px;
+  -gtk-icon-source: -gtk-icontheme("pan-down-symbolic");
+}
+
+check,
+radio {
+  min-height: 15px;
+  min-width: 15px;
+  margin: 4px;
+  padding: 0;
+  background-color: #cdd6f4;
+  border-radius: 100px;
+  transition: all 75ms cubic-bezier(0, 0, 0.2, 1), box-shadow 150ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+check {
+  border-radius: 4px;
+}
+
+check:hover,
+radio:hover {
+  box-shadow: 0 0 0 4px rgba(17, 17, 27, 0.1);
+  background-color: #a6adc8;
+}
+
+check:active,
+radio:active {
+  box-shadow: 0 0 0 4px rgba(17, 17, 27, 0.1);
+  background-color: #11111b;
+}
+
+check:checked,
+check:indeterminate,
+radio:checked,
+radio:indeterminate {
+  color: #11111b;
+  background-color: #cdd6f4;
+}
+
+check:checked {
+  -gtk-icon-source: -gtk-icontheme("checkbox");
+}
+
+check:checked:hover,
+check:indeterminate:hover,
+radio:checked:hover,
+radio:indeterminate:hover {
+  box-shadow: 0 0 0 4px rgba(205, 214, 244, 0.1);
+  background-color: #cdd6f4;
+}
+
+check:checked:active,
+check:indeterminate:active,
+radio:checked:active,
+radio:indeterminate:active {
+  box-shadow: 0 0 0 4px rgba(205, 214, 244, 0.1);
+  background-color: #cdd6f4;
+}
+
+switch {
+  transition: all 75ms cubic-bezier(0, 0, 0.2, 1);
+  margin: 4px 0;
+  border-radius: 9999px;
+  background-color: rgb(50.1315789474, 50.1315789474, 76.8684210526);
+  background-clip: padding-box;
+  font-size: 0;
+  color: transparent;
+}
+switch slider {
+  transition: all 75ms cubic-bezier(0, 0, 0.2, 1);
+  min-width: 14px;
+  min-height: 14px;
+  margin: 2px;
+  border-radius: 9999px;
+  outline: none;
+  background-color: #cdd6f4;
+  border: none;
+  color: transparent;
+}
+switch:checked {
+  background-color: #06944d;
+}
+switch:disabled {
+  opacity: 0.5;
+}
+
+@keyframes tooltipShow {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes spin {
+  to {
+    -gtk-icon-transform: rotate(1turn);
+  }
+}
+expander arrow {
+  min-width: 16px;
+  min-height: 16px;
+  -gtk-icon-source: -gtk-icontheme("pan-end-symbolic");
+  color: rgb(115.5128205128, 117.5641025641, 154.4871794872);
+}
+expander arrow:dir(rtl) {
+  -gtk-icon-source: -gtk-icontheme("pan-end-symbolic-rtl");
+}
+expander arrow:hover {
+  color: rgb(204.4358974359, 205.1794871795, 218.5641025641);
+}
+expander arrow:checked {
+  -gtk-icon-source: -gtk-icontheme("pan-down-symbolic");
+}
+
+spinner {
+  background: none;
+  opacity: 0;
+  -gtk-icon-source: -gtk-icontheme("process-working-symbolic");
+}
+
+spinner:checked {
+  opacity: 1;
+  animation: spin 1s linear infinite;
+}
+
+separator {
+  min-width: 1px;
+  min-height: 1px;
+  background-color: #313244;
+}
+
+scrollbar {
+  background-color: #cdd6f4;
+  border-radius: 10px;
+  margin-left: 8px;
+  min-width: 0.3em;
+}
+
+#corner {
+  background-color: rgba(46, 46, 46, 0.1);
+  border-radius: 0;
+}
+
+#corner-container {
+  min-width: 20px;
+  min-height: 20px;
+}
+
+#cava {
+  color: #cdd6f4;
+}
+
+/* notification widget*/
+#notification-eventbox #notification {
+  padding: 0.9rem;
+  border-radius: 1rem;
+  background-color: #181825;
+  color: #cdd6f4;
+  border: 1px solid #313244;
+  transition: border 100ms ease-in-out;
+}
+#notification-eventbox #notification .notification-header {
+  padding: 0.3125em;
+}
+#notification-eventbox #notification .notification-header .app-icon {
+  /* Notification app icon (only visible when the primary image is set) */
+  -gtk-icon-effect: none;
+  -gtk-icon-shadow: 0 1px 4px black;
+  margin: 6px;
+}
+#notification-eventbox #notification .notification-header .summary {
+  text-shadow: none;
+}
+#notification-eventbox #notification .notification-header .timestamp {
+  font-size: 12px;
+  font-weight: 700;
+  text-shadow: none;
+  margin-right: 10px;
+}
+#notification-eventbox #notification .notification-body .body {
+  background-color: transparent;
+  text-shadow: none;
+  padding: 0.3125em;
+}
+#notification-eventbox #notification .notification-body .image {
+  -gtk-icon-effect: none;
+  border-radius: 0.9375em;
+}
+#notification-eventbox #notification .close-button {
+  border-radius: 100px;
+}
+#notification-eventbox #notification .close-button:hover {
+  box-shadow: none;
+  border: none;
+  background-color: rgba(205, 214, 244, 0.2);
+  transition: background 0.15s ease-in-out;
+}
+#notification-eventbox #notification #notification-action-box button {
+  padding: 0.25em;
+  margin: 0;
+  font-weight: 600;
+  border-radius: 3rem;
+  box-shadow: none;
+  background-color: transparent;
+  transition: background 0.15s ease-in-out;
+}
+#notification-eventbox #notification #notification-action-box button.start-action {
+  margin-left: 0;
+}
+#notification-eventbox #notification #notification-action-box button.end-action {
+  margin-right: 0;
+}
+#notification-eventbox #notification #notification-action-box button:hover {
+  background-color: #1e1e2e;
+}
+#notification-eventbox #notification #notification-circular-progress-bar {
+  border: solid 0px rgb(151, 151, 177);
+  color: transparent;
+}
+#notification-eventbox #notification .critical {
+  box-shadow: inset 0 0 0.15em 0 #f38ba8;
+}
+
+/* OSD widget*/
+#osd-container {
+  background-color: rgba(0, 0, 0, 0.6);
+  padding: 0.75em 1.25em;
+  border-radius: 100px;
+  min-width: 200px;
+  margin-bottom: 100px;
+}
+#osd-container #osd-level {
+  font-weight: 600;
+  min-width: 35px;
+}
+#osd-container slider {
+  min-height: 8px;
+  border-radius: 10px;
+  background-color: transparent;
+  border: none;
+  box-shadow: 0 0 3px 0 rgba(0, 0, 0, 0.6);
+}
+#osd-container scale {
+  min-width: 150px;
+}
+#osd-container trough {
+  min-height: inherit;
+  border-radius: 10px;
+  border: none;
+  background-color: #11111b;
+}
+#osd-container highlight,
+#osd-container progress {
+  background-color: white;
+  border-radius: 10px;
+}
+
+/* overview  widget */
+#overview-window {
+  background-color: rgba(0, 0, 0, 0.9);
+  border-radius: 50px;
+  padding: 0.625em;
+}
+
+#overview-icon {
+  border-style: none;
+  margin: 5px;
+  background-color: rgba(0, 0, 0, 0.4);
+  border-color: black;
+  border-radius: 15px;
+  border-width: 2px;
+  border-style: solid;
+  padding: 0.3125em;
+}
+
+#overview-client-box,
+#overview-workspace-bg,
+#overview-frame {
+  border-radius: 10px;
+}
+
+#overview-client-box {
+  background-color: #cdd6f4;
+}
+#overview-client-box:hover {
+  background-color: rgba(205, 214, 244, 0.7);
+}
+#overview-client-box:active {
+  background-color: #cdd6f4;
+}
+
+#overview-workspace-bg {
+  background-color: #2a2a2a;
+}
+
+#overview-workspace-box {
+  padding: 0.9375em;
+}
+#overview-workspace-box label {
+  margin-top: 15px;
+  font-size: 23px;
+  font-weight: 700;
+  font-family: league spartan;
+}
+
+#date-time-button .notification-count {
+  font-weight: 700;
+  font-size: 11px;
+}
+
+/************** DATE MENU **************/
+#date-menu {
+  box-shadow: 0 0 1px 0 rgba(0, 0, 0, 0.6);
+  margin: 12pt;
+  border: 1px solid rgba(49, 50, 68, 0.05);
+  background-color: #11111b;
+  color: #cdd6f4;
+  border-radius: 24.9333333333px;
+  padding: 11.2pt;
+}
+#date-menu.horizontal > * {
+  margin: 0 6pt;
+}
+#date-menu.horizontal > *:first-child {
+  margin-left: 0;
+}
+#date-menu.horizontal > *:last-child {
+  margin-right: 0;
+}
+#date-menu.vertical > * {
+  margin: 6pt 0;
+}
+#date-menu.vertical > *:first-child {
+  margin-top: 0;
+}
+#date-menu.vertical > *:last-child {
+  margin-bottom: 0;
+}
+#date-menu #notification-column {
+  min-width: 410px;
+  min-height: 400px;
+}
+#date-menu #notification-column .header {
+  margin-bottom: 12pt;
+  margin-right: 12pt;
+}
+#date-menu #notification-column .header label {
+  padding-left: 10.5pt;
+  padding-right: 7pt;
+}
+#date-menu #notification-column .header #clear-button {
+  padding: 3.5pt 7pt;
+  border: 1px solid #313244;
+  border-radius: 10px;
+  background-color: #1e1e2e;
+  margin-right: 5px;
+  border-width: 2px;
+}
+#date-menu #notification-column .header #clear-button label {
+  padding-left: 5px;
+}
+#date-menu #notification-column .header #clear-button:hover {
+  background-color: #181825;
+}
+#date-menu #notification-column .notification-scrollable .notification-list {
+  margin-right: 12pt;
+}
+#date-menu #notification-column .notification-scrollable .placeholder image {
+  font-size: 7em;
+  margin-bottom: 10px;
+}
+#date-menu #notification-column .notification-scrollable .placeholder label {
+  font-size: 1em;
+}
+#date-menu separator {
+  background-color: rgba(70.358974359, 71.7948717949, 97.641025641, 0.05);
+  border-radius: 10px;
+  margin-right: 12pt;
+}
+#date-menu .date-column .clock-box {
+  padding: 7pt;
+}
+#date-menu .date-column .clock-box .clock {
+  font-size: 4.5em;
+}
+#date-menu .date-column .clock-box .uptime {
+  color: rgba(205, 214, 244, 0.8);
+}
+#date-menu .date-column .calendar {
+  background-color: #181825;
+  padding: 14pt 14pt 0;
+}
+#date-menu .date-column .calendar calendar {
+  all: unset;
+  font-size: 0.98em;
+  padding: 0.28em;
+}
+#date-menu .date-column .calendar calendar.button {
+  transition: 200ms;
+  border-radius: 10px;
+  color: #cdd6f4;
+}
+#date-menu .date-column .calendar calendar:hover {
+  color: #94e2d5;
+}
+#date-menu .date-column .calendar calendar:selected {
+  box-shadow: inset 0 -5px 0 0 rgba(166, 173, 200, 0.5), inset 0 0 0 1px #a6adc8;
+  border-radius: 6px;
+}
+#date-menu .date-column .calendar calendar.header {
+  background-color: transparent;
+  border: none;
+  color: #89b4fa;
+}
+#date-menu .date-column .calendar calendar.highlight {
+  background-color: transparent;
+  color: #94e2d5;
+}
+#date-menu .date-column .calendar calendar:indeterminate {
+  color: rgba(205, 214, 244, 0.1);
+}
+
+/* system tray widget*/
+#system-tray {
+  padding: 0.125em 0.25em;
+  color: #cdd6f4;
+}
+#system-tray > button {
+  margin: 0 0.1em;
+  padding: 0 0.15em;
+  border-radius: 100px;
+}
+#system-tray > button:hover {
+  background-color: #313244;
+}
+#system-tray > button:active {
+  background-color: #cdd6f4;
+}
+
+#system-tray-menu > menuitem menu,
+#system-tray-menu {
+  background-color: #313244;
+  border-radius: 1em;
+  padding: 0.625em;
+  min-width: 100px;
+}
+
+#system-tray-menu > menuitem menu > menuitem,
+#system-tray-menu > menuitem {
+  margin: 5px 0px;
+  background-color: #313244;
+  padding: 0.3em 0.5em;
+  border-radius: 10px;
+}
+
+#system-tray-menu > menuitem menu > menuitem:disabled,
+#system-tray-menu > menuitem:disabled {
+  background-color: transparent;
+  color: #9399b2;
+}
+
+#system-tray-menu > menuitem menu > menuitem:hover,
+#system-tray-menu > menuitem:hover,
+#submenu-button:hover {
+  background-color: #45475a;
+  color: #cba6f7;
+}
+
+/************** Battery MENU **************/
+#batterymenu {
+  box-shadow: 0 0 1px 0 rgba(0, 0, 0, 0.6);
+  margin: 12pt;
+  border: 1px solid rgba(49, 50, 68, 0.05);
+  background-color: #11111b;
+  color: #cdd6f4;
+  border-radius: 10px;
+  padding: 11.2pt;
+  min-width: 12em;
+}
+#batterymenu.horizontal > * {
+  margin: 0 6pt;
+}
+#batterymenu.horizontal > *:first-child {
+  margin-left: 0;
+}
+#batterymenu.horizontal > *:last-child {
+  margin-right: 0;
+}
+#batterymenu.vertical > * {
+  margin: 6pt 0;
+}
+#batterymenu.vertical > *:first-child {
+  margin-top: 0;
+}
+#batterymenu.vertical > *:last-child {
+  margin-bottom: 0;
+}
+#batterymenu .power-profile-box {
+  padding-left: 0.625em;
+  padding-right: 0.625em;
+  color: #cdd6f4;
+  font-weight: 500;
+}
+#batterymenu .active {
+  color: rgb(170.1917525773, 109.8474226804, 241.9525773196);
+}
+#batterymenu .power-profile-button:hover {
+  color: #cba6f7;
+}
+/** taskbar widget **/
+#taskbar {
+  font-style: normal;
+  color: #cdd6f4;
+  background-color: #11111b;
+  padding-left: 0.95em;
+  padding-right: 0.95em;
+}
+#taskbar > button {
+  padding: 0px 0.125em;
+  margin: 4px 0px;
+  border: 0px;
+}
+#taskbar > button:last-child {
+  margin-right: 0px;
+}
+
+.weather-box {
+  box-shadow: 0 0 1px 0 rgba(0, 0, 0, 0.6);
+  margin: 12pt;
+  border: 1px solid rgba(49, 50, 68, 0.05);
+  background-color: #11111b;
+  color: #cdd6f4;
+  border-radius: 24.9333333333px;
+  padding: 11.2pt;
+}
+.weather-box .weather-header-box {
+  font-size: 11pt;
+  color: white;
+  font-weight: 500;
+}
+.weather-box .weather-header-box .temperature {
+  font-size: 2em;
+}
+.weather-box .weather-header-box .feels-like {
+  font-size: 0.79em;
+}
+.weather-box .weather-header-box .location {
+  font-size: 0.9em;
+  font-weight: 600;
+  margin-top: 10px;
+}
+.weather-box .weather-header-box #weather-details {
+  margin: 8px 50px;
+}
+.weather-box .weather-header-box #weather-details .windspeed {
+  font-size: 1.1em;
+}
+.weather-box .weather-header-box #weather-details .humidity {
+  font-size: 1em;
+}
+.weather-box #weather-separator {
+  margin-top: 10px;
+  margin-bottom: 10px;
+  min-height: 2px;
+}
+.weather-box #weather-grid .weather-forecast-time {
+  font-weight: 500;
+  font-size: 10pt;
+  padding-top: 7pt;
+  padding-bottom: 7pt;
+}
+.weather-box #weather-grid .weather-forecast-icon {
+  margin-bottom: 4px;
+}
+.weather-box #weather-grid .weather-forecast-temp {
+  font-feature-settings: "tnum";
+  font-weight: 700;
+}
+
+.weather-bar-icon {
+  font-weight: 700;
+}
+
+/** workspace switcher widget */
+#workspaces {
+  padding: 0.19em 1em;
+  font-weight: 700;
+}
+#workspaces > button {
+  padding: 0.125em 0.5em;
+  transition: padding 0.05s steps(8);
+  border-radius: 100px;
+}
+#workspaces > button:hover {
+  background-color: #f5c2e7;
+  transition: all 0.4s cubic-bezier(0.55, -0.68, 0.48, 1.682);
+}
+#workspaces > button:hover label {
+  color: #11111b;
+}
+#workspaces > button.active {
+  font-weight: 600;
+  padding-left: 0.875em;
+  padding-right: 0.875em;
+  background-color: #a6adc8;
+  min-width: 1.4rem;
+  transition: all 0.4s cubic-bezier(0.55, -0.68, 0.48, 1.682);
+}
+#workspaces > button.active > label {
+  color: #11111b;
+}
+
+#power-control-button {
+  padding: 2.5em 7.5em;
+  border-radius: 0;
+  border-color: #313244;
+  text-decoration-color: #cdd6f4;
+  color: #cdd6f4;
+  background-color: #1e1e2e;
+  border-style: solid;
+  border-width: 1px;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 25%;
+}
+#power-control-button label {
+  margin-top: 4.5em;
+}
+#power-control-button:focus, #power-control-button:active, #power-control-button:hover {
+  background-color: #3700b3;
+  outline-style: none;
+}
+
+/* unset so we can style everything from the ground up. */
+* {
+  all: unset;
+  font-size: 16px;
+  font-family: "JetBrainsMono Nerd Font Propo", monospace;
+}
+
+.cover {
+  min-height: 0.8em;
+  min-width: 3em;
+  border-radius: 10px;
+  background-position: center;
+  background-size: contain;
+  margin: 3px 10px 3px 0px;
+}

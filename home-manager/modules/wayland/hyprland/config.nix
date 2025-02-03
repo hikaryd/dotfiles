@@ -1,4 +1,12 @@
 { inputs, config, pkgs, ... }: {
+  home.file.".local/share/wayland-sessions/hyprland.desktop".text = ''
+    [Desktop Entry]
+    Name=Hyprland
+    Comment=A dynamic tiling Wayland compositor
+    Exec=${inputs.hyprland.packages.${pkgs.stdenv.hostPlatform.system}.hyprland}
+    Type=Application
+    Keywords=tiling;compositor;wayland;
+  '';
   wayland.windowManager.hyprland = {
     enable = true;
     package = config.lib.nixGL.wrap
@@ -66,6 +74,12 @@
       };
 
       xwayland = { force_zero_scaling = true; };
+      layerrule = [
+        "blur , fabric"
+        "ignorezero, fabric"
+        "blur ,gtk-layer-shell"
+        "ignorezero ,gtk-layer-shell"
+      ];
 
       windowrulev2 = [
         "workspace name:dev-terminal, class:^(ghostty)$"
@@ -74,6 +88,8 @@
         "workspace name:terminal, class:^(ghostty)$"
         "workspace name:database, class:^(DBeaver)$"
         "workspace name:other, class:^(zoom)$"
+        "workspace name:other, class:^(zoom-us)$"
+        "workspace name:other, class:^(Zoom Workplace)$"
         "workspace name:other, class:^(codium)$"
 
         "workspace special:telegram, class:^(org.telegram.desktop)$"
@@ -107,6 +123,7 @@
         "opacity 0.80 0.80, class:^(org.freedesktop.impl.portal.desktop.hyprland)$"
         "opacity 0.9 0.9,class:^(neovide)$"
         "opacity 0.9 0.9,class:^(zen)$"
+        "animation off, class:^(flameshot)$"
       ];
 
       input = {
@@ -160,13 +177,19 @@
 
       animations = {
         enabled = true;
-        bezier = [ "linear, 0,0,1,1" "swirl, 0.04, 1, 0.2, 1.2" ];
+        bezier = [
+          "overshot, 0.05, 0.9, 0.1, 1.05"
+          "smoothOut, 0.36, 0, 0.66, -0.56"
+          "smoothIn, 0.25, 1, 0.5, 1"
+        ];
         animation = [
-          "windows, 1, 4, swirl, popin 0%"
-          "windowsOut, 1, 3, linear, popin 0%"
-          "fade, 1, 2, linear"
-          "workspaces, 1, 1, linear"
-          "specialWorkspace, 1, 5, swirl, slidefadevert -50%"
+          "windows, 1, 3, overshot, slide"
+          "windowsOut, 1, 3, smoothOut, slide"
+          "windowsMove, 1, 3, default"
+          "border, 1, 3, default"
+          "fade, 1, 3, smoothIn"
+          "fadeDim, 1, 3, smoothIn"
+          "workspaces, 1, 3, default"
         ];
       };
 
@@ -290,7 +313,10 @@
       exec-once = [
         "${pkgs.polkit_gnome}/libexec/polkit-gnome-authentication-agent-1"
         "nekoray"
+        "nm-applet"
+        "blueman-applet"
         "dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP"
+        "${../../../../bar/start.sh}"
         "${../../../../scripts/xdg-portal.sh}"
         "easyeffects"
         "kitty --class pulsemixer -- pulsemixer"

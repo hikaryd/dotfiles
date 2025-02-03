@@ -1,13 +1,13 @@
-{ pkgs, ... }: {
-  imports = [
-    ./niri
-    ./hyprland
-    ./anyrun
-    ./hyprpanel.nix
-    ./hypridle.nix
-    ./hyprpaper.nix
-    ./hyprlock.nix
-  ];
+{ pkgs, config, ... }: {
+  imports = [ ./hyprland ./anyrun ./hyprpanel.nix ./tools.nix ];
 
-  home.packages = with pkgs; [ glib wlroots xwayland libinput ];
+  home.packages = with pkgs; [
+    glib
+    wlroots
+    xwayland
+    libinput
+    (config.lib.nixGL.wrap xdg-desktop-portal)
+    (config.lib.nixGL.wrap xdg-desktop-portal-wlr)
+    (config.lib.nixGL.wrap xdg-desktop-portal-gtk)
+  ];
 }
