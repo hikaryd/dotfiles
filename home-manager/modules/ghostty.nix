@@ -5,7 +5,7 @@
     executable = true;
     text = ''
       #!/usr/bin/env bash
-      export LANG="en_US.UTF-8" 
+      export LANG="en_US.UTF-8"
       export LC_CTYPE="en_US.UTF-8"
 
       SESSION_NAME="ghostty"
@@ -25,22 +25,22 @@
   };
 
   xdg.configFile."ghostty/config".text = ''
-    # Font
+    # Настройки шрифта
     font-family = "Hack"
     font-size = 10
     font-thicken = true
     term = "xterm-256color"
-
     bold-is-bright = true
     adjust-box-thickness = 1
+
+    # Запуск команды и интеграция с оболочкой
     command = ~/.config/ghostty/tmux-session.sh
     shell-integration = none
 
-    # Theme
+    # Тема и визуальное оформление
     # theme = "catppuccin-mocha"
     theme = "iTerm2 Pastel Dark Background"
     background-opacity = 0.66
-
     background-blur-radius = 20
 
     cursor-style = block
@@ -63,5 +63,8 @@
     gtk-titlebar = false
     gtk-single-instance = true
     gtk-wide-tabs = false
+
+    scrollback-limit = 1000000
+    custom-shader-animation = false
   '';
 }

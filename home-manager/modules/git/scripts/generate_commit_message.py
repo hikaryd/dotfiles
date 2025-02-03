@@ -147,7 +147,7 @@ def generate_commit_message_openrouter(diff, api_key):
             }
         ],
         # 'model': 'deepseek/deepseek-chat',
-        'model': 'minimax/minimax-01',
+        'model': 'qwen/qwen-turbo',
     }
 
     response = make_request(

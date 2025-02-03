@@ -2,6 +2,7 @@
   description = "Hikary's system configuration";
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
+    poetry2nix.url = "github:nix-community/poetry2nix";
     catppuccin.url = "github:catppuccin/nix";
     stylix.url = "github:danth/stylix";
     zen-browser.url = "github:0xc000022070/zen-browser-flake";

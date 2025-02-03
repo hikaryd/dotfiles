@@ -1,0 +1,324 @@
+@use "sass:color";
+
+@use "mixins.scss";
+@use "functions.scss";
+@use "../theme.scss";
+@use "../variable.scss";
+
+label {
+  font-size: 1rem;
+}
+
+#panel {
+  background-color: theme.$bar-background;
+
+  &-inner {
+    padding: 0.6em 1.8em 0.35em 1.8em;
+    border-color: theme.$surface-disabled;
+  }
+}
+
+.panel-box,
+.panel-button {
+  border-radius: variable.$radius-large;
+  background-color: theme.$background-dark;
+}
+
+.panel-box {
+  padding: 0.1em 0.9em;
+  color: theme.$text-main;
+  font-weight: 700;
+}
+
+.panel-button {
+  padding: 0 1.25em;
+
+  label {
+    color: theme.$text-main;
+  }
+
+  &:hover {
+    @extend %widget_hover;
+  }
+}
+
+.flat {
+  border-radius: 4px;
+}
+
+.shadow {
+  border-radius: 4px;
+  box-shadow: darken($color: theme.$background-dark, $amount: 15%) 0px 4px;
+}
+
+.wave1 {
+  border-bottom-left-radius: 1.3em;
+  border-top-right-radius: 1.3em;
+}
+
+.wave2 {
+  border-bottom-right-radius: 1.3em;
+  border-top-left-radius: 1.3em;
+}
+
+.popover {
+  color: theme.$text-main;
+  background-color: theme.$background-dark;
+  border-radius: 20px;
+  border: variable.$border-width solid theme.$surface-disabled;
+}
+
+.panel-text {
+  font-weight: 700;
+  margin-left: 10px;
+}
+
+.panel-text-icon {
+  color: theme.$text-main;
+}
+
+.overlay-progress-bar {
+  color: transparent;
+  background-color: transparent;
+  border-color: theme.$surface-disabled;
+}
+
+.overlay-icon {
+  margin: 0px 6px 0px 0px;
+}
+
+#language,
+#window,
+#date-time {
+  padding: 0.19em 0.625em;
+  font-weight: 600;
+}
+
+tooltip {
+  @extend %unset;
+  background-color: theme.$background-dark;
+  border-radius: variable.$radius;
+  box-shadow: 0 0 3px 0 theme.$shadow-color;
+  animation: tooltipShow 0.25s cubic-bezier(0.5, 0.25, 0, 1);
+
+  label {
+    @extend %unset;
+    color: theme.$text-main;
+    font-weight: normal;
+  }
+}
+
+tooltip > * {
+  padding: 0.125em 0.25em;
+}
+
+menu {
+  margin: 6px;
+  padding: functions.toEm(6);
+  background-color: theme.$background-alt;
+  background-clip: border-box;
+  border-radius: 12px;
+  border: variable.$border;
+}
+
+menuitem {
+  transition: background-color 75ms cubic-bezier(0, 0, 0.2, 1);
+  min-height: 20px;
+  min-width: 40px;
+  background-clip: border-box;
+
+  arrow {
+    min-height: 16px;
+    min-width: 16px;
+    -gtk-icon-source: -gtk-icontheme("pan-end-symbolic");
+    margin-left: 8px;
+  }
+
+  separator {
+    min-height: 1px;
+    margin: 4px 0;
+    background-color: theme.$background;
+  }
+}
+
+menu > arrow {
+  min-height: 16px;
+  min-width: 16px;
+  padding: functions.toEm(4);
+  color: theme.$background-alt;
+}
+
+menu > arrow.top {
+  margin-top: 0;
+  border-radius: 6px;
+  -gtk-icon-source: -gtk-icontheme("pan-up-symbolic");
+}
+
+menu > arrow.bottom {
+  margin-top: 8px;
+  margin-bottom: -12px;
+  border-radius: 6px;
+  -gtk-icon-source: -gtk-icontheme("pan-down-symbolic");
+}
+
+check,
+radio {
+  min-height: 15px;
+  min-width: 15px;
+  margin: 4px;
+  padding: 0;
+  background-color: theme.$text-main;
+  border-radius: variable.$radius-large;
+  transition:
+    all 75ms cubic-bezier(0, 0, 0.2, 1),
+    box-shadow 150ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+check {
+  border-radius: 4px;
+}
+
+check:hover,
+radio:hover {
+  box-shadow: 0 0 0 4px color.adjust(theme.$background-dark, $alpha: -0.9);
+  background-color: theme.$text-muted;
+}
+
+check:active,
+radio:active {
+  box-shadow: 0 0 0 4px color.adjust(theme.$background-dark, $alpha: -0.9);
+  background-color: theme.$background-dark;
+}
+
+check:checked,
+check:indeterminate,
+radio:checked,
+radio:indeterminate {
+  color: theme.$background-dark;
+  background-color: theme.$text-main;
+}
+
+check:checked {
+  -gtk-icon-source: -gtk-icontheme("checkbox");
+}
+
+check:checked:hover,
+check:indeterminate:hover,
+radio:checked:hover,
+radio:indeterminate:hover {
+  box-shadow: 0 0 0 4px color.adjust(theme.$text-main, $alpha: -0.9);
+  background-color: theme.$text-main;
+}
+
+check:checked:active,
+check:indeterminate:active,
+radio:checked:active,
+radio:indeterminate:active {
+  box-shadow: 0 0 0 4px color.adjust(theme.$text-main, $alpha: -0.9);
+  background-color: theme.$text-main;
+}
+
+switch {
+  transition: all 75ms cubic-bezier(0, 0, 0.2, 1);
+  margin: 4px 0;
+  border-radius: 9999px;
+  background-color: lighten(theme.$background, 10%);
+  background-clip: padding-box;
+  font-size: 0;
+  color: transparent;
+
+  slider {
+    transition: all 75ms cubic-bezier(0, 0, 0.2, 1);
+    min-width: 14px;
+    min-height: 14px;
+    margin: 2px;
+    border-radius: 9999px;
+    outline: none;
+    background-color: theme.$text-main;
+    border: none;
+    color: transparent;
+  }
+
+  &:checked {
+    background-color: #06944d;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+  }
+}
+
+@keyframes tooltipShow {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes spin {
+  to {
+    -gtk-icon-transform: rotate(1turn);
+  }
+}
+
+expander {
+  arrow {
+    min-width: 16px;
+    min-height: 16px;
+    -gtk-icon-source: -gtk-icontheme("pan-end-symbolic");
+    color: color.adjust(variable.$border-color, $lightness: 30%);
+
+    &:dir(rtl) {
+      -gtk-icon-source: -gtk-icontheme("pan-end-symbolic-rtl");
+    }
+
+    &:hover {
+      color: lighten($color: variable.$border-color, $amount: 60);
+    }
+
+    &:checked {
+      -gtk-icon-source: -gtk-icontheme("pan-down-symbolic");
+    }
+  }
+}
+
+spinner {
+  background: none;
+  opacity: 0;
+  -gtk-icon-source: -gtk-icontheme("process-working-symbolic");
+}
+
+spinner:checked {
+  opacity: 1;
+  animation: spin 1s linear infinite;
+}
+
+separator {
+  min-width: 1px;
+  min-height: 1px;
+  background-color: theme.$surface-disabled;
+}
+
+scrollbar {
+  background-color: theme.$text-main;
+  border-radius: variable.$radius;
+  margin-left: 8px;
+  min-width: 0.3em;
+}
+
+#corner {
+  background-color: theme.$bar-background;
+  border-radius: 0;
+}
+
+#corner-container {
+  min-width: 20px;
+  min-height: 20px;
+}
+
+#cava {
+  color: theme.$text-main;
+}

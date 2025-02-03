@@ -1,12 +1,13 @@
 local M = {}
 
+M.preserved_win_sizes = {}
+
 function M.setup()
   local autocmd = vim.api.nvim_create_autocmd
   local augroup = vim.api.nvim_create_augroup
 
   local general = augroup('General Settings', { clear = true })
 
-  -- Highlight on yank
   autocmd('TextYankPost', {
     group = general,
     callback = function()
@@ -14,15 +15,40 @@ function M.setup()
     end,
   })
 
-  -- Resize splits if window got resized
-  autocmd({ 'VimResized' }, {
+  local function preserve_window_sizes()
+    local win_sizes = {}
+    for _, win in ipairs(vim.api.nvim_list_wins()) do
+      win_sizes[win] = {
+        height = vim.api.nvim_win_get_height(win),
+        width = vim.api.nvim_win_get_width(win),
+      }
+    end
+    M.preserved_win_sizes = win_sizes
+  end
+
+  local function restore_window_sizes()
+    if not M.preserved_win_sizes then
+      return
+    end
+    for _, win in ipairs(vim.api.nvim_list_wins()) do
+      local size = M.preserved_win_sizes[win]
+      if size then
+        vim.api.nvim_win_set_height(win, size.height)
+        vim.api.nvim_win_set_width(win, size.width)
+      end
+    end
+  end
+
+  autocmd('VimResized', {
     group = general,
     callback = function()
-      vim.cmd 'tabdo wincmd ='
+      preserve_window_sizes()
+      vim.defer_fn(function()
+        restore_window_sizes()
+      end, 50)
     end,
   })
 
-  -- Close some filetypes with <q>
   autocmd('FileType', {
     group = general,
     pattern = {
@@ -42,7 +68,6 @@ function M.setup()
     end,
   })
 
-  -- Set wrap and spell in markdown and gitcommit
   autocmd('FileType', {
     group = general,
     pattern = { 'gitcommit', 'markdown' },
