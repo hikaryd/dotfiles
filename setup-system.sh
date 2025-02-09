@@ -80,7 +80,7 @@ install_paru() {
 	fi
 
 	log "INFO" "Установка зависимостей для paru..."
-	sudo pacman -S --needed --noconfirm git base-devel power-profiles-daemon
+	sudo pacman -S --needed --noconfirm git base-devel power-profiles-daemon wl-clipboard brightnessctl
 	check_error "Ошибка при установке зависимостей paru"
 
 	local temp_dir

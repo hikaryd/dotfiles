@@ -24,6 +24,9 @@
     uv
     libnotify
     postgresql_16
+    tabiew
+    doh-proxy-rust
+    repomix
 
     p7zip
     lrzip
@@ -37,11 +40,14 @@
     xdg-user-dirs
 
     telegram-desktop
+    ytmdesktop
+    proxychains-ng
+    ayugram-desktop
     sing-geosite
-    youtube-music
-    dbeaver-bin
 
     (config.lib.nixGL.wrap inputs.zen-browser.packages.${system}.default)
+    (config.lib.nixGL.wrap beekeeper-studio)
+    (config.lib.nixGL.wrap super-productivity)
 
     nix-prefetch-scripts
     luajitPackages.luarocks

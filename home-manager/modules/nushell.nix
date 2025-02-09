@@ -43,6 +43,7 @@
       parse_dir =
         "repomix --ignore '*.lock,docs/*,.git/*,.idea/*,.vscode/*,__pycache__'";
       vs = "overlay use .venv/bin/activate.nu";
+      proxy = "mgraftcp --socks5 127.0.0.1:2080";
 
       # Docker
       dc = "docker compose";

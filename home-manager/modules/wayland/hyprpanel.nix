@@ -1,6 +1,6 @@
 { ... }: {
   programs.hyprpanel = {
-    enable = true;
+    enable = false;
     hyprland.enable = true;
     overwrite.enable = true;
 

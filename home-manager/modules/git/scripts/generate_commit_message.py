@@ -147,7 +147,7 @@ def generate_commit_message_openrouter(diff, api_key):
             }
         ],
         # 'model': 'deepseek/deepseek-chat',
-        'model': 'qwen/qwen-turbo',
+        'model': 'google/gemini-2.0-flash-001',
     }
 
     response = make_request(
