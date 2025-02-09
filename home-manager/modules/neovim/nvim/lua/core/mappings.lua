@@ -12,11 +12,11 @@ map('n', '<Esc>', '<cmd>noh<CR>', 'Clear search highlights')
 map('n', 'v$', 'v$h')
 
 -- File Explorer
--- map('n', '<space>e', ':Yazi<CR>')
+map('n', '<space>e', ':Yazi<CR>')
 
 map('n', '<leader>b', ':DBUIToggle<CR>')
 
-map('n', '<leader>tt', ':BufTermEnter<CR>')
+-- map('n', '<leader>tt', ':BufTermEnter<CR>')
 
 --Gitlab
 map('n', '<leader>gcm', ':lua require("gitlab").choose_merge_request()<CR>')

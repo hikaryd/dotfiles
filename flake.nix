@@ -2,7 +2,6 @@
   description = "Hikary's system configuration";
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
-    poetry2nix.url = "github:nix-community/poetry2nix";
     catppuccin.url = "github:catppuccin/nix";
     stylix.url = "github:danth/stylix";
     zen-browser.url = "github:0xc000022070/zen-browser-flake";
@@ -25,10 +24,6 @@
       url = "github:Jas-SinghFSU/HyprPanel";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    niri = {
-      url = "github:sodiboo/niri-flake";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
   };
   outputs =
     { nixpkgs, home-manager, catppuccin, stylix, hyprpanel, nixgl, ... }@inputs:
@@ -49,7 +44,7 @@
           ./home-manager/home.nix
           stylix.homeManagerModules.stylix
           catppuccin.homeManagerModules.catppuccin
-          inputs.hyprpanel.homeManagerModules.hyprpanel
+          # inputs.hyprpanel.homeManagerModules.hyprpanel
         ];
       };
     };

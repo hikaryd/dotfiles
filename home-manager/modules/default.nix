@@ -7,8 +7,7 @@
     ./neovim
     ./opentabletdriver
     ./yazi.nix
-    # ./windsurf.nix
-    ./vscodium.nix
+    ./windsurf.nix
     ./tmux.nix
     ./starship.nix
     ./kitty.nix

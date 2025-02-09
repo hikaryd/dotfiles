@@ -87,15 +87,17 @@
         "workspace name:conf-terminal, class:^(ghostty)$"
         "workspace name:terminal, class:^(ghostty)$"
         "workspace name:database, class:^(DBeaver)$"
+        "workspace name:database, class:^(beekeeper-studio)$"
         "workspace name:other, class:^(zoom)$"
         "workspace name:other, class:^(zoom-us)$"
         "workspace name:other, class:^(Zoom Workplace)$"
         "workspace name:other, class:^(codium)$"
 
         "workspace special:telegram, class:^(org.telegram.desktop)$"
+        "workspace special:telegram, class:^(com.ayugram.desktop)$"
         "workspace special:audio, class:^(pulsemixer)$"
         "workspace special:audio, class:^(com.github.wwmm.easyeffects)$"
-        "workspace special:music, class:^(YouTube Music)$"
+        "workspace special:music, class:^(YouTube Music Desktop App)$"
         "workspace special:vpn, class:^(nekoray)$"
 
         "immediate, class:^(mpv)$"
@@ -103,6 +105,7 @@
         "float,title:^(Google Chrome)(.*)$"
         "float,title:^(Untitled - Google Chrome)(.*)$"
         "float, class:^(org.telegram.desktop)$"
+        "float, class:^(com.ayugram.desktop)$"
         "float, class:^(com.github.wwmm.easyeffects)$"
         "float, class:^(pulsemixer)$"
         "float, class:^(nekoray)$"
@@ -113,8 +116,7 @@
         "float, class:^(org.kde.polkit-kde-authentication-agent-1)$"
         "float, class:^(bluetooth-manager)$"
         "float, class:^(iwgtk)$"
-        "float, class:^(com.github.th_ch.youtube_music)$"
-        "float, class:^(org.telegram.desktop)$"
+        "float, class:^(YouTube Music Desktop App)$"
         "float, class:^(com.github.wwmm.easyeffects)$"
         "float, class:^(pulsemixer)$"
         "float, class:^(nekoray)$"
@@ -194,7 +196,7 @@
       };
 
       decoration = {
-        rounding = 0;
+        rounding = 5;
         shadow = {
           enabled = true;
           scale = 0.3;
@@ -229,15 +231,16 @@
         "name:dev-terminal, monitor:HDMI-A-1"
         "name:conf-terminal, monitor:HDMI-A-1, on-created-empty:ghostty"
         "name:terminal, monitor:HDMI-A-1, on-created-empty:ghostty, default:true"
-        "name:database, monitor:HDMI-A-1, on-created-empty:dbeaver, default:true"
+        "name:database, monitor:HDMI-A-1, on-created-empty:beekeeper-studio, default:true"
         "name:other, monitor:HDMI-A-1, default:true"
         "special:xreal,monitor:xreal"
 
         # Специальные рабочие пространства
-        "special:telegram, on-created-empty:telegram-desktop, default:true"
+        # "special:telegram, on-created-empty:telegram-desktop, default:true"
+        "special:telegram, on-created-empty:ayugram-desktop, default:true"
         "special:misc, default:true"
         "special:audio, on-created-empty:audio, default:true"
-        "special:music, on-created-empty:youtube-music, default:true"
+        "special:music, default:true"
         "special:vpn, on-created-empty:nekoray, default:true"
         "special:browser2, on-created-empty:zen"
       ];
@@ -302,7 +305,6 @@
         "$base, Return, exec, ghostty"
         "$launch, S, exec, ${../../../../scripts/snapshot.sh}"
         "$base, A, exec, anyrun"
-        "$launch, B, exec, GDK_BACKEND=x11 dbeaver"
       ];
 
       bindm = [
@@ -311,14 +313,17 @@
       ];
 
       exec-once = [
+        "kanshi"
         "${pkgs.polkit_gnome}/libexec/polkit-gnome-authentication-agent-1"
+        "mgraftcp --socks5 127.0.0.1:2080 ytmdesktop"
         "nekoray"
         "nm-applet"
         "blueman-applet"
         "dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP"
         "${../../../../bar/start.sh}"
         "${../../../../scripts/xdg-portal.sh}"
-        "easyeffects"
+        "easyeffects --gapplication-service"
+        "easyeffects -b 1"
         "kitty --class pulsemixer -- pulsemixer"
         "blueman-applet"
         "wl-paste -t text -w xclip -selection clipboard --watch cliphist store"
