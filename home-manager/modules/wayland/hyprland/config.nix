@@ -74,12 +74,7 @@
       };
 
       xwayland = { force_zero_scaling = true; };
-      layerrule = [
-        "blur , fabric"
-        "ignorezero, fabric"
-        "blur ,gtk-layer-shell"
-        "ignorezero ,gtk-layer-shell"
-      ];
+      layerrule = [ "blur ,gtk-layer-shell" "ignorezero ,gtk-layer-shell" ];
 
       windowrulev2 = [
         "workspace name:dev-terminal, class:^(ghostty)$"
@@ -196,25 +191,19 @@
       };
 
       decoration = {
-        rounding = 5;
+        rounding = 14;
         shadow = {
           enabled = true;
-          scale = 0.3;
+          range = 10;
+          render_power = 2;
         };
         blur = {
           enabled = true;
-          xray = true;
-          size = 4;
-          passes = 5;
-          ignore_opacity = true;
-          brightness = 1.4;
-          vibrancy = 0.3;
-          vibrancy_darkness = 0.1;
-          special = true;
-          popups = true;
-          noise = 5.0e-2;
+          size = 5;
+          passes = 3;
           new_optimizations = true;
           contrast = 1;
+          brightness = 1;
         };
         active_opacity = 1;
         inactive_opacity = 1;
@@ -320,7 +309,6 @@
         "nm-applet"
         "blueman-applet"
         "dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP"
-        "${../../../../bar/start.sh}"
         "${../../../../scripts/xdg-portal.sh}"
         "easyeffects --gapplication-service"
         "easyeffects -b 1"
