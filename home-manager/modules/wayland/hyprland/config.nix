@@ -7,19 +7,22 @@
     Type=Application
     Keywords=tiling;compositor;wayland;
   '';
+  home.file.".config/hypr/hyprlock.conf".text =
+    builtins.readFile ../bar/config/hypr/hyprlock.conf;
+  home.file.".config/hypr/hypridle.conf".text =
+    builtins.readFile ../bar/config/hypr/hypridle.conf;
+
   wayland.windowManager.hyprland = {
     enable = true;
     package = config.lib.nixGL.wrap
       inputs.hyprland.packages.${pkgs.stdenv.hostPlatform.system}.hyprland;
     systemd.enable = true;
     xwayland.enable = true;
-
     settings = {
+      "$fabricSend" = "fabric-cli exec ax-shell";
       monitor = [
         "eDP-1, 2560x1600@120, -2560x0, 1.6"
         "HDMI-A-1, 2560x1440@120, 0x0, 1.25"
-        # "HDMI-A-1, 1920x1080@120, 0x0, 1.25"
-        # ", preferred, auto, 1, mirror, eDP-1"
       ];
 
       general = {
@@ -120,6 +123,7 @@
         "opacity 0.80 0.80, class:^(org.freedesktop.impl.portal.desktop.hyprland)$"
         "opacity 0.9 0.9,class:^(neovide)$"
         "opacity 0.9 0.9,class:^(zen)$"
+        "opacity 0.9 0.9,class:^(google-chrome)$"
         "animation off, class:^(flameshot)$"
       ];
 
@@ -174,19 +178,12 @@
 
       animations = {
         enabled = true;
-        bezier = [
-          "overshot, 0.05, 0.9, 0.1, 1.05"
-          "smoothOut, 0.36, 0, 0.66, -0.56"
-          "smoothIn, 0.25, 1, 0.5, 1"
-        ];
+        bezier = [ "myBezier, .5, .25, 0, 1" ];
         animation = [
-          "windows, 1, 3, overshot, slide"
-          "windowsOut, 1, 3, smoothOut, slide"
-          "windowsMove, 1, 3, default"
-          "border, 1, 3, default"
-          "fade, 1, 3, smoothIn"
-          "fadeDim, 1, 3, smoothIn"
-          "workspaces, 1, 3, default"
+          "windows, 1, 2.5, myBezier, popin 80%"
+          "border, 1, 2.5, myBezier"
+          "fade, 1, 2.5, myBezier"
+          "workspaces, 1, 2.5, myBezier, slidefade 20%"
         ];
       };
 
@@ -216,7 +213,7 @@
 
       workspace = [
         # Основные рабочие пространства
-        "name:browser, monitor:HDMI-A-1, on-created-empty:zen"
+        "name:browser, monitor:HDMI-A-1, on-created-empty:google-chrome-stable"
         "name:dev-terminal, monitor:HDMI-A-1"
         "name:conf-terminal, monitor:HDMI-A-1, on-created-empty:ghostty"
         "name:terminal, monitor:HDMI-A-1, on-created-empty:ghostty, default:true"
@@ -231,7 +228,7 @@
         "special:audio, on-created-empty:audio, default:true"
         "special:music, default:true"
         "special:vpn, on-created-empty:nekoray, default:true"
-        "special:browser2, on-created-empty:zen"
+        "special:browser2, on-created-empty:google-chrome-stable"
       ];
 
       "$mainMod" = "SUPER";
@@ -274,9 +271,6 @@
         "$base, j, movefocus, d"
 
         # ===== Системные функции =====
-        # Системное управление
-        "$system, L, exec, hyprlock"
-
         # Специальные рабочие пространства
         "$system, P, togglespecialworkspace, music"
         "$system, A, togglespecialworkspace, audio"
@@ -293,16 +287,44 @@
         # ===== Запуск приложений =====
         "$base, Return, exec, ghostty"
         "$launch, S, exec, ${../../../../scripts/snapshot.sh}"
-        "$base, A, exec, anyrun"
+        # "$base, A, exec, anyrun"
+
+        # ===== Bar tools =====
+        "$system, B, exec, killall ax-shell; uwsm app -- python /home/hikary/dotfiles/home-manager/modules/wayland/bar/main.py"
+
+        ''
+          $launch, B, exec, $fabricSend 'notch.open_notch("bluetooth")'
+        ''
+        ''
+          SUPER, COMMA, exec, $fabricSend 'notch.open_notch("wallpapers")'
+        ''
+        ''
+          $base, A, exec, $fabricSend 'notch.open_notch("launcher")'
+        ''
+        ''
+          SUPER, TAB, exec, $fabricSend 'notch.open_notch("overview")'
+        ''
+        ''
+          SUPER, ESCAPE, exec, $fabricSend 'notch.open_notch("power")'
+        ''
+        ''
+          $launch, T, exec, $fabricSend 'notch.toggle_hidden()'
+        ''
+        ''
+          $launch, T, exec, $fabricSend 'bar.toggle_hidden()'
+        ''
       ];
 
       bindm = [
         "$mainMod, mouse:272, movewindow"
         "$mainMod, mouse:273, resizewindow"
       ];
+      exec = [ "uwsm app -- swww-daemon" ];
 
       exec-once = [
         "kanshi"
+        "uwsm app -- python /home/hikary/dotfiles/home-manager/modules/wayland/bar/main.py"
+        "beekeeper-studio"
         "${pkgs.polkit_gnome}/libexec/polkit-gnome-authentication-agent-1"
         "mgraftcp --socks5 127.0.0.1:2080 ytmdesktop"
         "nekoray"
@@ -310,8 +332,7 @@
         "blueman-applet"
         "dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP"
         "${../../../../scripts/xdg-portal.sh}"
-        "easyeffects --gapplication-service"
-        "easyeffects -b 1"
+        "easyeffects"
         "kitty --class pulsemixer -- pulsemixer"
         "blueman-applet"
         "wl-paste -t text -w xclip -selection clipboard --watch cliphist store"

@@ -1,0 +1,24 @@
+{
+  "prefix_restart": "SUPER ALT",
+  "suffix_restart": "B",
+  "prefix_axmsg": "SUPER",
+  "suffix_axmsg": "A",
+  "prefix_dash": "SUPER",
+  "suffix_dash": "D",
+  "prefix_bluetooth": "SUPER",
+  "suffix_bluetooth": "B",
+  "prefix_walls": "SUPER",
+  "suffix_walls": "COMMA",
+  "prefix_launcher": "SUPER",
+  "suffix_launcher": "R",
+  "prefix_overview": "SUPER",
+  "suffix_overview": "TAB",
+  "prefix_power": "SUPER",
+  "suffix_power": "ESCAPE",
+  "prefix_toggle": "SUPER CTRL",
+  "suffix_toggle": "B",
+  "prefix_css": "SUPER SHIFT",
+  "suffix_css": "B",
+  "wallpapers_dir": "/home/hikary/dotfiles/wallpapers"
+}
+

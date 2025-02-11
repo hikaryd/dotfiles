@@ -1,11 +1,11 @@
 { ... }: {
   imports = [
-    ./easyeffects
     ./wayland
-    ./git
-    ./lazygit
-    ./neovim
-    ./opentabletdriver
+    ./easyeffects.nix
+    ./git.nix
+    ./lazygit.nix
+    ./nvim.nix
+    ./otd.nix
     ./yazi.nix
     ./windsurf.nix
     ./tmux.nix
@@ -17,5 +17,6 @@
     ./fzf.nix
     ./fastfetch.nix
     ./bat.nix
+    ./zellij.nix
   ];
 }

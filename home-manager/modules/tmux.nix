@@ -108,14 +108,17 @@
     plugins = with pkgs; [
       tmuxPlugins.sensible
       tmuxPlugins.yank
-      tmuxPlugins.resurrect
-      tmuxPlugins.continuum
-      tmuxPlugins.tmux-fzf
       tmuxPlugins.tmux-thumbs
       {
-        plugin = tmuxPlugins.resurrect;
+        plugin = (pkgs.tmuxPlugins.resurrect.overrideAttrs (oldAttrs: {
+          postFixup = (oldAttrs.postFixup or "") + ''
+            rm -rf $out/share/tmux-plugins/resurrect/tests
+            rm -f $out/share/tmux-plugins/resurrect/run_tests
+          '';
+        }));
         extraConfig = "set -g @resurrect-strategy-nvim 'session'";
       }
+
       {
         plugin = tmuxPlugins.continuum;
         extraConfig = "set -g @continuum-restore 'on'";
@@ -127,17 +130,6 @@
           set -g @fzf-url-history-limit '2000'
         '';
       }
-      # {
-      #   plugin = tmuxPlugins.tmux-floax;
-      #   extraConfig = ''
-      #     set -g @floax-width '80%'
-      #     set -g @floax-height '80%'
-      #     set -g @floax-border-color 'magenta'
-      #     set -g @floax-text-color 'blue'
-      #     set -g @floax-bind 'p'
-      #     set -g @floax-change-path 'true'
-      #   '';
-      # }
     ];
   };
 

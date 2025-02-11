@@ -1,4 +1,4 @@
-{ pkgs, ... }: {
+{ pkgs, lib, ... }: {
   home.packages = with pkgs; [
     jetbrains-mono
     noto-fonts
@@ -18,8 +18,9 @@
 
   stylix = {
     enable = true;
+    polarity = "dark";
     base16Scheme = "${pkgs.base16-schemes}/share/themes/catppuccin-mocha.yaml";
-    image = ../wallpapers/hollow-knight.jpg;
+    image = ../wallpapers/hollow-knight.jpg; # not set
 
     fonts = {
       serif = {
@@ -42,10 +43,11 @@
 
     targets = {
       gtk.enable = true;
+      qt.enable = true;
       kitty.enable = false;
       bat.enable = false;
       hyprlock.enable = true;
-      hyprpaper.enable = true;
+      hyprpaper.enable = lib.mkForce false;
     };
     cursor = {
       size = 20;
