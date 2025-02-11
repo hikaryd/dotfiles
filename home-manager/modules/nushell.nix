@@ -1,6 +1,7 @@
 { pkgs, lib, ... }: {
   programs.carapace.enable = true;
   programs.carapace.enableNushellIntegration = true;
+
   home.activation = {
     addNushellToEtcShells = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
       if [ -f /etc/shells ]; then
@@ -12,6 +13,7 @@
       fi
     '';
   };
+
   programs.nushell = {
     enable = true;
     package = pkgs.nushell;
@@ -47,7 +49,7 @@
 
       # Docker
       dc = "docker compose";
-      osu = ''env WLR_DRM_NO_ATOMIC="1" osu'';
+      # osu     = ''env WLR_DRM_NO_ATOMIC="1" osu'';
       dcl = "docker compose logs -f";
       dcub = "docker compose up --build -d --force-recreate";
       dcd = "docker compose down";
@@ -93,7 +95,8 @@
 
     extraEnv = ''
       mkdir ~/.cache/zoxide
-      zoxide init nushell | str replace --all "-- $rest" "-- ...$rest" | str replace --all "def-env" "def --env" | save -f ~/.cache/zoxide/init.nu
+      $env.__zoxide_hooked = true
+      zoxide init nushell | save -f ~/.cache/zoxide/init.nu
     '';
 
     extraConfig = ''
@@ -105,7 +108,7 @@
           "/usr/local/sbin"
           "/usr/local/bin"
           "/usr/bin"
-          "/home/hikary/.local/bin"
+          ($env.HOME + "/.local/bin")
           ($env.HOME + "/.config/carapace/bin")
         ]
         let joined = ($base_paths | uniq | str join ":")
@@ -113,92 +116,93 @@
       }
       setup_path
 
-      $env.OPENROUTER_API_KEY = (open ($env.HOME + '/creds/open_router') | str trim)
+      $env.OPENROUTER_API_KEY = (open ($env.HOME + "/creds/open_router") | str trim)
       $env.SSH_AUTH_SOCK = ($env.XDG_RUNTIME_DIR | path join "ssh-agent.socket")
+
       def extract [file: string] {
-      if ($file | is-empty) {
-      echo "Usage: extract <file>"
-      return 1
-      }
+        if ($file | is-empty) {
+          echo "Usage: extract <file>"
+          return 1
+        }
 
-      if (not ($file | path exists)) {
-      echo "'$file' is not a valid file"
-      return 1
-      }
+        if (not ($file | path exists)) {
+          echo "'$file' is not a valid file"
+          return 1
+        }
 
-      let ext = ($file | split row '.' | last)
-      match $ext {
-      "tar" => { run-external "tar" "xvf" $file }
-      "tgz" => { run-external "tar" "xvzf" $file }
-      "tbz2" => { run-external "tar" "xvjf" $file }
-      "bz2" => { run-external "bunzip2" $file }
-      "gz" => { run-external "gunzip" $file }
-      "zip" => { run-external "unzip" $file }
-      "rar" => { run-external "unrar" "x" $file }
-      "7z" => { run-external "7z" "x" $file }
-      "xz" => { run-external "xz" "--decompress" $file }
-      "Z" => { run-external "uncompress" $file }
-      _ => { echo "unsupported file extension"; return 1 }
-      }
+        let ext = ($file | split row '.' | last)
+        match $ext {
+          "tar"  => { run-external "tar" "xvf" $file }
+          "tgz"  => { run-external "tar" "xvzf" $file }
+          "tbz2" => { run-external "tar" "xvjf" $file }
+          "bz2"  => { run-external "bunzip2" $file }
+          "gz"   => { run-external "gunzip" $file }
+          "zip"  => { run-external "unzip" $file }
+          "rar"  => { run-external "unrar" "x" $file }
+          "7z"   => { run-external "7z" "x" $file }
+          "xz"   => { run-external "xz" "--decompress" $file }
+          "Z"    => { run-external "uncompress" $file }
+          _      => { echo "unsupported file extension"; return 1 }
+        }
       }
 
       def git-cleanup [] {
-      let branches = (run-external "git" "branch" "--merged" "main" 
-      | lines 
-      | where { |it| not ($it | str contains "* main") }
-      )
-      if not ($branches | is-empty) {
-      $branches | each { |branch| run-external "git" "branch" "-d" ($branch | str trim) }
-      }
+        let branches = (
+          run-external "git" "branch" "--merged" "main"
+          | lines
+          | where { |it| not ($it | str contains "* main") }
+        )
+        if not ($branches | is-empty) {
+          $branches | each { |branch| run-external "git" "branch" "-d" ($branch | str trim) }
+        }
       }
 
       def git-recent [] {
-      run-external "git" "for-each-ref" "--sort=-committerdate" "refs/heads/" "--format=%(refname:short)" 
-      | lines 
-      | first 5
+        run-external "git" "for-each-ref" "--sort=-committerdate" "refs/heads/" "--format=%(refname:short)"
+        | lines
+        | first 5
       }
 
       def git-contrib [] {
-      run-external "git" "shortlog" "-sn" "--all" "--no-merges"
+        run-external "git" "shortlog" "-sn" "--all" "--no-merges"
       }
 
       def docker-cleanup [] {
-      run-external "docker" "system" "prune" "-af"
-      run-external "docker" "volume" "prune" "-f"
+        run-external "docker" "system" "prune" "-af"
+        run-external "docker" "volume" "prune" "-f"
       }
 
       def docker-stop-all [] {
-      let containers = (run-external "docker" "ps" "-q" | lines)
-      if not ($containers | is-empty) {
-      $containers | each { |id| run-external "docker" "stop" $id }
-      }
+        let containers = (run-external "docker" "ps" "-q" | lines)
+        if not ($containers | is-empty) {
+          $containers | each { |id| run-external "docker" "stop" $id }
+        }
       }
 
       $env.config = {
-      show_banner: false
-      table: {
-      mode: rounded
-      index_mode: always
+        show_banner: false
+        table: {
+          mode: "rounded"
+          index_mode: "always"
+        }
+        completions: {
+          case_sensitive: false
+          quick: true
+          partial: true
+        }
+        history: {
+          max_size: 100000
+          sync_on_enter: true
+          file_format: "plaintext"
+        }
+        filesize: {
+          unit: "MiB"
+        }
       }
-      completions: {
-      case_sensitive: false
-      quick: true
-      partial: true
-      }
-      history: {
-      max_size: 100000
-      sync_on_enter: true
-      file_format: "plaintext"
-      }
-      filesize: {
-      metric: true
-      format: "auto"
-      }
-      }
+
       source ~/.cache/zoxide/init.nu
     '';
   };
 
   home.packages = with pkgs; [ nu_scripts zoxide ];
 }
-

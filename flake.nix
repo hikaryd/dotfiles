@@ -8,6 +8,7 @@
     ghostty.url = "github:ghostty-org/ghostty";
     anyrun.url = "github:fufexan/anyrun/launch-prefix";
     hyprland.url = "github:hyprwm/Hyprland";
+
     home-manager = {
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -20,17 +21,22 @@
       url = "github:nix-community/nixGL";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    hyprpanel = {
-      url = "github:Jas-SinghFSU/HyprPanel";
+    zjstatus = { url = "github:dj95/zjstatus"; };
+
+    zj-quit = {
+      url = "github:dj95/zj-quit";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    zj-smart-sessions = {
+      url = "github:dj95/zj-smart-sessions";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
-  outputs =
-    { nixpkgs, home-manager, catppuccin, stylix, hyprpanel, nixgl, ... }@inputs:
+  outputs = { nixpkgs, home-manager, catppuccin, stylix, ... }@inputs:
     let
-      system = "x86_64-linux";
       pkgs = import nixpkgs {
-        inherit system;
+        system = "x86_64-linux";
         config = {
           allowUnfree = true;
           allowUnfreePredicate = _: true;
@@ -44,7 +50,6 @@
           ./home-manager/home.nix
           stylix.homeManagerModules.stylix
           catppuccin.homeManagerModules.catppuccin
-          # inputs.hyprpanel.homeManagerModules.hyprpanel
         ];
       };
     };

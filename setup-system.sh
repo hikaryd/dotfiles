@@ -248,6 +248,17 @@ install_emptty() {
 	fi
 }
 
+install_other() {
+	log "INFO" "Установка дополнительный пакетов..."
+
+	if check_command pacman; then
+		sudo pacman -S --needed --noconfirm hyprlock hypridle
+		log "SUCCESS" "Пакеты успешно установлены"
+	else
+		log "WARNING" "Pacman не найден, пропуск установки emptty"
+	fi
+}
+
 install_docker() {
 	log "INFO" "Установка docker..."
 
@@ -277,10 +288,9 @@ main() {
 	install_nix
 	install_docker
 	install_home_manager
+	install_other
 
 	install_driver_symlink_daemon
-
-	install_emptty
 
 	log "SUCCESS" "Установка и настройка завершены успешно!"
 	log "INFO" "Пожалуйста, перезагрузите систему для применения всех изменений"
