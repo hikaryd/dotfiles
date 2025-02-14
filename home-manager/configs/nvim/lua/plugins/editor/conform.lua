@@ -11,15 +11,11 @@ return {
     conform.setup {
       formatters_by_ft = {
         lua = { 'stylua' },
-        -- python = { 'ruff_organize_imports', 'ruff_format', 'ruff_fix' },
-        javascript = { 'prettier' },
-        typescript = { 'prettier' },
+        python = { 'ruff_organize_imports', 'ruff_format', 'ruff_fix' },
         json = { 'jq' },
-        html = { 'prettier' },
-        css = { 'prettier' },
         sh = { 'shfmt' },
-        yaml = { 'prettier' },
-        markdown = { 'prettier' },
+        yaml = { 'yq' },
+        markdown = { 'cbfmt ' },
         toml = { 'taplo' },
         nix = { 'nixfmt' },
       },

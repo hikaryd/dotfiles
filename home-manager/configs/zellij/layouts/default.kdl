@@ -8,7 +8,6 @@ layout {
 
   tab name="edit" focus=true {
     pane {
-      command "direnv"
       args "exec" "." "nvim"
     }
   }

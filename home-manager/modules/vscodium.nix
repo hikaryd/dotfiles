@@ -9,7 +9,6 @@
       ms-vscode.cpptools
     ];
     userSettings = {
-      "update.mode" = "none";
       "extensions.autoUpdate" = true;
       "window.titleBarStyle" = "custom";
 

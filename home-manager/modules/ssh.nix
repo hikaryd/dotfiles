@@ -19,6 +19,8 @@ in {
     forwardAgent = true;
     extraConfig = ''
       AddKeysToAgent yes
+      ServerAliveInterval 5
+      ServerAliveCountMax 10
     '';
     inherit (sshConfig) matchBlocks;
   };
@@ -33,3 +35,4 @@ in {
     Install = { WantedBy = [ "default.target" ]; };
   };
 }
+

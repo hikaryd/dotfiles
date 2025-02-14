@@ -36,8 +36,13 @@
 
     shellAliases = {
       v = "nvim";
-      nv = ''env NEOVIDE_APP_ID="neovide" neovide .'';
+      # zj = "zellij";
       ssh = ''env TERM="xterm-256color" ssh'';
+      kvnt-monitor = "tmuxinator start monitoring";
+      prod-kvnt =
+        " ssh -t kvant-mgmt 'ssh -t production-srv \"sudo su - deploy\"'";
+      stage-kvnt =
+        " ssh -t kvant-mgmt 'ssh -t staging-srv \"sudo su - deploy\"'";
       cat = "bat --style=plain";
       ".." = "cd ..";
       l = "ls";
@@ -49,7 +54,7 @@
 
       # Docker
       dc = "docker compose";
-      # osu     = ''env WLR_DRM_NO_ATOMIC="1" osu'';
+      # osu  = ''env WLR_DRM_NO_ATOMIC="1" osu'';
       dcl = "docker compose logs -f";
       dcub = "docker compose up --build -d --force-recreate";
       dcd = "docker compose down";
@@ -124,12 +129,10 @@
           echo "Usage: extract <file>"
           return 1
         }
-
         if (not ($file | path exists)) {
           echo "'$file' is not a valid file"
           return 1
         }
-
         let ext = ($file | split row '.' | last)
         match $ext {
           "tar"  => { run-external "tar" "xvf" $file }
@@ -177,6 +180,32 @@
         if not ($containers | is-empty) {
           $containers | each { |id| run-external "docker" "stop" $id }
         }
+      }
+
+      def dev [name:string] {
+          let workspace = (pwd)
+          if $name == "" {
+              let oldpwd = $workspace
+              cd ~/dev
+              let directory = (fd -t d | fzf --preview 'bash -c "[[ -f {}/README.md ]] && glow {}/README.md || eza -l --icons --color=always --no-time {}"') | str trim
+              if $directory == "" {
+                  return
+              }
+              let developer_dir = (pwd)
+              let workspace = ($developer_dir + "/" + $directory)
+              let name = (echo $workspace | path basename | str replace -r "\\." "_")
+              cd $oldpwd
+          }
+          cd $workspace
+          if (($workspace | path join ".zellij.kdl") | path exists) {
+              zellij --layout ($workspace | path join ".zellij.kdl") attach -c $name
+              return
+          }
+          let cols = (tput cols | str trim | into int)
+          let rows = (tput lines | str trim | into int)
+          let ratio = ($cols / $rows)
+          let layout = if ($ratio > 8.0) { "wide" } else { "default" }
+          zellij --layout $layout attach -c $name
       }
 
       $env.config = {

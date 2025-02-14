@@ -146,7 +146,7 @@ def generate_commit_message_openrouter(diff, api_key):
                 'content': COMMIT_MESSAGE_PROMPT.format(diff=diff),
             }
         ],
-        # 'model': 'deepseek/deepseek-chat',
+        # 'model': 'openai/o3-mini',
         'model': 'google/gemini-2.0-flash-001',
     }
 
