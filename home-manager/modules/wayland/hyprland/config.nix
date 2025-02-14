@@ -214,7 +214,7 @@
       workspace = [
         # Основные рабочие пространства
         "name:browser, monitor:HDMI-A-1, on-created-empty:google-chrome-stable"
-        "name:dev-terminal, monitor:HDMI-A-1"
+        "name:dev-terminal, monitor:HDMI-A-1, on-created-empty:ghostty"
         "name:conf-terminal, monitor:HDMI-A-1, on-created-empty:ghostty"
         "name:terminal, monitor:HDMI-A-1, on-created-empty:ghostty, default:true"
         "name:database, monitor:HDMI-A-1, on-created-empty:beekeeper-studio, default:true"
@@ -226,7 +226,7 @@
         "special:telegram, on-created-empty:ayugram-desktop, default:true"
         "special:misc, default:true"
         "special:audio, on-created-empty:audio, default:true"
-        "special:music, default:true"
+        "special:music, default:true, on-create-empty:mgraftcp --socks5 127.0.0.1:2080 ytmdesktop"
         "special:vpn, on-created-empty:nekoray, default:true"
         "special:browser2, on-created-empty:google-chrome-stable"
       ];

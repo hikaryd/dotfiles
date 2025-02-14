@@ -7,7 +7,7 @@
     ./nvim.nix
     ./otd.nix
     ./yazi.nix
-    ./windsurf.nix
+    ./vscodium.nix
     ./tmux.nix
     ./starship.nix
     ./kitty.nix
@@ -17,6 +17,6 @@
     ./fzf.nix
     ./fastfetch.nix
     ./bat.nix
-    ./zellij.nix
+    # ./zellij.nix
   ];
 }

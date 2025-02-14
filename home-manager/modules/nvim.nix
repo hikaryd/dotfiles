@@ -27,6 +27,8 @@ let
     p.vue
     p.yaml
   ]));
+  pylsp = (pkgs.python312.withPackages
+    (ps: with ps; [ python-lsp-server pylsp-mypy ]));
 in {
   home.packages = with pkgs; [
     lua-language-server
@@ -36,6 +38,9 @@ in {
     nodePackages.dockerfile-language-server-nodejs
     nodePackages.typescript-language-server
     nodePackages.prettier
+    cbfmt
+    yq
+    pylsp
     taplo
     ruff-lsp
     luajit

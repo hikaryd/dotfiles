@@ -15,14 +15,6 @@ return {
       end
 
       config = vim.tbl_deep_extend('force', {
-        on_attach = function(client, bufnr)
-          local keymap = vim.keymap.set
-          keymap('n', 'gd', '<cmd>Lspsaga goto_definition<CR>', { buffer = bufnr })
-          keymap('n', 'K', '<cmd>Lspsaga hover_doc<CR>', { buffer = bufnr })
-          keymap('n', 'gf', '<cmd>Lspsaga finder<CR>', { buffer = bufnr })
-          keymap('n', '<leader>ca', '<cmd>Lspsaga code_action<CR>', { buffer = bufnr })
-          keymap('n', '<leader>lr', '<cmd>Lspsaga rename<CR>', { buffer = bufnr })
-        end,
         capabilities = require('blink.cmp').get_lsp_capabilities(config.capabilities),
       }, config)
 
@@ -75,18 +67,70 @@ return {
       settings = {
         pyright = {
           analysis = {
-            typeCheckingMode = 'basic',
+            ignore = { '*' },
+            typeCheckingMode = 'off',
             diagnosticMode = 'openFilesOnly',
             useLibraryCodeForTypes = true,
-            reportMissingImports = true,
-            reportUndefinedVariable = true,
+            reportMissingImports = false,
+            reportUndefinedVariable = false,
+          },
+        },
+      },
+      on_attach = function(client, bufnr)
+        if client.name == 'pyright' then
+          client.handlers['textDocument/publishDiagnostics'] = function() end
+        end
+      end,
+    })
+
+    setup_server('pylsp', {
+      settings = {
+        pyls = {
+          plugins = {
+            jedi_completion = { enabled = false },
+            jedi_hover = { enabled = false },
+            jedi_references = { enabled = false },
+            jedi_signature_help = { enabled = false },
+            jedi_symbols = { enabled = false },
+            pycodestyle = { enabled = false },
+            flake8 = {
+              enabled = false,
+              ignore = {},
+              maxLineLength = 160,
+            },
+            mypy = { enabled = false },
+            isort = { enabled = false },
+            yapf = { enabled = false },
+            pylint = { enabled = false },
+            pydocstyle = { enabled = false },
+            mccabe = { enabled = false },
+            preload = { enabled = false },
+            rope_completion = { enabled = false },
+            pylsp_mypy = {
+              enabled = true,
+              live_mode = true,
+              report_progress = true,
+            },
           },
         },
       },
     })
+
+    vim.o.updatetime = 250
+    vim.api.nvim_create_autocmd('CursorHold', {
+      callback = function()
+        local diag = vim.diagnostic.get(0, { lnum = vim.fn.line '.' - 1 })
+        if #diag > 0 then
+          vim.diagnostic.open_float {
+            scope = 'line',
+            border = 'rounded',
+            focusable = false,
+          }
+        end
+      end,
+    })
   end,
   dependencies = {
-    'glepnir/lspsaga.nvim',
     'saghen/blink.cmp',
   },
 }

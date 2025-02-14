@@ -167,4 +167,60 @@
         '';
     };
   };
+
+  xdg.configFile = {
+    "tmuxinator/monitoring.yml" = {
+      text = ''
+        name: monitoring
+        root: ~/
+
+        windows:
+          - base:
+              pre_window: |
+                tmux split-window -v 
+                tmux split-window -h 
+
+              panes:
+                - "ssh -t kvant-mgmt 'ssh -t staging-srv \"sudo su - deploy -c \\\"docker service logs -f nexus_email\\\"\"'"
+                - "ssh -t kvant-mgmt 'ssh -t staging-srv \"sudo su - deploy -c \\\"docker service logs -f nexus_email\\\"\"'"
+                - "ssh -t kvant-mgmt 'sudo tail -f /var/log/nginx/access.log -n 100'"
+
+          - kvant-prod:
+              pre_window: |
+                tmux select-pane -t 0
+
+                tmux split-window -h -p 50
+
+                tmux select-pane -t 0
+                tmux split-window -v -p 50
+
+                tmux select-pane -t 1
+                tmux split-window -v -p 50
+
+              panes:
+                - "ssh -t kvant-mgmt 'ssh -t production-srv \"sudo su - deploy -c \\\"docker service logs -f nexus_deal-api\\\"\"'"
+                - "ssh -t kvant-mgmt 'ssh -t production-srv \"sudo su - deploy -c \\\"docker service logs -f nexus_import\\\"\"'"
+                - "ssh -t kvant-mgmt 'ssh -t production-srv \"sudo su - deploy -c \\\"docker service logs -f nexus_email\\\"\"'"
+                - "ssh -t kvant-mgmt 'ssh -t production-srv \"sudo su - deploy -c \\\"docker service logs -f nexus_sync\\\"\"'"
+
+          - kvant-stage:
+              pre_window: |
+                tmux select-pane -t 0
+
+                tmux split-window -h -p 50
+
+                tmux select-pane -t 0
+                tmux split-window -v -p 50
+
+                tmux select-pane -t 1
+                tmux split-window -v -p 50
+
+              panes:
+                - "ssh -t kvant-mgmt 'ssh -t staging-srv \"sudo su - deploy -c \\\"docker service logs -f nexus_deal-api\\\"\"'"
+                - "ssh -t kvant-mgmt 'ssh -t staging-srv \"sudo su - deploy -c \\\"docker service logs -f nexus_import\\\"\"'"
+                - "ssh -t kvant-mgmt 'ssh -t staging-srv \"sudo su - deploy -c \\\"docker service logs -f nexus_email\\\"\"'"
+                - "ssh -t kvant-mgmt 'ssh -t staging-srv \"sudo su - deploy -c \\\"docker service logs -f nexus_sync\\\"\"'"
+      '';
+    };
+  };
 }

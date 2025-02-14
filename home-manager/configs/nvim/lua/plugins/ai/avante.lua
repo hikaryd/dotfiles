@@ -1,9 +1,12 @@
 return {
   'yetone/avante.nvim',
+  enabled = false,
   event = 'VeryLazy',
+  build = 'make BUILD_FROM_SOURCE=true',
+  lazy = false,
   version = false,
   opts = {
-    provider = 'gemini',
+    provider = 'o3',
     auto_suggestions_provider = 'gemini',
     vendors = {
       openrouterdeepseek = {
@@ -98,7 +101,6 @@ return {
       provider_opts = {},
     },
   },
-  build = 'make',
   dependencies = {
     'stevearc/dressing.nvim',
     'nvim-lua/plenary.nvim',

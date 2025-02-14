@@ -21,6 +21,10 @@ map('n', '<leader>b', ':DBUIToggle<CR>')
 --Gitlab
 map('n', '<leader>gcm', ':lua require("gitlab").choose_merge_request()<CR>')
 
+map('n', 'gd', function()
+  Snacks.picker.lsp_definitions()
+end)
+
 -- Window Management
 map('n', '<leader>sv', '<cmd>:vsplit<CR>', 'Vertical split window')
 map('n', '<leader>ss', '<cmd>:split<CR>', 'Vertical split window')
@@ -46,9 +50,3 @@ map('n', '<A-j>', ':m .+1<CR>==', 'Move current line down')
 
 -- Aerial
 map('n', '<leader>aet', '<cmd>AerialToggle!<CR>', 'Toggle Aerial')
-
--- CodeCompanion
-map('n', '<leader>at', '<cmd>CodeCompanion<CR>', 'CodeCompanion')
-map('v', '<leader>at', '<cmd>CodeCompanion<CR>', 'CodeCompanion')
-map('n', '<leader>aa', '<cmd>CodeCompanionChat<CR>', 'CodeCompanion')
-map('n', '<leader>ac', '<cmd>CodeCompanionActions<CR>', 'CodeCompanion')

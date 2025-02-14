@@ -5,6 +5,7 @@
   home.packages = with pkgs; [
     inputs.nixgl.packages.${system}.nixGLDefault
     inputs.nixgl.packages.${system}.nixVulkanIntel
+    rustup
     zellij
     uwsm
     swww
@@ -30,6 +31,7 @@
     repomix
     bluetuith
     uv
+    grip-grab
 
     p7zip
     lrzip
@@ -38,6 +40,7 @@
     gnutar
 
     pulsemixer
+    tmuxinator
 
     xdg-desktop-portal
     xdg-user-dirs
@@ -48,7 +51,6 @@
     ayugram-desktop
     sing-geosite
 
-    # (config.lib.nixGL.wrap inputs.zen-browser.packages.${system}.default)
     (config.lib.nixGL.wrap beekeeper-studio)
     (config.lib.nixGL.wrap super-productivity)
     (config.lib.nixGL.wrap mpv)
@@ -58,6 +60,7 @@
 
     nix-prefetch-scripts
     luajitPackages.luarocks
+    gitu
 
     docker
     docker-compose

@@ -2,7 +2,7 @@
   programs.zellij = { enable = true; };
 
   xdg.configFile."zellij/config.kdl".text = ''
-        theme "gruvbox-dark"
+        theme "catppuccin"
         themes {
           catppuccin {
             bg "#585b70"
@@ -47,9 +47,11 @@
           }
         }
 
-        default_shell "fish"
+        default_shell "nu"
 
         keybinds {
+          unbind "Ctrl s"
+          unbind "Ctrl t"
           tmux {
             bind "Ctrl a" { Write 1; SwitchToMode "Normal"; }
             bind "[" { SwitchToMode "Scroll"; }
@@ -108,10 +110,10 @@
             color_orange "#ffc387"
 
             // gruvbox-dark
-            color_bg     "#1d2021"
-            color_fg     "#ebdbb2"
-            color_fg_dim "#928374"
-            color_orange "#fe8019"
+            // color_bg     "#1d2021"
+            // color_fg     "#ebdbb2"
+            // color_fg_dim "#928374"
+            // color_orange "#fe8019"
 
             // rose-pine
             // color_bg     "#33362E"

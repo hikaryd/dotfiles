@@ -1,6 +1,7 @@
 return {
   'saghen/blink.cmp',
   enabled = true,
+  build = 'cargo build --release',
   dependencies = {
     'moyiz/blink-emoji.nvim',
     'Kaiser-Yang/blink-cmp-dictionary',
