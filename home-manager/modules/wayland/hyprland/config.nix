@@ -287,6 +287,7 @@
         # ===== Запуск приложений =====
         "$base, Return, exec, ghostty"
         "$launch, S, exec, ${../../../../scripts/snapshot.sh}"
+        "$launch, P, exec, ${../../../../scripts/ai_refactor_clipboard}"
         # "$base, A, exec, anyrun"
 
         # ===== Bar tools =====
@@ -323,7 +324,7 @@
 
       exec-once = [
         "kanshi"
-        "uwsm app -- python /home/hikary/dotfiles/home-manager/modules/wayland/bar/main.py"
+        "uwsm app -- /usr/bin/python /home/hikary/dotfiles/home-manager/modules/wayland/bar/main.py"
         "beekeeper-studio"
         "${pkgs.polkit_gnome}/libexec/polkit-gnome-authentication-agent-1"
         "mgraftcp --socks5 127.0.0.1:2080 ytmdesktop"

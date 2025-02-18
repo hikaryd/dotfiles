@@ -6,7 +6,7 @@
     }
 
     profile laptop {
-      output eDP-1 mode "2560x1600@120" position -2560,0 scale 1.6
+      output eDP-1 mode "2560x1600@120" position -2560,0 scale 1.4
     }
   '';
 

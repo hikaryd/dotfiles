@@ -220,6 +220,10 @@
                 - "ssh -t kvant-mgmt 'ssh -t staging-srv \"sudo su - deploy -c \\\"docker service logs -f nexus_import\\\"\"'"
                 - "ssh -t kvant-mgmt 'ssh -t staging-srv \"sudo su - deploy -c \\\"docker service logs -f nexus_email\\\"\"'"
                 - "ssh -t kvant-mgmt 'ssh -t staging-srv \"sudo su - deploy -c \\\"docker service logs -f nexus_sync\\\"\"'"
+
+          - glab:
+              panes:
+                - "glim"
       '';
     };
   };

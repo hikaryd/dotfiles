@@ -6,8 +6,6 @@
     inputs.nixgl.packages.${system}.nixGLDefault
     inputs.nixgl.packages.${system}.nixVulkanIntel
     rustup
-    zellij
-    uwsm
     swww
     stu
     tree
