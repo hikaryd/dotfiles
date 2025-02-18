@@ -65,51 +65,27 @@ return {
 
     setup_server('pyright', {
       settings = {
-        pyright = {
-          analysis = {
-            ignore = { '*' },
-            typeCheckingMode = 'off',
-            diagnosticMode = 'openFilesOnly',
-            useLibraryCodeForTypes = true,
-            reportMissingImports = false,
-            reportUndefinedVariable = false,
-          },
-        },
+        pyright = { autoImportCompletion = true },
+        python = { analysis = { autoSearchPaths = true, diagnosticMode = 'openFilesOnly', useLibraryCodeForTypes = true, typeCheckingMode = 'off' } },
       },
-      on_attach = function(client, bufnr)
-        if client.name == 'pyright' then
-          client.handlers['textDocument/publishDiagnostics'] = function() end
-        end
-      end,
     })
 
+    local venv_path = os.getenv 'VIRTUAL_ENV'
+    local mypy_overrides = venv_path and { '--python-executable', venv_path .. '/bin/python3', true } or nil
+    vim.env.PYTHONPATH = vim.env.VIRTUAL_ENV .. '/lib/python3.12/site-packages'
     setup_server('pylsp', {
       settings = {
         pyls = {
           plugins = {
-            jedi_completion = { enabled = false },
-            jedi_hover = { enabled = false },
-            jedi_references = { enabled = false },
-            jedi_signature_help = { enabled = false },
-            jedi_symbols = { enabled = false },
-            pycodestyle = { enabled = false },
-            flake8 = {
-              enabled = false,
-              ignore = {},
-              maxLineLength = 160,
-            },
-            mypy = { enabled = false },
-            isort = { enabled = false },
-            yapf = { enabled = false },
-            pylint = { enabled = false },
-            pydocstyle = { enabled = false },
-            mccabe = { enabled = false },
-            preload = { enabled = false },
-            rope_completion = { enabled = false },
             pylsp_mypy = {
               enabled = true,
-              live_mode = true,
+              live_mode = false,
+              dmypy = true,
+
               report_progress = true,
+              strict = false,
+
+              overrides = mypy_overrides,
             },
           },
         },

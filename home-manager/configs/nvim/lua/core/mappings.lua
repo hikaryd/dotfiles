@@ -18,16 +18,7 @@ map('n', '<leader>b', ':DBUIToggle<CR>')
 
 -- map('n', '<leader>tt', ':BufTermEnter<CR>')
 
---Gitlab
-map('n', '<leader>gcm', ':lua require("gitlab").choose_merge_request()<CR>')
-
-map('n', 'gd', function()
-  Snacks.picker.lsp_definitions()
-end)
-
 -- Window Management
-map('n', '<leader>sv', '<cmd>:vsplit<CR>', 'Vertical split window')
-map('n', '<leader>ss', '<cmd>:split<CR>', 'Vertical split window')
 map('n', '<A-h>', require('smart-splits').resize_left)
 map('n', '<A-j>', require('smart-splits').resize_down)
 map('n', '<A-k>', require('smart-splits').resize_up)
@@ -47,6 +38,3 @@ map('v', '<A-j>', ":m '>+1<CR>gv=gv", 'Move selected lines down')
 map('v', '<A-k>', ":m '<-2<CR>gv=gv", 'Move selected lines up')
 map('n', '<A-k>', ':m .-2<CR>==', 'Move current line up')
 map('n', '<A-j>', ':m .+1<CR>==', 'Move current line down')
-
--- Aerial
-map('n', '<leader>aet', '<cmd>AerialToggle!<CR>', 'Toggle Aerial')

@@ -3,7 +3,7 @@ return {
   priority = 10000,
   lazy = false,
   opts = {
-    input = {},
+    input = { enabled = true },
     bigfile = { enabled = true },
     notifier = {
       enabled = true,
@@ -17,6 +17,19 @@ return {
         wo = { wrap = true },
       },
     },
+    lazygit = {
+      enabled = true,
+    },
+    animate = {
+      enabled = true,
+    },
+    indent = {
+      enabled = true,
+    },
+    toggle = {
+      enabled = true,
+    },
+    image = { enabled = true },
     {
       debounce = 200, -- time in ms to wait before updating
       notify_jump = false, -- show a notification when jumping
@@ -77,7 +90,7 @@ return {
             enabled = function()
               return Snacks.git.get_root() ~= nil
             end,
-            cmd = 'git status --short --branch --renames',
+            cmd = 'git status --short --branch --snacrenames',
             height = 5,
             padding = 1,
             ttl = 5 * 60,

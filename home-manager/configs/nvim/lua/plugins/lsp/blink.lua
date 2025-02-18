@@ -77,16 +77,6 @@ return {
           },
         },
       },
-      cmdline = function()
-        local type = vim.fn.getcmdtype()
-        if type == '/' or type == '?' then
-          return {}
-        end
-        if type == ':' then
-          return { 'cmdline' }
-        end
-        return {}
-      end,
     })
 
     opts.completion = {

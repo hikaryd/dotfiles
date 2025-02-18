@@ -17,6 +17,6 @@
     ./fzf.nix
     ./fastfetch.nix
     ./bat.nix
-    # ./zellij.nix
+    ./kanata.nix
   ];
 }

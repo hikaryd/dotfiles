@@ -20,8 +20,8 @@
 
     environmentVariables = {
       # XDG
-      DOCKER_CONFIG = "$XDG_CONFIG_HOME/docker";
-      PYTHONSTARTUP = "$XDG_CONFIG_HOME/python/pythonrc";
+      DOCKER_CONFIG = "/home/hikary/.docker/";
+      PYTHONSTARTUP = "~/.python/pythonrc";
       LESSHISTFILE = "$XDG_STATE_HOME/less/history";
 
       # Локали
