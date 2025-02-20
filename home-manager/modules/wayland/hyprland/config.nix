@@ -291,7 +291,7 @@
         # "$base, A, exec, anyrun"
 
         # ===== Bar tools =====
-        "$system, B, exec, killall ax-shell; uwsm app -- python /home/hikary/dotfiles/home-manager/modules/wayland/bar/main.py"
+        "$system, B, exec, killall ax-shell; uwsm app -- /usr/bin/python /home/hikary/dotfiles/home-manager/modules/wayland/bar/main.py"
 
         ''
           $launch, B, exec, $fabricSend 'notch.open_notch("bluetooth")'

@@ -10,8 +10,10 @@
     stu
     tree
     htop
+    jan
     rsync
     less
+    proton-pass
     ncdu
     duf
     iotop
