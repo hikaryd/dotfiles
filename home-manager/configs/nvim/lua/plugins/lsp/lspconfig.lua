@@ -70,9 +70,9 @@ return {
       },
     })
 
-    local venv_path = os.getenv 'VIRTUAL_ENV'
+    local venv_path = os.getenv 'VIRTUAL_ENV' or ''
     local mypy_overrides = venv_path and { '--python-executable', venv_path .. '/bin/python3', true } or nil
-    vim.env.PYTHONPATH = vim.env.VIRTUAL_ENV .. '/lib/python3.12/site-packages'
+    vim.env.PYTHONPATH = venv_path .. '/lib/python3.12/site-packages'
     setup_server('pylsp', {
       settings = {
         pyls = {

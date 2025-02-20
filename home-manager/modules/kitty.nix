@@ -1,11 +1,8 @@
 { pkgs, config, ... }: {
-  catppuccin.kitty.enable = true;
   programs.kitty = {
     enable = true;
     package = config.lib.nixGL.wrap pkgs.kitty;
     settings = {
-      background_opacity = 0.8;
-
       window_padding_width = 0;
       scrollback_lines = 80000;
       scrollback_pager =
@@ -21,10 +18,6 @@
       allow_remote_control = "yes";
       listen_on = "unix:/tmp/kitty";
       shell_integration = "enabled no-cursor";
-    };
-    font = {
-      name = "Maple Mono";
-      size = 17;
     };
     keybindings = {
       "ctrl+shift+c" = "copy_to_clipboard";

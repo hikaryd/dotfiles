@@ -2,7 +2,6 @@
   description = "Hikary's system configuration";
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
-    catppuccin.url = "github:catppuccin/nix";
     stylix.url = "github:danth/stylix";
     zen-browser.url = "github:0xc000022070/zen-browser-flake";
     ghostty.url = "github:ghostty-org/ghostty";
@@ -33,7 +32,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
-  outputs = { nixpkgs, home-manager, catppuccin, stylix, ... }@inputs:
+  outputs = { nixpkgs, home-manager, stylix, ... }@inputs:
     let
       pkgs = import nixpkgs {
         system = "x86_64-linux";
@@ -46,11 +45,7 @@
       homeConfigurations."hikary" = home-manager.lib.homeManagerConfiguration {
         inherit pkgs;
         extraSpecialArgs = { inherit inputs; };
-        modules = [
-          ./home-manager/home.nix
-          stylix.homeManagerModules.stylix
-          catppuccin.homeManagerModules.catppuccin
-        ];
+        modules = [ ./home-manager/home.nix stylix.homeManagerModules.stylix ];
       };
     };
 }

@@ -54,6 +54,7 @@
 
       # Docker
       dc = "docker compose";
+      create_mr = "${../../scripts/ai-mr-helper}";
       # osu  = ''env WLR_DRM_NO_ATOMIC="1" osu'';
       dcl = "docker compose logs -f";
       dcub = "docker compose up --build -d --force-recreate";
