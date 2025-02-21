@@ -1,5 +1,5 @@
 { pkgs, config, ... }: {
-  imports = [ ./hyprland ./anyrun ./tools.nix ];
+  imports = [ ./hyprland ./anyrun ./tools.nix ./waybar.nix ./dunst.nix ];
 
   home.packages = with pkgs; [
     glib

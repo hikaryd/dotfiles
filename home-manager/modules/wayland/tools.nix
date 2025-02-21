@@ -6,16 +6,8 @@
     }
 
     profile laptop {
-      output eDP-1 mode "2560x1600@120" position -2560,0 scale 1.4
+      output eDP-1 mode "2560x1600@120" position -2560,0 scale 1.3333
     }
-  '';
-
-  home.file.".config/swaync/config.toml".text = ''
-    [theme]
-    name = "catppucin"
-    accent_color = "#ff79c6"
-    background_color = "#282a36"
-    text_color = "#f8f8f2"
   '';
 
   systemd.user.services.kanshi = {
@@ -28,10 +20,6 @@
     Install = { WantedBy = [ "default.target" ]; };
   };
 
-  home.packages = with pkgs; [
-    (config.lib.nixGL.wrap swaybg)
-    (config.lib.nixGL.wrap swaynotificationcenter)
-    kanshi
-  ];
+  home.packages = with pkgs; [ kanshi bluetui btop ];
 }
 

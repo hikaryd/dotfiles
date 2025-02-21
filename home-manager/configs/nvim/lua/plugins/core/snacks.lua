@@ -188,13 +188,13 @@ return {
       end,
       desc = 'Projects',
     },
-    {
-      'gd',
-      function()
-        Snacks.picker.lsp_definitions()
-      end,
-      desc = 'Goto Definition',
-    },
+    -- {
+    --   'gd',
+    --   function()
+    --     Snacks.picker.lsp_definitions()
+    --   end,
+    --   desc = 'Goto Definition',
+    -- },
     {
       'gr',
       function()

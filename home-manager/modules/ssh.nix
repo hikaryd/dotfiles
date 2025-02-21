@@ -24,6 +24,7 @@ in {
     '';
     inherit (sshConfig) matchBlocks;
   };
+  home.packages = with pkgs; [ mosh ];
 
   systemd.user.services.ssh-agent = {
     Unit = { Description = "SSH key agent"; };
@@ -35,4 +36,3 @@ in {
     Install = { WantedBy = [ "default.target" ]; };
   };
 }
-

@@ -40,6 +40,7 @@ in {
     nodePackages.prettier
     cbfmt
     yq
+    yamlfmt
     pylsp
     taplo
     ruff-lsp

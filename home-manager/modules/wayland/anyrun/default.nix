@@ -10,6 +10,9 @@
         shell
         symbols
         translate
+        rink
+        websearch
+        stdin
       ];
 
       width.fraction = 0.25;

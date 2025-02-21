@@ -7,10 +7,6 @@
     Type=Application
     Keywords=tiling;compositor;wayland;
   '';
-  home.file.".config/hypr/hyprlock.conf".text =
-    builtins.readFile ../bar/config/hypr/hyprlock.conf;
-  home.file.".config/hypr/hypridle.conf".text =
-    builtins.readFile ../bar/config/hypr/hypridle.conf;
 
   wayland.windowManager.hyprland = {
     enable = true;
@@ -19,12 +15,6 @@
     systemd.enable = true;
     xwayland.enable = true;
     settings = {
-      "$fabricSend" = "fabric-cli exec ax-shell";
-      monitor = [
-        "eDP-1, 2560x1600@120, -2560x0, 1.6"
-        "HDMI-A-1, 2560x1440@120, 0x0, 1.25"
-      ];
-
       general = {
         gaps_in = 5;
         gaps_out = 14;
@@ -119,6 +109,18 @@
         "float, class:^(pulsemixer)$"
         "float, class:^(nekoray)$"
 
+        "float, class:^(bluetui)$"
+        "move 1483 40, class:^(bluetui)$"
+        "size 400 600, class:^(bluetui)$"
+
+        "float, class:^(monitor)$"
+        "center, class:^(monitor)$"
+        "size 1000 606, class:^(monitor)$"
+
+        "float, class:^(wifi-manager)$"
+        "move 1433 40, class:^(wifi-manager)$"
+        "size 400 60, class:^(wifi-manager)$"
+
         "opacity 0.80 0.80, class:^(org.freedesktop.impl.portal.desktop.gtk)$"
         "opacity 0.80 0.80, class:^(org.freedesktop.impl.portal.desktop.hyprland)$"
         "opacity 0.9 0.9,class:^(neovide)$"
@@ -196,11 +198,12 @@
         };
         blur = {
           enabled = true;
-          size = 5;
+          size = 2;
           passes = 3;
           new_optimizations = true;
-          contrast = 1;
-          brightness = 1;
+          ignore_opacity = true;
+          special = true;
+          popups = true;
         };
         active_opacity = 1;
         inactive_opacity = 1;
@@ -288,59 +291,41 @@
         "$base, Return, exec, ghostty"
         "$launch, S, exec, ${../../../../scripts/snapshot.sh}"
         "$launch, P, exec, ${../../../../scripts/ai_refactor_clipboard}"
-        # "$base, A, exec, anyrun"
-
-        # ===== Bar tools =====
-        "$system, B, exec, killall ax-shell; uwsm app -- /usr/bin/python /home/hikary/dotfiles/home-manager/modules/wayland/bar/main.py"
-
-        ''
-          $launch, B, exec, $fabricSend 'notch.open_notch("bluetooth")'
-        ''
-        ''
-          SUPER, COMMA, exec, $fabricSend 'notch.open_notch("wallpapers")'
-        ''
-        ''
-          $base, A, exec, $fabricSend 'notch.open_notch("launcher")'
-        ''
-        ''
-          SUPER, TAB, exec, $fabricSend 'notch.open_notch("overview")'
-        ''
-        ''
-          SUPER, ESCAPE, exec, $fabricSend 'notch.open_notch("power")'
-        ''
-        ''
-          $launch, T, exec, $fabricSend 'notch.toggle_hidden()'
-        ''
-        ''
-          $launch, T, exec, $fabricSend 'bar.toggle_hidden()'
-        ''
+        "$base, A, exec, anyrun"
+        "$launch, B, exec, kitty --class bluetui -e bluetui"
       ];
 
       bindm = [
         "$mainMod, mouse:272, movewindow"
         "$mainMod, mouse:273, resizewindow"
       ];
-      exec = [ "uwsm app -- swww-daemon" ];
+      exec = [ "pkill hyprpaper && hyprpaper" "pkill waybar && waybar" ];
 
       exec-once = [
         "kanshi"
-        "uwsm app -- /usr/bin/python /home/hikary/dotfiles/home-manager/modules/wayland/bar/main.py"
+        "hypridle"
+        "dunst"
+        "walker --gapplication-service"
+
         "beekeeper-studio"
-        "${pkgs.polkit_gnome}/libexec/polkit-gnome-authentication-agent-1"
-        "mgraftcp --socks5 127.0.0.1:2080 ytmdesktop"
         "nekoray"
+        "mgraftcp --socks5 127.0.0.1:2080 ytmdesktop"
+
         "nm-applet"
         "blueman-applet"
-        "dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP"
+
         "${../../../../scripts/xdg-portal.sh}"
+
         "easyeffects"
         "kitty --class pulsemixer -- pulsemixer"
-        "blueman-applet"
+
+        "${pkgs.polkit_gnome}/libexec/polkit-gnome-authentication-agent-1"
+        "dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP"
+
         "wl-paste -t text -w xclip -selection clipboard --watch cliphist store"
         "wl-paste --type image --watch cliphist store"
       ];
     };
   };
-
 }
 
