@@ -1,5 +1,5 @@
 { config, pkgs, ... }: {
-  imports = [ ./config.nix ];
+  imports = [ ./config.nix ./hyprlock.nix ./hypridle.nix ];
 
   home.packages = with pkgs; [
     (config.lib.nixGL.wrap hypridle)

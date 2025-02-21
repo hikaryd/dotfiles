@@ -39,8 +39,8 @@
 
     # Тема и визуальное оформление
     # theme = "catppuccin-mocha"
-    theme = "cyberdream"
     # theme = "iTerm2 Pastel Dark Background"
+    theme = "cyberdream"
     background-opacity = 0.66
     background-blur-radius = 20
 

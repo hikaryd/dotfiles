@@ -18,6 +18,7 @@
       allow_remote_control = "yes";
       listen_on = "unix:/tmp/kitty";
       shell_integration = "enabled no-cursor";
+      confirm_os_window_close = 0;
     };
     keybindings = {
       "ctrl+shift+c" = "copy_to_clipboard";

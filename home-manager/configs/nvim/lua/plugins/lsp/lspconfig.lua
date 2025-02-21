@@ -25,7 +25,6 @@ return {
       'html',
       'cssls',
       'lua_ls',
-      'bashls',
       'taplo',
       'biome',
       'yamlls',
@@ -83,7 +82,7 @@ return {
               dmypy = true,
 
               report_progress = true,
-              strict = false,
+              strict = true,
 
               overrides = mypy_overrides,
             },
@@ -91,7 +90,7 @@ return {
         },
       },
     })
-
+    vim.api.nvim_set_keymap('n', 'gd', '<cmd>lua vim.lsp.buf.definition()<CR>', { noremap = true, silent = true })
     vim.o.updatetime = 250
     vim.api.nvim_create_autocmd('CursorHold', {
       callback = function()

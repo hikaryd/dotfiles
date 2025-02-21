@@ -6,7 +6,8 @@
     inputs.nixgl.packages.${system}.nixGLDefault
     inputs.nixgl.packages.${system}.nixVulkanIntel
     rustup
-    swww
+    todo
+    ansible
     stu
     tree
     htop
@@ -26,8 +27,6 @@
     imagemagick
     libnotify
     postgresql_16
-    tabiew
-    doh-proxy-rust
     repomix
     bluetuith
     uv

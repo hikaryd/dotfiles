@@ -14,7 +14,7 @@ return {
         python = { 'ruff_organize_imports', 'ruff_format', 'ruff_fix' },
         json = { 'jq' },
         sh = { 'shfmt' },
-        yaml = { 'yq' },
+        yaml = { 'yamlfmt' },
         markdown = { 'cbfmt ' },
         toml = { 'taplo' },
         nix = { 'nixfmt' },
