@@ -11,7 +11,6 @@
     ./tmux.nix
     ./starship.nix
     ./btop.nix
-    ./kitty.nix
     ./nushell.nix
     ./ssh.nix
     ./ghostty.nix

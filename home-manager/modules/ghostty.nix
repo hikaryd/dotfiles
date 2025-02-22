@@ -26,12 +26,13 @@
 
   xdg.configFile."ghostty/config".text = ''
     # Настройки шрифта
-    font-family = "Hack"
+    font-family = "Iosevka Term Nerd Font"
+    # font-family = "Hack"
     font-size = 10
-    font-thicken = true
+    font-thicken = false
+    adjust-box-thickness = 0
     term = "xterm-256color"
     bold-is-bright = true
-    adjust-box-thickness = 1
 
     # Запуск команды и интеграция с оболочкой
     command = ~/.config/ghostty/tmux-session.sh
@@ -62,7 +63,7 @@
     window-decoration = false
 
     gtk-titlebar = false
-    gtk-single-instance = true
+    gtk-single-instance = false
     gtk-wide-tabs = false
 
     scrollback-limit = 1000000

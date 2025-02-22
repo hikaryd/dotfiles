@@ -1,13 +1,12 @@
 { pkgs, ... }: {
   home.packages = with pkgs; [
-    jetbrains-mono
     noto-fonts
     noto-fonts-emoji
     noto-fonts-cjk-sans
     hack-font
     bemoji
     maple-mono
-    nerd-fonts.jetbrains-mono
+    iosevka
 
     bibata-cursors
     base16-schemes

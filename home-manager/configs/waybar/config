@@ -26,7 +26,7 @@
 	"format-connected": "<span foreground='#89b4fa'> {device_alias}</span>",
 	"tooltip-format": "{controller_alias}\t{controller_address}",
 	"tooltip-format-connected": "{device_battery_percentage}% Battery Left",
-	"on-click": "kitty --class bluetui -e bluetui"
+	"on-click": "ghostty --class=com.mark.bluetui -e bluetui"
     },
     
     "hyprland/window": {
@@ -169,14 +169,13 @@
 
     "cpu": {
         "interval": 1,
-        "on-click": "kitty --class monitor -e btop",
+        "on-click": "ghostty --class=com.mark.monitor -e btop",
         "format": "󰍛  {usage}%"
     },
 
     "network": {
         "tooltip": true,
         "format-wifi": "    {essid}",
-        "on-click": "kitty --class wifi-manager -e nmtui",
         "format-ethernet": "󰈀 {bandwidthTotalBytes}",
         "format-linked": "󰈀 {ifname} (No IP)",
         "format-disconnected": "󰖪 ",
