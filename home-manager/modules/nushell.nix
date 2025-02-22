@@ -26,17 +26,14 @@
 
       # Локали
       LANG = "en_US.UTF-8";
-      LC_CTYPE = "ru_RU.UTF-8";
+      LC_CTYPE = "en_US.UTF-8";
 
-      # Основные
-      TERM = "xterm-256color";
       EDITOR = "nvim";
       VISUAL = "nvim";
     };
 
     shellAliases = {
       v = "nvim";
-      # zj = "zellij";
       ssh = ''env TERM="xterm-256color" ssh'';
       kvnt-monitor = "tmuxinator start monitoring";
       prod-kvnt =
@@ -181,32 +178,6 @@
         if not ($containers | is-empty) {
           $containers | each { |id| run-external "docker" "stop" $id }
         }
-      }
-
-      def dev [name:string] {
-          let workspace = (pwd)
-          if $name == "" {
-              let oldpwd = $workspace
-              cd ~/dev
-              let directory = (fd -t d | fzf --preview 'bash -c "[[ -f {}/README.md ]] && glow {}/README.md || eza -l --icons --color=always --no-time {}"') | str trim
-              if $directory == "" {
-                  return
-              }
-              let developer_dir = (pwd)
-              let workspace = ($developer_dir + "/" + $directory)
-              let name = (echo $workspace | path basename | str replace -r "\\." "_")
-              cd $oldpwd
-          }
-          cd $workspace
-          if (($workspace | path join ".zellij.kdl") | path exists) {
-              zellij --layout ($workspace | path join ".zellij.kdl") attach -c $name
-              return
-          }
-          let cols = (tput cols | str trim | into int)
-          let rows = (tput lines | str trim | into int)
-          let ratio = ($cols / $rows)
-          let layout = if ($ratio > 8.0) { "wide" } else { "default" }
-          zellij --layout $layout attach -c $name
       }
 
       $env.config = {

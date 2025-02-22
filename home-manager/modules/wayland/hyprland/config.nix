@@ -43,7 +43,7 @@
         animate_mouse_windowdragging = false;
         enable_swallow = false;
         swallow_regex =
-          "(foot|kitty|allacritty|Alacritty|wzterm|com.mitchellh.ghostty)";
+          "(foot|allacritty|Alacritty|wzterm|com.mitchellh.ghostty)";
         disable_splash_rendering = true;
         disable_hyprland_logo = true;
         force_default_wallpaper = 0;
@@ -105,25 +105,21 @@
         "float, class:^(pulsemixer)$"
         "float, class:^(nekoray)$"
 
-        "float, class:^(bluetui)$"
-        "move 1483 40, class:^(bluetui)$"
-        "size 400 600, class:^(bluetui)$"
+        "float, class:^(com.mark.bluetui)$"
+        "move 1483 40, class:^(com.mark.bluetui)$"
+        "size 400 600, class:^(com.mark.bluetui)$"
 
-        "float, class:^(monitor)$"
-        "center, class:^(monitor)$"
-        "size 1000 606, class:^(monitor)$"
+        "float, class:^(com.mark.monitor)$"
+        "center, class:^(com.mark.monitor)$"
+        "size 1000 606, class:^(com.mark.monitor)$"
 
-        "float, class:^(term-launcher)$"
-        "center, class:^(term-launcher)$"
-        "size 300 500, class:^(term-launcher)$"
+        "float, class:^(com.mark.term-launcher)$"
+        "center, class:^(com.mark.term-launcher)$"
+        "size 300 500, class:^(com.mark.term-launcher)$"
 
-        "float, class:^(pulsemixer)$"
-        "center, class:^(pulsemixer)$"
-        "size 600 300, class:^(pulsemixer)$"
-
-        "float, class:^(wifi-manager)$"
-        "move 1433 40, class:^(wifi-manager)$"
-        "size 400 600, class:^(wifi-manager)$"
+        "float, class:^(com.mark.pulsemixer)$"
+        "center, class:^(com.mark.pulsemixer)$"
+        "size 600 300, class:^(com.mark.pulsemixer)$"
 
         "float, class:^(com.ayugram.desktop)$"
         "center, class:^(com.ayugram.desktop)$"
@@ -239,7 +235,6 @@
         # Специальные рабочие пространства
         "special:telegram, on-created-empty:ayugram-desktop, default:true"
         "special:misc, default:true"
-        "special:audio, on-created-empty:audio, default:true"
         "special:music, default:true, on-create-empty:mgraftcp --socks5 127.0.0.1:2080 ytmdesktop"
         "special:vpn, on-created-empty:nekoray, default:true"
         "special:browser2, on-created-empty:google-chrome-stable"
@@ -287,7 +282,6 @@
         # ===== Системные функции =====
         # Специальные рабочие пространства
         "$system, P, togglespecialworkspace, music"
-        "$system, A, togglespecialworkspace, audio"
         "$system, V, togglespecialworkspace, vpn"
         "$system, T, togglespecialworkspace, telegram"
         "$system, G, togglespecialworkspace, browser2"
@@ -303,9 +297,9 @@
         "$launch, S, exec, ${../../../../scripts/snapshot.sh}"
         "$launch, R, exec, ${../../../../scripts/ai_refactor_clipboard}"
         # "$base, A, exec, anyrun"
-        "$base, A, exec, kitty --class term-launcher -e sway-launcher-desktop "
-        "$launch, B, exec, kitty --class bluetui -e bluetui"
-        "$launch, P, exec, kitty --class pulsemixer -- pulsemixer"
+        "$base, A, exec, sh -c 'exec 3>/dev/null; exec ghostty --class=com.mark.term-launcher -e sway-launcher-desktop'"
+        "$launch, B, exec, ghostty --class=com.mark.bluetui -e bluetui"
+        "$launch, P, exec, ghostty --class=com.mark.pulsemixer -e pulsemixer"
       ];
 
       bindm = [
