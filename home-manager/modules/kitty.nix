@@ -1,4 +1,4 @@
-{ pkgs, config, ... }: {
+{ pkgs, config, lib, ... }: {
   programs.kitty = {
     enable = true;
     package = config.lib.nixGL.wrap pkgs.kitty;
@@ -11,6 +11,7 @@
       enable_audio_bell = "no";
       visual_bell_duration = "0.1";
       window_alert_on_bell = "yes";
+      background_opacity = lib.mkForce 0.8;
       url_style = "curly";
       detect_urls = "yes";
       copy_on_select = "clipboard";

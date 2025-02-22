@@ -13,6 +13,7 @@
     htop
     jan
     rsync
+    inkscape-with-extensions
     less
     proton-pass
     ncdu
@@ -21,8 +22,8 @@
     powertop
     acpi
     ripgrep
-    libreoffice
     nemo
+    jq
     fd
     imagemagick
     libnotify
@@ -72,5 +73,6 @@
     networkmanagerapplet
     networkmanager
     wf-recorder
+    sway-launcher-desktop
   ];
 }

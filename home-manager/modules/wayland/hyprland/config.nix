@@ -83,8 +83,6 @@
 
         "workspace special:telegram, class:^(org.telegram.desktop)$"
         "workspace special:telegram, class:^(com.ayugram.desktop)$"
-        "workspace special:audio, class:^(pulsemixer)$"
-        "workspace special:audio, class:^(com.github.wwmm.easyeffects)$"
         "workspace special:music, class:^(YouTube Music Desktop App)$"
         "workspace special:vpn, class:^(nekoray)$"
 
@@ -94,7 +92,6 @@
         "float,title:^(Untitled - Google Chrome)(.*)$"
         "float, class:^(org.telegram.desktop)$"
         "float, class:^(com.ayugram.desktop)$"
-        "float, class:^(com.github.wwmm.easyeffects)$"
         "float, class:^(pulsemixer)$"
         "float, class:^(nekoray)$"
         "float, class:^(pavucontrol)$"
@@ -105,7 +102,6 @@
         "float, class:^(bluetooth-manager)$"
         "float, class:^(iwgtk)$"
         "float, class:^(YouTube Music Desktop App)$"
-        "float, class:^(com.github.wwmm.easyeffects)$"
         "float, class:^(pulsemixer)$"
         "float, class:^(nekoray)$"
 
@@ -117,9 +113,25 @@
         "center, class:^(monitor)$"
         "size 1000 606, class:^(monitor)$"
 
+        "float, class:^(term-launcher)$"
+        "center, class:^(term-launcher)$"
+        "size 300 500, class:^(term-launcher)$"
+
+        "float, class:^(pulsemixer)$"
+        "center, class:^(pulsemixer)$"
+        "size 600 300, class:^(pulsemixer)$"
+
         "float, class:^(wifi-manager)$"
         "move 1433 40, class:^(wifi-manager)$"
-        "size 400 60, class:^(wifi-manager)$"
+        "size 400 600, class:^(wifi-manager)$"
+
+        "float, class:^(com.ayugram.desktop)$"
+        "center, class:^(com.ayugram.desktop)$"
+        "size 600 1000, class:^(com.ayugram.desktop)$"
+
+        "float, class:^(com.github.wwmm.easyeffects)$"
+        "center, class:^(com.github.wwmm.easyeffects)$"
+        "size 600 400, class:^(com.github.wwmm.easyeffects)$"
 
         "opacity 0.80 0.80, class:^(org.freedesktop.impl.portal.desktop.gtk)$"
         "opacity 0.80 0.80, class:^(org.freedesktop.impl.portal.desktop.hyprland)$"
@@ -225,7 +237,6 @@
         "special:xreal,monitor:xreal"
 
         # Специальные рабочие пространства
-        # "special:telegram, on-created-empty:telegram-desktop, default:true"
         "special:telegram, on-created-empty:ayugram-desktop, default:true"
         "special:misc, default:true"
         "special:audio, on-created-empty:audio, default:true"
@@ -290,24 +301,25 @@
         # ===== Запуск приложений =====
         "$base, Return, exec, ghostty"
         "$launch, S, exec, ${../../../../scripts/snapshot.sh}"
-        "$launch, P, exec, ${../../../../scripts/ai_refactor_clipboard}"
-        "$base, A, exec, anyrun"
+        "$launch, R, exec, ${../../../../scripts/ai_refactor_clipboard}"
+        # "$base, A, exec, anyrun"
+        "$base, A, exec, kitty --class term-launcher -e sway-launcher-desktop "
         "$launch, B, exec, kitty --class bluetui -e bluetui"
+        "$launch, P, exec, kitty --class pulsemixer -- pulsemixer"
       ];
 
       bindm = [
         "$mainMod, mouse:272, movewindow"
         "$mainMod, mouse:273, resizewindow"
       ];
-      exec = [ "pkill hyprpaper && hyprpaper" "pkill waybar && waybar" ];
+      exec = [ "pkill hyprpaper && hyprpaper" ];
 
       exec-once = [
         "kanshi"
         "hypridle"
         "dunst"
-        "walker --gapplication-service"
+        "waybar"
 
-        "beekeeper-studio"
         "nekoray"
         "mgraftcp --socks5 127.0.0.1:2080 ytmdesktop"
 
@@ -316,8 +328,7 @@
 
         "${../../../../scripts/xdg-portal.sh}"
 
-        "easyeffects"
-        "kitty --class pulsemixer -- pulsemixer"
+        "easyeffects --gapplication-service"
 
         "${pkgs.polkit_gnome}/libexec/polkit-gnome-authentication-agent-1"
         "dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP"
