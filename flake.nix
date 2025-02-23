@@ -7,6 +7,7 @@
     ghostty.url = "github:ghostty-org/ghostty";
     anyrun.url = "github:fufexan/anyrun/launch-prefix";
     hyprland.url = "github:hyprwm/Hyprland";
+    master.url = "github:nixos/nixpkgs/master";
 
     home-manager = {
       url = "github:nix-community/home-manager";

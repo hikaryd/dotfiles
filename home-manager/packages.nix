@@ -13,8 +13,8 @@
     htop
     jan
     rsync
-    inkscape-with-extensions
     less
+    bluetuith
     proton-pass
     ncdu
     duf
@@ -29,9 +29,11 @@
     libnotify
     postgresql_16
     repomix
-    bluetuith
     uv
     grip-grab
+
+    flameshot
+    satty
 
     p7zip
     lrzip
@@ -46,13 +48,12 @@
     xdg-user-dirs
 
     telegram-desktop
-    ytmdesktop
-    proxychains-ng
     ayugram-desktop
+
+    proxychains-ng
     sing-geosite
 
     (config.lib.nixGL.wrap beekeeper-studio)
-    (config.lib.nixGL.wrap super-productivity)
     (config.lib.nixGL.wrap mpv)
     (config.lib.nixGL.wrap osu-lazer-bin)
     (config.lib.nixGL.wrap insomnia)
@@ -74,5 +75,9 @@
     networkmanager
     wf-recorder
     sway-launcher-desktop
+
+    geogebra
+    jamesdsp
+
   ];
 }

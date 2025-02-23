@@ -83,12 +83,13 @@
 
         "workspace special:telegram, class:^(org.telegram.desktop)$"
         "workspace special:telegram, class:^(com.ayugram.desktop)$"
-        "workspace special:music, class:^(YouTube Music Desktop App)$"
+        "workspace special:music, class:^(com.mark.music)$"
         "workspace special:vpn, class:^(nekoray)$"
 
         "immediate, class:^(mpv)$"
 
         "float,title:^(Google Chrome)(.*)$"
+        "float,title:^(JamesDSP for Linux)(.*)$"
         "float,title:^(Untitled - Google Chrome)(.*)$"
         "float, class:^(org.telegram.desktop)$"
         "float, class:^(com.ayugram.desktop)$"
@@ -101,7 +102,6 @@
         "float, class:^(org.kde.polkit-kde-authentication-agent-1)$"
         "float, class:^(bluetooth-manager)$"
         "float, class:^(iwgtk)$"
-        "float, class:^(YouTube Music Desktop App)$"
         "float, class:^(pulsemixer)$"
         "float, class:^(nekoray)$"
 
@@ -123,11 +123,15 @@
 
         "float, class:^(com.ayugram.desktop)$"
         "center, class:^(com.ayugram.desktop)$"
-        "size 600 1000, class:^(com.ayugram.desktop)$"
+        "size 700 1000, class:^(com.ayugram.desktop)$"
 
         "float, class:^(com.github.wwmm.easyeffects)$"
         "center, class:^(com.github.wwmm.easyeffects)$"
-        "size 600 400, class:^(com.github.wwmm.easyeffects)$"
+        "size 650 400, class:^(com.github.wwmm.easyeffects)$"
+
+        "float, class:^(com.mark.music)$"
+        "center, class:^(com.mark.music)$"
+        "size 700 1000, class:^(com.mark.music)$"
 
         "opacity 0.80 0.80, class:^(org.freedesktop.impl.portal.desktop.gtk)$"
         "opacity 0.80 0.80, class:^(org.freedesktop.impl.portal.desktop.hyprland)$"
@@ -201,8 +205,8 @@
         rounding = 14;
         shadow = {
           enabled = true;
-          range = 10;
-          render_power = 2;
+          range = 20;
+          render_power = 4;
         };
         blur = {
           enabled = true;
@@ -235,7 +239,9 @@
         # Специальные рабочие пространства
         "special:telegram, on-created-empty:ayugram-desktop, default:true"
         "special:misc, default:true"
-        "special:music, default:true, on-create-empty:mgraftcp --socks5 127.0.0.1:2080 ytmdesktop"
+        ''
+          special:music, default:true, on-create-empty:ghostty --class=com.mark.music -e nu -c "echo 1; mgraftcp --socks5 127.0.0.1:2080 ytermusic"
+        ''
         "special:vpn, on-created-empty:nekoray, default:true"
         "special:browser2, on-created-empty:google-chrome-stable"
       ];
@@ -294,7 +300,7 @@
 
         # ===== Запуск приложений =====
         "$base, Return, exec, ghostty"
-        "$launch, S, exec, ${../../../../scripts/snapshot.sh}"
+        "$launch, S, exec, grimblast save area - | satty --filename - --fullscreen --copy-command wl-copy"
         "$launch, R, exec, ${../../../../scripts/ai_refactor_clipboard}"
         # "$base, A, exec, anyrun"
         "$base, A, exec, sh -c 'exec 3>/dev/null; exec ghostty --class=com.mark.term-launcher -e sway-launcher-desktop'"
@@ -315,14 +321,18 @@
         "waybar"
 
         "nekoray"
-        "mgraftcp --socks5 127.0.0.1:2080 ytmdesktop"
 
         "nm-applet"
         "blueman-applet"
 
+        ''
+          ghostty --class=com.mark.music -e nu -c "echo 1; mgraftcp --socks5 127.0.0.1:2080 ytermusic"
+        ''
+
         "${../../../../scripts/xdg-portal.sh}"
 
         "easyeffects --gapplication-service"
+        "jamesdsp"
 
         "${pkgs.polkit_gnome}/libexec/polkit-gnome-authentication-agent-1"
         "dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP"
@@ -333,4 +343,3 @@
     };
   };
 }
-

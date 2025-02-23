@@ -4,6 +4,7 @@
     homeDirectory = "/home/hikary";
     stateVersion = "24.11";
   };
+
   imports = [ ./modules ./theme.nix ./packages.nix ];
   programs.home-manager.enable = true;
   nixGL = {
@@ -12,13 +13,15 @@
   };
 
   xdg.configFile."environment.d/envvars.conf".text = ''
-    PATH="$HOME/.nix-profile/bin:/nix/var/nix/profiles/default/bin:/home/hikary/.local/nin:$PATH"
+    PATH="$HOME/.nix-profile/bin:/nix/var/nix/profiles/default/bin:/home/hikary/.local/bin:$HOME/.cargo/bin:$PATH"
   '';
 
   programs.bash = {
     enable = true;
     bashrcExtra = ''
-      export PATH="$HOME/.nix-profile/bin:$PATH"
+      export PATH="$HOME/.nix-profile/bin:/nix/var/nix/profiles/default/bin:/home/hikary/.local/bin:$HOME/.cargo/bin:$PATH"
+      export LANG="en_US.UTF-8"
+      export LC_ALL="en_US.UTF-8"
     '';
   };
 
