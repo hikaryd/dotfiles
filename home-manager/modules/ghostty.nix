@@ -36,7 +36,9 @@
 
     # Запуск команды и интеграция с оболочкой
     command = ~/.config/ghostty/tmux-session.sh
-    shell-integration = none
+    shell-integration = detect
+    shell-integration-features = cursor,sudo,title
+    linux-cgroup = single-instance
 
     # Тема и визуальное оформление
     # theme = "catppuccin-mocha"

@@ -112,6 +112,7 @@
           "/usr/local/bin"
           "/usr/bin"
           ($env.HOME + "/.local/bin")
+          ($env.HOME + "/.cargo/bin")
           ($env.HOME + "/.config/carapace/bin")
         ]
         let joined = ($base_paths | uniq | str join ":")

@@ -1,11 +1,13 @@
 { pkgs, ... }: {
   home.packages = with pkgs; [
+    jetbrains-mono
     noto-fonts
     noto-fonts-emoji
     noto-fonts-cjk-sans
     hack-font
     bemoji
     maple-mono
+    nerd-fonts.jetbrains-mono
     iosevka
 
     bibata-cursors
@@ -21,7 +23,6 @@
     enable = true;
     autoEnable = true;
     polarity = "dark";
-    # base16Scheme = "${pkgs.base16-schemes}/share/themes/catppuccin-mocha.yaml";
     base16Scheme = builtins.fetchurl {
       url =
         "https://raw.githubusercontent.com/scottmckendry/cyberdream.nvim/main/extras/base16/cyberdream.yaml";
@@ -50,15 +51,9 @@
 
     targets = {
       dunst.enable = false;
-      # gtk.enable = true;
-      # qt.enable = true;
-      # kitty.enable = true;
-      # bat.enable = true;
-      # hyprlock.enable = true;
-      # yazi.enable = true;
-      # nushell.enable = true;
-      # console.enable = true;
-      # chromium.enable = true;
+      wpaperd.enable = false;
+      vscode.enable = false;
+      waybar.enable = false;
     };
     cursor = {
       size = 20;
@@ -67,4 +62,3 @@
     };
   };
 }
-

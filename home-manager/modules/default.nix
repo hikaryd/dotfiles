@@ -7,7 +7,6 @@
     ./nvim.nix
     ./otd.nix
     ./yazi.nix
-    ./vscodium.nix
     ./tmux.nix
     ./starship.nix
     ./btop.nix
