@@ -42,6 +42,7 @@ in {
     yq
     yamlfmt
     pylsp
+    typstyle
     taplo
     ruff-lsp
     luajit

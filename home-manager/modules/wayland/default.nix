@@ -6,6 +6,7 @@
     wlroots
     xwayland
     libinput
+    sway-launcher-desktop
     (config.lib.nixGL.wrap xdg-desktop-portal)
     (config.lib.nixGL.wrap xdg-desktop-portal-wlr)
     (config.lib.nixGL.wrap xdg-desktop-portal-gtk)

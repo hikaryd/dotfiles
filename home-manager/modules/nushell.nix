@@ -48,11 +48,14 @@
         "repomix --ignore '*.lock,docs/*,.git/*,.idea/*,.vscode/*,__pycache__'";
       vs = "overlay use .venv/bin/activate.nu";
       proxy = "mgraftcp --socks5 127.0.0.1:2080";
+      md_convert = "pandoc -s -o output.pdf --pdf-engine=typst";
+      scan_domain = ''
+        sudo ~/.nix-profile/bin/nmap -sV -sS -A -T4 --script="*" -Pn -n -v -p1-65535  -oA nmap
+      '';
 
       # Docker
       dc = "docker compose";
       create_mr = "${../../scripts/ai-mr-helper}";
-      # osu  = ''env WLR_DRM_NO_ATOMIC="1" osu'';
       dcl = "docker compose logs -f";
       dcub = "docker compose up --build -d --force-recreate";
       dcd = "docker compose down";

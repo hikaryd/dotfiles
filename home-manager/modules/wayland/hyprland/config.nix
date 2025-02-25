@@ -103,7 +103,6 @@
         "float, class:^(bluetooth-manager)$"
         "float, class:^(iwgtk)$"
         "float, class:^(pulsemixer)$"
-        "float, class:^(nekoray)$"
 
         "float, class:^(com.mark.bluetui)$"
         "move 1483 40, class:^(com.mark.bluetui)$"
@@ -133,11 +132,19 @@
         "center, class:^(com.mark.music)$"
         "size 700 1000, class:^(com.mark.music)$"
 
+        "float, class:^(com-artemchep-keyguard-MainKt)$"
+        "center, class:^(com-artemchep-keyguard-MainKt)$"
+        "size 700 700, class:^(com-artemchep-keyguard-MainKt)$"
+
+        "float, class:^(xdg-desktop-portal-gtk)$"
+        "center, class:^(xdg-desktop-portal-gtk)$"
+        "size 400 400, class:^(xdg-desktop-portal-gtk)$"
+
         "opacity 0.80 0.80, class:^(org.freedesktop.impl.portal.desktop.gtk)$"
         "opacity 0.80 0.80, class:^(org.freedesktop.impl.portal.desktop.hyprland)$"
         "opacity 0.9 0.9,class:^(neovide)$"
         "opacity 0.9 0.9,class:^(zen)$"
-        "opacity 0.9 0.9,class:^(google-chrome)$"
+        "opacity 0.9 0.9,class:^(Min)$"
         "animation off, class:^(flameshot)$"
       ];
 
@@ -228,7 +235,7 @@
 
       workspace = [
         # Основные рабочие пространства
-        "name:browser, monitor:HDMI-A-1, on-created-empty:google-chrome-stable"
+        "name:browser, monitor:HDMI-A-1, on-created-empty:min-browser"
         "name:dev-terminal, monitor:HDMI-A-1, on-created-empty:ghostty"
         "name:conf-terminal, monitor:HDMI-A-1, on-created-empty:ghostty"
         "name:terminal, monitor:HDMI-A-1, on-created-empty:ghostty, default:true"
@@ -238,12 +245,13 @@
 
         # Специальные рабочие пространства
         "special:telegram, on-created-empty:ayugram-desktop, default:true"
+        "special:ai, on-created-empty:cherry-studio, default:true"
         "special:misc, default:true"
         ''
           special:music, default:true, on-create-empty:ghostty --class=com.mark.music -e nu -c "echo 1; mgraftcp --socks5 127.0.0.1:2080 ytermusic"
         ''
         "special:vpn, on-created-empty:nekoray, default:true"
-        "special:browser2, on-created-empty:google-chrome-stable"
+        "special:browser2, on-created-empty:min-browser"
       ];
 
       "$mainMod" = "SUPER";
@@ -291,6 +299,7 @@
         "$system, V, togglespecialworkspace, vpn"
         "$system, T, togglespecialworkspace, telegram"
         "$system, G, togglespecialworkspace, browser2"
+        "$system, W, togglespecialworkspace, ai"
 
         # Системные панели и меню
         "$system, S, exec, hyprpanel t dashboardmenu"
@@ -301,9 +310,9 @@
         # ===== Запуск приложений =====
         "$base, Return, exec, ghostty"
         "$launch, S, exec, grimblast save area - | satty --filename - --fullscreen --copy-command wl-copy"
-        "$launch, R, exec, ${../../../../scripts/ai_refactor_clipboard}"
-        # "$base, A, exec, anyrun"
-        "$base, A, exec, sh -c 'exec 3>/dev/null; exec ghostty --class=com.mark.term-launcher -e sway-launcher-desktop'"
+        "$launch, O, exec, ${../../../../scripts/ai_refactor_clipboard}"
+        "$base, A, exec, anyrun"
+        # "$base, A, exec, sh -c 'exec 3>/dev/null; exec ghostty --class=com.mark.term-launcher -e sway-launcher-desktop'"
         "$launch, B, exec, ghostty --class=com.mark.bluetui -e bluetui"
         "$launch, P, exec, ghostty --class=com.mark.pulsemixer -e pulsemixer"
       ];
@@ -312,7 +321,7 @@
         "$mainMod, mouse:272, movewindow"
         "$mainMod, mouse:273, resizewindow"
       ];
-      exec = [ "pkill hyprpaper && hyprpaper" ];
+      exec = [ "pkill hyprpaper && hyprpaper" "pkill waybar && waybar" ];
 
       exec-once = [
         "kanshi"
