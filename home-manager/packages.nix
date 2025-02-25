@@ -45,7 +45,6 @@
     tmuxinator
 
     xdg-desktop-portal
-    xdg-user-dirs
 
     telegram-desktop
     ayugram-desktop
@@ -53,11 +52,18 @@
     proxychains-ng
     sing-geosite
 
+    pandoc
+    typst
+
+    tdf
+
+    nmap
+
+    (config.lib.nixGL.wrap keyguard)
     (config.lib.nixGL.wrap beekeeper-studio)
     (config.lib.nixGL.wrap mpv)
     (config.lib.nixGL.wrap osu-lazer-bin)
     (config.lib.nixGL.wrap insomnia)
-    (config.lib.nixGL.wrap google-chrome)
 
     nix-prefetch-scripts
     luajitPackages.luarocks
@@ -74,10 +80,7 @@
     networkmanagerapplet
     networkmanager
     wf-recorder
-    sway-launcher-desktop
 
-    geogebra
     jamesdsp
-
   ];
 }
