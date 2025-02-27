@@ -12,6 +12,7 @@
     tree
     htop
     jan
+    qbittorrent
     rsync
     less
     bluetuith
@@ -60,6 +61,7 @@
     nmap
 
     (config.lib.nixGL.wrap keyguard)
+    (config.lib.nixGL.wrap google-chrome)
     (config.lib.nixGL.wrap beekeeper-studio)
     (config.lib.nixGL.wrap mpv)
     (config.lib.nixGL.wrap osu-lazer-bin)

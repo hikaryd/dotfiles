@@ -17,5 +17,6 @@
     ./fastfetch.nix
     ./bat.nix
     ./kanata.nix
+    ./xdg-mimes.nix
   ];
 }

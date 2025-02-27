@@ -105,7 +105,7 @@
         "float, class:^(pulsemixer)$"
 
         "float, class:^(com.mark.bluetui)$"
-        "move 1483 40, class:^(com.mark.bluetui)$"
+        "center, class:^(com.mark.monitor)$"
         "size 400 600, class:^(com.mark.bluetui)$"
 
         "float, class:^(com.mark.monitor)$"
@@ -262,25 +262,35 @@
       "$launch" = "SUPER SHIFT ALT"; # Запуск приложений
       bind = [
         # ===== Основные рабочие пространства =====
-        "$base, B, workspace, name:browser"
-        "$base, D, workspace, name:dev-terminal"
-        "$base, C, workspace, name:conf-terminal"
-        "$base, T, workspace, name:terminal"
-        "$base, M, workspace, name:misc"
-        "$base, O, workspace, name:other"
-        "$system, M, workspace, name:database"
+        "$base, R, workspace, name:browser"
+        "$window, R, movetoworkspacesilent, name:browser"
 
-        # ===== Управление окнами =====
-        "$window, B, movetoworkspacesilent, name:browser"
-        "$window, D, movetoworkspacesilent, name:dev-terminal"
-        "$window, C, movetoworkspacesilent, name:conf-terminal"
-        "$window, T, movetoworkspacesilent, name:terminal"
-        "$window, M, movetoworkspacesilent, name:misc"
+        "$base, G, workspace, name:dev-terminal"
+        "$window, G, movetoworkspacesilent, name:dev-terminal"
+
+        "$base, T, workspace, name:conf-terminal"
+        "$window, T, movetoworkspacesilent, name:conf-terminal"
+
+        "$base, V, workspace, name:terminal"
+        "$window, V, movetoworkspacesilent, name:terminal"
+
+        "$base, C, workspace, name:misc"
+        "$window, C, movetoworkspacesilent, name:misc"
+
+        "$base, O, workspace, name:other"
         "$window, O, movetoworkspacesilent, name:other"
 
-        "$window, Q, killactive"
+        "$base, 4, workspace, name:database"
+
+        "$base, E, togglespecialworkspace, telegram"
+        "$base, 5, togglespecialworkspace, music"
+        "$base, 6, togglespecialworkspace, vpn"
+        "$base, B, togglespecialworkspace, browser2"
+
+        # ===== Управление окнами =====
+
+        "$window, F, killactive"
         "$window, Space, togglefloating"
-        "$window, F, fullscreen"
         "$window, Period, movewindow, mon:+1"
         "$window, Comma, movewindow, mon:-1"
 
@@ -288,28 +298,14 @@
         "$window, J, movewindow, d"
         "$window, K, movewindow, u"
         "$window, L, movewindow, r"
-        "$base, h, movefocus, l"
-        "$base, l, movefocus, r"
-        "$base, k, movefocus, u"
-        "$base, j, movefocus, d"
-
-        # ===== Системные функции =====
-        # Специальные рабочие пространства
-        "$system, P, togglespecialworkspace, music"
-        "$system, V, togglespecialworkspace, vpn"
-        "$system, T, togglespecialworkspace, telegram"
-        "$system, G, togglespecialworkspace, browser2"
-        "$system, W, togglespecialworkspace, ai"
-
-        # Системные панели и меню
-        "$system, S, exec, hyprpanel t dashboardmenu"
-        "$system, B, exec, hyprpanel t bluetoothmenu"
-        "$system, N, exec, hyprpanel t notificationsmenu"
-        "$system, W, exec, hyprpanel t networkmenu"
+        "$system, h, movefocus, l"
+        "$system, l, movefocus, r"
+        "$system, k, movefocus, u"
+        "$system, j, movefocus, d"
 
         # ===== Запуск приложений =====
         "$base, Return, exec, ghostty"
-        "$launch, S, exec, grimblast save area - | satty --filename - --fullscreen --copy-command wl-copy"
+        "$launch, C, exec, grimblast save area - | satty --filename - --fullscreen --copy-command wl-copy"
         "$launch, O, exec, ${../../../../scripts/ai_refactor_clipboard}"
         "$base, A, exec, anyrun"
         # "$base, A, exec, sh -c 'exec 3>/dev/null; exec ghostty --class=com.mark.term-launcher -e sway-launcher-desktop'"
@@ -321,13 +317,13 @@
         "$mainMod, mouse:272, movewindow"
         "$mainMod, mouse:273, resizewindow"
       ];
-      exec = [ "pkill hyprpaper && hyprpaper" "pkill waybar && waybar" ];
+      exec =
+        [ "pkill hyprpaper && hyprpaper" "pkill waybar && waybar" "kanata" ];
 
       exec-once = [
         "kanshi"
         "hypridle"
         "dunst"
-        "waybar"
 
         "nekoray"
 
@@ -335,7 +331,7 @@
         "blueman-applet"
 
         ''
-          ghostty --class=com.mark.music -e nu -c "echo 1; mgraftcp --socks5 127.0.0.1:2080 ytermusic"
+          sleep 10 && ghostty --class=com.mark.music -e nu -c "echo 1; mgraftcp --socks5 127.0.0.1:2080 ytermusic"
         ''
 
         "${../../../../scripts/xdg-portal.sh}"
