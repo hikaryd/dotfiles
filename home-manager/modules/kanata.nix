@@ -1,5 +1,5 @@
 { pkgs, ... }: {
-  # home.packages = with pkgs; [ kanata ];
+  home.packages = with pkgs; [ kanata ];
   xdg.configFile."kanata/kanata.kbd".text = ''
     (defsrc
       esc  f1   f2   f3   f4   f5   f6   f7   f8   f9   f10  f11  f12
@@ -12,7 +12,7 @@
 
     (defvar
       tap-timeout 100
-      hold-timeout 200
+      hold-timeout 150
 
       tt $tap-timeout
       ht $hold-timeout
@@ -27,39 +27,49 @@
     )
 
     (deflayermap (default)
-      caps (tap-hold $tt $ht caps lctl)
+      a (tap-hold-release $tt $ht a lalt)
+      s (tap-hold-release $tt $ht s lmet)
+      d (tap-hold-release $tt $ht d lsft)
+      f (tap-hold-release $tt $ht f lctl)
+      lctrl  (tap-hold-release $tt $ht esc lctrl)
 
-      (template-expand triple-tap-layer-switch grv transparent)
       spc (tap-hold $tt $ht spc (layer-while-held extended))
     )
 
 
-    (deflayermap (transparent)
-      (template-expand triple-tap-layer-switch grv default)
-    )
-
     (deflayermap (extended)
+      1 (macro C-a 10 Digit1)
+      2 (macro C-a 10 Digit2)
+      3 (macro C-a 10 Digit3)
+      4 (macro C-a 10 Digit4)
+      5 (macro C-a 10 Digit5)
+      6 (macro C-a 10 Digit6)
+      7 (macro C-a 10 Digit7)
+      8 (macro C-a 10 Digit8)
+
       u pgdn
       o pgup
+      w C-bspc
 
-      i up
-      j left
-      k down
+      k up
+      h left
+      j down
       l rght
 
-      h C-left
+      g C-left
       ; C-rght
 
       m C-S-tab ;; previous tab
       , C-tab ;; next tab
+      q C-S-p ;; task groups
 
       n home
       . end
 
-      r C-. ;; paste
-      t C-i ;; yank/copy
-      f C-/ ;; undo
-      b C-b ;; cut
+      r C-S-v ;; paste
+      t C-c ;; yank/copy
+      f C-z ;; undo
+      b C-x ;; cut
     )
   '';
 }

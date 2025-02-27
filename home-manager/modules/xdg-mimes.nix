@@ -2,7 +2,7 @@
 with lib;
 let
   defaultApps = {
-    browser = [ "zen-browser.desktop" ];
+    browser = [ "min-browser.desktop" ];
     text = [ "code.desktop" ];
     image = [ "imv-dir.desktop" ];
     audio = [ "mpv.desktop" ];
@@ -74,15 +74,13 @@ let
       "application/7z"
       "application/*tar"
     ];
-    discord = [ "x-scheme-handler/discord" ];
   };
 
   associations = with lists;
     listToAttrs (flatten (mapAttrsToList
       (key: map (type: attrsets.nameValuePair type defaultApps."${key}"))
       mimeMap));
-in
-{
+in {
   xdg.configFile."mimeapps.list".force = true;
   xdg.mimeApps.enable = true;
   xdg.mimeApps.associations.added = associations;
