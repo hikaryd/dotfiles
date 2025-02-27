@@ -245,7 +245,6 @@
 
         # Специальные рабочие пространства
         "special:telegram, on-created-empty:ayugram-desktop, default:true"
-        "special:ai, on-created-empty:cherry-studio, default:true"
         "special:misc, default:true"
         ''
           special:music, default:true, on-create-empty:ghostty --class=com.mark.music -e nu -c "echo 1; mgraftcp --socks5 127.0.0.1:2080 ytermusic"
@@ -262,20 +261,17 @@
       "$launch" = "SUPER SHIFT ALT"; # Запуск приложений
       bind = [
         # ===== Основные рабочие пространства =====
-        "$base, R, workspace, name:browser"
-        "$window, R, movetoworkspacesilent, name:browser"
+        "$base, T, workspace, name:browser"
+        "$window, T, movetoworkspacesilent, name:browser"
 
         "$base, G, workspace, name:dev-terminal"
         "$window, G, movetoworkspacesilent, name:dev-terminal"
 
-        "$base, T, workspace, name:conf-terminal"
-        "$window, T, movetoworkspacesilent, name:conf-terminal"
+        "$base, C, workspace, name:conf-terminal"
+        "$window, C, movetoworkspacesilent, name:conf-terminal"
 
         "$base, V, workspace, name:terminal"
         "$window, V, movetoworkspacesilent, name:terminal"
-
-        "$base, C, workspace, name:misc"
-        "$window, C, movetoworkspacesilent, name:misc"
 
         "$base, O, workspace, name:other"
         "$window, O, movetoworkspacesilent, name:other"
@@ -317,8 +313,11 @@
         "$mainMod, mouse:272, movewindow"
         "$mainMod, mouse:273, resizewindow"
       ];
-      exec =
-        [ "pkill hyprpaper && hyprpaper" "pkill waybar && waybar" "kanata" ];
+      exec = [
+        "pkill hyprpaper && hyprpaper"
+        "pkill waybar && waybar"
+        "pkill kanata && kanata"
+      ];
 
       exec-once = [
         "kanshi"
