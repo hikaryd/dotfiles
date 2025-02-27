@@ -10,6 +10,7 @@
     ansible
     stu
     tree
+    evince
     htop
     jan
     qbittorrent
@@ -32,6 +33,8 @@
     repomix
     uv
     grip-grab
+
+    gajim
 
     flameshot
     satty

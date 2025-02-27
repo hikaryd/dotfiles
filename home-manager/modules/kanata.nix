@@ -46,6 +46,11 @@
       6 (macro C-a 10 Digit6)
       7 (macro C-a 10 Digit7)
       8 (macro C-a 10 Digit8)
+      v (macro C-a 10 v)
+      c (macro C-a 10 C-c)
+      x (macro C-a 10 c)
+      s (macro C-a 10 S-t)
+      a C-a
 
       u pgdn
       o pgup
@@ -66,8 +71,8 @@
       n home
       . end
 
-      r C-S-v ;; paste
-      t C-c ;; yank/copy
+      t C-S-v ;; paste
+      r C-c ;; yank/copy
       f C-z ;; undo
       b C-x ;; cut
     )
