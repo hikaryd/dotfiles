@@ -124,6 +124,10 @@
         "center, class:^(com.ayugram.desktop)$"
         "size 700 1000, class:^(com.ayugram.desktop)$"
 
+        "float, class:^(1Password)$"
+        "center, class:^(1Password)$"
+        "size 500 700, class:^(1Password)$"
+
         "float, class:^(com.github.wwmm.easyeffects)$"
         "center, class:^(com.github.wwmm.easyeffects)$"
         "size 650 400, class:^(com.github.wwmm.easyeffects)$"
@@ -144,7 +148,6 @@
         "opacity 0.80 0.80, class:^(org.freedesktop.impl.portal.desktop.hyprland)$"
         "opacity 0.9 0.9,class:^(neovide)$"
         "opacity 0.9 0.9,class:^(zen)$"
-        "opacity 0.9 0.9,class:^(Min)$"
         "animation off, class:^(flameshot)$"
       ];
 
@@ -235,22 +238,21 @@
 
       workspace = [
         # Основные рабочие пространства
-        "name:browser, monitor:HDMI-A-1, on-created-empty:min-browser"
         "name:dev-terminal, monitor:HDMI-A-1, on-created-empty:ghostty"
         "name:conf-terminal, monitor:HDMI-A-1, on-created-empty:ghostty"
         "name:terminal, monitor:HDMI-A-1, on-created-empty:ghostty, default:true"
-        "name:database, monitor:HDMI-A-1, on-created-empty:beekeeper-studio, default:true"
         "name:other, monitor:HDMI-A-1, default:true"
         "special:xreal,monitor:xreal"
 
         # Специальные рабочие пространства
+        "special:browser, on-created-empty:zen"
+        "special:database, on-created-empty:beekeeper-studio"
         "special:telegram, on-created-empty:ayugram-desktop, default:true"
         "special:misc, default:true"
         ''
           special:music, default:true, on-create-empty:ghostty --class=com.mark.music -e nu -c "echo 1; mgraftcp --socks5 127.0.0.1:2080 ytermusic"
         ''
         "special:vpn, on-created-empty:nekoray, default:true"
-        "special:browser2, on-created-empty:min-browser"
       ];
 
       "$mainMod" = "SUPER";
@@ -258,35 +260,37 @@
       "$window" = "SUPER SHIFT"; # Управление окнами
       "$layout" = "SUPER ALT"; # Управление расположением
       "$system" = "SUPER CTRL"; # Системные функции
-      "$launch" = "SUPER SHIFT ALT"; # Запуск приложений
+      "$launch" = "CTRL SHIFT"; # Запуск приложений
       bind = [
         # ===== Основные рабочие пространства =====
-        "$base, T, workspace, name:browser"
-        "$window, T, movetoworkspacesilent, name:browser"
+        "$base, 2, workspace, name:dev-terminal"
+        "$window, 2, movetoworkspacesilent, name:dev-terminal"
 
-        "$base, G, workspace, name:dev-terminal"
-        "$window, G, movetoworkspacesilent, name:dev-terminal"
+        "$base, 3, workspace, name:other"
+        "$window, 3, movetoworkspacesilent, name:other"
 
-        "$base, C, workspace, name:conf-terminal"
-        "$window, C, movetoworkspacesilent, name:conf-terminal"
+        "$base, 4, workspace, name:conf-terminal"
+        "$window, 4, movetoworkspacesilent, name:conf-terminal"
 
-        "$base, V, workspace, name:terminal"
-        "$window, V, movetoworkspacesilent, name:terminal"
-
-        "$base, O, workspace, name:other"
-        "$window, O, movetoworkspacesilent, name:other"
-
-        "$base, 4, workspace, name:database"
+        "$base, B, workspace, name:terminal"
+        "$window, B, movetoworkspacesilent, name:terminal"
 
         "$base, E, togglespecialworkspace, telegram"
-        "$base, 5, togglespecialworkspace, music"
-        "$base, 6, togglespecialworkspace, vpn"
-        "$base, B, togglespecialworkspace, browser2"
+
+        "$base, D, togglespecialworkspace, database"
+
+        "$base, 6, togglespecialworkspace, music"
+
+        "$base, 7, togglespecialworkspace, vpn"
+
+        "$base, G, togglespecialworkspace, browser"
+        "$window, G, movetoworkspacesilent, special:browser"
 
         # ===== Управление окнами =====
 
-        "$window, F, killactive"
-        "$window, Space, togglefloating"
+        "$base, Q, killactive"
+        "$window, F, togglefloating"
+        "$window, Space, fullscreen"
         "$window, Period, movewindow, mon:+1"
         "$window, Comma, movewindow, mon:-1"
 
@@ -301,28 +305,28 @@
 
         # ===== Запуск приложений =====
         "$base, Return, exec, ghostty"
-        "$launch, C, exec, grimblast save area - | satty --filename - --fullscreen --copy-command wl-copy"
+        # "$launch, C, exec, grimblast save area - | satty --filename - --fullscreen --copy-command wl-copy"
+        "$launch, S, exec, grimblast save area - | wl-copy"
         "$launch, O, exec, ${../../../../scripts/ai_refactor_clipboard}"
         "$base, A, exec, anyrun"
         # "$base, A, exec, sh -c 'exec 3>/dev/null; exec ghostty --class=com.mark.term-launcher -e sway-launcher-desktop'"
         "$launch, B, exec, ghostty --class=com.mark.bluetui -e bluetui"
-        "$launch, P, exec, ghostty --class=com.mark.pulsemixer -e pulsemixer"
+        "$launch, L, exec, ghostty --class=com.mark.pulsemixer -e pulsemixer"
       ];
 
       bindm = [
         "$mainMod, mouse:272, movewindow"
         "$mainMod, mouse:273, resizewindow"
       ];
-      exec = [
-        "pkill hyprpaper && hyprpaper"
-        "pkill waybar && waybar"
-        "pkill kanata && kanata"
-      ];
+      exec = [ "pkill hyprpaper && hyprpaper" "pkill kanata && kanata" ];
 
       exec-once = [
         "kanshi"
         "hypridle"
         "dunst"
+        "1password"
+        "kanata"
+        "waybar "
 
         "nekoray"
 

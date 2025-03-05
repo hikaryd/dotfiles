@@ -12,6 +12,7 @@ let
 
       Or create this file by secrets/ssh.nix.example
     '';
+  onePassPath = "~/.1password/agent.sock";
 in {
   programs.ssh = {
     enable = true;
@@ -21,18 +22,9 @@ in {
       AddKeysToAgent yes
       ServerAliveInterval 5
       ServerAliveCountMax 10
+      IdentityAgent ${onePassPath}
     '';
     inherit (sshConfig) matchBlocks;
   };
   home.packages = with pkgs; [ mosh ];
-
-  systemd.user.services.ssh-agent = {
-    Unit = { Description = "SSH key agent"; };
-    Service = {
-      Type = "simple";
-      Environment = "SSH_AUTH_SOCK=%t/ssh-agent.socket";
-      ExecStart = "${pkgs.openssh_hpn}/bin/ssh-agent -D -a $SSH_AUTH_SOCK";
-    };
-    Install = { WantedBy = [ "default.target" ]; };
-  };
 }

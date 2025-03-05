@@ -36,7 +36,7 @@
     PATH = "$HOME/.nix-profile/bin:$PATH";
     LANG = "en_US.UTF-8";
     LC_ALL = "en_US.UTF-8";
-    SSH_AUTH_SOCK = "$XDG_RUNTIME_DIR/ssh-agent.socket";
+    # SSH_AUTH_SOCK = "$XDG_RUNTIME_DIR/ssh-agent.socket";
 
     _JAVA_AWT_WM_NONEREPARENTING = "1";
     DISABLE_QT5_COMPAT = "0";

@@ -1,5 +1,6 @@
 { ... }: {
   imports = [
+    ./1password.nix
     ./wayland
     ./easyeffects.nix
     ./git.nix
