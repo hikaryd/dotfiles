@@ -19,6 +19,8 @@
     bluetuith
     proton-pass
     ncdu
+    vscode
+    sublime-merge
     duf
     iotop
     powertop
@@ -33,8 +35,9 @@
     repomix
     uv
     grip-grab
+    aider-chat
 
-    gajim
+    onlyoffice-desktopeditors
 
     flameshot
     satty
@@ -65,6 +68,7 @@
 
     (config.lib.nixGL.wrap keyguard)
     (config.lib.nixGL.wrap google-chrome)
+    (config.lib.nixGL.wrap inputs.zen-browser.packages.${pkgs.system}.beta)
     (config.lib.nixGL.wrap beekeeper-studio)
     (config.lib.nixGL.wrap mpv)
     (config.lib.nixGL.wrap osu-lazer-bin)
@@ -87,5 +91,6 @@
     wf-recorder
 
     jamesdsp
+
   ];
 }

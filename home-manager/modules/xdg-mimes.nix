@@ -2,7 +2,7 @@
 with lib;
 let
   defaultApps = {
-    browser = [ "min-browser.desktop" ];
+    browser = [ "zen.desktop" ];
     text = [ "code.desktop" ];
     image = [ "imv-dir.desktop" ];
     audio = [ "mpv.desktop" ];

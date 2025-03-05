@@ -12,7 +12,7 @@
 
     (defvar
       tap-timeout 100
-      hold-timeout 150
+      hold-timeout 200
 
       tt $tap-timeout
       ht $hold-timeout
@@ -27,11 +27,11 @@
     )
 
     (deflayermap (default)
-      a (tap-hold-release $tt $ht a lalt)
+      ;; a (tap-hold-release $tt $ht a lalt)
       s (tap-hold-release $tt $ht s lmet)
-      d (tap-hold-release $tt $ht d lsft)
+      ;; d (tap-hold-release $tt $ht d lsft)
       f (tap-hold-release $tt $ht f lctl)
-      lctrl  (tap-hold-release $tt $ht esc lctrl)
+      ;; lctrl  (tap-hold-release $tt $ht esc lctrl)
 
       spc (tap-hold $tt $ht spc (layer-while-held extended))
     )
@@ -51,6 +51,7 @@
       x (macro C-a 10 c)
       s (macro C-a 10 S-t)
       a C-a
+      lctrl esc
 
       u pgdn
       o pgup
