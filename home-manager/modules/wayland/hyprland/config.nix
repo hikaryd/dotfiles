@@ -15,6 +15,8 @@
     systemd.enable = true;
     xwayland.enable = true;
     settings = {
+      "$fabricSend" = "fabric-cli exec ax-shell";
+
       general = {
         gaps_in = 5;
         gaps_out = 14;
@@ -242,6 +244,7 @@
         "name:conf-terminal, monitor:HDMI-A-1, on-created-empty:ghostty"
         "name:terminal, monitor:HDMI-A-1, on-created-empty:ghostty, default:true"
         "name:other, monitor:HDMI-A-1, default:true"
+        "name:other2, monitor:eDP-1, default:true"
         "special:xreal,monitor:xreal"
 
         # Специальные рабочие пространства
@@ -272,8 +275,11 @@
         "$base, 4, workspace, name:conf-terminal"
         "$window, 4, movetoworkspacesilent, name:conf-terminal"
 
-        "$base, B, workspace, name:terminal"
-        "$window, B, movetoworkspacesilent, name:terminal"
+        "$base, 5, workspace, name:terminal"
+        "$window, 5, movetoworkspacesilent, name:terminal"
+
+        "$base, B, workspace, name:other2"
+        "$window, B, movetoworkspacesilent, name:other2"
 
         "$base, E, togglespecialworkspace, telegram"
 
@@ -308,9 +314,11 @@
         # "$launch, C, exec, grimblast save area - | satty --filename - --fullscreen --copy-command wl-copy"
         "$launch, S, exec, grimblast save area - | wl-copy"
         "$launch, O, exec, ${../../../../scripts/ai_refactor_clipboard}"
-        "$base, A, exec, anyrun"
-        # "$base, A, exec, sh -c 'exec 3>/dev/null; exec ghostty --class=com.mark.term-launcher -e sway-launcher-desktop'"
-        "$launch, B, exec, ghostty --class=com.mark.bluetui -e bluetui"
+        # "$base, A, exec, anyrun"
+        "$base, A, exec, $fabricSend 'notch.open_notch(\"launcher\")'"
+
+        # "$launch, B, exec, ghostty --class=com.mark.bluetui -e bluetui"
+        "$launch, B, exec, $fabricSend 'notch.open_notch(\"bluetooth\")'"
         "$launch, L, exec, ghostty --class=com.mark.pulsemixer -e pulsemixer"
       ];
 
@@ -321,32 +329,34 @@
       exec = [ "pkill hyprpaper && hyprpaper" "pkill kanata && kanata" ];
 
       exec-once = [
-        "kanshi"
-        "hypridle"
-        "dunst"
-        "1password"
-        "kanata"
-        "waybar "
+        "${pkgs.polkit_gnome}/libexec/polkit-gnome-authentication-agent-1"
+        "dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP"
 
-        "nekoray"
+        "kanshi"
+        "sleep 2 && nekoray"
+
+        "uwsm app -- /usr/bin/python ~/.config/Ax-Shell/main.py ; disown"
+        # "waybar"
+
+        "hypridle"
+        # "dunst"
+
+        "1password --silent"
+        "kanata"
 
         "nm-applet"
-        "blueman-applet"
 
         ''
           sleep 10 && ghostty --class=com.mark.music -e nu -c "echo 1; mgraftcp --socks5 127.0.0.1:2080 ytermusic"
         ''
 
-        "${../../../../scripts/xdg-portal.sh}"
-
         "easyeffects --gapplication-service"
-        "jamesdsp"
-
-        "${pkgs.polkit_gnome}/libexec/polkit-gnome-authentication-agent-1"
-        "dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP"
+        "jamesdsp --tray"
 
         "wl-paste -t text -w xclip -selection clipboard --watch cliphist store"
         "wl-paste --type image --watch cliphist store"
+
+        "${../../../../scripts/xdg-portal.sh}"
       ];
     };
   };
