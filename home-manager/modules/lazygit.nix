@@ -1,7 +1,13 @@
-{ pkgs, ... }: {
-  home.packages = with pkgs; [ lazygit ];
-
-  xdg.configFile."lazygit/config.yml" = {
-    source = ../configs/lazygit/config.yml;
+{ ... }: {
+  programs.lazygit.enable = true;
+  programs.lazygit.settings = {
+    customCommands = [{
+      "key" = "C";
+      "command" = "git commit";
+      "description" = "Commit (open in nvim)";
+      "subprocess" = true;
+      "loadingText" = "Opening nvim...";
+      "context" = "files";
+    }];
   };
 }

@@ -227,8 +227,8 @@
             "Display": {
               "Width": 2560.0,
               "Height": 1440.0,
-              "X": 1053.4474,
-              "Y": 496.03946,
+              "X": 1280.0,
+              "Y": 720.0,
               "Rotation": 0.0
             },
             "Tablet": {
@@ -277,5 +277,6 @@
       "LockUsableAreaTablet": false,
       "Tools": []
     }
+
   '';
 }

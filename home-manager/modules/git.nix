@@ -1,4 +1,4 @@
-{ config, pkgs, lib, ... }: {
+{ config, pkgs, ... }: {
   programs.git = {
     enable = true;
     userName = "Hikary";
@@ -10,7 +10,7 @@
         navigate = true;
         light = false;
         side-by-side = true;
-        line-numbers = true;
+        line-numbr = true;
       };
     };
     aliases = {
