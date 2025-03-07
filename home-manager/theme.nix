@@ -28,7 +28,7 @@
         "https://raw.githubusercontent.com/scottmckendry/cyberdream.nvim/main/extras/base16/cyberdream.yaml";
       sha256 = "1bfi479g7v5cz41d2s0lbjlqmfzaah68cj1065zzsqksx3n63znf";
     };
-    image = ../wallpapers/cat-vibin.png;
+    image = ../wallpapers/foggy-city.png;
 
     fonts = {
       serif = {
@@ -50,10 +50,9 @@
     };
 
     targets = {
-      dunst.enable = false;
-      wpaperd.enable = false;
-      vscode.enable = false;
       waybar.enable = false;
+      firefox.colorTheme.enable = true;
+      firefox.firefoxGnomeTheme.enable = true;
     };
     cursor = {
       size = 20;
