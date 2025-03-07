@@ -1,7 +1,0 @@
-customCommands:
-  - key: "C"
-    command: "git commit"
-    context: "files"
-    description: "Commit (open in nvim)"
-    subprocess: true
-    loadingText: "Opening nvim..."
