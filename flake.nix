@@ -42,14 +42,6 @@
           allowUnfree = true;
           allowUnfreePredicate = _: true;
         };
-        overlays = [
-          (final: prev: {
-            jamesdsp = prev.jamesdsp.overrideAttrs (oldAttrs: {
-              cmakeFlags = (oldAttrs.cmakeFlags or [ ])
-                ++ [ "-DCMAKE_CXX_FLAGS=-Wno-error=maybe-uninitialized" ];
-            });
-          })
-        ];
       };
       p2nix = poetry2nix.lib.mkPoetry2Nix { inherit pkgs; };
     in {
