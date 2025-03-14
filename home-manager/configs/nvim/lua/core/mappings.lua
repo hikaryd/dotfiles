@@ -32,6 +32,9 @@ map('t', '<C-h>', require('smart-splits').move_cursor_left)
 map('t', '<C-j>', require('smart-splits').move_cursor_down)
 map('t', '<C-k>', require('smart-splits').move_cursor_up)
 map('t', '<C-l>', require('smart-splits').move_cursor_right)
+-- Split
+map('n', '<C-s>', ':vsplit', 'Move selected lines down')
+map('n', '<C-v>', ':vsplit', 'Move selected lines up')
 
 -- Line Movement
 map('v', '<A-j>', ":m '>+1<CR>gv=gv", 'Move selected lines down')

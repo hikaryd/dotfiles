@@ -1,2 +1,2 @@
-{ pkgs, ... }: { home.packages = with pkgs; [ _1password-cli _1password-gui ]; }
+{ pkgs, ... }: { home.packages = with pkgs; [ _1password-gui ]; }
 

@@ -85,7 +85,8 @@
 
         "workspace special:telegram, class:^(org.telegram.desktop)$"
         "workspace special:telegram, class:^(com.ayugram.desktop)$"
-        "workspace special:music, class:^(com.mark.music)$"
+        "workspace special:telegram, class:^(Slack)$"
+        "workspace special:music, class:^(tidal-hifi)$"
         "workspace special:vpn, class:^(nekoray)$"
 
         "immediate, class:^(mpv)$"
@@ -94,7 +95,6 @@
         "float,title:^(JamesDSP for Linux)(.*)$"
         "float,title:^(Untitled - Google Chrome)(.*)$"
         "float, class:^(org.telegram.desktop)$"
-        "float, class:^(com.ayugram.desktop)$"
         "float, class:^(pulsemixer)$"
         "float, class:^(nekoray)$"
         "float, class:^(pavucontrol)$"
@@ -123,8 +123,12 @@
         "size 600 300, class:^(com.mark.pulsemixer)$"
 
         "float, class:^(com.ayugram.desktop)$"
-        "center, class:^(com.ayugram.desktop)$"
         "size 700 1000, class:^(com.ayugram.desktop)$"
+        "move 50% 15%, class:^(com.ayugram.desktop)$"
+
+        "float, class:^(Slack)$"
+        "size 700 1000, class:^(Slack)$"
+        "move 20% 15%, class:^(Slack)$"
 
         "float, class:^(1Password)$"
         "center, class:^(1Password)$"
@@ -133,10 +137,6 @@
         "float, class:^(com.github.wwmm.easyeffects)$"
         "center, class:^(com.github.wwmm.easyeffects)$"
         "size 650 400, class:^(com.github.wwmm.easyeffects)$"
-
-        "float, class:^(com.mark.music)$"
-        "center, class:^(com.mark.music)$"
-        "size 700 1000, class:^(com.mark.music)$"
 
         "float, class:^(com-artemchep-keyguard-MainKt)$"
         "center, class:^(com-artemchep-keyguard-MainKt)$"
@@ -148,9 +148,7 @@
 
         "opacity 0.80 0.80, class:^(org.freedesktop.impl.portal.desktop.gtk)$"
         "opacity 0.80 0.80, class:^(org.freedesktop.impl.portal.desktop.hyprland)$"
-        "opacity 0.9 0.9,class:^(neovide)$"
         "opacity 0.9 0.9,class:^(zen)$"
-        "animation off, class:^(flameshot)$"
       ];
 
       input = {
@@ -252,9 +250,7 @@
         "special:database, on-created-empty:beekeeper-studio"
         "special:telegram, on-created-empty:ayugram-desktop, default:true"
         "special:misc, default:true"
-        ''
-          special:music, default:true, on-create-empty:ghostty --class=com.mark.music -e nu -c "echo 1; mgraftcp --socks5 127.0.0.1:2080 ytermusic"
-        ''
+        "special:music, default:true, on-created-empty:tidal-hifi"
         "special:vpn, on-created-empty:nekoray, default:true"
       ];
 
@@ -314,8 +310,8 @@
         # "$launch, C, exec, grimblast save area - | satty --filename - --fullscreen --copy-command wl-copy"
         "$launch, S, exec, grimblast save area - | wl-copy"
         "$launch, O, exec, ${../../../../scripts/ai_refactor_clipboard}"
-        # "$base, A, exec, anyrun"
-        "$base, A, exec, $fabricSend 'notch.open_notch(\"launcher\")'"
+        "$base, A, exec, anyrun"
+        # "$base, A, exec, $fabricSend 'notch.open_notch(\"launcher\")'"
 
         # "$launch, B, exec, ghostty --class=com.mark.bluetui -e bluetui"
         "$launch, B, exec, $fabricSend 'notch.open_notch(\"bluetooth\")'"
@@ -326,29 +322,23 @@
         "$mainMod, mouse:272, movewindow"
         "$mainMod, mouse:273, resizewindow"
       ];
-      exec = [ "pkill hyprpaper && hyprpaper" "pkill kanata && kanata" ];
+      exec = [
+        "pkill hyprpaper && hyprpaper"
+        "pkill kanata && kanata"
+        "killall ax-shell || true && sleep 1 && uwsm app -- /usr/bin/python ~/.config/Ax-Shell/main.py && disown"
+      ];
 
       exec-once = [
-        "${pkgs.polkit_gnome}/libexec/polkit-gnome-authentication-agent-1"
-        "dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP"
-
         "kanshi"
         "sleep 2 && nekoray"
 
-        "uwsm app -- /usr/bin/python ~/.config/Ax-Shell/main.py ; disown"
+        "sleep 5 && 1password --silent"
         # "waybar"
 
         "hypridle"
-        # "dunst"
 
-        "1password --silent"
         "kanata"
-
-        "nm-applet"
-
-        ''
-          sleep 10 && ghostty --class=com.mark.music -e nu -c "echo 1; mgraftcp --socks5 127.0.0.1:2080 ytermusic"
-        ''
+        "tidal-hifi"
 
         "easyeffects --gapplication-service"
         "jamesdsp --tray"
@@ -357,6 +347,10 @@
         "wl-paste --type image --watch cliphist store"
 
         "${../../../../scripts/xdg-portal.sh}"
+        ''
+          /usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1
+        ''
+        "dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP"
       ];
     };
   };

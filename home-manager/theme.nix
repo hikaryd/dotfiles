@@ -53,6 +53,7 @@
       waybar.enable = false;
       firefox.colorTheme.enable = true;
       firefox.firefoxGnomeTheme.enable = true;
+      hyprlock.enable = false;
     };
     cursor = {
       size = 20;

@@ -51,7 +51,6 @@ in {
     nil
     stylua
     shfmt
-    ruff
     shellcheck
     yamllint
     hadolint
