@@ -1,31 +1,40 @@
-{ ... }: {
-  home.file.".config/hypr/hypridle.conf".text = ''
-    general {
-        lock_cmd = pidof hyprlock || hyprlock       # avoid starting multiple hyprlock instances.
-        before_sleep_cmd = loginctl lock-session    # lock before suspend.
-        after_sleep_cmd = hyprctl dispatch dpms on  # to avoid having to press a key twice to turn on the display.
-    }
-
-    listener {
-        timeout = 150                                # 2.5min.
-        on-timeout = brightnessctl -s set 10         # set monitor backlight to minimum, avoid 0 on OLED monitor.
-        on-resume = brightnessctl -r                 # monitor backlight restore.
-    }
-
-    listener {
-        timeout = 300                                 # 5min
-        on-timeout = hyprlock                         # lock screen when timeout has passed
-    }
-
-    listener {
-        timeout = 330                                 # 5.5min
-        on-timeout = hyprctl dispatch dpms off        # screen off when timeout has passed
-        on-resume = hyprctl dispatch dpms on          # screen on when activity is detected after timeout has fired.
-    }
-
-    listener {
-        timeout = 1800                                # 30min
-        on-timeout = systemctl suspend                # suspend pc
-    }
-  '';
+{ ... }:
+let
+  lock = "pidof /usr/bin/hyprlock || /usr/bin/hyprlock";
+  lockWarning = 30;
+  lockTimeout = 60 * 5;
+  suspendTimeout = 60 * 10;
+in {
+  services.hypridle = {
+    enable = true;
+    settings = {
+      general = {
+        lock_cmd = lock;
+        before_sleep_cmd = "loginctl lock-session";
+        after_sleep_cmd =
+          "hyprctl dispatch dpms on && killall ax-shell || true && sleep 1 && uwsm app -- /usr/bin/python ~/.config/Ax-Shell/main.py && disown";
+      };
+      listener = [
+        {
+          timeout = lockTimeout - lockWarning;
+          on-timeout = "notify-send -t 3000 'Locking' 'This computer locks in ${
+              toString lockWarning
+            } seconds'";
+        }
+        {
+          timeout = lockTimeout;
+          on-timeout = lock;
+        }
+        {
+          timeout = lockTimeout + 30;
+          on-timeout = "hyprctl dispatch dpms off";
+          on-resume = "hyprctl dispatch dpms on";
+        }
+        {
+          timeout = suspendTimeout;
+          on-timeout = "systemctl suspend";
+        }
+      ];
+    };
+  };
 }

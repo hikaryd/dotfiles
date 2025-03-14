@@ -78,7 +78,7 @@ return {
           plugins = {
             pylsp_mypy = {
               enabled = true,
-              live_mode = false,
+              live_mode = true,
               dmypy = true,
 
               report_progress = true,

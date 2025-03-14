@@ -3,94 +3,83 @@
   nixpkgs.overlays = lib.mkForce [ inputs.nixgl.overlay ];
 
   home.packages = with pkgs; [
+    # Графические драйверы и совместимость
     inputs.nixgl.packages.${system}.nixGLDefault
     inputs.nixgl.packages.${system}.nixVulkanIntel
-    rustup
-    todo
-    ansible
-    stu
-    tree
-    evince
+
+    # Системные утилиты и мониторинг
     htop
-    jan
-    qbittorrent
-    rsync
-    less
-    bluetuith
-    proton-pass
-    ncdu
-    vscode
-    sublime-merge
     duf
-    iotop
     powertop
     acpi
-    ripgrep
-    nemo
-    jq
-    fd
-    imagemagick
+    tree
+    less
+    bluetuith
     libnotify
-    postgresql_16
-    repomix
-    uv
-    grip-grab
-    aider-chat
+    xdg-desktop-portal
+    bluez
+    bluez-tools
+    networkmanager
+    libsecret
+    pass-wayland
 
-    onlyoffice-desktopeditors
-
-    flameshot
-    satty
-
+    # Файловые менеджеры и работа с файлами
+    nemo
+    rsync
     p7zip
     lrzip
     unrar
     unzip
     gnutar
 
-    pulsemixer
-    tmuxinator
-
-    xdg-desktop-portal
-
-    telegram-desktop
-    ayugram-desktop
-
-    proxychains-ng
-    sing-geosite
-
-    pandoc
-    typst
-
-    tdf
-
-    nmap
-
-    (config.lib.nixGL.wrap keyguard)
-    (config.lib.nixGL.wrap google-chrome)
-    (config.lib.nixGL.wrap inputs.zen-browser.packages.${pkgs.system}.beta)
-    (config.lib.nixGL.wrap beekeeper-studio)
-    (config.lib.nixGL.wrap mpv)
-    (config.lib.nixGL.wrap osu-lazer-bin)
-    (config.lib.nixGL.wrap insomnia)
-
-    nix-prefetch-scripts
-    luajitPackages.luarocks
-    gitu
-
+    # Разработка и программирование
+    rustup
+    vscode
+    jq
+    fd
+    ripgrep
+    postgresql_16
     docker
     docker-compose
     docker-buildx
-    nekoray
-    amdvlk
-    bluez
-    bluez-tools
-    gnome-bluetooth
-    networkmanagerapplet
-    networkmanager
-    wf-recorder
+    luajitPackages.luarocks
+    nix-prefetch-scripts
+    ansible
+    uv
+    (config.lib.nixGL.wrap beekeeper-studio)
 
+    # Инструменты для работы с текстом и документами
+    pandoc
+    typst
+    tdf
+
+    # Интернет и сеть
+    (config.lib.nixGL.wrap google-chrome)
+    (config.lib.nixGL.wrap inputs.zen-browser.packages.${pkgs.system}.beta)
+    (config.lib.nixGL.wrap slack)
+    qbittorrent
+    proxychains-ng
+    sing-geosite
+    nekoray
+    ayugram-desktop
+    (config.lib.nixGL.wrap insomnia)
+    grip-grab
+    tidal-hifi
+
+    # Офисные приложения и просмотр документов
+    onlyoffice-desktopeditors
+    evince
+
+    # Мультимедиа и развлечения
+    (config.lib.nixGL.wrap mpv)
+    (config.lib.nixGL.wrap osu-lazer-bin)
+    wf-recorder
+    imagemagick
     jamesdsp
 
+    # Инструменты командной строки и улучшения терминала 
+    tmuxinator
+    pulsemixer
+    repomix
   ];
 }

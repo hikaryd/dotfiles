@@ -1,6 +1,8 @@
 return {
-  'nvzone/typr',
-  dependencies = 'nvzone/volt',
-  opts = {},
-  cmd = { 'Typr', 'TyprStats' },
+  { 'nvzone/typr', dependencies = 'nvzone/volt', event = 'VeryLazy', opts = {}, cmd = { 'Typr', 'TyprStats' } },
+  {
+    'chomosuke/typst-preview.nvim',
+    event = 'VeryLazy',
+    opts = {},
+  },
 }
