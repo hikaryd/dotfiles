@@ -78,6 +78,8 @@
         "workspace name:terminal, class:^(ghostty)$"
         "workspace name:database, class:^(DBeaver)$"
         "workspace name:database, class:^(beekeeper-studio)$"
+        "workspace name:browser, class:^(zen)$"
+        "workspace name:browser, class:^(vivaldi-stable)$"
         "workspace name:other, class:^(zoom)$"
         "workspace name:other, class:^(zoom-us)$"
         "workspace name:other, class:^(Zoom Workplace)$"
@@ -88,6 +90,7 @@
         "workspace special:telegram, class:^(Slack)$"
         "workspace special:music, class:^(tidal-hifi)$"
         "workspace special:vpn, class:^(nekoray)$"
+        "workspace special:vpn, class:^(hiddify)$"
 
         "immediate, class:^(mpv)$"
 
@@ -97,6 +100,7 @@
         "float, class:^(org.telegram.desktop)$"
         "float, class:^(pulsemixer)$"
         "float, class:^(nekoray)$"
+        "float, class:^(hiddify)$"
         "float, class:^(pavucontrol)$"
         "float, class:^(blueman-manager)$"
         "float, class:^(nm-applet)$"
@@ -149,6 +153,7 @@
         "opacity 0.80 0.80, class:^(org.freedesktop.impl.portal.desktop.gtk)$"
         "opacity 0.80 0.80, class:^(org.freedesktop.impl.portal.desktop.hyprland)$"
         "opacity 0.9 0.9,class:^(zen)$"
+        "opacity 0.9 0.9,class:^(vivaldi-stable)$"
       ];
 
       input = {
@@ -246,7 +251,7 @@
         "special:xreal,monitor:xreal"
 
         # Специальные рабочие пространства
-        "special:browser, on-created-empty:zen"
+        "special:browser, on-created-empty:vivaldi-stable"
         "special:database, on-created-empty:beekeeper-studio"
         "special:telegram, on-created-empty:ayugram-desktop, default:true"
         "special:misc, default:true"
@@ -283,7 +288,7 @@
 
         "$base, 6, togglespecialworkspace, music"
 
-        "$base, 7, togglespecialworkspace, vpn"
+        "$base, v, togglespecialworkspace, vpn"
 
         "$base, G, togglespecialworkspace, browser"
         "$window, G, movetoworkspacesilent, special:browser"
@@ -307,7 +312,6 @@
 
         # ===== Запуск приложений =====
         "$base, Return, exec, ghostty"
-        # "$launch, C, exec, grimblast save area - | satty --filename - --fullscreen --copy-command wl-copy"
         "$launch, S, exec, grimblast save area - | wl-copy"
         "$launch, O, exec, ${../../../../scripts/ai_refactor_clipboard}"
         "$base, A, exec, anyrun"
@@ -330,9 +334,9 @@
 
       exec-once = [
         "kanshi"
-        "sleep 2 && nekoray"
+        "${../../../../scripts/run-vpn.sh}"
 
-        "sleep 5 && 1password --silent"
+        "1password --silent"
         # "waybar"
 
         "hypridle"
@@ -341,7 +345,6 @@
         "tidal-hifi"
 
         "easyeffects --gapplication-service"
-        "jamesdsp --tray"
 
         "wl-paste -t text -w xclip -selection clipboard --watch cliphist store"
         "wl-paste --type image --watch cliphist store"
