@@ -256,7 +256,7 @@
         "special:telegram, on-created-empty:ayugram-desktop, default:true"
         "special:misc, default:true"
         "special:music, default:true, on-created-empty:tidal-hifi"
-        "special:vpn, on-created-empty:nekoray, default:true"
+        "special:vpn, default:true"
       ];
 
       "$mainMod" = "SUPER";
@@ -334,7 +334,7 @@
 
       exec-once = [
         "kanshi"
-        "${../../../../scripts/run-vpn.sh}"
+        "sudo -E hiddify"
 
         "1password --silent"
         # "waybar"
