@@ -10,7 +10,7 @@
       '';
       right_format = "$all";
       command_timeout = 1000;
-      palette = "catppuccin_mocha";
+      # palette = "catppuccin_mocha";
 
       character = {
         vicmd_symbol = "[N] ❯❯❯";

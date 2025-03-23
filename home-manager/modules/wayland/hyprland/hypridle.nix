@@ -12,7 +12,7 @@ in {
         lock_cmd = lock;
         before_sleep_cmd = "loginctl lock-session";
         after_sleep_cmd =
-          "hyprctl dispatch dpms on && killall ax-shell || true && sleep 1 && uwsm app -- /usr/bin/python ~/.config/Ax-Shell/main.py && disown";
+          "killall ax-shell || true && sleep 1 && uwsm app -- /usr/bin/python ~/.config/Ax-Shell/main.py && disown &&  hyprctl dispatch dpms on";
       };
       listener = [
         {

@@ -47,15 +47,20 @@
     ansible
     uv
     (config.lib.nixGL.wrap beekeeper-studio)
+    (config.lib.nixGL.wrap
+      inputs.claude-desktop.packages.${system}.claude-desktop-with-fhs)
+    nodejs_23
+    code-cursor
 
     # Инструменты для работы с текстом и документами
     pandoc
     typst
     tdf
+    python313Packages.weasyprint
 
     # Интернет и сеть
     (config.lib.nixGL.wrap google-chrome)
-    (config.lib.nixGL.wrap inputs.zen-browser.packages.${pkgs.system}.beta)
+    # (config.lib.nixGL.wrap inputs.zen-browser.packages.${pkgs.system}.beta)
     (config.lib.nixGL.wrap slack)
     qbittorrent
     proxychains-ng
@@ -68,6 +73,7 @@
 
     # Офисные приложения и просмотр документов
     onlyoffice-desktopeditors
+    libreoffice
     evince
 
     # Мультимедиа и развлечения
@@ -75,7 +81,6 @@
     (config.lib.nixGL.wrap osu-lazer-bin)
     wf-recorder
     imagemagick
-    jamesdsp
 
     # Инструменты командной строки и улучшения терминала 
     tmuxinator

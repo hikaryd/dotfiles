@@ -2,7 +2,7 @@
 with lib;
 let
   defaultApps = {
-    browser = [ "zen.desktop" ];
+    browser = [ "vivaldi.desktop" ];
     text = [ "code.desktop" ];
     image = [ "imv-dir.desktop" ];
     audio = [ "mpv.desktop" ];

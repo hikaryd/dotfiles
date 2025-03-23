@@ -49,7 +49,6 @@
       vs = "overlay use .venv/bin/activate.nu";
       proxy = "mgraftcp --socks5 127.0.0.1:2080";
       md_convert = "pandoc -s -o output.pdf --pdf-engine=typst";
-      claude = "aider --model openrouter/anthropic/claude-3.7-sonnet:beta";
       scan_domain = ''
         sudo ~/.nix-profile/bin/nmap -sV -sS -A -T4 --script="*" -Pn -n -v -p1-65535  -oA nmap
       '';
