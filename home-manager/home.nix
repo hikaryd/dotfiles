@@ -1,4 +1,4 @@
-{ pkgs, inputs, ... }: {
+{ pkgs, inputs, lib, ... }: {
   home = {
     username = "hikary";
     homeDirectory = "/home/hikary";
@@ -7,6 +7,7 @@
 
   imports = [ ./modules ./theme.nix ./packages.nix ];
   programs.home-manager.enable = true;
+
   nixGL = {
     packages = inputs.nixgl.packages.${pkgs.system};
     defaultWrapper = "mesa";

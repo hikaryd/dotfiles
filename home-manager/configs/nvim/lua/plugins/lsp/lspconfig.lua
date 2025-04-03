@@ -65,7 +65,7 @@ return {
     setup_server('pyright', {
       settings = {
         pyright = { autoImportCompletion = true },
-        python = { analysis = { autoSearchPaths = true, diagnosticMode = 'openFilesOnly', useLibraryCodeForTypes = true, typeCheckingMode = 'off' } },
+        python = { analysis = { autoSearchPaths = true, diagnosticMode = 'openFilesOnly', useLibraryCodeForTypes = true, typeCheckingMode = 'basic' } },
       },
     })
 
@@ -90,22 +90,5 @@ return {
         },
       },
     })
-    vim.api.nvim_set_keymap('n', 'gd', '<cmd>lua vim.lsp.buf.definition()<CR>', { noremap = true, silent = true })
-    vim.o.updatetime = 250
-    vim.api.nvim_create_autocmd('CursorHold', {
-      callback = function()
-        local diag = vim.diagnostic.get(0, { lnum = vim.fn.line '.' - 1 })
-        if #diag > 0 then
-          vim.diagnostic.open_float {
-            scope = 'line',
-            border = 'rounded',
-            focusable = false,
-          }
-        end
-      end,
-    })
   end,
-  dependencies = {
-    'saghen/blink.cmp',
-  },
 }

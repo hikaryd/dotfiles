@@ -2,7 +2,7 @@
 with lib;
 let
   defaultApps = {
-    browser = [ "vivaldi.desktop" ];
+    browser = [ "google-chrome.desktop" ];
     text = [ "code.desktop" ];
     image = [ "imv-dir.desktop" ];
     audio = [ "mpv.desktop" ];

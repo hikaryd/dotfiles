@@ -1,5 +1,28 @@
 local M = {}
 
+vim.o.updatetime = 50
+
+local diagnosticsHoverGroup = vim.api.nvim_create_augroup('UserDiagnosticsHoverSimple', { clear = true })
+
+vim.api.nvim_create_autocmd('CursorHold', {
+  group = diagnosticsHoverGroup,
+  pattern = '*',
+  desc = 'Показать LSP диагностику на строке при удержании курсора',
+  callback = function()
+    local diag = vim.diagnostic.get(0, { lnum = vim.fn.line '.' - 1 })
+    if #diag > 0 then
+      vim.diagnostic.open_float {
+        scope = 'line', -- Показать для всей строки
+        border = 'rounded', -- Со скругленными рамками
+        focusable = false, -- Окно не должно получать фокус
+        source = 'always', -- Показывать источник (имя LSP сервера)
+        header = '', -- Без заголовка
+        prefix = '', -- Без префикса
+      }
+    end
+  end,
+})
+
 M.preserved_win_sizes = {}
 
 function M.setup()

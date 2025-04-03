@@ -1,8 +1,8 @@
 { config, pkgs, ... }: {
   programs.git = {
     enable = true;
-    userName = "Hikary";
-    userEmail = "hikary@proton.me";
+    userName = "hikaryd";
+    userEmail = "tronin371@gmail.com";
     delta = {
       enable = true;
       options = {
@@ -62,21 +62,10 @@
       executable = true;
       source = ../configs/git/scripts/generate_commit_message.py;
     };
-    "git/hooks/pre-commit" = {
-      executable = true;
-      text = ''
-        #!/usr/bin/env bash
-        python_files=$(git diff --cached --name-only --diff-filter=ACM | grep '\.py$' || true)
-        if [ -n "$python_files" ]; then
-          ${pkgs.ruff}/bin/ruff check $python_files
-        fi
-        exit 0
-      '';
-    };
     "git/hooks/prepare-commit-msg" = {
       executable = true;
       text = ''
-        #!/usr/bin/env zsh
+        #!/usr/bin/env bash
         COMMIT_MSG_FILE=$1
         export OPENROUTER_API_KEY=$(cat ~/creds/open_router)
 

@@ -26,9 +26,7 @@
 
   xdg.configFile."ghostty/config".text = ''
     # Настройки шрифта
-    font-family = "Iosevka Term Nerd Font"
-    # font-family = "Hack"
-    # font-family = "Maple Mono"
+    font-family = "Monaspace Krypton Frozen"
     font-size = 10
     font-thicken = false
     adjust-box-thickness = 0
