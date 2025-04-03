@@ -1,4 +1,5 @@
-{ pkgs, ... }: {
+{ pkgs, inputs, ... }: {
+  imports = [ inputs.stylix.homeManagerModules.stylix ];
   home.packages = with pkgs; [
     jetbrains-mono
     noto-fonts
@@ -6,9 +7,11 @@
     noto-fonts-cjk-sans
     hack-font
     bemoji
-    maple-mono
+    maple-mono.NF
     nerd-fonts.jetbrains-mono
     iosevka
+    open-sans
+    monaspace
 
     bibata-cursors
     base16-schemes
@@ -40,8 +43,8 @@
         name = "Inter Regular";
       };
       monospace = {
-        package = pkgs.inter;
-        name = "Inter Medium";
+        package = pkgs.monaspace;
+        name = "Monaspace Neon Frozen";
       };
       emoji = {
         package = pkgs.noto-fonts-emoji;

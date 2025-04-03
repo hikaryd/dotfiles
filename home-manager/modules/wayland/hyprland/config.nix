@@ -1,22 +1,15 @@
-{ inputs, config, pkgs, ... }: {
-  home.file.".local/share/wayland-sessions/hyprland.desktop".text = ''
-    [Desktop Entry]
-    Name=Hyprland
-    Comment=A dynamic tiling Wayland compositor
-    Exec=${inputs.hyprland.packages.${pkgs.stdenv.hostPlatform.system}.hyprland}
-    Type=Application
-    Keywords=tiling;compositor;wayland;
-  '';
-
+{ config, pkgs, ... }: {
   wayland.windowManager.hyprland = {
     enable = true;
-    package = config.lib.nixGL.wrap
-      inputs.hyprland.packages.${pkgs.stdenv.hostPlatform.system}.hyprland;
+    package = config.lib.nixGL.wrap pkgs.hyprland;
     systemd.enable = true;
+    systemd.variables = [ "--all" ];
     xwayland.enable = true;
     settings = {
-      "$fabricSend" = "fabric-cli exec ax-shell";
-
+      monitor = [
+        "eDP-1, 2560x1600@120, -2560x0, 1"
+        "HDMI-A-1, 2560x1440@120, 0x0, 1.25"
+      ];
       general = {
         gaps_in = 5;
         gaps_out = 14;
@@ -78,7 +71,7 @@
         "workspace name:terminal, class:^(ghostty)$"
         "workspace name:database, class:^(DBeaver)$"
         "workspace name:database, class:^(beekeeper-studio)$"
-        "workspace name:browser, class:^(zen)$"
+        "workspace name:browser, class:^(google-chrome)$"
         "workspace name:browser, class:^(vivaldi-stable)$"
         "workspace name:other, class:^(zoom)$"
         "workspace name:other, class:^(zoom-us)$"
@@ -89,8 +82,6 @@
         "workspace special:telegram, class:^(com.ayugram.desktop)$"
         "workspace special:telegram, class:^(Slack)$"
         "workspace special:music, class:^(tidal-hifi)$"
-        "workspace special:vpn, class:^(nekoray)$"
-        "workspace special:vpn, class:^(hiddify)$"
 
         "immediate, class:^(mpv)$"
 
@@ -152,7 +143,7 @@
 
         "opacity 0.80 0.80, class:^(org.freedesktop.impl.portal.desktop.gtk)$"
         "opacity 0.80 0.80, class:^(org.freedesktop.impl.portal.desktop.hyprland)$"
-        "opacity 0.9 0.9,class:^(zen)$"
+        "opacity 0.9 0.9,class:^(google-chrome)$"
         "opacity 0.9 0.9,class:^(vivaldi-stable)$"
       ];
 
@@ -217,7 +208,7 @@
       };
 
       decoration = {
-        rounding = 14;
+        rounding = 28;
         shadow = {
           enabled = true;
           range = 20;
@@ -244,19 +235,17 @@
       workspace = [
         # Основные рабочие пространства
         "name:dev-terminal, monitor:HDMI-A-1, on-created-empty:ghostty"
-        "name:conf-terminal, monitor:HDMI-A-1, on-created-empty:ghostty"
-        "name:terminal, monitor:HDMI-A-1, on-created-empty:ghostty, default:true"
-        "name:other, monitor:HDMI-A-1, default:true"
-        "name:other2, monitor:eDP-1, default:true"
-        "special:xreal,monitor:xreal"
+        "name:conf-terminal, id:2, monitor:HDMI-A-1, on-created-empty:ghostty"
+        "name:terminal, id:3, monitor:HDMI-A-1, on-created-empty:ghostty, default:true"
+        "name:other, id:4, monitor:HDMI-A-1, default:true"
+        "name:other2, id:5, monitor:eDP-1, default:true"
 
         # Специальные рабочие пространства
-        "special:browser, on-created-empty:vivaldi-stable"
-        "special:database, on-created-empty:beekeeper-studio"
-        "special:telegram, on-created-empty:ayugram-desktop, default:true"
-        "special:misc, default:true"
-        "special:music, default:true, on-created-empty:tidal-hifi"
-        "special:vpn, default:true"
+        "special:browser, id:6, on-created-empty:google-chrome-stable"
+        "special:database, id:7, on-created-empty:beekeeper-studio"
+        "special:telegram, id:8, on-created-empty:ayugram-desktop, default:true"
+        "special:misc, id:9, default:true"
+        "special:music, id:10, default:true, on-created-empty:tidal-hifi"
       ];
 
       "$mainMod" = "SUPER";
@@ -286,9 +275,7 @@
 
         "$base, D, togglespecialworkspace, database"
 
-        "$base, 6, togglespecialworkspace, music"
-
-        "$base, v, togglespecialworkspace, vpn"
+        "$base, v, togglespecialworkspace, music"
 
         "$base, G, togglespecialworkspace, browser"
         "$window, G, movetoworkspacesilent, special:browser"
@@ -312,13 +299,11 @@
 
         # ===== Запуск приложений =====
         "$base, Return, exec, ghostty"
-        "$launch, S, exec, grimblast save area - | wl-copy"
+        ''$launch, S, exec, grim -g "$(slurp)" - | wl-copy''
         "$launch, O, exec, ${../../../../scripts/ai_refactor_clipboard}"
         "$base, A, exec, anyrun"
-        # "$base, A, exec, $fabricSend 'notch.open_notch(\"launcher\")'"
 
         # "$launch, B, exec, ghostty --class=com.mark.bluetui -e bluetui"
-        "$launch, B, exec, $fabricSend 'notch.open_notch(\"bluetooth\")'"
         "$launch, L, exec, ghostty --class=com.mark.pulsemixer -e pulsemixer"
       ];
 
@@ -326,15 +311,10 @@
         "$mainMod, mouse:272, movewindow"
         "$mainMod, mouse:273, resizewindow"
       ];
-      exec = [
-        "pkill hyprpaper && hyprpaper"
-        "pkill kanata && kanata"
-        "killall ax-shell || true && sleep 1 && uwsm app -- /usr/bin/python ~/.config/Ax-Shell/main.py && disown"
-      ];
+      exec = [ "pkill hyprpaper && hyprpaper" "pkill kanata && kanata" ];
 
       exec-once = [
-        "kanshi"
-        "sudo -E hiddify"
+        # "sudo -E hiddify"
 
         "1password --silent"
         # "waybar"
@@ -344,6 +324,7 @@
         "kanata"
         "tidal-hifi"
 
+        "jamesdsp"
         "easyeffects --gapplication-service"
 
         "wl-paste -t text -w xclip -selection clipboard --watch cliphist store"

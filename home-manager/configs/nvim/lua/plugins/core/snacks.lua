@@ -30,6 +30,13 @@ return {
       enabled = true,
     },
     image = { enabled = true },
+    picker = {
+      sources = {
+        explorer = {
+          auto_close = true,
+        },
+      },
+    },
     {
       debounce = 200, -- time in ms to wait before updating
       notify_jump = false, -- show a notification when jumping
@@ -178,6 +185,13 @@ return {
       '<leader>sd',
       function()
         Snacks.picker.diagnostics()
+      end,
+      desc = 'Diagnostics',
+    },
+    {
+      '<leader>e',
+      function()
+        Snacks.explorer.open()
       end,
       desc = 'Diagnostics',
     },

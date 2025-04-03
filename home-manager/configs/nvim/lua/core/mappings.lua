@@ -12,9 +12,7 @@ map('n', '<Esc>', '<cmd>noh<CR>', 'Clear search highlights')
 map('n', 'v$', 'v$h')
 
 -- File Explorer
-map('n', '<space>e', ':Yazi<CR>')
-
-map('n', '<leader>b', ':DBUIToggle<CR>')
+-- map('n', '<space>e', ':Yazi<CR>')
 
 -- map('n', '<leader>tt', ':BufTermEnter<CR>')
 
@@ -25,8 +23,6 @@ map('n', '<A-k>', require('smart-splits').resize_up)
 map('n', '<A-l>', require('smart-splits').resize_right)
 -- moving between splits
 map('n', '<C-h>', require('smart-splits').move_cursor_left)
-map('n', '<C-j>', require('smart-splits').move_cursor_down)
-map('n', '<C-k>', require('smart-splits').move_cursor_up)
 map('n', '<C-l>', require('smart-splits').move_cursor_right)
 map('t', '<C-h>', require('smart-splits').move_cursor_left)
 map('t', '<C-j>', require('smart-splits').move_cursor_down)
