@@ -7,8 +7,8 @@
     xwayland.enable = true;
     settings = {
       monitor = [
-        "eDP-1, 2560x1600@120, -2560x0, 1"
-        "HDMI-A-1, 2560x1440@120, 0x0, 1.25"
+        "eDP-1, 2560x1600@120, -2560x0, 1.25"
+        "HDMI-A-1, 2560x1440@120, 0x0, 1"
       ];
       general = {
         gaps_in = 5;
@@ -73,9 +73,9 @@
         "workspace name:database, class:^(beekeeper-studio)$"
         "workspace name:browser, class:^(google-chrome)$"
         "workspace name:browser, class:^(vivaldi-stable)$"
-        "workspace name:other, class:^(zoom)$"
-        "workspace name:other, class:^(zoom-us)$"
-        "workspace name:other, class:^(Zoom Workplace)$"
+        "workspace name:other2, class:^(zoom)$"
+        "workspace name:other2, class:^(zoom-us)$"
+        "workspace name:other2, class:^(Zoom Workplace)$"
         "workspace name:other, class:^(codium)$"
 
         "workspace special:telegram, class:^(org.telegram.desktop)$"
@@ -123,7 +123,7 @@
 
         "float, class:^(Slack)$"
         "size 700 1000, class:^(Slack)$"
-        "move 20% 15%, class:^(Slack)$"
+        "move 15% 15%, class:^(Slack)$"
 
         "float, class:^(1Password)$"
         "center, class:^(1Password)$"
