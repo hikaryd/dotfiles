@@ -1,9 +1,9 @@
 { pkgs, ... }:
 
 let
-  lockCmd = "hyprlock";
+  lockCmd = "/usr/bin/hyprlock";
   notifyCmd = "${pkgs.libnotify}/bin/notify-send";
-  hyprctlCmd = "${pkgs.hyprland}/bin/hyprctl";
+  hyprctlCmd = "hyprctl";
   systemctlCmd = "systemctl";
 
   lockWarning = 30; # seconds
