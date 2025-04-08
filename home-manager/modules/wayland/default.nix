@@ -7,6 +7,7 @@
     ./dunst.nix
     ./hyprpanel.nix
     ./niri.nix
+    ./hyprpaper.nix
   ];
 
   home.packages = with pkgs; [ glib wlroots xwayland libinput ];

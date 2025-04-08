@@ -16,7 +16,6 @@
     bibata-cursors
     base16-schemes
     catppuccin-gtk
-    hyprpaper
     inter
   ];
 
