@@ -104,7 +104,7 @@
       cursor = {
         theme = "Bibata-Modern-Ice";
         size = 20;
-        hide-when-typing = true;
+        hide-when-typing = false;
       };
 
       gestures = {
@@ -121,26 +121,43 @@
         "other" = { open-on-output = "HDMI-A-1"; };
       };
       environment = {
-        XDG_DATA_DIRS = "$HOME/.nix-profile/share:/usr/local/share:/usr/share";
         DISPLAY = ":0";
+
+        QT_QPA_PLATFORM = "wayland;xcb";
+        QT_WAYLAND_DISABLE_WINDOWDECORATION = "1";
+        QT_AUTO_SCREEN_SCALE_FACTOR = "1";
+        QT_QPA_PLATFORMTHEME = "qt5ct";
+        QT_SCALE_FACTOR_ROUNDING_POLICY = "RoundPreferFloor";
+        QT_WAYLAND_DISABLED_INTERFACES = "wp_fractional_scale_manager_v1";
       };
 
       spawn-at-startup = [
-        { command = [ "xwayland-satellite" ]; }
-        {
-          command = [
-            "dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP"
-          ];
-        }
-        { command = [ "google-chrome-stable" ]; }
+        { command = [ "/usr/libexec/polkit-gnome-authentication-agent-1" ]; }
         { command = [ "${pkgs.waybar}/bin/waybar" ]; }
         { command = [ "${pkgs.hyprpaper}/bin/hyprpaper" ]; }
         { command = [ "${pkgs.kanata}/bin/kanata" ]; }
         { command = [ "${pkgs.slack}/bin/slack" ]; }
-        { command = [ "${pkgs.ghostty}/bin/ghostty" ]; }
+        { command = [ "dunst" ]; }
         { command = [ "${pkgs.tidal-hifi}/bin/tidal-hifi" ]; }
+        { command = [ "sleep" "3" "&&" "notify-send" "123" ]; }
         { command = [ "google-chrome-stable" ]; }
         { command = [ "ayugram-desktop" ]; }
+        { command = [ "easyeffects --gapplication-service" ]; }
+        {
+          command = [
+            "${pkgs.dbus}/bin/dbus-update-activation-environment"
+            "--systemd"
+            "DISPLAY"
+            "WAYLAND_DISPLAY"
+            "SWAYSOCK"
+            "XDG_CURRENT_DESKTOP"
+            "XDG_SESSION_TYPE"
+            "NIXOS_OZONE_WL"
+            "XCURSOR_THEME"
+            "XCURSOR_SIZE"
+            "XDG_DATA_DIRS"
+          ];
+        }
       ];
 
       window-rules = [
@@ -159,7 +176,7 @@
           opacity = inactiveOpacity;
         }
         {
-          matches = [{ app-id = "^(com.mitchellh.ghostty)$"; }];
+          matches = [{ app-id = "^(com.mitchellh.ghostty|Slack)$"; }];
           open-on-workspace = "1";
         }
         { matches = [{ app-id = "^(neovide)$"; }]; }
@@ -265,13 +282,7 @@
         "${mod}+J" = { action = { focus-workspace = [ "other" ]; }; };
 
         "${mod}+${shift}+G" = {
-          action = { move-window-to-workspace = [ "1" ]; };
-        };
-        "${mod}+${shift}+B" = {
           action = { move-window-to-workspace = [ "2" ]; };
-        };
-        "${mod}+${shift}+E" = {
-          action = { move-window-to-workspace = [ "other" ]; };
         };
 
         "${mod}+Period" = { action = { focus-monitor-next = [ ]; }; };
