@@ -45,8 +45,7 @@
     nix-prefetch-scripts
     ansible
     uv
-    # (config.lib.nixGL.wrap beekeeper-studio)
-    nodejs_23
+    nodejs_22
     code-cursor
 
     # Инструменты для работы с текстом и документами

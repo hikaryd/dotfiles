@@ -71,8 +71,8 @@
         "workspace name:terminal, class:^(ghostty)$"
         "workspace name:database, class:^(DBeaver)$"
         "workspace name:database, class:^(beekeeper-studio)$"
-        "workspace name:browser, class:^(google-chrome)$"
-        "workspace name:browser, class:^(vivaldi-stable)$"
+        "workspace special:browser, class:^(google-chrome)$"
+        "workspace special:browser, class:^(vivaldi-stable)$"
         "workspace name:other2, class:^(zoom)$"
         "workspace name:other2, class:^(zoom-us)$"
         "workspace name:other2, class:^(Zoom Workplace)$"
@@ -311,31 +311,8 @@
         "$mainMod, mouse:272, movewindow"
         "$mainMod, mouse:273, resizewindow"
       ];
-      exec = [ "pkill hyprpaper && hyprpaper" "pkill kanata && kanata" ];
 
-      exec-once = [
-        # "sudo -E hiddify"
-
-        "1password --silent"
-        # "waybar"
-
-        "hypridle"
-
-        "kanata"
-        "tidal-hifi"
-
-        "jamesdsp"
-        "easyeffects --gapplication-service"
-
-        "wl-paste -t text -w xclip -selection clipboard --watch cliphist store"
-        "wl-paste --type image --watch cliphist store"
-
-        "${../../../../scripts/xdg-portal.sh}"
-        ''
-          /usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1
-        ''
-        "dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP"
-      ];
+      exec-once = [ "tidal-hifi" "${../../../../scripts/xdg-portal.sh}" ];
     };
   };
 }
