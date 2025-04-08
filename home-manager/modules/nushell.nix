@@ -19,17 +19,34 @@
     package = pkgs.nushell;
 
     environmentVariables = {
-      # XDG
       DOCKER_CONFIG = "/home/hikary/.docker/";
-      PYTHONSTARTUP = "~/.python/pythonrc";
+      XDG_DATA_DIRS = "$HOME/.nix-profile/share:/usr/local/share:/usr/share";
+      PYTHONSTARTUP = "$HOME/.python/pythonrc";
       LESSHISTFILE = "$XDG_STATE_HOME/less/history";
-
-      # Локали
+      XDG_CURRENT_DESKTOP = "wlroots";
       LANG = "en_US.UTF-8";
-      LC_CTYPE = "en_US.UTF-8";
-
       EDITOR = "nvim";
       VISUAL = "nvim";
+
+      _JAVA_AWT_WM_NONEREPARENTING = "1";
+      DISABLE_QT5_COMPAT = "0";
+      ANKI_WAYLAND = "1";
+      QT_QPA_PLATFORMTHEME = "qt5ct";
+      QT_STYLE_OVERRIDE = "kvantum";
+      AMD_VULKAN_ICD = "RADV";
+      LIBVA_DRIVER_NAME = "radeonsi";
+      XDG_SESSION_TYPE = "wayland";
+      GDK_BACKEND = "wayland";
+      MOZ_ENABLE_WAYLAND = "1";
+      SDL_VIDEODRIVER = "wayland";
+      CLUTTER_BACKEND = "wayland";
+      ELECTRON_OZONE_PLATFORM_HINT = "wayland";
+      QT_QPA_PLATFORM = "wayland;xcb";
+      QT_AUTO_SCREEN_SCALE_FACTOR = "1";
+      QT_WAYLAND_DISABLE_WINDOWDECORATION = "1";
+      XCURSOR_THEME = "Bibata-Modern-Ice";
+      XCURSOR_SIZE = "20";
+      TERM = "ghostty";
     };
 
     shellAliases = {
@@ -37,9 +54,9 @@
       ssh = ''env TERM="xterm-256color" ssh'';
       kvnt-monitor = "tmuxinator start monitoring";
       prod-kvnt =
-        " ssh -t kvant-mgmt 'ssh -t production-srv \"sudo su - deploy\"'";
+        "env TERM=\"xterm-256color\" ssh -t kvant-mgmt 'ssh -t production-srv \"sudo su - deploy\"'";
       stage-kvnt =
-        " ssh -t kvant-mgmt 'ssh -t staging-srv \"sudo su - deploy\"'";
+        "env TERM=\"xterm-256color\" ssh -t kvant-mgmt 'ssh -t staging-srv \"sudo su - deploy\"'";
       cat = "bat --style=plain";
       ".." = "cd ..";
       l = "ls";
@@ -108,13 +125,13 @@
     extraConfig = ''
       def --env setup_path [] {
         let base_paths = [
+          "/usr/local/sbin"
+          "/usr/local/bin"
+          ($env.HOME + "/.local/bin")
+          "/usr/bin"
           ($env.HOME + "/.nix-profile/bin")
           "/nix/var/nix/profiles/default/bin"
           "/run/current-system/sw/bin"
-          "/usr/local/sbin"
-          "/usr/local/bin"
-          "/usr/bin"
-          ($env.HOME + "/.local/bin")
           ($env.HOME + "/.cargo/bin")
           ($env.HOME + "/.config/carapace/bin")
         ]

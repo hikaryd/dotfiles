@@ -1,6 +1,6 @@
 { config, pkgs, ... }: {
   services.dunst = {
-    enable = false;
+    enable = true;
     settings = {
       global = {
         browser = "${config.programs.firefox.package}/bin/firefox -new-tab";

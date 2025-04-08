@@ -1,4 +1,4 @@
-{ pkgs, config, ... }: {
+{ pkgs, ... }: {
   imports = [
     ./hyprland
     ./anyrun
@@ -9,14 +9,5 @@
     ./niri.nix
   ];
 
-  home.packages = with pkgs; [
-    glib
-    wlroots
-    xwayland
-    libinput
-    sway-launcher-desktop
-    (config.lib.nixGL.wrap xdg-desktop-portal)
-    (config.lib.nixGL.wrap xdg-desktop-portal-wlr)
-    (config.lib.nixGL.wrap xdg-desktop-portal-gtk)
-  ];
+  home.packages = with pkgs; [ glib wlroots xwayland libinput ];
 }
