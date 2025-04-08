@@ -18,23 +18,22 @@
       url = "github:nix-community/nixGL";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    # systems.url = "github:nix-systems/x86_64-linux";
-    # flake-utils = {
-    #   url = "github:numtide/flake-utils";
-    #   inputs.systems.follows = "systems";
-    # };
-    # claude-desktop = {
-    #   url = "github:k3d3/claude-desktop-linux-flake";
-    #   inputs.nixpkgs.follows = "nixpkgs";
-    #   inputs.flake-utils.follows = "flake-utils";
-    # };
+    niri = {
+      url = "github:sodiboo/niri-flake";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
   outputs = inputs@{ home-manager, nixpkgs, ... }:
     let
+      system = "x86_64-linux";
       pkgs = import nixpkgs {
-        system = "x86_64-linux";
+        inherit system;
         config = { allowUnfree = true; };
-        overlays = [ inputs.hyprpanel.overlay inputs.nixgl.overlay ];
+        overlays = [
+          inputs.hyprpanel.overlay
+          inputs.nixgl.overlay
+          inputs.niri.overlays.niri
+        ];
       };
     in {
       homeConfigurations."hikary" = home-manager.lib.homeManagerConfiguration {

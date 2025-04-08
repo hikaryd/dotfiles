@@ -6,6 +6,7 @@
     ./waybar.nix
     ./dunst.nix
     ./hyprpanel.nix
+    ./niri.nix
   ];
 
   home.packages = with pkgs; [

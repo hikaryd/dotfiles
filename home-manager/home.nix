@@ -13,14 +13,9 @@
     defaultWrapper = "mesa";
   };
 
-  xdg.configFile."environment.d/envvars.conf".text = ''
-    PATH="$HOME/.nix-profile/bin:/nix/var/nix/profiles/default/bin:/home/hikary/.local/bin:$HOME/.cargo/bin:$PATH"
-  '';
-
   programs.bash = {
     enable = true;
     bashrcExtra = ''
-      export PATH="$HOME/.nix-profile/bin:/nix/var/nix/profiles/default/bin:/home/hikary/.local/bin:$HOME/.cargo/bin:$PATH"
       export LANG="en_US.UTF-8"
       export LC_ALL="en_US.UTF-8"
     '';
@@ -32,32 +27,113 @@
     fi
   '';
 
-  home.sessionPath = [ "$HOME/.nix-profile/bin" ];
   home.sessionVariables = {
-    PATH = "$HOME/.nix-profile/bin:$PATH";
-
     _JAVA_AWT_WM_NONEREPARENTING = "1";
     DISABLE_QT5_COMPAT = "0";
-    GDK_BACKEND = "wayland";
     ANKI_WAYLAND = "1";
-    WLR_DRM_NO_ATOMIC = "1";
-    QT_AUTO_SCREEN_SCALE_FACTOR = "1";
-    QT_WAYLAND_DISABLE_WINDOWDECORATION = "1";
-    QT_QPA_PLATFORM = "wayland;xcb";
     QT_QPA_PLATFORMTHEME = "qt5ct";
     QT_STYLE_OVERRIDE = "kvantum";
-    MOZ_ENABLE_WAYLAND = "1";
-    WLR_BACKEND = "drm";
-    WLR_RENDERER = "vulkan";
-    WLR_NO_HARDWARE_CURSORS = "1";
-    XDG_SESSION_TYPE = "wayland";
-    SDL_VIDEODRIVER = "wayland";
-    CLUTTER_BACKEND = "wayland";
-    GBM_BACKEND = "amdgpu";
     AMD_VULKAN_ICD = "RADV";
     LIBVA_DRIVER_NAME = "radeonsi";
-    WLR_RENDERER_ALLOW_SOFTWARE = "1";
     MESA_LOADER_DRIVER_OVERRIDE = "amdgpu";
     __GLX_VENDOR_LIBRARY_NAME = "amdgpu";
+    GBM_BACKEND = "amdgpu";
+
+    XDG_SESSION_TYPE = "wayland";
+
+    GDK_BACKEND = "wayland";
+    MOZ_ENABLE_WAYLAND = "1";
+    SDL_VIDEODRIVER = "wayland";
+    CLUTTER_BACKEND = "wayland";
+    ELECTRON_OZONE_PLATFORM_HINT = "wayland";
+
+    QT_QPA_PLATFORM = "wayland;xcb";
+    QT_AUTO_SCREEN_SCALE_FACTOR = "1";
+    QT_WAYLAND_DISABLE_WINDOWDECORATION = "1";
+
+    XCURSOR_THEME = "Bibata-Modern-Ice";
+    XCURSOR_SIZE = "20";
+
+    TERM = "ghostty";
   };
+
+  systemd.user.services = {
+    onepassword = {
+      Unit = {
+        Description = "1Password GUI Helper";
+        After = [ "graphical-session-pre.target" ];
+        PartOf = [ "graphical-session.target" ];
+      };
+      Service = {
+        Type = "simple";
+        ExecStart = "/usr/bin/1password --silent";
+        Restart = "on-failure";
+        RestartSec = 5;
+      };
+      Install = { WantedBy = [ "graphical-session.target" ]; };
+    };
+
+    kanata = {
+      Unit = {
+        Description = "Kanata Key Remapper";
+        After = [ "graphical-session-pre.target" ];
+        PartOf = [ "graphical-session.target" ];
+      };
+      Service = {
+        Type = "simple";
+        ExecStart = "${pkgs.kanata}/bin/kanata";
+        Restart = "on-failure";
+        RestartSec = 5;
+      };
+      Install = { WantedBy = [ "graphical-session.target" ]; };
+    };
+
+    jamesdsp = {
+      Unit = {
+        Description = "JamesDSP Service";
+        After = [ "graphical-session-pre.target" ];
+        PartOf = [ "graphical-session.target" ];
+      };
+      Service = {
+        Type = "simple";
+        ExecStart = "${pkgs.jamesdsp}/bin/jamesdsp";
+        Restart = "on-failure";
+        RestartSec = 5;
+      };
+      Install = { WantedBy = [ "graphical-session.target" ]; };
+    };
+
+    easyeffects = {
+      Unit = {
+        Description = "EasyEffects Service";
+        After = [ "graphical-session-pre.target" ];
+        PartOf = [ "graphical-session.target" ];
+      };
+      Service = {
+        Type = "dbus";
+        BusName = "com.github.wwmm.easyeffects";
+        ExecStart =
+          "${pkgs.easyeffects}/bin/easyeffects --gapplication-service";
+        Restart = "on-failure";
+        RestartSec = 5;
+      };
+      Install = { WantedBy = [ "graphical-session.target" ]; };
+    };
+
+    polkitGnomeAgent = {
+      Unit = {
+        Description = "Polkit GNOME Authentication Agent";
+        After = [ "graphical-session-pre.target" ];
+        PartOf = [ "graphical-session.target" ];
+      };
+      Service = {
+        Type = "simple";
+        ExecStart = "/usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1";
+        Restart = "on-failure";
+        RestartSec = 5;
+      };
+      Install = { WantedBy = [ "graphical-session.target" ]; };
+    };
+  };
+
 }
