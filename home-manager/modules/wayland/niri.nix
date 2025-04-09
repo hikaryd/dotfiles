@@ -94,14 +94,15 @@
             return color;
           }
         '';
-        prefer-no-csd = true;
-        hotkey-overlay.skip-at-startup = true;
       };
+
+      prefer-no-csd = true;
+      hotkey-overlay.skip-at-startup = true;
 
       layout = {
         focus-ring.enable = false;
         border = {
-          enable = true;
+          enable = false;
           width = 1;
           active.color = focusRingColor;
           inactive.color = inactiveBorderColor;
@@ -150,7 +151,7 @@
           click-method = "button-areas";
           dwt = true;
           dwtp = true;
-          natural-scroll = false;
+          natural-scroll = true;
           scroll-method = "two-finger";
           tap = true;
           tap-button-map = "left-right-middle";
@@ -194,15 +195,18 @@
       };
 
       spawn-at-startup = [
-        (makeCommand "/usr/libexec/polkit-gnome-authentication-agent-1")
-        (makeCommand "${pkgs.waybar}/bin/waybar")
+        (makeCommand "ashell")
         (makeCommand "${pkgs.kanata}/bin/kanata")
         (makeCommand "slack")
+        (makeCommand "jamedsp")
+        (makeCommand "1password --silent")
+        (makeCommand "${pkgs.hyprpaper}/bin/hyprpaper")
         (makeCommand "dunst")
         (makeCommand "${pkgs.tidal-hifi}/bin/tidal-hifi")
+        (makeCommand
+          "${pkgs.easyeffects}/bin/easyeffects --gapplication-service")
         (makeCommand "google-chrome-stable")
         (makeCommand "ayugram-desktop")
-        (makeCommand "easyeffects --gapplication-service")
         (makeCommand "wl-paste --type image --watch cliphist store")
         (makeCommand "wl-paste --type text --watch cliphist store")
         {

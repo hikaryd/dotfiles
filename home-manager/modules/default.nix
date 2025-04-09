@@ -1,6 +1,7 @@
 { ... }: {
   imports = [
     ./wayland
+    ./ashell.nix
     ./easyeffects.nix
     ./git.nix
     ./lazygit.nix
@@ -9,7 +10,6 @@
     ./yazi.nix
     ./tmux.nix
     ./starship.nix
-    ./btop.nix
     ./nushell.nix
     ./ssh.nix
     ./ghostty.nix

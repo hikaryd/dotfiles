@@ -25,11 +25,7 @@
     enable = true;
     autoEnable = true;
     polarity = "dark";
-    base16Scheme = builtins.fetchurl {
-      url =
-        "https://raw.githubusercontent.com/scottmckendry/cyberdream.nvim/main/extras/base16/cyberdream.yaml";
-      sha256 = "1bfi479g7v5cz41d2s0lbjlqmfzaah68cj1065zzsqksx3n63znf";
-    };
+    base16Scheme = "${pkgs.base16-schemes}/share/themes/catppuccin-mocha.yaml";
     image = ../wallpapers/foggy-city.png;
 
     fonts = {
@@ -42,7 +38,7 @@
         name = "Inter Regular";
       };
       monospace = {
-        package = pkgs.monaspace;
+        package = pkgs.sf-mono-liga-bin;
         name = "Monaspace Neon Frozen";
       };
       emoji = {
@@ -56,6 +52,12 @@
       firefox.colorTheme.enable = true;
       firefox.firefoxGnomeTheme.enable = true;
       hyprlock.enable = false;
+      dunst.enable = false;
+      hyprpaper.enable = true;
+      qt = {
+        enable = true;
+        platform = "qtct";
+      };
     };
     cursor = {
       size = 20;

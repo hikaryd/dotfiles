@@ -23,21 +23,6 @@
   };
 
   systemd.user.services = {
-    onepassword = {
-      Unit = {
-        Description = "1Password GUI Helper";
-        After = [ "graphical-session-pre.target" ];
-        PartOf = [ "graphical-session.target" ];
-      };
-      Service = {
-        Type = "simple";
-        ExecStart = "/usr/bin/1password --silent";
-        Restart = "on-failure";
-        RestartSec = 5;
-      };
-      Install = { WantedBy = [ "graphical-session.target" ]; };
-    };
-
     kanata = {
       Unit = {
         Description = "Kanata Key Remapper";
@@ -47,21 +32,6 @@
       Service = {
         Type = "simple";
         ExecStart = "${pkgs.kanata}/bin/kanata";
-        Restart = "on-failure";
-        RestartSec = 5;
-      };
-      Install = { WantedBy = [ "graphical-session.target" ]; };
-    };
-
-    jamesdsp = {
-      Unit = {
-        Description = "JamesDSP Service";
-        After = [ "graphical-session-pre.target" ];
-        PartOf = [ "graphical-session.target" ];
-      };
-      Service = {
-        Type = "simple";
-        ExecStart = "${pkgs.jamesdsp}/bin/jamesdsp";
         Restart = "on-failure";
         RestartSec = 5;
       };
