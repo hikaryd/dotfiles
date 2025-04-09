@@ -30,6 +30,7 @@
     unrar
     unzip
     gnutar
+    blueman
 
     # Разработка и программирование
     rustup

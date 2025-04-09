@@ -22,6 +22,11 @@
       url = "github:sodiboo/niri-flake";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    sf-mono-liga-src = {
+      url = "github:shaunsingh/SFMono-Nerd-Font-Ligaturized";
+      flake = false;
+    };
+    ashell.url = "github:MalpenZibo/ashell";
   };
   outputs = inputs@{ home-manager, nixpkgs, ... }:
     let
@@ -33,6 +38,18 @@
           inputs.hyprpanel.overlay
           inputs.nixgl.overlay
           inputs.niri.overlays.niri
+          (final: prev: {
+            sf-mono-liga-bin = prev.stdenvNoCC.mkDerivation {
+              pname = "sf-mono-liga-bin";
+              version = "dev";
+              src = inputs.sf-mono-liga-src;
+              dontConfigure = true;
+              installPhase = ''
+                mkdir -p $out/share/fonts/opentype
+                cp -R $src/*.otf $out/share/fonts/opentype/
+              '';
+            };
+          })
         ];
       };
     in {
