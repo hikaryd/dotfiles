@@ -199,7 +199,7 @@
         (makeCommand "${pkgs.kanata}/bin/kanata")
         (makeCommand "slack")
         (makeCommand "jamedsp")
-        (makeCommand "1password --silent")
+        (makeCommand "1password")
         (makeCommand "${pkgs.hyprpaper}/bin/hyprpaper")
         (makeCommand "dunst")
         (makeCommand "${pkgs.tidal-hifi}/bin/tidal-hifi")
@@ -245,14 +245,11 @@
           matches = [{ app-id = "^(com.mitchellh.ghostty|Slack)$"; }];
           open-on-workspace = "1";
         }
-        { matches = [{ app-id = "^(neovide)$"; }]; }
-        { matches = [{ app-id = "^(DBeaver)$"; }]; }
         {
-          matches = [{ app-id = "^(zoom|zoom-us|Zoom Workplace)$"; }];
-          open-on-workspace = "2";
-        }
-        {
-          matches = [{ app-id = "^(tidal-hifi)$"; }];
+          matches = [{
+            app-id =
+              "^(zoom|zoom-us|Zoom Workplace|com.github.wwmm.easyeffects|tidal-hifi)$";
+          }];
           open-on-workspace = "2";
         }
         {
@@ -263,6 +260,8 @@
           open-on-workspace = "other";
           opacity = 0.9;
         }
+        { matches = [{ app-id = "^(neovide)$"; }]; }
+        { matches = [{ app-id = "^(DBeaver)$"; }]; }
         {
           matches =
             [{ title = "^(Google Chrome.*|Untitled - Google Chrome)$"; }];
@@ -297,11 +296,7 @@
           open-floating = true;
           default-window-height = { fixed = 700; };
         }
-        {
-          matches = [{ app-id = "com.github.wwmm.easyeffects"; }];
-          open-floating = true;
-          default-window-height = { fixed = 400; };
-        }
+        { matches = [{ app-id = ""; }]; }
         {
           matches = [{ app-id = "xdg-desktop-portal-gtk"; }];
           open-floating = true;
