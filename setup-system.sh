@@ -191,47 +191,6 @@ install_home_manager() {
 	log "SUCCESS" "home-manager успешно установлен"
 }
 
-install_driver_symlink_daemon() {
-	log "INFO" "Установка сервиса для настройки драйверов (driversetup)..."
-
-	sudo tee /usr/local/bin/driversetup.sh >/dev/null <<'EOF'
-#!/bin/bash
-echo "Searching for Mesa GBM driver in /nix/store..."
-mesaDriver=$(find /nix/store -maxdepth 4 -name "dri_gbm.so" | head -n 1)
-if [ -z "$mesaDriver" ]; then
-echo "Error: Cannot find dri_gbm.so in /nix/store"
-exit 1
-fi
-echo "Found Mesa driver: $mesaDriver"
-mkdir -p /run/opengl-driver/lib/gbm
-ln -sf "$mesaDriver" /run/opengl-driver/lib/gbm/dri_gbm.so
-EOF
-	check_error "Ошибка при создании скрипта driversetup.sh"
-
-	sudo chmod +x /usr/local/bin/driversetup.sh
-
-	sudo tee /etc/systemd/system/driversetup.service >/dev/null <<'EOF'
-[Unit]
-Description=Setup Mesa GPU driver symlink
-After=network.target
-
-[Service]
-Type=oneshot
-ExecStart=/usr/local/bin/driversetup.sh
-RemainAfterExit=yes
-
-[Install]
-WantedBy=multi-user.target
-EOF
-	check_error "Ошибка при создании unit файла driversetup.service"
-
-	sudo systemctl daemon-reload
-	sudo systemctl enable --now driversetup.service
-	check_error "Ошибка при активации службы driversetup.service"
-
-	log "SUCCESS" "Сервис driversetup успешно установлен и запущен"
-}
-
 install_emptty() {
 	log "INFO" "Установка emptty..."
 
@@ -289,8 +248,6 @@ main() {
 	install_docker
 	install_home_manager
 	install_other
-
-	install_driver_symlink_daemon
 
 	log "SUCCESS" "Установка и настройка завершены успешно!"
 	log "INFO" "Пожалуйста, перезагрузите систему для применения всех изменений"
