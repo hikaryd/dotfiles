@@ -203,8 +203,7 @@
         (makeCommand "${pkgs.hyprpaper}/bin/hyprpaper")
         (makeCommand "dunst")
         (makeCommand "${pkgs.tidal-hifi}/bin/tidal-hifi")
-        (makeCommand
-          "${pkgs.easyeffects}/bin/easyeffects --gapplication-service")
+        (makeCommand "${pkgs.easyeffects}/bin/easyeffects")
         (makeCommand "google-chrome-stable")
         (makeCommand "ayugram-desktop")
         (makeCommand "wl-paste --type image --watch cliphist store")

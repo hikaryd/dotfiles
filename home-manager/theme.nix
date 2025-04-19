@@ -12,6 +12,7 @@
     iosevka
     open-sans
     monaspace
+    fira-code
 
     bibata-cursors
     base16-schemes

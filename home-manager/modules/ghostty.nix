@@ -26,8 +26,8 @@
 
   xdg.configFile."ghostty/config".text = ''
     # Настройки шрифта
-    # font-family = "Monaspace Krypton Frozen"
-    font-family = "Liga SFMono Nerd Font"
+    font-family = "Fira Code"
+    # font-family = "Liga SFMono Nerd Font"
     font-size = 10
     font-thicken = false
     adjust-box-thickness = 0
