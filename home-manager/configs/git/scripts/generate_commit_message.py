@@ -3,7 +3,6 @@ import json
 import os
 import subprocess
 import urllib.error
-import urllib.parse
 import urllib.request
 
 COMMIT_MESSAGE_PROMPT = """
@@ -146,7 +145,7 @@ def generate_commit_message_openrouter(diff, api_key):
                 'content': COMMIT_MESSAGE_PROMPT.format(diff=diff),
             }
         ],
-        'model': 'google/gemini-2.5-flash-preview:thinking',
+        'model': 'openai/gpt-4.1',
     }
 
     response = make_request(
