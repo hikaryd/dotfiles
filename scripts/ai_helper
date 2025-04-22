@@ -1,0 +1,298 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+import argparse
+import json
+import os
+import subprocess
+import sys
+import urllib.error
+import urllib.request
+from typing import Optional, Dict, Any
+
+MR_PROMPT_TEMPLATE = (
+    """
+    # РОЛЬ: Ты опытный AI-ассистент, специализирующийся на анализе кода и подготовке Merge Request (MR). "
+    "Твоя задача – помочь разработчикам быстро понять суть изменений и ускорить процесс ревью.
+"
+    "# ЗАДАЧА: На основе предоставленного diff изменений между ветками Git, создай информативный заголовок (Title) и "
+    "структурированное подробное описание (Description) для Merge Request. Ответ должен быть полностью на русском языке.
+"
+    "# ВХОДНЫЕ ДАННЫЕ (Diff для анализа):
+{diff}
+"
+    "# ИНСТРУКЦИИ ПО СОЗДАНИЮ MR:
+"
+    "## 1. Заголовок (Title):
+"
+    "* **Краткость и ясность:** Сформулируй лаконично, не более 72 символов.
+"
+    "* **Информативность:** Четко отрази основное изменение или цель данного MR.
+"
+    "* **Формат (Рекомендованный):** Используй префиксы, указывающие на *основной* тип изменений "
+    "(по аналогии с Conventional Commits):
+"
+    "    * `feat:` для новой функциональности.
+"
+    "    * `fix:` для исправления ошибки.
+"
+    "    * `refactor:` для рефакторинга без изменения поведения.
+"
+    "    * `perf:` для улучшения производительности.
+"
+    "    * `docs:` для изменений только в документации.
+"
+    "    * `test:` для добавления/изменения тестов.
+"
+    "    * `chore:` для рутинных задач (обновление зависимостей, конфигов и т.п.).
+"
+    "  *Пример:* `feat(api): Добавить эндпоинт для получения профиля пользователя`
+"
+    "  *Пример:* `fix: Исправить расчет скидки для оптовых заказов`
+
+"
+    "## 2. Описание (Description):
+"
+    "* **Цель:** Предоставить достаточный контекст, объяснить суть изменений и помочь ревьюерам эффективно проверить код.
+"
+    "* **Структура:** Используй Markdown и четкие разделы:
+"
+    "  **Что сделано:**
+"
+    "    * Краткое резюме внесенных изменений.
+"
+    "    * Выдели *все* основные типы изменений, обнаруженные в diff: `feat`, `fix`, `refactor`, `perf`, `docs`, `test`, `chore`, `style`.
+"
+    "  **Зачем это сделано:**
+"
+    "    * Объясни мотивацию или бизнес-требование.
+"
+    "  **Как проверить (опционально):**
+"
+    "    * Шаги для тестирования или проверки.
+"
+    "  **Дополнительные замечания (опционально):**
+"
+    "    * Риски, нерешенные вопросы, моменты для внимания.
+
+"
+    "* **Важно:** Фокусируйся на смысле изменений.
+"
+    "# ФОРМАТ ВЫВОДА (строго соблюдать):
+"
+    "Title: <сгенерированный заголовок>
+"
+    "Description: <сгенерированное описание с использованием Markdown и предложенной структуры>
+"
+    """"
+)
+
+REFRACTOR_PROMPT_TEMPLATE = (
+    "Проанализируй этот текст, найди и исправь ошибки. "
+    "В ответ отправь только сам текст, не добавляя комментариев.\n\n"
+    "{text}"
+)
+
+
+def notify(title: str, message: str) -> None:
+    """
+    Отправляет системное уведомление на Linux или macOS.
+    """
+    if sys.platform == "darwin":
+        subprocess.run([
+            "osascript", "-e",
+            f'display notification "{message}" with title "{title}"'
+        ])
+    else:
+        subprocess.run(["notify-send", title, message])
+
+
+def get_clipboard_text() -> str:
+    """
+    Возвращает текст из буфера обмена (wl-paste или pbpaste).
+    """
+    try:
+        if sys.platform == "darwin":
+            return subprocess.check_output(["pbpaste"], encoding="utf-8")
+        return subprocess.check_output(["wl-paste"], encoding="utf-8")
+    except subprocess.CalledProcessError:
+        return ""
+
+
+def set_clipboard_text(text: str) -> None:
+    """
+    Копирует текст в буфер обмена (wl-copy или pbcopy).
+    """
+    if sys.platform == "darwin":
+        proc = subprocess.Popen(["pbcopy"], stdin=subprocess.PIPE)
+    else:
+        proc = subprocess.Popen(["wl-copy"], stdin=subprocess.PIPE)
+    proc.communicate(input=text.encode("utf-8"))
+
+
+def send_request(
+    api_key: str,
+    prompt: str,
+    api: str,
+    model: Optional[str] = None
+) -> Optional[Dict[str, Any]]:
+    """
+    Отправляет запрос к выбранному API (openrouter или gemini).
+    """
+    if api == "openrouter":
+        url = "https://openrouter.ai/api/v1/chat/completions"
+        payload = {
+            "model": model or os.getenv("OPENROUTER_MODEL", "google/gemini-2.0-flash-001"),
+            "messages": [{"role": "user", "content": prompt}]
+        }
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {api_key}"
+        }
+    else:
+        url = (
+            f"https://generativelanguage.googleapis.com/v1beta/models/"
+            f"gemini-2.5-flash-preview-04-17:generateContent?key={api_key}"
+        )
+        payload = {"contents": [{"parts": [{"text": prompt}]}]}
+        headers = {"Content-Type": "application/json; charset=utf-8"}
+
+    data = json.dumps(payload).encode("utf-8")
+    req = urllib.request.Request(url, data=data, headers=headers, method="POST")
+    try:
+        with urllib.request.urlopen(req) as resp:
+            return json.loads(resp.read().decode("utf-8"))
+    except urllib.error.HTTPError as err:
+        notify(f"AI Helper ({api.title()})", f"HTTP Error: {err.code} {err.reason}\n{err.read().decode()}")
+    except urllib.error.URLError as err:
+        notify(f"AI Helper ({api.title()})", f"URL Error: {err.reason}")
+    return None
+
+
+def extract_answer(response: Dict[str, Any], api: str) -> str:
+    """
+    Извлекает текстовый ответ из словаря.
+    """
+    if api == "gemini":
+        candidates = response.get("candidates")
+        if candidates:
+            parts = candidates[0].get("content", {}).get("parts", [])
+            return "".join(p.get("text", "") for p in parts).strip()
+    else:
+        choices = response.get("choices")
+        if choices:
+            return choices[0]["message"]["content"].strip()
+    return response.get("output", "") or response.get("content", "") or ""
+
+
+def handle_mr(api: str) -> None:
+    """
+    Генерация MR на основе diff.
+    """
+    api_key = (
+        os.getenv("OPENROUTER_API_KEY") if api == "openrouter"
+        else os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
+    )
+    if not api_key:
+        notify("AI Helper", f"{api.upper()}_API_KEY не установлена.")
+        sys.exit(1)
+
+    target = input("Введите ветку, в которую делается MR: ").strip()
+    if not target:
+        print("Целевая ветка не указана. Выход.")
+        sys.exit(1)
+
+    try:
+        current = subprocess.check_output(["git", "rev-parse", "--abbrev-ref", "HEAD"], encoding="utf-8").strip()
+        diff = subprocess.check_output(["git", "diff", f"{target}..{current}"], encoding="utf-8")
+    except subprocess.CalledProcessError as err:
+        notify("AI Helper", f"Ошибка Git: {err}")
+        sys.exit(1)
+
+    if not diff.strip():
+        notify("AI Helper", "Нет изменений между ветками.")
+        sys.exit(0)
+
+    prompt = MR_PROMPT_TEMPLATE.format(diff=diff)
+    print("Отправка запроса к AI...")
+    resp = send_request(api_key, prompt, api)
+    if not resp:
+        print("Ошибка получения ответа от AI.")
+        sys.exit(1)
+
+    answer = extract_answer(resp, api)
+    if not answer:
+        print("Не удалось извлечь ответ.")
+        sys.exit(1)
+
+    print(answer)
+    set_clipboard_text(answer)
+    notify("AI Helper", "Ответ скопирован в буфер обмена.")
+
+
+def handle_refactor(api: str) -> None:
+    """
+    Рефакторинг текста из буфера обмена.
+    """
+    api_key = (
+        os.getenv("OPENROUTER_API_KEY") if api == "openrouter"
+        else os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
+    )
+    if not api_key:
+        notify("AI Helper", f"{api.upper()}_API_KEY не установлена.")
+        sys.exit(1)
+
+    text = get_clipboard_text()
+    if not text:
+        notify("AI Helper", "Буфер обмена пуст.")
+        sys.exit(1)
+
+    prompt = REFRACTOR_PROMPT_TEMPLATE.format(text=text)
+    notify("AI Helper", "Отправка текста на рефакторинг...")
+    resp = send_request(api_key, prompt, api)
+    if not resp:
+        print("Ошибка получения ответа от AI.")
+        sys.exit(1)
+
+    answer = extract_answer(resp, api)
+    if not answer:
+        print("Не удалось извлечь ответ.")
+        sys.exit(1)
+
+    set_clipboard_text(answer)
+    notify("AI Helper", "Ответ скопирован в буфер обмена.")
+
+
+def parse_args() -> argparse.Namespace:
+    """
+    Парсит аргументы командной строки.
+
+    --mode: 'mr' для Merge Request или 'refactor' для рефакторинга.
+    --api: 'openrouter' или 'gemini'.
+    """
+    parser = argparse.ArgumentParser(description="AI Helper")
+    parser.add_argument(
+        "--mode",
+        choices=["mr", "refactor"],
+        required=True,
+        help="Режим работы: mr или refactor"
+    )
+    parser.add_argument(
+        "--api",
+        choices=["openrouter", "gemini"],
+        default="openrouter",
+        help="API для использования: openrouter или gemini"
+    )
+    return parser.parse_args()
+
+
+def main() -> None:
+    args = parse_args()
+    if args.mode == "mr":
+        handle_mr(args.api)
+    else:
+        handle_refactor(args.api)
+
+
+if __name__ == "__main__":
+    main()
