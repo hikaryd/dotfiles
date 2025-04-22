@@ -199,7 +199,7 @@
         (makeCommand "jamedsp")
         (makeCommand "1password")
         (makeCommand "${pkgs.hyprpaper}/bin/hyprpaper")
-        (makeCommand "dunst")
+        (makeCommand "~/.config/hydepanel/init.sh -start")
         (makeCommand "${pkgs.tidal-hifi}/bin/tidal-hifi")
         (makeCommand "${pkgs.easyeffects}/bin/easyeffects")
         (makeCommand "zen-browser")
