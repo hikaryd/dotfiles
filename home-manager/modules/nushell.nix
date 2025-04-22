@@ -44,7 +44,6 @@
       QT_QPA_PLATFORM = "wayland;xcb";
       QT_AUTO_SCREEN_SCALE_FACTOR = "1";
       QT_WAYLAND_DISABLE_WINDOWDECORATION = "1";
-      XCURSOR_THEME = "Bibata-Modern-Ice";
       XCURSOR_SIZE = "20";
       TERM = "ghostty";
     };
@@ -52,11 +51,6 @@
     shellAliases = {
       v = "nvim";
       ssh = ''env TERM="xterm-256color" ssh'';
-      kvnt-monitor = "tmuxinator start monitoring";
-      prod-kvnt =
-        "env TERM=\"xterm-256color\" ssh -t kvant-mgmt 'ssh -t production-srv \"sudo su - deploy\"'";
-      stage-kvnt =
-        "env TERM=\"xterm-256color\" ssh -t kvant-mgmt 'ssh -t staging-srv \"sudo su - deploy\"'";
       cat = "bat --style=plain";
       ".." = "cd ..";
       l = "ls";
@@ -66,13 +60,10 @@
       vs = "overlay use .venv/bin/activate.nu";
       proxy = "mgraftcp --socks5 127.0.0.1:2080";
       md_convert = "pandoc -s -o output.pdf --pdf-engine=typst";
-      scan_domain = ''
-        sudo ~/.nix-profile/bin/nmap -sV -sS -A -T4 --script="*" -Pn -n -v -p1-65535  -oA nmap
-      '';
 
       # Docker
       dc = "docker compose";
-      create_mr = "${../../scripts/ai-mr-helper}";
+      create_mr = "${../../scripts/ai_helper} --mode mr --api gemini";
       dcl = "docker compose logs -f";
       dcub = "docker compose up --build -d --force-recreate";
       dcd = "docker compose down";
@@ -141,6 +132,7 @@
       setup_path
 
       $env.OPENROUTER_API_KEY = (open ($env.HOME + "/creds/open_router") | str trim)
+      $env.GOOGLE_API_KEY = (open ($env.HOME + "/creds/gemini") | str trim)
 
       def extract [file: string] {
         if ($file | is-empty) {

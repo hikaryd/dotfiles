@@ -1,85 +1,68 @@
-{ pkgs, inputs, config, ... }: {
+{ pkgs, inputs, config, ... }:
+let
+  isDarwin = pkgs.stdenv.isDarwin;
+  system = pkgs.system;
+  nixglPkgs = inputs.nixgl.packages.${system};
+  zenBrowserPkgs = inputs."zen-browser".packages.${system};
+in {
   nixpkgs.config.allowUnfree = true;
 
-  home.packages = with pkgs; [
-    # Графические драйверы и совместимость
-    inputs.nixgl.packages.${system}.nixGLDefault
-    inputs.nixgl.packages.${system}.nixVulkanIntel
-
-    # Системные утилиты и мониторинг
-    htop
-    duf
-    powertop
-    acpi
-    tree
-    less
-    bluetuith
-    libnotify
-    xdg-desktop-portal
-    bluez
-    bluez-tools
-    networkmanager
-    libsecret
-    pass-wayland
-
-    # Файловые менеджеры и работа с файлами
-    nemo
-    rsync
-    p7zip
-    lrzip
-    unrar
-    unzip
-    gnutar
-    blueman
-
-    # Разработка и программирование
-    rustup
-    vscode
-    jq
-    fd
-    ripgrep
-    postgresql_16
-    docker
-    docker-compose
-    docker-buildx
-    luajitPackages.luarocks
-    nix-prefetch-scripts
-    ansible
-    uv
-    nodejs_22
-    code-cursor
-
-    # Инструменты для работы с текстом и документами
-    pandoc
-    typst
-    tdf
-    python313Packages.weasyprint
-
-    # Интернет и сеть
-    (config.lib.nixGL.wrap google-chrome)
-    (config.lib.nixGL.wrap slack)
-    qbittorrent
-    proxychains-ng
-    sing-geosite
-    nekoray
-    ayugram-desktop
-    (config.lib.nixGL.wrap insomnia)
-    grip-grab
-    tidal-hifi
-
-    # Офисные приложения и просмотр документов
-    onlyoffice-desktopeditors
-    evince
-
-    # Мультимедиа и развлечения
-    (config.lib.nixGL.wrap mpv)
-    (config.lib.nixGL.wrap osu-lazer-bin)
-    wf-recorder
-    imagemagick
-
-    # Инструменты командной строки и улучшения терминала 
-    tmuxinator
-    pulsemixer
-    repomix
-  ];
+  home.packages = let
+    common = with pkgs; [
+      htop
+      tree
+      less
+      rsync
+      p7zip
+      lrzip
+      unrar
+      unzip
+      gnutar
+      jq
+      fd
+      ripgrep
+      postgresql_16
+      docker
+      luajitPackages.luarocks
+      uv
+      nodejs_22
+      sing-geosite
+      grip-grab
+      (config.lib.nixGL.wrap zenBrowserPkgs.default)
+    ];
+    linuxOnly = if !isDarwin then
+      with pkgs; [
+        rustup
+        ansible
+        bluetuith
+        libnotify
+        acpi
+        tidal-hifi
+        ayugram-desktop
+        repomix
+        evince
+        pulsemixer
+        wf-recorder
+        code-cursor
+        typst
+        qbittorrent
+        duf
+        powertop
+        bluez
+        bluez-tools
+        networkmanager
+        nemo
+        blueman
+        nixglPkgs.nixGLDefault
+        nixglPkgs.nixVulkanIntel
+        (config.lib.nixGL.wrap google-chrome)
+        (config.lib.nixGL.wrap slack)
+        (config.lib.nixGL.wrap insomnia)
+        (config.lib.nixGL.wrap mpv)
+        (config.lib.nixGL.wrap osu-lazer-bin)
+      ]
+    else
+      [ ];
+    macosOnly = if isDarwin then with pkgs; [ mas chatgpt ] else [ ];
+  in common ++ linuxOnly ++ macosOnly;
 }

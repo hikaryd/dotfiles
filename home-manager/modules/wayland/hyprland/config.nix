@@ -190,9 +190,7 @@
         "WLR_RENDERER,vulkan"
         "WLR_RENDERER_ALLOW_SOFTWARE,1"
 
-        "XCURSOR_THEME,Bibata-Modern-Ice"
         "XCURSOR_SIZE,20"
-        "HYPRCURSOR_THEME,Bibata-Modern-Ice"
         "HYPRCURSOR_SIZE,20"
       ];
 

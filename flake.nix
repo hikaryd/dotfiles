@@ -2,6 +2,7 @@
   description = "Hikary's system configuration";
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
+    flake-utils.url = "github:numtide/flake-utils";
     stylix.url = "github:danth/stylix";
     ghostty.url = "github:ghostty-org/ghostty";
     anyrun.url = "github:fufexan/anyrun/launch-prefix";
@@ -26,11 +27,12 @@
       url = "github:shaunsingh/SFMono-Nerd-Font-Ligaturized";
       flake = false;
     };
-    ashell.url = "github:MalpenZibo/ashell";
+    zen-browser.url = "github:MarceColl/zen-browser-flake";
+    # https://github.com/JustAdumbPrsn/Nebula-A-Minimal-Theme-for-Zen-Browser
   };
-  outputs = inputs@{ home-manager, nixpkgs, ... }:
+  outputs = inputs@{ self, nixpkgs, home-manager, ... }:
     let
-      system = "x86_64-linux";
+      system = builtins.currentSystem;
       pkgs = import nixpkgs {
         inherit system;
         config = { allowUnfree = true; };
@@ -55,7 +57,7 @@
     in {
       homeConfigurations."hikary" = home-manager.lib.homeManagerConfiguration {
         inherit pkgs;
-        extraSpecialArgs = { inherit inputs; };
+        extraSpecialArgs = { inherit inputs system; };
         modules = [ ./home-manager/home.nix ];
       };
     };

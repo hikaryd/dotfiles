@@ -1,7 +1,5 @@
-{ ... }: {
-  imports = [
-    ./wayland
-    ./ashell.nix
+{ system, ... }: {
+  imports = (if system == "x86_64-linux" then [ ./wayland ] else [ ]) ++ [
     ./easyeffects.nix
     ./git.nix
     ./lazygit.nix
@@ -18,5 +16,6 @@
     ./bat.nix
     ./kanata.nix
     ./xdg-mimes.nix
+    ./onepassword.nix
   ];
 }
