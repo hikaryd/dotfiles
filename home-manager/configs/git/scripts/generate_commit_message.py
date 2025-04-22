@@ -1,83 +1,75 @@
+#!/usr/bin/env python3
+
 import argparse
 import json
 import os
 import subprocess
+import sys
 import urllib.error
 import urllib.request
+from typing import Optional, Dict, Any
 
 COMMIT_MESSAGE_PROMPT = """
-# РОЛЬ: Ты – эксперт по написанию сообщений коммитов на русском языке, строго следующий правилам Conventional Commits.
+Ты – эксперт по написанию сообщений коммитов на русском языке, строго следующий правилам Conventional Commits.
+Создать сообщение для коммита на русском языке на основе предоставленного diff.
 
-# ЗАДАЧА: Создать сообщение для коммита на русском языке на основе предоставленного diff.
-
-# ВХОДНЫЕ ДАННЫЕ:
+ВХОДНЫЕ ДАННЫЕ:
 diff:
 ```
 {diff}
 ```
 
-# ИНСТРУКЦИИ И ПРАВИЛА:
-
-## ОБЩИЕ ТРЕБОВАНИЯ:
+# ОБЩИЕ ТРЕБОВАНИЯ:
 *   Сообщение коммита должно быть полностью на русском языке.
-*   Сообщение состоит из двух обязательных частей: Заголовок и Детальное описание, разделенных пустой строкой.
+*   Сообщение состоит из двух обязательных частей: заголовок и детальное описание, разделенных пустой строкой.
 *   Строго придерживайся типов коммитов Conventional Commits.
 
-## 1. ЗАГОЛОВОК (Title):
-*   **Содержание:** Краткое, высокоуровневое описание сути изменений.
-*   **Формат:** `<описание>` (область опциональна, если изменение затрагивает несколько областей или область сложно определить).
-*   **Глагол:** Описание должно начинаться с глагола в **повелительном наклонении** (императив), например: "Добавить", "Исправить", "Обновить", "Удалить", "Рефакторить".
-*   **Длина:** **Не более 50 символов.**
-*   **Регистр:** Начинается с заглавной буквы после двоеточия.
-*   **Точка в конце:** Не ставится.
+# 1. ЗАГОЛОВОК (Title):
+*   **Содержание:** краткое, высокоуровневое описание сути изменений.
+*   **Формат:** `<описание>` (область опциональна).
+*   **Глагол:** формулировка в повелительном наклонении (императив).
+*   **Длина:** не более 50 символов.
+*   **Регистр:** начинается с заглавной буквы.
+*   **Точка в конце:** не ставится.
 
-## 2. ДЕТАЛЬНОЕ ОПИСАНИЕ (Body / Тело):
-*   **Назначение:** Предоставляет контекст и детали изменений. Объясняет "что" и "почему", а не "как".
-*   **Расположение:** Следует после заголовка, отделено **одной пустой строкой**.
-*   **Формат:**
-    *   Может содержать несколько параграфов.
-    *   Для перечисления конкретных изменений можно использовать строки формата `<тип>(<область>): <описание>`, каждая на новой строке.
-    *   Если используются строки `<тип>(<область>): <описание>`:
-        *   Глагол в описании используется в **прошедшем времени**, например: "Добавлена", "Исправлено", "Обновлены".
-        *   Каждая такая строка не должна превышать **72 символа** в длину.
-        *   Включи все релевантные типы изменений, если diff затрагивает несколько аспектов (например, и `fix`, и `refactor`).
-*   **Обязательность:** Необязательно, если заголовок достаточно информативен для простых изменений. Однако, для `feat` и `fix` крайне рекомендуется.
+# 2. ДЕТАЛЬНОЕ ОПИСАНИЕ (Body):
+*   **Назначение:** объясняет «что» и «почему», а не «как».
+*   Следует после заголовка через одну пустую строку.
+*   Может содержать несколько параграфов или маркеры `<тип>(<область>): <описание>` в прошедшем времени.
 
-## ТИПЫ КОММИТОВ:
-*   `feat`: Добавление новой функциональности.
-*   `fix`: Исправление ошибки (бага).
-*   `docs`: Изменения, касающиеся только документации.
-*   `style`: Изменения, не влияющие на семантику кода (пробелы, форматирование, точки с запятой и т.д.).
-*   `refactor`: Изменение кода, которое не исправляет ошибку и не добавляет функциональность (например, оптимизация, изменение структуры).
-*   `perf`: Изменение кода, улучшающее производительность.
-*   `test`: Добавление или исправление тестов.
-*   `build`: Изменения, влияющие на систему сборки или внешние зависимости (npm, gradle, etc).
-*   `ci`: Изменения в файлах и скриптах конфигурации CI (Travis, Circle, etc).
-*   `chore`: Прочие изменения, не модифицирующие исходный код или тесты (обновление зависимостей в lock-файле, изменение .gitignore и т.п.).
+# ТИПЫ КОММИТОВ:
+*   `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`.
 
 # ФОРМАТ ОТВЕТА:
-# Выведи только сгенерированное сообщение коммита без дополнительных пояснений.
-
 <Заголовок>
-
-<Пустая строка>
 
 <Детальное описание (если применимо)>
 """
 
-
-def get_api_key(api_type):
-    if api_type == 'openai':
-        return os.getenv('OPENAI_API_KEY')
-    elif api_type == 'claude':
-        return os.getenv('ANTHROPIC_API_KEY')
-    elif api_type == 'operouter':
-        return os.getenv('OPENROUTER_API_KEY')
-    else:
-        raise ValueError(f'Неизвестный тип API: {api_type}')
+MODEL_NAME = os.getenv("GEMINI_MODEL", "gemini-2.5-flash-preview-04-17")
+API_KEY_ENV = "GOOGLE_API_KEY"
 
 
-def get_git_diff():
+def get_api_key() -> str:
+    """
+    Получает ключ API из переменной окружения.
+
+    :raises SystemExit: если переменная не установлена.
+    :return: строка с API-ключом.
+    """
+    key = os.getenv(API_KEY_ENV)
+    if not key:
+        print(f"Ошибка: переменная окружения {API_KEY_ENV} не установлена.", file=sys.stderr)
+        sys.exit(1)
+    return key
+
+
+def get_git_diff() -> str:
+    """
+    Извлекает разницу (diff) из индексированных изменений Git.
+
+    :return: текст diff.
+    """
     result = subprocess.run(
         [
             'git',
@@ -89,164 +81,100 @@ def get_git_diff():
             '--text',
         ],
         stdout=subprocess.PIPE,
-        text=True,
+        text=True
     )
     return result.stdout
 
 
-def make_request(url, headers, data, proxy_host='127.0.0.1', proxy_port='2080'):
-    proxy_handler = urllib.request.ProxyHandler(
-        # {
-        #     'http': f'http://{proxy_host}:{proxy_port}',
-        #     'https': f'http://{proxy_host}:{proxy_port}',
-        # }
-    )
-    opener = urllib.request.build_opener(proxy_handler)
-    urllib.request.install_opener(opener)
+def send_request(api_key: str, prompt: str) -> Optional[Dict[str, Any]]:
+    """
+    Отправляет запрос к Gemini Free API и возвращает ответ.
 
-    req = urllib.request.Request(
-        url,
-        data=json.dumps(data).encode('utf-8'),
-        headers=headers,
-        method='POST',
+    :param api_key: API-ключ для доступа к сервису.
+    :param prompt: текстовый промпт для модели.
+    :return: словарь с ответом или None при ошибке.
+    """
+    url = (
+        f"https://generativelanguage.googleapis.com/v1beta/models/"
+        f"{MODEL_NAME}:generateContent?key={api_key}"
     )
-
+    payload = {"contents": [{"parts": [{"text": prompt}]}]}
+    headers = {"Content-Type": "application/json; charset=utf-8"}
+    data = json.dumps(payload).encode("utf-8")
+    req = urllib.request.Request(url, data=data, headers=headers, method="POST")
     try:
-        with urllib.request.urlopen(req) as response:
-            return json.loads(response.read().decode('utf-8'))
-    except urllib.error.HTTPError as e:
-        print(f'Ошибка HTTP: {e.code} {e.reason}')
-        print(e.read().decode('utf-8'))
-        return None
-    except urllib.error.URLError as e:
-        print(f'Ошибка URL: {e.reason}')
-        return None
+        with urllib.request.urlopen(req) as resp:
+            return json.loads(resp.read().decode("utf-8"))
+    except urllib.error.HTTPError as err:
+        print(f"Ошибка HTTP: {err.code} {err.reason}", file=sys.stderr)
+        print(err.read().decode("utf-8"), file=sys.stderr)
+    except urllib.error.URLError as err:
+        print(f"Ошибка URL: {err.reason}", file=sys.stderr)
+    return None
 
 
-def generate_commit_message_claude(diff, api_key):
-    headers = {
-        'Content-Type': 'application/json',
-        'x-api-key': api_key,
-        'anthropic-version': '2023-06-01',
-    }
-    data = {
-        'messages': [
-            {
-                'role': 'user',
-                'content': COMMIT_MESSAGE_PROMPT.format(diff=diff),
-            }
-        ],
-        'max_tokens': 3000,
-        'model': 'claude-3-5-sonnet-20241022',
-    }
+def extract_answer(response: Dict[str, Any]) -> str:
+    """
+    Извлекает текстовое содержание ответа модели из структуры API.
 
-    response = make_request(
-        'https://api.anthropic.com/v1/messages', headers=headers, data=data
-    )
-
-    if response:
-        return response.get('content', [{}])[0].get('text', '').strip()
-    return ''
+    :param response: словарь с данными ответа API.
+    :return: текст ответа.
+    """
+    candidates = response.get("candidates")
+    if candidates:
+        parts = candidates[0].get("content", {}).get("parts", [])
+        return "".join(p.get("text", "") for p in parts).strip()
+    return ""
 
 
-def generate_commit_message_openrouter(diff, api_key):
-    headers = {
-        'Authorization': f'Bearer {api_key}',
-    }
-    data = {
-        'messages': [
-            {
-                'role': 'user',
-                'content': COMMIT_MESSAGE_PROMPT.format(diff=diff),
-            }
-        ],
-        'model': 'openai/o4-mini',
-    }
+def format_commit_message(message: str) -> str:
+    """
+    Форматирует сгенерированное сообщение коммита.
 
-    response = make_request(
-        'https://openrouter.ai/api/v1/chat/completions',
-        headers=headers,
-        data=data,
-    )
-
-    if response:
-        try:
-            return (
-                response.get('choices', [{}])[0]
-                .get('message', '')
-                .get('content', '')
-                .strip()
-            )
-        except Exception as e:
-            print(f'Ошибка при генерации сообщения коммита: {e}.\n\n{response}')
-    return ''
+    :param message: сырой текст от модели.
+    :return: отформатированное сообщение.
+    """
+    lines = message.strip().split("\n")
+    title = lines[0]
+    body = "\n".join(lines[1:]).strip()
+    return f"{title}\n\n{body}" if body else title
 
 
-def generate_commit_message_openai(diff, api_key):
-    headers = {
-        'Content-Type': 'application/json',
-        'Authorization': f'Bearer {api_key}',
-    }
-    data = {
-        'model': 'gpt-4',
-        'messages': [
-            {
-                'role': 'system',
-                'content': 'Вы - помощник по генерации сообщений коммитов.',
-            },
-            {
-                'role': 'user',
-                'content': COMMIT_MESSAGE_PROMPT.format(diff=diff),
-            },
-        ],
-        'max_tokens': 3000,
-    }
-
-    response = make_request(
-        'https://api.openai.com/v1/chat/completions',
-        headers=headers,
-        data=data,
-    )
-
-    if response:
-        return response['choices'][0]['message']['content'].strip()
-    return ''
-
-
-def format_commit_message(message):
-    lines = message.split('\n')
-    title = lines[0].replace('TITLE: ', '')
-    body = '\n'.join(lines[2:])
-    return f'{title}\n\n{body}'
-
-
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Генератор сообщений коммитов')
+def main() -> None:
+    """
+    Основная функция: извлекает diff, запрашивает модель и выводит сообщение.
+    """
+    parser = argparse.ArgumentParser(description='Генератор сообщений коммитов с Gemini API')
     parser.add_argument(
-        '--openai',
-        action='store_true',
-        help='Использовать OpenAI API вместо Claude',
-    )
-    parser.add_argument(
-        '--operouter',
-        action='store_true',
-        help='Использовать OpenRouter API',
+        '--model',
+        help='Имя модели Gemini (по умолчанию из GEMINI_MODEL)',
     )
     args = parser.parse_args()
 
-    diff = get_git_diff()
-    if diff.strip() == '':
-        print('Нет изменений для коммита.')
-    else:
-        if args.openai:
-            api_key = get_api_key('openai')
-            commit_message = generate_commit_message_openai(diff, api_key)
-        elif args.operouter:
-            api_key = get_api_key('operouter')
-            commit_message = generate_commit_message_openrouter(diff, api_key)
-        else:
-            api_key = get_api_key('claude')
-            commit_message = generate_commit_message_claude(diff, api_key)
+    if args.model:
+        global MODEL_NAME
+        MODEL_NAME = args.model
 
-        formatted_message = format_commit_message(commit_message)
-        print(formatted_message)
+    api_key = get_api_key()
+    diff = get_git_diff()
+    if not diff.strip():
+        print('Нет изменений для коммита.')
+        sys.exit(0)
+
+    prompt = COMMIT_MESSAGE_PROMPT.format(diff=diff)
+    response = send_request(api_key, prompt)
+    if not response:
+        print('Ошибка получения ответа от Gemini API.', file=sys.stderr)
+        sys.exit(1)
+
+    answer = extract_answer(response)
+    if not answer:
+        print('Пустой ответ от модели.', file=sys.stderr)
+        sys.exit(1)
+
+    commit_msg = format_commit_message(answer)
+    print(commit_msg)
+
+
+if __name__ == '__main__':
+    main()

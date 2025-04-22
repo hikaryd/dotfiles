@@ -298,7 +298,6 @@
         # ===== Запуск приложений =====
         "$base, Return, exec, ghostty"
         ''$launch, S, exec, grim -g "$(slurp)" - | wl-copy''
-        "$launch, O, exec, ${../../../../scripts/ai_refactor_clipboard}"
         "$base, A, exec, anyrun"
 
         # "$launch, B, exec, ghostty --class=com.mark.bluetui -e bluetui"
