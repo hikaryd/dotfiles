@@ -47,7 +47,7 @@ confirm() {
 	case "$answer" in
 	[yY] | [yY][eE][sS]) return 0 ;;
 	*) return 1 ;;
-	esac
+esac
 }
 
 check_error() {
@@ -254,4 +254,4 @@ main() {
 	log "WARNING" "Некоторые изменения (например, добавление в группы) вступят в силу только после перезагрузки"
 }
 
-main
+main 

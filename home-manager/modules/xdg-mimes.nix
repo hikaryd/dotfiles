@@ -2,7 +2,8 @@
 with lib;
 let
   defaultApps = {
-    browser = [ "google-chrome.desktop" ];
+    # browser = [ "google-chrome.desktop" ];
+    browser = [ "zen.desktop" ];
     text = [ "code.desktop" ];
     image = [ "imv-dir.desktop" ];
     audio = [ "mpv.desktop" ];

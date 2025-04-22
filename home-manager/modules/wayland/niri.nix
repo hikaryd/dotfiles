@@ -161,9 +161,8 @@
       };
 
       cursor = {
-        theme = "Bibata-Modern-Ice";
-        size = 20;
         hide-when-typing = false;
+        size = 20;
       };
 
       gestures = {
@@ -195,7 +194,6 @@
       };
 
       spawn-at-startup = [
-        (makeCommand "ashell")
         (makeCommand "${pkgs.kanata}/bin/kanata")
         (makeCommand "slack")
         (makeCommand "jamedsp")
@@ -204,7 +202,7 @@
         (makeCommand "dunst")
         (makeCommand "${pkgs.tidal-hifi}/bin/tidal-hifi")
         (makeCommand "${pkgs.easyeffects}/bin/easyeffects")
-        (makeCommand "google-chrome-stable")
+        (makeCommand "zen-browser")
         (makeCommand "ayugram-desktop")
         (makeCommand "wl-paste --type image --watch cliphist store")
         (makeCommand "wl-paste --type text --watch cliphist store")
@@ -254,7 +252,7 @@
         {
           matches = [{
             app-id =
-              "^(google-chrome|google-chrome-stable|com.ayugram.desktop)$";
+              "^(google-chrome|google-chrome-stable|com.ayugram.desktop|zen)$";
           }];
           open-on-workspace = "other";
           opacity = 0.9;
@@ -334,8 +332,8 @@
           action = { consume-or-expel-window-right = [ ]; };
         };
 
-        "${mod}+${alt}+H" = { action = { set-column-width = "-100"; }; };
-        "${mod}+${alt}+L" = { action = { set-column-width = "+100"; }; };
+        "${mod}+${alt}+H" = { action = { set-column-width = "-20"; }; };
+        "${mod}+${alt}+L" = { action = { set-column-width = "+20"; }; };
 
         "${mod}+K" = { action = { focus-workspace = [ "1" ]; }; };
         "${mod}+G" = { action = { focus-workspace = [ "2" ]; }; };

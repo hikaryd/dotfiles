@@ -14,7 +14,6 @@
     monaspace
     fira-code
 
-    bibata-cursors
     base16-schemes
     catppuccin-gtk
     inter
@@ -27,7 +26,7 @@
     autoEnable = true;
     polarity = "dark";
     base16Scheme = "${pkgs.base16-schemes}/share/themes/catppuccin-mocha.yaml";
-    image = ../wallpapers/foggy-city.png;
+    image = ../wallpapers/keyboard.png;
 
     fonts = {
       serif = {
@@ -62,8 +61,8 @@
     };
     cursor = {
       size = 20;
-      name = "Bibata-Modern-Ice";
-      package = pkgs.bibata-cursors;
+      name = "phinger-cursors-light";
+      package = pkgs.phinger-cursors;
     };
   };
 }
