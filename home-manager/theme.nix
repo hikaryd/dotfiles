@@ -30,16 +30,16 @@
 
     fonts = {
       serif = {
-        package = pkgs.inter;
-        name = "Inter Black Italic";
+        package = pkgs.nerd-fonts.jetbrains-mono;
+        name = "Jetbrains Mono";
       };
       sansSerif = {
-        package = pkgs.inter;
-        name = "Inter Regular";
+        package = pkgs.nerd-fonts.jetbrains-mono;
+        name = "Jetbrains Mono";
       };
       monospace = {
-        package = pkgs.sf-mono-liga-bin;
-        name = "Monaspace Neon Frozen";
+        package = pkgs.nerd-fonts.jetbrains-mono;
+        name = "Jetbrains Mono";
       };
       emoji = {
         package = pkgs.noto-fonts-emoji;
