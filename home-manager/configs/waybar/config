@@ -1,0 +1,103 @@
+{
+  "position": "top",
+    "height": 22,
+    "spacing": 0,
+    "layer": "bottom",
+    "fixed-center": true,
+    "modules-left": ["clock" ],
+    "modules-center": [],
+    "modules-right": ["custom/recording", "network", "battery", "backlight", "cpu", "memory", "tray"],
+    "tray": {
+      "spacing": 0,
+    },
+    "clock": {
+    "timezone": "Asia/Kolkata",
+    "format": "󰅐 {:%a %I:%M %p}",
+    "tooltip-format": "<big>{:%Y %B}</big>\n<tt><small>{calendar}</small></tt>",
+    "format-alt": "󰅐 {:%a %d.%m.%Y %I:%M %p}"
+    },
+    "cpu": {
+      "format": "󰍛 {usage}%",
+      "tooltip": true
+    },
+    "memory": {
+      "format": "󰘚 {}%"
+    },
+    "temperature": {
+      "critical-threshold": 70,
+      "interval": 3,
+      "format": "{icon} {temperatureC}°C",
+      "format-icons": ["󱃃", "󰔏", "󱃂"]
+    },
+    "backlight": {
+      "format": "{icon} {percent}%",
+      "format-icons": ["󰛩", "󱩎", "󱩏", "󱩐", "󱩑", "󱩒", "󱩓", "󱩔", "󱩕", "󱩖", "󰛨"],
+      "on-click": "light -S 0.1",
+      "on-scroll-up": "brightnessctl set +5%",
+      "on-scroll-down": "brightnessctl set 5%-"
+    },
+    "battery": {
+      "interval": 10,
+      "states": {
+        "critical": 25
+      },
+      "format": "{icon} {capacity}%",
+      "format-charging": "󰂄 {capacity}%",
+      "format-icons": ["󰂎", "󰁺", "󰁻", "󰁼", "󰁽", "󰁾", "󰁿", "󰂀", "󰂁", "󰂂", "󰁹"]
+    },
+    "network": {
+      "format-wifi": "{icon} {essid}",
+      "tooltip-format-wifi": "Signal strength: {signalStrength}%\nLocal IP: {ipaddr}\nGateway: {gwaddr}",
+      "format-ethernet": "󰈀 {ifname}",
+      "tooltip-format": "Local IP: {ipaddr}\nGateway: {gwaddr}",
+      "format-linked": "󰀦 {ifname} (No IP)",
+      "format-disconnected": "󰀦 {ifname}",
+      "format-alt": "{ipaddr}/{cidr} - {bandwidthDownBits}",
+      "format-icons": ["󰤯", "󰤟", "󰤢", "󰤥", "󰤨"]
+    },
+    "pulseaudio": {
+      "scroll-step": 1,
+      "format": "{icon} {volume}% {format_source}",
+      "format-bluetooth": "{icon} {volume}%  {format_source}",
+      "format-bluetooth-muted": "<span>󰖁</span> {volume}%  {format_source}",
+      "format-muted": "󰖁 {volume}% {format_source}",
+      "format-source": "󰍬",
+      "format-source-muted": "󰍭",
+      "format-icons": {
+        "headphone": "󰋋",
+        "default": ["󰕿", "󰖀", "󰕾"],
+        "headphone": "",
+        "hands-free": "",
+        "headset": "󰋋",
+      },
+      "on-click": "pactl set-sink-mute 0 toggle",
+      "on-click-middle": "pavucontrol",
+      "on-click-right": "pactl set-source-mute 0 toggle"
+    },
+    "power-profiles-daemon": {
+      "format": "{icon}",
+      "tooltip-format": "Power profile: {profile}\nDriver: {driver}",
+      "tooltip": true,
+      "format-icons": {
+      "default": "󱐋",
+      "performance": "󱐋 High",
+      "balanced": "󱓝 Base",
+      "power-saver": "󰌪 Save"
+      }  
+    },
+    "custom/recording": {
+      "exec": "pgrep wl-screenrec > /dev/null && echo '󰻃 REC' || echo ''",
+      "interval": 2
+    },
+    "custom/spotify": {
+        "exec": "~/.config/niri/spotify_waybar.sh",
+        "interval": 1,
+        "on-click-left": "playerctl -p spotify play-pause",
+        "on-click-right": "playerctl -p spotify next",
+        "on-click-middle": "playerctl -p spotify previous",
+        "on-click": "playerctl -p spotify play-pause",
+        "on-scroll-up": "playerctl -p spotify volume 0.05+",
+        "on-scroll-down": "playerctl -p spotify volume 0.05-",
+        "tooltip": false
+    }
+}

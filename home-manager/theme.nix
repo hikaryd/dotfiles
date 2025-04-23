@@ -48,7 +48,7 @@
     };
 
     targets = {
-      waybar.enable = true;
+      waybar.enable = false;
       firefox.colorTheme.enable = true;
       firefox.firefoxGnomeTheme.enable = true;
       hyprlock.enable = false;
