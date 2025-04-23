@@ -101,7 +101,7 @@
       gta = "git tag -a";
 
       # Nix
-      hms = "home-manager switch --flake '.#hikary' --impure";
+      hms = "home-manager switch --flake '.#hikary'";
       hmb = "home-manager build --flake '.#hikary'";
       hmc =
         "do { nix-collect-garbage -d; home-manager expire-generations '-30 days' }";
