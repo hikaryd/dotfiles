@@ -5,7 +5,11 @@
     stateVersion = "24.11";
   };
 
-  imports = [ ./modules ./theme.nix ./packages.nix ];
+  imports = [
+    ./modules
+    ./theme.nix
+    ./packages.nix
+  ];
 
   programs.home-manager.enable = true;
 
@@ -53,5 +57,4 @@
       Install = { WantedBy = [ "graphical-session.target" ]; };
     };
   };
-
 }

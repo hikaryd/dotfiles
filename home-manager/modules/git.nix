@@ -68,6 +68,7 @@
         #!/usr/bin/env bash
         COMMIT_MSG_FILE=$1
         export OPENROUTER_API_KEY=$(cat ~/creds/open_router)
+        export GOOGLE_API_KEY=$(cat ~/creds/gemini)
 
         COMMIT_MSG=$(${pkgs.python312}/bin/python ${config.xdg.configHome}/git/scripts/generate_commit_message.py)
         if [ -n "$COMMIT_MSG" ]; then
