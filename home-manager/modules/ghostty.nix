@@ -1,5 +1,5 @@
-{ config, pkgs, ... }: {
-  home.packages = with pkgs; [ (config.lib.nixGL.wrap ghostty) ];
+{ pkgs, ... }: {
+  home.packages = with pkgs; [ ghostty ];
 
   xdg.configFile."ghostty/tmux-session.sh" = {
     executable = true;
@@ -27,7 +27,6 @@
   xdg.configFile."ghostty/config".text = ''
     # Настройки шрифта
     font-family = "Fira Code"
-    # font-family = "Liga SFMono Nerd Font"
     font-size = 10
     font-thicken = false
     adjust-box-thickness = 0
@@ -42,7 +41,6 @@
 
     # Тема и визуальное оформление
     theme = "catppuccin-mocha"
-    # theme = "iTerm2 Pastel Dark Background"
     background-opacity = 0.8
     background-blur-radius = 20
 
@@ -71,3 +69,4 @@
     custom-shader-animation = true
   '';
 }
+

@@ -11,7 +11,7 @@
       "spacing": 0,
     },
     "clock": {
-    "timezone": "Asia/Kolkata",
+    "timezone": "Europe/Moscow",
     "format": "󰅐 {:%a %I:%M %p}",
     "tooltip-format": "<big>{:%Y %B}</big>\n<tt><small>{calendar}</small></tt>",
     "format-alt": "󰅐 {:%a %d.%m.%Y %I:%M %p}"

@@ -60,7 +60,7 @@
       };
     };
     cursor = {
-      size = 20;
+      size = 23;
       name = "phinger-cursors-light";
       package = pkgs.phinger-cursors;
     };
