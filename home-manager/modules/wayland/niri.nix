@@ -162,7 +162,8 @@
 
       cursor = {
         hide-when-typing = false;
-        size = 20;
+        size = config.stylix.cursor.size;
+        theme = config.stylix.cursor.name;
       };
 
       gestures = {
@@ -196,11 +197,9 @@
       spawn-at-startup = [
         (makeCommand "${pkgs.kanata}/bin/kanata")
         (makeCommand "slack")
-        (makeCommand "jamedsp")
         (makeCommand "1password")
         (makeCommand "${pkgs.hyprpaper}/bin/hyprpaper")
         (makeCommand "waybar")
-        (makeCommand "${pkgs.tidal-hifi}/bin/tidal-hifi")
         (makeCommand "${pkgs.easyeffects}/bin/easyeffects")
         (makeCommand "zen-browser")
         (makeCommand "ayugram-desktop")
@@ -245,7 +244,7 @@
         {
           matches = [{
             app-id =
-              "^(zoom|zoom-us|Zoom Workplace|com.github.wwmm.easyeffects|tidal-hifi)$";
+              "^(zoom|zoom-us|Zoom Workplace|com.github.wwmm.easyeffects)$";
           }];
           open-on-workspace = "2";
         }

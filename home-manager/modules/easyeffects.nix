@@ -1,12 +1,5 @@
-{ pkgs, config, ... }: {
-  home.packages = with pkgs;
-    [
-      (config.lib.nixGL.wrap easyeffects)
-      # (writeShellScriptBin "easyeffects" ''
-      #   export GSK_RENDERER=cairo
-      #   exec ${(config.lib.nixGL.wrap easyeffects)}/bin/easyeffects "$@"
-      # '')
-    ];
+{ pkgs, ... }: {
+  home.packages = with pkgs; [ easyeffects ];
 
   xdg.configFile."easyeffects" = {
     source = ../configs/easyeffects/.;

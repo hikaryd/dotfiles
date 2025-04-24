@@ -1,89 +1,87 @@
-{ ... }: {
+{ config, ... }: {
+  home.sessionVariables = {
+    STARSHIP_CACHE = "${config.xdg.cacheHome}/starship";
+  };
   programs.starship = {
     enable = true;
+    enableFishIntegration = true;
     settings = {
+      format =
+        "$directory$all$shell$line_break$env_var$username$sudo$character";
+      right_format = "$jobs$status$cmd_duration";
       add_newline = false;
-      # format = "$directory$character";
-      format = ''
-        $directory
-        $character
-      '';
-      right_format = "$all";
-      command_timeout = 1000;
-      # palette = "catppuccin_mocha";
 
       character = {
-        vicmd_symbol = "[N] ❯❯❯";
-        success_symbol = "[➜](bold green)";
-        error_symbol = "[✗](bold red)";
+        format = "$symbol ";
+        success_symbol = "[●](bright-green)";
+        error_symbol = "[●](red)";
+        vicmd_symbol = "[◆](blue)";
       };
-
-      directory = {
-        substitutions = { "~/tests/starship-custom" = "work-project"; };
-        style = "bold blue";
-        truncation_length = 3;
-        truncation_symbol = "…/";
-        read_only = " ";
-      };
-
-      git_branch = {
-        format = "[$symbol$branch(:$remote_branch)]($style) ";
-        symbol = " ";
-      };
-
-      aws = {
-        format =
-          ''[$symbol(profile: "$profile" )(\(region: $region\) )]($style)'';
-        disabled = false;
-        style = "bold blue";
-        symbol = " ";
-      };
-
-      golang = { format = "[ ](bold cyan)"; };
-
-      kubernetes = {
-        symbol = "☸ ";
+      sudo = {
+        format = "[$symbol]($style)";
+        style = "bright-purple";
+        symbol = ":";
         disabled = true;
-        detect_files = [ "Dockerfile" ];
-        format = "[$symbol$context( \\($namespace\\))]($style) ";
-        contexts = [{
-          context_pattern =
-            "arn:aws:eks:us-west-2:577926974532:cluster/zd-pvc-omer";
-          style = "green";
-          context_alias = "omerxx";
-          symbol = "⎈ ";
-        }];
       };
-
-      docker_context = { disabled = true; };
-
-      palettes.catppuccin_mocha = {
-        rosewater = "#f5e0dc";
-        flamingo = "#f2cdcd";
-        pink = "#f5c2e7";
-        mauve = "#cba6f7";
-        red = "#f38ba8";
-        maroon = "#eba0ac";
-        peach = "#fab387";
-        yellow = "#f9e2af";
-        green = "#a6e3a1";
-        teal = "#94e2d5";
-        sky = "#89dceb";
-        sapphire = "#74c7ec";
-        blue = "#89b4fa";
-        lavender = "#b4befe";
-        text = "#cdd6f4";
-        subtext1 = "#bac2de";
-        subtext0 = "#a6adc8";
-        overlay2 = "#9399b2";
-        overlay1 = "#7f849c";
-        overlay0 = "#6c7086";
-        surface2 = "#585b70";
-        surface1 = "#45475a";
-        surface0 = "#313244";
-        base = "#1e1e2e";
-        mantle = "#181825";
-        crust = "#11111b";
+      username = {
+        style_user = "yellow bold";
+        style_root = "purple bold";
+        format = "[$user]($style) ▻ ";
+        disabled = false;
+        show_always = false;
+      };
+      directory = {
+        home_symbol = "⌂";
+        truncation_length = 2;
+        truncation_symbol = "□ ";
+        read_only = " △";
+        use_os_path_sep = true;
+        style = "bright-blue";
+      };
+      git_branch = {
+        format = "[$symbol $branch(:$remote_branch)]($style) ";
+        symbol = "[△](green)";
+        style = "green";
+      };
+      git_status = {
+        format =
+          "($ahead_behind$staged$renamed$modified$untracked$deleted$conflicted$stashed)";
+        conflicted = "[◪ ]( bright-magenta)";
+        ahead = "[▲ [$count](bold white) ](green)";
+        behind = "[▼ [$count](bold white) ](red)";
+        diverged =
+          "[◇ [$ahead_count](bold green)/[$behind_count](bold red) ](bright-magenta)";
+        untracked = "[○ ](bright-yellow)";
+        stashed = "[$count ](bold white)";
+        renamed = "[● ](bright-blue)";
+        modified = "[● ](yellow)";
+        staged = "[● ](bright-cyan)";
+        deleted = "[✕ ](red)";
+      };
+      deno = {
+        format = "deno [∫ $version](blue ) ";
+        version_format = "$major.$minor";
+      };
+      nodejs = {
+        format = "node [◫ ($version)]( bright-green) ";
+        detect_files = [ "package.json" ];
+        version_format = "$major.$minor";
+      };
+      rust = {
+        format = "rs [$symbol$version]($style) ";
+        symbol = "⊃ ";
+        version_format = "$major.$minor";
+        style = "red";
+      };
+      package = {
+        format = "pkg [$symbol$version]($style) ";
+        version_format = "$major.$minor";
+        symbol = "◫ ";
+        style = "bright-yellow ";
+      };
+      nix_shell = {
+        symbol = "⊛ ";
+        format = "nix [$symbol$state $name]($style) ";
       };
     };
   };

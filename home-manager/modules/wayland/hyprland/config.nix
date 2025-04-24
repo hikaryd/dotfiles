@@ -65,86 +65,26 @@
       layerrule = [ "blur ,gtk-layer-shell" "ignorezero ,gtk-layer-shell" ];
 
       windowrulev2 = [
-        "workspace name:dev-terminal, class:^(ghostty)$"
-        "workspace name:dev-terminal, class:^(neovide)$"
-        "workspace name:conf-terminal, class:^(ghostty)$"
-        "workspace name:terminal, class:^(ghostty)$"
-        "workspace name:database, class:^(DBeaver)$"
-        "workspace name:database, class:^(beekeeper-studio)$"
-        "workspace special:browser, class:^(google-chrome)$"
-        "workspace special:browser, class:^(vivaldi-stable)$"
-        "workspace name:other2, class:^(zoom)$"
-        "workspace name:other2, class:^(zoom-us)$"
-        "workspace name:other2, class:^(Zoom Workplace)$"
-        "workspace name:other, class:^(codium)$"
-
-        "workspace special:telegram, class:^(org.telegram.desktop)$"
-        "workspace special:telegram, class:^(com.ayugram.desktop)$"
-        "workspace special:telegram, class:^(Slack)$"
-        "workspace special:music, class:^(tidal-hifi)$"
-
+        "geometry-corner-radius 28 28 28 28, clip-to-geometry"
+        "workspace name:1, class:^(com.mitchellh.ghostty|Slack)$"
+        "workspace name:1, class:^(neovide)$"
+        "workspace name:2, class:^(zoom|zoom-us|Zoom Workplace|com.github.wwmm.easyeffects)$"
+        "workspace name:6, class:^(google-chrome|google-chrome-stable|com.ayugram.desktop|zen)$, opacity 0.9 0.9"
+        "workspace name:7, class:^(DBeaver|beekeeper-studio)$"
         "immediate, class:^(mpv)$"
-
-        "float,title:^(Google Chrome)(.*)$"
-        "float,title:^(JamesDSP for Linux)(.*)$"
-        "float,title:^(Untitled - Google Chrome)(.*)$"
+        "float,title:^(Google Chrome.*|Untitled - Google Chrome)$"
+        "float,title:^(JamesDSP for Linux.*)$"
+        "float,title:^(Untitled - Google Chrome.*)$"
         "float, class:^(org.telegram.desktop)$"
-        "float, class:^(pulsemixer)$"
-        "float, class:^(nekoray)$"
-        "float, class:^(hiddify)$"
-        "float, class:^(pavucontrol)$"
-        "float, class:^(blueman-manager)$"
-        "float, class:^(nm-applet)$"
-        "float, class:^(nm-connection-editor)$"
+        "float, class:^(pulsemixer|nekoray|hiddify|pavucontrol)$"
+        "float, class:^(blueman-manager|nm-applet|nm-connection-editor)$"
         "float, class:^(org.kde.polkit-kde-authentication-agent-1)$"
-        "float, class:^(bluetooth-manager)$"
-        "float, class:^(iwgtk)$"
-        "float, class:^(pulsemixer)$"
-
-        "float, class:^(com.mark.bluetui)$"
-        "center, class:^(com.mark.monitor)$"
-        "size 400 600, class:^(com.mark.bluetui)$"
-
-        "float, class:^(com.mark.monitor)$"
-        "center, class:^(com.mark.monitor)$"
-        "size 1000 606, class:^(com.mark.monitor)$"
-
-        "float, class:^(com.mark.term-launcher)$"
-        "center, class:^(com.mark.term-launcher)$"
-        "size 300 500, class:^(com.mark.term-launcher)$"
-
-        "float, class:^(com.mark.pulsemixer)$"
-        "center, class:^(com.mark.pulsemixer)$"
-        "size 600 300, class:^(com.mark.pulsemixer)$"
-
-        "float, class:^(com.ayugram.desktop)$"
-        "size 700 1000, class:^(com.ayugram.desktop)$"
-        "move 50% 15%, class:^(com.ayugram.desktop)$"
-
-        "float, class:^(Slack)$"
-        "size 700 1000, class:^(Slack)$"
-        "move 15% 15%, class:^(Slack)$"
-
-        "float, class:^(1Password)$"
-        "center, class:^(1Password)$"
-        "size 500 700, class:^(1Password)$"
-
-        "float, class:^(com.github.wwmm.easyeffects)$"
-        "center, class:^(com.github.wwmm.easyeffects)$"
-        "size 650 400, class:^(com.github.wwmm.easyeffects)$"
-
-        "float, class:^(com-artemchep-keyguard-MainKt)$"
-        "center, class:^(com-artemchep-keyguard-MainKt)$"
-        "size 700 700, class:^(com-artemchep-keyguard-MainKt)$"
-
-        "float, class:^(xdg-desktop-portal-gtk)$"
-        "center, class:^(xdg-desktop-portal-gtk)$"
-        "size 400 400, class:^(xdg-desktop-portal-gtk)$"
-
-        "opacity 0.80 0.80, class:^(org.freedesktop.impl.portal.desktop.gtk)$"
-        "opacity 0.80 0.80, class:^(org.freedesktop.impl.portal.desktop.hyprland)$"
-        "opacity 0.9 0.9,class:^(google-chrome)$"
-        "opacity 0.9 0.9,class:^(vivaldi-stable)$"
+        "float, class:^(bluetooth-manager|iwgtk)$"
+        "float, class:^(1Password)$, size 500 700"
+        "float, class:^(com.github.wwmm.easyeffects)$, size 650 400"
+        "float, class:^(com-artemchep-keyguard-MainKt)$, size 700 700"
+        "float, class:^(xdg-desktop-portal-gtk)$, size 400 400"
+        "opacity 0.8 0.8, class:^(org.freedesktop.impl.portal.desktop.gtk|org.freedesktop.impl.portal.desktop.hyprland)$"
       ];
 
       input = {
@@ -163,7 +103,6 @@
         force_no_accel = false;
       };
 
-      cursor = { no_hardware_cursors = true; };
       env = [
         "TERM,ghostty"
         "WLR_DRM_NO_ATOMIC,1"
@@ -190,8 +129,11 @@
         "WLR_RENDERER,vulkan"
         "WLR_RENDERER_ALLOW_SOFTWARE,1"
 
-        "XCURSOR_SIZE,20"
-        "HYPRCURSOR_SIZE,20"
+        "HYPRCURSOR_SIZE,23"
+        "HYPRCURSOR_THEME,phinger-cursors-light"
+
+        "XCURSOR_THEME,phinger-cursors-light"
+        "XCURSOR_SIZE,23"
       ];
 
       animations = {
@@ -222,7 +164,7 @@
           popups = true;
         };
         active_opacity = 1;
-        inactive_opacity = 1;
+        inactive_opacity = 0.7;
         fullscreen_opacity = 1;
         dim_around = 1;
         dim_inactive = true;
@@ -231,85 +173,75 @@
       };
 
       workspace = [
-        # Основные рабочие пространства
-        "name:dev-terminal, monitor:HDMI-A-1, on-created-empty:ghostty"
-        "name:conf-terminal, id:2, monitor:HDMI-A-1, on-created-empty:ghostty"
-        "name:terminal, id:3, monitor:HDMI-A-1, on-created-empty:ghostty, default:true"
-        "name:other, id:4, monitor:HDMI-A-1, default:true"
-        "name:other2, id:5, monitor:eDP-1, default:true"
-
-        # Специальные рабочие пространства
-        "special:browser, id:6, on-created-empty:google-chrome-stable"
-        "special:database, id:7, on-created-empty:beekeeper-studio"
-        "special:telegram, id:8, on-created-empty:ayugram-desktop, default:true"
-        "special:misc, id:9, default:true"
-        "special:music, id:10, default:true, on-created-empty:tidal-hifi"
+        "name:1, id:1, monitor:HDMI-A-1"
+        "name:2, id:2, monitor:eDP-1"
+        "name:3, id:3, monitor:HDMI-A-1"
+        "name:4, id:4, monitor:HDMI-A-1"
+        "name:5, id:5, monitor:HDMI-A-1"
+        "name:6, id:6, monitor:HDMI-A-1"
+        "name:7, id:7, monitor:HDMI-A-1"
+        "name:8, id:8, monitor:HDMI-A-1, on-created-empty:ayugram-desktop"
+        "name:9, id:9, monitor:eDP-1"
+        "name:0, id:10, monitor:eDP-1"
       ];
 
-      "$mainMod" = "SUPER";
-      "$base" = "SUPER";
-      "$window" = "SUPER SHIFT"; # Управление окнами
-      "$layout" = "SUPER ALT"; # Управление расположением
-      "$system" = "SUPER CTRL"; # Системные функции
-      "$launch" = "CTRL SHIFT"; # Запуск приложений
       bind = [
-        # ===== Основные рабочие пространства =====
-        "$base, 2, workspace, name:dev-terminal"
-        "$window, 2, movetoworkspacesilent, name:dev-terminal"
+        # workspace navigation
+        "SUPER, 1, workspace, name:1"
+        "SUPER SHIFT, 1, movetoworkspace, name:1"
+        "SUPER, 2, workspace, name:2"
+        "SUPER SHIFT, 2, movetoworkspace, name:2"
+        "SUPER, 3, workspace, name:3"
+        "SUPER SHIFT, 3, movetoworkspace, name:3"
+        "SUPER, 4, workspace, name:4"
+        "SUPER SHIFT, 4, movetoworkspace, name:4"
+        "SUPER, 5, workspace, name:5"
+        "SUPER SHIFT, 5, movetoworkspace, name:5"
+        "SUPER, 6, workspace, name:6"
+        "SUPER SHIFT, 6, movetoworkspace, name:6"
+        "SUPER, 7, workspace, name:7"
+        "SUPER SHIFT, 7, movetoworkspace, name:7"
+        "SUPER, 8, workspace, name:8"
+        "SUPER SHIFT, 8, movetoworkspace, name:8"
+        "SUPER, 9, workspace, name:9"
+        "SUPER SHIFT, 9, movetoworkspace, name:9"
+        "SUPER, 0, workspace, name:0"
+        "SUPER SHIFT, 0, movetoworkspace, name:0"
 
-        "$base, 3, workspace, name:other"
-        "$window, 3, movetoworkspacesilent, name:other"
+        # window management
+        "SUPER, Q, killactive"
+        "SUPER, F, togglefloating"
+        "SUPER, Space, fullscreen"
+        "SUPER, Period, movewindow, mon:+1"
+        "SUPER, Comma, movewindow, mon:-1"
 
-        "$base, 4, workspace, name:conf-terminal"
-        "$window, 4, movetoworkspacesilent, name:conf-terminal"
+        "SUPER, H, movewindow, l"
+        "SUPER, J, movewindow, d"
+        "SUPER, K, movewindow, u"
+        "SUPER, L, movewindow, r"
 
-        "$base, 5, workspace, name:terminal"
-        "$window, 5, movetoworkspacesilent, name:terminal"
+        "CTRL, H, movefocus, l"
+        "CTRL, J, movefocus, d"
+        "CTRL, K, movefocus, u"
+        "CTRL, L, movefocus, r"
 
-        "$base, B, workspace, name:other2"
-        "$window, B, movetoworkspacesilent, name:other2"
-
-        "$base, E, togglespecialworkspace, telegram"
-
-        "$base, D, togglespecialworkspace, database"
-
-        "$base, v, togglespecialworkspace, music"
-
-        "$base, G, togglespecialworkspace, browser"
-        "$window, G, movetoworkspacesilent, special:browser"
-
-        # ===== Управление окнами =====
-
-        "$base, Q, killactive"
-        "$window, F, togglefloating"
-        "$window, Space, fullscreen"
-        "$window, Period, movewindow, mon:+1"
-        "$window, Comma, movewindow, mon:-1"
-
-        "$window, H, movewindow, l"
-        "$window, J, movewindow, d"
-        "$window, K, movewindow, u"
-        "$window, L, movewindow, r"
-        "$system, h, movefocus, l"
-        "$system, l, movefocus, r"
-        "$system, k, movefocus, u"
-        "$system, j, movefocus, d"
-
-        # ===== Запуск приложений =====
-        "$base, Return, exec, ghostty"
-        ''$launch, S, exec, grim -g "$(slurp)" - | wl-copy''
-        "$base, A, exec, anyrun"
-
-        # "$launch, B, exec, ghostty --class=com.mark.bluetui -e bluetui"
-        "$launch, L, exec, ghostty --class=com.mark.pulsemixer -e pulsemixer"
+        # launches
+        "SUPER, Return, exec, ghostty"
+        ''CTRL SHIFT, S, exec, grim -g "$(slurp)" - | wl-copy''
+        "SUPER, A, exec, anyrun"
       ];
 
-      bindm = [
-        "$mainMod, mouse:272, movewindow"
-        "$mainMod, mouse:273, resizewindow"
-      ];
+      bindm =
+        [ "SUPER, mouse:272, movewindow" "SUPER, mouse:273, resizewindow" ];
 
-      exec-once = [ "tidal-hifi" "${../../../../scripts/xdg-portal.sh}" ];
+      exec-once = [
+        "${pkgs.kanata}/bin/kanata"
+        "${../../../../scripts/xdg-portal.sh}"
+        "1password"
+        "${pkgs.hyprpaper}/bin/hyprpaper"
+        "zen-browser"
+        "${pkgs.easyeffects}/bin/easyeffects"
+      ];
     };
   };
 }

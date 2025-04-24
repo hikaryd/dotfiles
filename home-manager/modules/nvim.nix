@@ -44,7 +44,6 @@ in {
     pylsp
     typstyle
     taplo
-    ruff-lsp
     luajit
     pyright
     nixfmt-classic

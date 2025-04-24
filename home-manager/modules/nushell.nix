@@ -44,7 +44,6 @@
       QT_QPA_PLATFORM = "wayland;xcb";
       QT_AUTO_SCREEN_SCALE_FACTOR = "1";
       QT_WAYLAND_DISABLE_WINDOWDECORATION = "1";
-      XCURSOR_SIZE = "20";
       TERM = "ghostty";
     };
 
@@ -101,8 +100,7 @@
       gta = "git tag -a";
 
       # Nix
-      hms = "home-manager switch --flake '.#hikary'";
-      hmb = "home-manager build --flake '.#hikary'";
+      hms = "home-manager switch --flake '.#hikary' --impure";
       hmc =
         "do { nix-collect-garbage -d; home-manager expire-generations '-30 days' }";
     };
