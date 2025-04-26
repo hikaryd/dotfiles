@@ -117,6 +117,7 @@
           "/usr/local/sbin"
           "/usr/local/bin"
           ($env.HOME + "/.local/bin")
+          ($env.HOME + "/.local/share/bin")
           "/usr/bin"
           ($env.HOME + "/.nix-profile/bin")
           "/nix/var/nix/profiles/default/bin"

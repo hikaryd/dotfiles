@@ -32,6 +32,7 @@ in {
     ];
     linuxOnly = if !isDarwin then
       with pkgs; [
+        (config.lib.nixGL.wrap spotify)
         rustup
         ansible
         bluetuith
@@ -62,6 +63,6 @@ in {
       ]
     else
       [ ];
-    macosOnly = if isDarwin then with pkgs; [ mas chatgpt ] else [ ];
+    macosOnly = if isDarwin then with pkgs; [ mas chatgpt spotify ] else [ ];
   in common ++ linuxOnly ++ macosOnly;
 }

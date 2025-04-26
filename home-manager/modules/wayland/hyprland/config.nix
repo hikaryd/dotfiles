@@ -21,7 +21,7 @@
         pseudotile = true;
         preserve_split = true;
         special_scale_factor = 0.9;
-        smart_split = false;
+        smart_split = true;
       };
 
       master = {
@@ -33,7 +33,7 @@
 
       misc = {
         vfr = true;
-        vrr = 0;
+        vrr = 1;
         animate_manual_resizes = true;
         animate_mouse_windowdragging = false;
         enable_swallow = false;
@@ -63,9 +63,8 @@
 
       xwayland = { force_zero_scaling = true; };
       layerrule = [ "blur ,gtk-layer-shell" "ignorezero ,gtk-layer-shell" ];
-
+      windowrule = [ "noanim, floating:1" ];
       windowrulev2 = [
-        "geometry-corner-radius 28 28 28 28, clip-to-geometry"
         "workspace name:1, class:^(com.mitchellh.ghostty|Slack)$"
         "workspace name:1, class:^(neovide)$"
         "workspace name:2, class:^(zoom|zoom-us|Zoom Workplace|com.github.wwmm.easyeffects)$"
@@ -109,8 +108,6 @@
         "XDG_CURRENT_DESKTOP,Hyprland"
         "XDG_SESSION_TYPE,wayland"
         "XDG_SESSION_DESKTOP,Hyprland"
-        "XDG_DATA_DIRS,$HOME/.nix-profile/share:/usr/local/share:/usr/share"
-        "PATH,$HOME/.nix-profile/bin:$PATH"
 
         "QT_QPA_PLATFORM,wayland;xcb"
         "QT_WAYLAND_DISABLE_WINDOWDECORATION,1"
@@ -138,12 +135,15 @@
 
       animations = {
         enabled = true;
-        bezier = [ "myBezier, .5, .25, 0, 1" ];
+        bezier = [ "soft, 0.25, 0.8, 0.3, 1" ];
         animation = [
-          "windows, 1, 2.5, myBezier, popin 80%"
-          "border, 1, 2.5, myBezier"
-          "fade, 1, 2.5, myBezier"
-          "workspaces, 1, 2.5, myBezier, slidefade 20%"
+          "global,       1, 8,   soft"
+          "windowsIn,    1, 5,   soft, popin 80%"
+          "windowsOut,   1, 4,   soft, popin 80%"
+          "windowsMove,  1, 3,   linear"
+          "workspaces,   1, 4,   soft, slidefade 12%"
+          "fadeIn,       1, 3,   linear"
+          "fadeOut,      1, 3,   linear"
         ];
       };
 
@@ -173,40 +173,39 @@
       };
 
       workspace = [
-        "name:1, id:1, monitor:HDMI-A-1"
-        "name:2, id:2, monitor:eDP-1"
-        "name:3, id:3, monitor:HDMI-A-1"
-        "name:4, id:4, monitor:HDMI-A-1"
-        "name:5, id:5, monitor:HDMI-A-1"
-        "name:6, id:6, monitor:HDMI-A-1"
-        "name:7, id:7, monitor:HDMI-A-1"
-        "name:8, id:8, monitor:HDMI-A-1, on-created-empty:ayugram-desktop"
-        "name:9, id:9, monitor:eDP-1"
-        "name:0, id:10, monitor:eDP-1"
+        "name:terminal, id:1, monitor:HDMI-A-1"
+        "name:other, id:4, monitor:HDMI-A-1"
+        "name:other2, id:4, monitor:HDMI-A-1"
+        "name:misc, id:5, monitor:eDP-1"
+        "name:misc2, id:5, monitor:eDP-1"
+
+        "special:browser, id:6, on-created-empty:zen-browser"
+        "special:telegram, id:8, on-created-empty:ayugram-desktop"
+        "special:music, id:10"
       ];
 
       bind = [
-        # workspace navigation
-        "SUPER, 1, workspace, name:1"
-        "SUPER SHIFT, 1, movetoworkspace, name:1"
-        "SUPER, 2, workspace, name:2"
-        "SUPER SHIFT, 2, movetoworkspace, name:2"
-        "SUPER, 3, workspace, name:3"
-        "SUPER SHIFT, 3, movetoworkspace, name:3"
-        "SUPER, 4, workspace, name:4"
-        "SUPER SHIFT, 4, movetoworkspace, name:4"
-        "SUPER, 5, workspace, name:5"
-        "SUPER SHIFT, 5, movetoworkspace, name:5"
-        "SUPER, 6, workspace, name:6"
-        "SUPER SHIFT, 6, movetoworkspace, name:6"
-        "SUPER, 7, workspace, name:7"
-        "SUPER SHIFT, 7, movetoworkspace, name:7"
-        "SUPER, 8, workspace, name:8"
-        "SUPER SHIFT, 8, movetoworkspace, name:8"
-        "SUPER, 9, workspace, name:9"
-        "SUPER SHIFT, 9, movetoworkspace, name:9"
-        "SUPER, 0, workspace, name:0"
-        "SUPER SHIFT, 0, movetoworkspace, name:0"
+        "SUPER, D, workspace, name:terminal"
+        "SUPER SHIFT, D, movetoworkspacesilent, name:terminal"
+
+        "SUPER, 2, workspace, name:other"
+        "SUPER SHIFT, 2, movetoworkspacesilent, name:other"
+
+        "SUPER, 3, workspace, name:other2"
+        "SUPER SHIFT, 3, movetoworkspacesilent, name:other2"
+
+        "SUPER, 4, workspace, name:misc"
+        "SUPER SHIFT, 4, movetoworkspacesilent, name:misc"
+
+        "SUPER, 5, workspace, name:misc2"
+        "SUPER SHIFT, 5, movetoworkspacesilent, name:misc2"
+
+        "SUPER, E, togglespecialworkspace, telegram"
+
+        "SUPER, V, togglespecialworkspace, music"
+
+        "SUPER, G, togglespecialworkspace, browser"
+        "SUPER SHIFT, G, movetoworkspacesilent, special:browser"
 
         # window management
         "SUPER, Q, killactive"
@@ -215,15 +214,15 @@
         "SUPER, Period, movewindow, mon:+1"
         "SUPER, Comma, movewindow, mon:-1"
 
-        "SUPER, H, movewindow, l"
-        "SUPER, J, movewindow, d"
-        "SUPER, K, movewindow, u"
-        "SUPER, L, movewindow, r"
+        "SUPER SHIFT, H, movewindow, l"
+        "SUPER SHIFT, J, movewindow, d"
+        "SUPER SHIFT, K, movewindow, u"
+        "SUPER SHIFT, L, movewindow, r"
 
-        "CTRL, H, movefocus, l"
-        "CTRL, J, movefocus, d"
-        "CTRL, K, movefocus, u"
-        "CTRL, L, movefocus, r"
+        "SUPER, H, movefocus, l"
+        "SUPER, J, movefocus, d"
+        "SUPER, K, movefocus, u"
+        "SUPER, L, movefocus, r"
 
         # launches
         "SUPER, Return, exec, ghostty"
@@ -235,12 +234,12 @@
         [ "SUPER, mouse:272, movewindow" "SUPER, mouse:273, resizewindow" ];
 
       exec-once = [
-        "${pkgs.kanata}/bin/kanata"
+        "kanata"
         "${../../../../scripts/xdg-portal.sh}"
         "1password"
-        "${pkgs.hyprpaper}/bin/hyprpaper"
+        "hyprpaper"
         "zen-browser"
-        "${pkgs.easyeffects}/bin/easyeffects"
+        "easyeffects"
       ];
     };
   };
