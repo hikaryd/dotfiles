@@ -195,14 +195,15 @@
       };
 
       spawn-at-startup = [
-        (makeCommand "${pkgs.kanata}/bin/kanata")
+        (makeCommand "kanata")
         (makeCommand "slack")
         (makeCommand "1password")
         (makeCommand "${pkgs.hyprpaper}/bin/hyprpaper")
         (makeCommand "waybar")
-        (makeCommand "${pkgs.easyeffects}/bin/easyeffects")
+        (makeCommand "easyeffects")
         (makeCommand "zen-browser")
         (makeCommand "ayugram-desktop")
+        (makeCommand "spotify")
         (makeCommand "wl-paste --type image --watch cliphist store")
         (makeCommand "wl-paste --type text --watch cliphist store")
         {
@@ -244,7 +245,7 @@
         {
           matches = [{
             app-id =
-              "^(zoom|zoom-us|Zoom Workplace|com.github.wwmm.easyeffects)$";
+              "^(zoom|zoom-us|Zoom Workplace|com.github.wwmm.easyeffects|spotify|better_control.py)$";
           }];
           open-on-workspace = "2";
         }
