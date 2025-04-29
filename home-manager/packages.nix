@@ -26,13 +26,14 @@ in {
       luajitPackages.luarocks
       uv
       nodejs_22
-      sing-geosite
       grip-grab
+      rustup
+      typst
     ];
     linuxOnly = if !isDarwin then
       with pkgs; [
         (config.lib.nixGL.wrap spotify)
-        rustup
+        sing-geosite
         ansible
         bluetuith
         libnotify
@@ -43,7 +44,6 @@ in {
         pulsemixer
         wf-recorder
         code-cursor
-        typst
         qbittorrent
         duf
         powertop
