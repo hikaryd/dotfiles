@@ -59,7 +59,7 @@
               useGlobalPkgs = true;
               useUserPackages = true;
               extraSpecialArgs = { inherit inputs system; };
-              users.hikary = import ./home-manager/home.nix;
+              users.${builtins.getEnv "USER"} = import ./home-manager/home.nix;
             };
           }
         ];
