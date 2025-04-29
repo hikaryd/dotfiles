@@ -1,17 +1,6 @@
 { pkgs, ... }: {
   home.packages = with pkgs; [ yabai skhd ];
 
-  services.yabai = {
-    enable = true;
-    package = pkgs.yabai;
-    enableScriptingAddition = true;
-  };
-
-  services.skhd = {
-    enable = true;
-    package = pkgs.skhd;
-  };
-
   xdg.configFile."yabai/yabairc" = {
     executable = true;
     text = ''
