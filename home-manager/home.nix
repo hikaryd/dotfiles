@@ -1,24 +1,17 @@
 { pkgs, inputs, system, lib, ... }: {
   home = {
-    username = "hikary";
-    homeDirectory = if system == "x86_64-linux" then "/home/hikary" else "/Users/hikary";
+    username =
+      if system == "x86_64-linux" then "hikary" else "/Users/tronin.egor";
+    homeDirectory =
+      if system == "x86_64-linux" then "/home/hikary" else "/Users/tronin.egor";
     stateVersion = "24.11";
   };
 
-  imports = [
-    ./modules
-    ./theme.nix
-    ./packages.nix
-  ];
+  imports = [ ./modules ./theme.nix ./packages.nix ];
 
   programs.home-manager.enable = true;
 
-  nixGL = {
-    packages = inputs.nixgl.packages.${pkgs.system};
-    defaultWrapper = "mesaPrime";
-  };
-
-  programs.bash = {
+  programs.bash = lib.mkIf (system == "x86_64-linux") {
     enable = true;
     bashrcExtra = ''
       export LANG="en_US.UTF-8"
@@ -26,6 +19,10 @@
     '';
   };
 
+  nixGL = lib.mkIf (system == "x86_64-linux") {
+    packages = inputs.nixgl.packages.${pkgs.system};
+    defaultWrapper = "mesaPrime";
+  };
   systemd = lib.mkIf (system == "x86_64-linux") {
     user.services = {
       kanata = {
