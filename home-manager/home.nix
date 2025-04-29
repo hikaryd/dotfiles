@@ -1,13 +1,10 @@
-{ pkgs, inputs, system, lib, ... }: 
-
-let
-  username = if system == "x86_64-linux" then "hikary" else "tronin.egor";
-in
-{
+{ pkgs, inputs, system, lib, ... }: {
   home = {
-    username = username;
-    homeDirectory =
-      if system == "x86_64-linux" then "/home/${username}" else "/Users/${username}";
+    username = if system == "x86_64-linux" then "hikary" else "tronin.egor";
+    homeDirectory = 
+      if system == "x86_64-linux" 
+      then "/home/hikary" 
+      else "/Users/tronin.egor";
     stateVersion = "24.11";
   };
 
