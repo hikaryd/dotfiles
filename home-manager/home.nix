@@ -1,11 +1,11 @@
 { pkgs, inputs, system, lib, ... }: {
-  home = {
-    username =
-      if system == "x86_64-linux" then "hikary" else "/Users/user";
-    homeDirectory =
-      if system == "x86_64-linux" then "/home/hikary" else "/Users/user";
-    stateVersion = "24.11";
-  };
+  # home = {
+  #   username =
+  #     if system == "x86_64-linux" then "hikary" else "/Users/user";
+  #   homeDirectory =
+  #     if system == "x86_64-linux" then "/home/hikary" else "/Users/user";
+  #   stateVersion = "24.11";
+  # };
 
   imports = [ ./modules ./theme.nix ./packages.nix ];
 
