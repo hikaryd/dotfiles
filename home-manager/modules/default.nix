@@ -21,7 +21,10 @@
 
     darwin-modules = [ ./yabai.nix ./onepassword-darwin.nix ];
 
-    linux-modules = [ ./wayland ./onepassword.nix ];
+    linux-modules = [ 
+      ./wayland 
+      ./onepassword.nix 
+    ];
 
     platform-modules =
       if (system == "aarch64-darwin" || system == "x86_64-darwin") then

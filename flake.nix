@@ -49,12 +49,19 @@
       };
 
       darwinConfigurations."hikary-mac" = nix-darwin.lib.darwinSystem {
-        inherit pkgs;
-        extraSpecialArgs = { inherit inputs system; };
+        inherit inputs;
+        system = "aarch64-darwin";
         modules = [
           ./darwin/configuration.nix
           home-manager.darwinModules.home-manager
-          ./home-manager/home.nix
+          {
+            home-manager = {
+              useGlobalPkgs = true;
+              useUserPackages = true;
+              extraSpecialArgs = { inherit inputs system; };
+              users.hikary = import ./home-manager/home.nix;
+            };
+          }
         ];
       };
     };
