@@ -7,7 +7,7 @@
   users.users."${user}" = {
     home = "/Users/${user}";
     name = user;
-    shell = { program = "${pkgs.nushell}/bin/nu"; };
+    shell = pkgs.nushell;
   };
 
   security.pam.services.sudo_local.touchIdAuth = true;
