@@ -1,5 +1,5 @@
 { pkgs, ... }: {
-  home.packages = with pkgs; [ sesh ];
+  home.packages = with pkgs; [ sesh tmux ];
   programs.tmux = {
     enable = true;
     terminal = "xterm-256color";
