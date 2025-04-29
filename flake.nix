@@ -52,13 +52,16 @@
       darwinConfigurations."hikary-mac" = nix-darwin.lib.darwinSystem {
         inherit inputs;
         system = "aarch64-darwin";
-        specialArgs = { user = user; };
+        specialArgs = {
+          user = user;
+          inherit inputs;
+        };
         modules = [
           ./darwin/configuration.nix
           home-manager.darwinModules.home-manager
           {
             home-manager = {
-              useGlobalPkgs = false;
+              useGlobalPkgs = true;
               useUserPackages = true;
               extraSpecialArgs = { inherit inputs system user; };
               users."tronin.egor" = import ./home-manager/home.nix;

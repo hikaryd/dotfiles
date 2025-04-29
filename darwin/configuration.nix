@@ -2,11 +2,12 @@
   nixpkgs.config.allowUnfree = true;
   nix.enable = false;
 
-  environment.systemPackages = with pkgs; [ vim curl wget git ];
+  environment.systemPackages = with pkgs; [ vim curl wget git tmux ];
 
   users.users."${user}" = {
     home = "/Users/${user}";
     name = user;
+    shell = { program = "${pkgs.nushell}/bin/nu"; };
   };
 
   security.pam.services.sudo_local.touchIdAuth = true;
