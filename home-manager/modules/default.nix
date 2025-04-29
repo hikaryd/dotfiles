@@ -15,7 +15,7 @@
       ./kanata.nix
     ];
 
-    darwin-modules = [ ./yabai.nix ];
+    darwin-modules = [ ./yabai.nix ./onepassword-darwin.nix ];
 
     linux-modules = [
       ./xdg-mimes.nix
