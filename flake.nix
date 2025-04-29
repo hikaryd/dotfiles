@@ -52,7 +52,7 @@
       darwinConfigurations."hikary-mac" = nix-darwin.lib.darwinSystem {
         inherit inputs;
         system = "aarch64-darwin";
-        specialArgs = user;
+        specialArgs = { user = user; };
         modules = [
           ./darwin/configuration.nix
           home-manager.darwinModules.home-manager
