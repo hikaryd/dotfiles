@@ -1,12 +1,12 @@
-{ pkgs, ... }: {
+{ pkgs, user, ... }: {
   nixpkgs.config.allowUnfree = true;
   nix.enable = false;
 
   environment.systemPackages = with pkgs; [ vim curl wget git ];
 
-  users.users."tronin.egor" = {
-    home = "/Users/tronin.egor";
-    name = "tronin.egor";
+  users.users."${user}" = {
+    home = "/Users/${user}";
+    name = user;
   };
 
   security.pam.services.sudo_local.touchIdAuth = true;
@@ -17,10 +17,10 @@
       ApplePressAndHoldEnabled = true;
 
       # 120, 90, 60, 30, 12, 6, 2
-      KeyRepeat = 2;
+      KeyRepeat = 90;
 
       # 120, 94, 68, 35, 25, 15
-      InitialKeyRepeat = 68;
+      InitialKeyRepeat = 15;
 
       "com.apple.mouse.tapBehavior" = 1;
       "com.apple.sound.beep.volume" = 0.0;

@@ -27,9 +27,6 @@
     ];
 
     platform-modules =
-      if (system == "aarch64-darwin" || system == "x86_64-darwin") then
-        darwin-modules
-      else
-        linux-modules;
+      if (system == "aarch64-darwin") then darwin-modules else linux-modules;
   in base-modules ++ platform-modules;
 }

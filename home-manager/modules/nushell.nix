@@ -1,4 +1,4 @@
-{ pkgs, lib, ... }: {
+{ pkgs, system, ... }: {
   programs.carapace.enable = true;
   programs.carapace.enableNushellIntegration = true;
 
@@ -100,7 +100,10 @@
       gta = "git tag -a";
 
       # Nix
-      hms = "home-manager switch --flake '.#hikary' --impure";
+      hms = if (system == "aarch64-darwin") then
+        "darwin-rebuild switch --flake '.#hikary-mac' --impure -v"
+      else
+        "home-manager switch --flake '.#hikary' --impure";
       hmc =
         "do { nix-collect-garbage -d; home-manager expire-generations '-30 days' }";
     };

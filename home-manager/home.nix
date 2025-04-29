@@ -1,6 +1,4 @@
-{ pkgs, inputs, system, lib, ... }:
-let user = if system == "x86_64-linux" then "hikary" else "tronin.egor";
-in {
+{ pkgs, inputs, system, lib, user, ... }: {
   home = {
     enableNixpkgsReleaseCheck = false;
     username = user;

@@ -41,16 +41,18 @@
           inputs.niri.overlays.niri
         ];
       };
+      user = "tronin.egor";
     in {
       homeConfigurations."hikary" = home-manager.lib.homeManagerConfiguration {
         inherit pkgs;
-        extraSpecialArgs = { inherit inputs system; };
+        extraSpecialArgs = { inherit inputs system user; };
         modules = [ ./home-manager/home.nix ];
       };
 
       darwinConfigurations."hikary-mac" = nix-darwin.lib.darwinSystem {
         inherit inputs;
         system = "aarch64-darwin";
+        specialArgs = [ inputs user ];
         modules = [
           ./darwin/configuration.nix
           home-manager.darwinModules.home-manager
@@ -58,7 +60,7 @@
             home-manager = {
               useGlobalPkgs = false;
               useUserPackages = true;
-              extraSpecialArgs = { inherit inputs system; };
+              extraSpecialArgs = { inherit inputs system user; };
               users."tronin.egor" = import ./home-manager/home.nix;
             };
           }
