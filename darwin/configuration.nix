@@ -1,6 +1,4 @@
-{ pkgs, ... }:
-
-{
+{ pkgs, ... }: {
   nixpkgs.config.allowUnfree = true;
 
   environment.systemPackages = with pkgs; [ vim curl wget git kanata ];
@@ -37,5 +35,16 @@
     };
   };
   system.stateVersion = 4;
+
+  services.yabai = {
+    enable = true;
+    package = pkgs.yabai;
+    enableScriptingAddition = true;
+  };
+
+  services.skhd = {
+    enable = true;
+    package = pkgs.skhd;
+  };
 }
 
