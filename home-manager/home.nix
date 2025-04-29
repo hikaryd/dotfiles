@@ -1,8 +1,11 @@
-{ pkgs, inputs, system, lib, ... }: {
+{ pkgs, inputs, system, lib, ... }:
+let user = if system == "x86_64-linux" then "hikary" else "user";
+in {
   home = {
-    username = if system == "x86_64-linux" then "hikary" else "user";
+    enableNixpkgsReleaseCheck = false;
+    username = user;
     homeDirectory =
-      if system == "x86_64-linux" then "/home/hikary" else "/Users/user";
+      if system == "x86_64-linux" then "/home/${user}" else "/Users/${user}";
     stateVersion = "24.11";
   };
 
