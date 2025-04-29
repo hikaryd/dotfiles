@@ -5,9 +5,6 @@
 
   environment.systemPackages = with pkgs; [ vim curl wget git kanata ];
 
-  system.autoUpgrade.enable = true;
-  system.autoUpgrade.allowReboot = false;
-
   nix.gc = {
     automatic = true;
     interval.Day = 7;
@@ -17,6 +14,7 @@
   nix.settings.auto-optimise-store = true;
 
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
+  security.pam.services.sudo_local.touchIdAuth = true;
 
   system.defaults = {
     NSGlobalDomain = {
