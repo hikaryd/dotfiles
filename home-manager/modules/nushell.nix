@@ -2,17 +2,17 @@
   programs.carapace.enable = true;
   programs.carapace.enableNushellIntegration = true;
 
-  home.activation = {
-    addNushellToEtcShells = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-      if [ -f /etc/shells ]; then
-        nushell_path="$HOME/.nix-profile/bin/nu"
-        if ! grep -q "$nushell_path" /etc/shells; then
-          echo "Adding $nushell_path to /etc/shells"
-          echo "$nushell_path" | sudo tee -a /etc/shells
-        fi
-      fi
-    '';
-  };
+  # home.activation = {
+  #   addNushellToEtcShells = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+  #     if [ -f /etc/shells ]; then
+  #       nushell_path="$HOME/.nix-profile/bin/nu"
+  #       if ! grep -q "$nushell_path" /etc/shells; then
+  #         echo "Adding $nushell_path to /etc/shells"
+  #         echo "$nushell_path" | sudo tee -a /etc/shells
+  #       fi
+  #     fi
+  #   '';
+  # };
 
   programs.nushell = {
     enable = true;
