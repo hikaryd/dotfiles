@@ -130,8 +130,8 @@
       }
       setup_path
 
-      $env.OPENROUTER_API_KEY = (open ($env.HOME + "/creds/open_router") | str trim)
-      $env.GOOGLE_API_KEY = (open ($env.HOME + "/creds/gemini") | str trim)
+      # $env.OPENROUTER_API_KEY = (open ($env.HOME + "/creds/open_router") | str trim)
+      # $env.GOOGLE_API_KEY = (open ($env.HOME + "/creds/gemini") | str trim)
 
       def extract [file: string] {
         if ($file | is-empty) {
