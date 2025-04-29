@@ -28,7 +28,6 @@ in {
       nodejs_22
       sing-geosite
       grip-grab
-      zenBrowserPkgs.default
     ];
     linuxOnly = if !isDarwin then
       with pkgs; [
@@ -58,6 +57,7 @@ in {
         google-chrome
         slack
         insomnia
+        zenBrowserPkgs.default
         (config.lib.nixGL.wrap mpv)
         (config.lib.nixGL.wrap osu-lazer-bin)
       ]
