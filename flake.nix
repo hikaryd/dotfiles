@@ -47,21 +47,18 @@
         extraSpecialArgs = { inherit inputs system; };
         modules = [ ./home-manager/home.nix ];
       };
-      
+
       darwinConfigurations."hikary-mac" = nix-darwin.lib.darwinSystem {
-        system = "aarch64-darwin"; # или "x86_64-darwin" в зависимости от типа Mac
+        system = "aarch64-darwin";
         modules = [
-          # Базовые настройки darwin
           ./darwin/configuration.nix
-          
-          # Интеграция с home-manager
           home-manager.darwinModules.home-manager
           {
             home-manager.useGlobalPkgs = true;
             home-manager.useUserPackages = true;
             home-manager.users.hikary = { ... }: {
               imports = [ ./home-manager/home.nix ];
-              _module.args = { inherit inputs; };
+              _module.args = { inherit inputs system; };
             };
           }
         ];

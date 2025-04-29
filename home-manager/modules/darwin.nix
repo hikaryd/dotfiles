@@ -1,7 +1,6 @@
 { lib, pkgs, ... }: {
   home.packages = with pkgs;
     [
-      # alfred # Альтернатива Spotlight
       rectangle # Управление окнами
     ];
 

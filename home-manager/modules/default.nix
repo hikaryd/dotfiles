@@ -1,4 +1,4 @@
-{ pkgs, ... }: {
+{ system, ... }: {
   imports = let
     base-modules = [
       ./easyeffects.nix
@@ -24,6 +24,9 @@
     linux-modules = [ ./wayland ./onepassword.nix ];
 
     platform-modules =
-      if pkgs.stdenv.isDarwin then darwin-modules else linux-modules;
+      if (system == "aarch64-darwin" || system == "x86_64-darwin") then
+        darwin-modules
+      else
+        linux-modules;
   in base-modules ++ platform-modules;
 }
