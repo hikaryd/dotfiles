@@ -112,23 +112,23 @@
     '';
 
     extraConfig = ''
-      def --env setup_path [] {
-        let base_paths = [
-          "/usr/local/sbin"
-          "/usr/local/bin"
-          ($env.HOME + "/.local/bin")
-          ($env.HOME + "/.local/share/bin")
-          "/usr/bin"
-          ($env.HOME + "/.nix-profile/bin")
-          "/nix/var/nix/profiles/default/bin"
-          "/run/current-system/sw/bin"
-          ($env.HOME + "/.cargo/bin")
-          ($env.HOME + "/.config/carapace/bin")
-        ]
-        let joined = ($base_paths | uniq | str join ":")
-        $env.PATH = $joined
-      }
-      setup_path
+      # def --env setup_path [] {
+      #   let base_paths = [
+      #     "/usr/local/sbin"
+      #     "/usr/local/bin"
+      #     ($env.HOME + "/.local/bin")
+      #     ($env.HOME + "/.local/share/bin")
+      #     "/usr/bin"
+      #     ($env.HOME + "/.nix-profile/bin")
+      #     "/nix/var/nix/profiles/default/bin"
+      #     "/run/current-system/sw/bin"
+      #     ($env.HOME + "/.cargo/bin")
+      #     ($env.HOME + "/.config/carapace/bin")
+      #   ]
+      #   let joined = ($base_paths | uniq | str join ":")
+      #   $env.PATH = $joined
+      # }
+      # setup_path
 
       # $env.OPENROUTER_API_KEY = (open ($env.HOME + "/creds/open_router") | str trim)
       # $env.GOOGLE_API_KEY = (open ($env.HOME + "/creds/gemini") | str trim)
