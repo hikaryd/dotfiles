@@ -11,7 +11,7 @@
         term = xterm-256color
         bold-is-bright = true
 
-        command = ${../../scripts/tmux-session.sh}
+        # command = ${../../scripts/tmux-session.sh}
         linux-cgroup = single-instance
 
         theme = stylix
