@@ -1,7 +1,6 @@
 { system, ... }: {
   imports = let
     base-modules = [
-      ./easyeffects.nix
       ./git.nix
       ./lazygit.nix
       ./nvim.nix
@@ -20,7 +19,8 @@
 
     darwin-modules = [ ./yabai.nix ./onepassword-darwin.nix ];
 
-    linux-modules = [ ./xdg-mimes.nix ./wayland ./onepassword.nix ];
+    linux-modules =
+      [ ./xdg-mimes.nix ./wayland ./onepassword.nix ./easyeffects.nix ];
 
     platform-modules =
       if (system == "aarch64-darwin" || system == "x86_64-darwin") then
