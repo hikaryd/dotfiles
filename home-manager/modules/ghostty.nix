@@ -1,6 +1,7 @@
-{ lib, ... }: {
+{ lib, pkgs, ... }: {
   programs.ghostty = {
     enable = true;
+    package = pkgs.ghostty;
 
     settings = {
       background-opacity = lib.mkForce 0.8;
