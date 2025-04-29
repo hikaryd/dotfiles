@@ -13,22 +13,37 @@
 
   system.defaults = {
     NSGlobalDomain = {
+      AppleShowAllExtensions = true;
+      ApplePressAndHoldEnabled = true;
+
+      # 120, 90, 60, 30, 12, 6, 2
       KeyRepeat = 2;
-      InitialKeyRepeat = 15;
+
+      # 120, 94, 68, 35, 25, 15
+      InitialKeyRepeat = 68;
+
+      "com.apple.mouse.tapBehavior" = 1;
+      "com.apple.sound.beep.volume" = 0.0;
+      "com.apple.sound.beep.feedback" = 0;
     };
 
     dock = {
-      autohide = true;
-      tilesize = 48;
+      autohide = false;
       show-recents = false;
-      magnification = true;
-      largesize = 64;
+      launchanim = true;
+      mouse-over-hilite-stack = true;
+      orientation = "bottom";
+      tilesize = 48;
     };
 
     finder = {
       AppleShowAllExtensions = true;
       ShowPathbar = true;
       FXDefaultSearchScope = "SCcf";
+    };
+    trackpad = {
+      Clicking = true;
+      TrackpadThreeFingerDrag = true;
     };
   };
 
