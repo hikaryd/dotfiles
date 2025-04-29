@@ -5,6 +5,8 @@
 
   environment.systemPackages = with pkgs; [ vim curl wget git kanata ];
 
+  security.polkit.enable = false;
+
   nix.gc = {
     automatic = true;
     interval.Day = 7;
