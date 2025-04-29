@@ -1,22 +1,14 @@
 { pkgs, ... }: {
   nixpkgs.config.allowUnfree = true;
+  nix.enable = false;
 
-  environment.systemPackages = with pkgs; [ vim curl wget git kanata ];
+  environment.systemPackages = with pkgs; [ vim curl wget git ];
 
   users.users."tronin.egor" = {
     home = "/Users/tronin.egor";
     name = "tronin.egor";
   };
 
-  nix.gc = {
-    automatic = true;
-    interval.Day = 7;
-    options = "--delete-older-than 30d";
-  };
-
-  nix.optimise.automatic = true;
-
-  nix.settings.experimental-features = [ "nix-command" "flakes" ];
   security.pam.services.sudo_local.touchIdAuth = true;
 
   system.defaults = {
@@ -39,6 +31,7 @@
       FXDefaultSearchScope = "SCcf";
     };
   };
+
   system.stateVersion = 4;
 
   services.yabai = {
