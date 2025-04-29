@@ -1,6 +1,6 @@
-{ system, ... }: {
-  imports =
-    (if system == "x86_64-linux" then [ ./wayland ] else [ ./yabai.nix ]) ++ [
+{ pkgs, ... }: {
+  imports = let
+    base-modules = [
       ./easyeffects.nix
       ./git.nix
       ./lazygit.nix
@@ -17,6 +17,13 @@
       ./bat.nix
       ./kanata.nix
       ./xdg-mimes.nix
-      ./onepassword.nix
     ];
+
+    darwin-modules = [ ./yabai.nix ./onepassword-darwin.nix ];
+
+    linux-modules = [ ./wayland ./onepassword.nix ];
+
+    platform-modules =
+      if pkgs.stdenv.isDarwin then darwin-modules else linux-modules;
+  in base-modules ++ platform-modules;
 }

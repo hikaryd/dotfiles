@@ -24,8 +24,12 @@
     };
     zen-browser.url = "github:MarceColl/zen-browser-flake";
     # https://github.com/JustAdumbPrsn/Nebula-A-Minimal-Theme-for-Zen-Browser
+    nix-darwin = {
+      url = "github:LnL7/nix-darwin";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
-  outputs = inputs@{ self, nixpkgs, home-manager, ... }:
+  outputs = inputs@{ self, nixpkgs, home-manager, nix-darwin, ... }:
     let
       system = builtins.currentSystem;
       pkgs = import nixpkgs {
@@ -42,6 +46,25 @@
         inherit pkgs;
         extraSpecialArgs = { inherit inputs system; };
         modules = [ ./home-manager/home.nix ];
+      };
+      
+      darwinConfigurations."hikary-mac" = nix-darwin.lib.darwinSystem {
+        system = "aarch64-darwin"; # или "x86_64-darwin" в зависимости от типа Mac
+        modules = [
+          # Базовые настройки darwin
+          ./darwin/configuration.nix
+          
+          # Интеграция с home-manager
+          home-manager.darwinModules.home-manager
+          {
+            home-manager.useGlobalPkgs = true;
+            home-manager.useUserPackages = true;
+            home-manager.users.hikary = { ... }: {
+              imports = [ ./home-manager/home.nix ];
+              _module.args = { inherit inputs; };
+            };
+          }
+        ];
       };
     };
 }

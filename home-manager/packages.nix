@@ -63,6 +63,6 @@ in {
       ]
     else
       [ ];
-    macosOnly = if isDarwin then with pkgs; [ mas chatgpt spotify ] else [ ];
+    macosOnly = if isDarwin then with pkgs; [ chatgpt spotify ] else [ ];
   in common ++ linuxOnly ++ macosOnly;
 }
