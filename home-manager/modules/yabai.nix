@@ -31,7 +31,7 @@
       # настройки мыши
       yabai -m config mouse_follows_focus on
       yabai -m config focus_follows_mouse autoraise
-      yabai -m config mouse_modifier ctrl
+      yabai -m config mouse_modifier alt
       yabai -m config mouse_action1 move
       yabai -m config mouse_action2 resize
       yabai -m config mouse_drop_action swap
@@ -69,9 +69,9 @@
       # Автозапуск приложений при старте yabai
       # Проверяем, запущены ли уже программы, чтобы избежать дублирования
 
-      # Terminal
+      # Запуск kanata для переназначения клавиш (не для управления yabai)
       if ! pgrep -f "kanata" > /dev/null; then
-        open -a "kanata"
+        ${pkgs.kanata}/bin/kanata --cfg ~/.config/kanata/kanata.kbd &
       fi
     '';
   };
@@ -79,65 +79,64 @@
   xdg.configFile."skhd/skhdrc" = {
     text = ''
       # Переключение между пространствами
-      ctrl - 1 : yabai -m space --focus terminal
-      ctrl - 2 : yabai -m space --focus web
-      ctrl - 3 : yabai -m space --focus code
-      ctrl - 4 : yabai -m space --focus chat
-      ctrl - 5 : yabai -m space --focus files
-      ctrl - 6 : yabai -m space --focus media
+      cmd - 1 : yabai -m space --focus terminal
+      cmd - 2 : yabai -m space --focus web
+      cmd - 3 : yabai -m space --focus code
+      cmd - 4 : yabai -m space --focus chat
+      cmd - 5 : yabai -m space --focus files
+      cmd - 6 : yabai -m space --focus media
 
       # Отправка окна в пространство
-      ctrl + shift - 1 : yabai -m window --space terminal --focus
-      ctrl + shift - 2 : yabai -m window --space web --focus
-      ctrl + shift - 3 : yabai -m window --space code --focus
-      ctrl + shift - 4 : yabai -m window --space chat --focus
-      ctrl + shift - 5 : yabai -m window --space files --focus
-      ctrl + shift - 6 : yabai -m window --space media --focus
+      cmd + shift - 1 : yabai -m window --space terminal --focus
+      cmd + shift - 2 : yabai -m window --space web --focus
+      cmd + shift - 3 : yabai -m window --space code --focus
+      cmd + shift - 4 : yabai -m window --space chat --focus
+      cmd + shift - 5 : yabai -m window --space files --focus
+      cmd + shift - 6 : yabai -m window --space media --focus
 
       # Управление окнами
-      ctrl - q : yabai -m window --close
-      ctrl - f : yabai -m window --toggle float
-      ctrl - space : yabai -m window --toggle zoom-fullscreen
+      cmd - q : yabai -m window --close
+      cmd - f : yabai -m window --toggle float
+      cmd - space : yabai -m window --toggle zoom-fullscreen
 
       # Переключение дисплеев
-      ctrl - period : yabai -m display --focus next
-      ctrl - comma : yabai -m display --focus prev
+      cmd - period : yabai -m display --focus next
+      cmd - comma : yabai -m display --focus prev
 
       # Перемещение на другой дисплей
-      ctrl + shift - period : yabai -m window --display next; yabai -m display --focus next
-      ctrl + shift - comma : yabai -m window --display prev; yabai -m display --focus prev
+      cmd + shift - period : yabai -m window --display next; yabai -m display --focus next
+      cmd + shift - comma : yabai -m window --display prev; yabai -m display --focus prev
 
       # Перемещение окон
-      ctrl + shift - h : yabai -m window --swap west
-      ctrl + shift - j : yabai -m window --swap south
-      ctrl + shift - k : yabai -m window --swap north
-      ctrl + shift - l : yabai -m window --swap east
+      cmd + shift - h : yabai -m window --swap west
+      cmd + shift - j : yabai -m window --swap south
+      cmd + shift - k : yabai -m window --swap north
+      cmd + shift - l : yabai -m window --swap east
 
       # Перемещение фокуса
-      ctrl - h : yabai -m window --focus west
-      ctrl - j : yabai -m window --focus south
-      ctrl - k : yabai -m window --focus north
-      ctrl - l : yabai -m window --focus east
+      cmd - h : yabai -m window --focus west
+      cmd - j : yabai -m window --focus south
+      cmd - k : yabai -m window --focus north
+      cmd - l : yabai -m window --focus east
 
       # Запуск терминала
-      ctrl - return : open -a "ghostty"
+      cmd - return : open -a "ghostty"
 
       # Скриншот
-      ctrl + shift - s : screencapture -i -c
+      cmd + shift - 4 : screencapture -i -c
 
       # Дополнительные функции
-      ctrl + alt - r : yabai -m space --rotate 270
-      ctrl + alt - x : yabai -m space --mirror x-axis
-      ctrl + alt - y : yabai -m space --mirror y-axis
-      ctrl + alt - e : yabai -m space --balance
+      cmd + alt - r : yabai -m space --rotate 270
+      cmd + alt - x : yabai -m space --mirror x-axis
+      cmd + alt - y : yabai -m space --mirror y-axis
+      cmd + alt - e : yabai -m space --balance
 
       # Управление сервисами
-      ctrl + alt - q : yabai --stop-service
-      ctrl + alt - s : yabai --start-service
-      ctrl + alt - r : yabai --restart-service
-      ctrl + alt - k : skhd --restart-service
+      cmd + alt - q : yabai --stop-service
+      cmd + alt - s : yabai --start-service
+      cmd + alt - r : yabai --restart-service
+      cmd + alt - k : skhd --restart-service
     '';
   };
-
 }
 
