@@ -3,6 +3,11 @@
 
   environment.systemPackages = with pkgs; [ vim curl wget git kanata ];
 
+  users.users."tronin.egor" = {
+    home = "/Users/tronin.egor";
+    name = "tronin.egor";
+  };
+
   nix.gc = {
     automatic = true;
     interval.Day = 7;
