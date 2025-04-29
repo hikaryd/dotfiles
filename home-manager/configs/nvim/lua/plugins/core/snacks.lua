@@ -188,13 +188,13 @@ return {
       end,
       desc = 'Diagnostics',
     },
-    {
-      '<leader>e',
-      function()
-        Snacks.explorer.open()
-      end,
-      desc = 'Diagnostics',
-    },
+    -- {
+    --   '<leader>e',
+    --   function()
+    --     Snacks.explorer.open()
+    --   end,
+    --   desc = 'Diagnostics',
+    -- },
     {
       '<leader>qp',
       function()

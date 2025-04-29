@@ -1,72 +1,32 @@
-{ pkgs, ... }: {
-  home.packages = with pkgs; [ ghostty ];
+{ lib, ... }: {
+  programs.ghostty = {
+    enable = true;
 
-  xdg.configFile."ghostty/tmux-session.sh" = {
-    executable = true;
-    text = ''
-      #!/usr/bin/env bash
-      export LANG="en_US.UTF-8"
-      export LC_CTYPE="en_US.UTF-8"
+    settings = {
+      background-opacity = lib.mkForce 0.8;
+      minimum-contrast = 1.1;
+      font-size = 10;
+      # font = "Fira Code";
+      term = "xterm-256color";
+      bold-is-bright = true;
 
-      SESSION_NAME="ghostty"
+      command = "${../../scripts/tmux-session.sh}";
+      linux-cgroup = "single-instance";
 
-      tmux list-sessions 2>/dev/null
-      if [ $? -eq 1 ]; then
-        exec tmux attach
-      fi
+      theme = "stylix";
+      background-blur-radius = 20;
 
-      tmux has-session -t $SESSION_NAME 2>/dev/null
-      if [ $? -eq 1 ]; then
-        tmux new-session -d -s $SESSION_NAME
-      fi
+      confirm-close-surface = false;
+      mouse-hide-while-typing = true;
 
-      exec tmux attach-session -t $SESSION_NAME
-    '';
+      window-padding-x = 10;
+      window-padding-y = 10;
+      window-padding-balance = true;
+      window-inherit-working-directory = true;
+      window-inherit-font-size = true;
+
+      scrollback-limit = 1000000;
+      custom-shader-animation = true;
+    };
   };
-
-  xdg.configFile."ghostty/config".text = ''
-    # Настройки шрифта
-    font-family = "Fira Code"
-    font-size = 10
-    font-thicken = false
-    adjust-box-thickness = 0
-    term = "xterm-256color"
-    bold-is-bright = true
-
-    # Запуск команды и интеграция с оболочкой
-    command = ~/.config/ghostty/tmux-session.sh
-    shell-integration = detect
-    shell-integration-features = cursor,sudo,title
-    linux-cgroup = single-instance
-
-    # Тема и визуальное оформление
-    theme = "catppuccin-mocha"
-    background-opacity = 0.8
-    background-blur-radius = 20
-
-    cursor-style = block
-    cursor-style-blink = true
-    adjust-cursor-thickness = 1
-
-    copy-on-select = true
-    confirm-close-surface = false
-    mouse-hide-while-typing = true
-
-    window-theme = ghostty
-    window-padding-x = 10
-    window-padding-y = 10
-    window-padding-balance = true
-    window-padding-color = background
-    window-inherit-working-directory = true
-    window-inherit-font-size = true
-    window-decoration = false
-
-    gtk-titlebar = false
-    gtk-single-instance = false
-    gtk-wide-tabs = false
-
-    scrollback-limit = 1000000
-    custom-shader-animation = true
-  '';
 }
-

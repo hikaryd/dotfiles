@@ -4,7 +4,6 @@
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
     flake-utils.url = "github:numtide/flake-utils";
     stylix.url = "github:danth/stylix";
-    ghostty.url = "github:ghostty-org/ghostty";
     anyrun.url = "github:fufexan/anyrun/launch-prefix";
     hyprpanel.url = "github:Jas-SinghFSU/HyprPanel";
     home-manager = {
@@ -23,10 +22,6 @@
       url = "github:sodiboo/niri-flake";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    sf-mono-liga-src = {
-      url = "github:shaunsingh/SFMono-Nerd-Font-Ligaturized";
-      flake = false;
-    };
     zen-browser.url = "github:MarceColl/zen-browser-flake";
     # https://github.com/JustAdumbPrsn/Nebula-A-Minimal-Theme-for-Zen-Browser
   };
@@ -40,18 +35,6 @@
           inputs.hyprpanel.overlay
           inputs.nixgl.overlay
           inputs.niri.overlays.niri
-          (final: prev: {
-            sf-mono-liga-bin = prev.stdenvNoCC.mkDerivation {
-              pname = "sf-mono-liga-bin";
-              version = "dev";
-              src = inputs.sf-mono-liga-src;
-              dontConfigure = true;
-              installPhase = ''
-                mkdir -p $out/share/fonts/opentype
-                cp -R $src/*.otf $out/share/fonts/opentype/
-              '';
-            };
-          })
         ];
       };
     in {
