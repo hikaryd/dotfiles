@@ -23,7 +23,6 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     zen-browser.url = "github:MarceColl/zen-browser-flake";
-    ghostty = { url = "github:ghostty-org/ghostty"; };
     # https://github.com/JustAdumbPrsn/Nebula-A-Minimal-Theme-for-Zen-Browser
     nix-darwin = {
       url = "github:LnL7/nix-darwin";
