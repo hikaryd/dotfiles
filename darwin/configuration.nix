@@ -3,6 +3,11 @@
 
   environment.systemPackages = with pkgs; [ vim curl wget git kanata ];
 
+  users.users."user" = {
+    home = "/Users/user";
+    name = "user";
+  };
+
   nix.gc = {
     automatic = true;
     interval.Day = 7;
