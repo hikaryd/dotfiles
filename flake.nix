@@ -49,12 +49,11 @@
       };
 
       darwinConfigurations."hikary-mac" = nix-darwin.lib.darwinSystem {
+        inherit pkgs;
         extraSpecialArgs = { inherit inputs system; };
-        config = { allowUnfree = true; };
         modules = [
           ./darwin/configuration.nix
           home-manager.darwinModules.home-manager
-
           ./home-manager/home.nix
         ];
       };
