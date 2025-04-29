@@ -7,8 +7,8 @@
     xwayland.enable = true;
     settings = {
       monitor = [
-        "eDP-1, 2560x1600@120, -2560x0, 1.25"
-        "HDMI-A-1, 2560x1440@120, 0x0, 1"
+        "eDP-1, 2560x1600@120, auto, 1.25"
+        "HDMI-A-1, 2560x1440@144, auto, 1,bitdepth, 10, cm, wide"
       ];
       general = {
         gaps_in = 5;
@@ -21,7 +21,7 @@
         pseudotile = true;
         preserve_split = true;
         special_scale_factor = 0.9;
-        smart_split = true;
+        smart_split = false;
       };
 
       master = {
@@ -64,27 +64,6 @@
       xwayland = { force_zero_scaling = true; };
       layerrule = [ "blur ,gtk-layer-shell" "ignorezero ,gtk-layer-shell" ];
       windowrule = [ "noanim, floating:1" ];
-      windowrulev2 = [
-        "workspace name:1, class:^(com.mitchellh.ghostty|Slack)$"
-        "workspace name:1, class:^(neovide)$"
-        "workspace name:2, class:^(zoom|zoom-us|Zoom Workplace|com.github.wwmm.easyeffects)$"
-        "workspace name:6, class:^(google-chrome|google-chrome-stable|com.ayugram.desktop|zen)$, opacity 0.9 0.9"
-        "workspace name:7, class:^(DBeaver|beekeeper-studio)$"
-        "immediate, class:^(mpv)$"
-        "float,title:^(Google Chrome.*|Untitled - Google Chrome)$"
-        "float,title:^(JamesDSP for Linux.*)$"
-        "float,title:^(Untitled - Google Chrome.*)$"
-        "float, class:^(org.telegram.desktop)$"
-        "float, class:^(pulsemixer|nekoray|hiddify|pavucontrol)$"
-        "float, class:^(blueman-manager|nm-applet|nm-connection-editor)$"
-        "float, class:^(org.kde.polkit-kde-authentication-agent-1)$"
-        "float, class:^(bluetooth-manager|iwgtk)$"
-        "float, class:^(1Password)$, size 500 700"
-        "float, class:^(com.github.wwmm.easyeffects)$, size 650 400"
-        "float, class:^(com-artemchep-keyguard-MainKt)$, size 700 700"
-        "float, class:^(xdg-desktop-portal-gtk)$, size 400 400"
-        "opacity 0.8 0.8, class:^(org.freedesktop.impl.portal.desktop.gtk|org.freedesktop.impl.portal.desktop.hyprland)$"
-      ];
 
       input = {
         kb_layout = "us, ru";
@@ -182,6 +161,25 @@
         "special:browser, id:6, on-created-empty:zen-browser"
         "special:telegram, id:8, on-created-empty:ayugram-desktop"
         "special:music, id:10"
+      ];
+
+      windowrulev2 = [
+        "workspace name:misc, class:^(zoom|zoom-us|Zoom Workplace|com.github.wwmm.easyeffects)$"
+        "workspace special:browser, class:^(google-chrome|google-chrome-stable|com.ayugram.desktop|zen)$, opacity 0.9 0.9"
+        "immediate, class:^(mpv)$"
+        "float,title:^(Google Chrome.*|Untitled - Google Chrome)$"
+        "float,title:^(JamesDSP for Linux.*)$"
+        "float,title:^(Untitled - Google Chrome.*)$"
+        "float, class:^(org.telegram.desktop)$"
+        "float, class:^(pulsemixer|nekoray|hiddify|pavucontrol)$"
+        "float, class:^(blueman-manager|nm-applet|nm-connection-editor)$"
+        "float, class:^(org.kde.polkit-kde-authentication-agent-1)$"
+        "float, class:^(bluetooth-manager|iwgtk)$"
+        "float, class:^(1Password)$, size 500 700"
+        "float, class:^(com.github.wwmm.easyeffects)$, size 650 400"
+        "float, class:^(com-artemchep-keyguard-MainKt)$, size 700 700"
+        "float, class:^(xdg-desktop-portal-gtk)$, size 400 400"
+        "opacity 0.8 0.8, class:^(org.freedesktop.impl.portal.desktop.gtk|org.freedesktop.impl.portal.desktop.hyprland)$"
       ];
 
       bind = [

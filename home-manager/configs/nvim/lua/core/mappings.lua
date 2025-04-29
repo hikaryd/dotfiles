@@ -12,7 +12,7 @@ map('n', '<Esc>', '<cmd>noh<CR>', 'Clear search highlights')
 map('n', 'v$', 'v$h')
 
 -- File Explorer
--- map('n', '<space>e', ':Yazi<CR>')
+map('n', '<space>e', ':Triptych<CR>')
 
 -- map('n', '<leader>tt', ':BufTermEnter<CR>')
 

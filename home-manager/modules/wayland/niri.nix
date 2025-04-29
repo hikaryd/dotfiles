@@ -196,6 +196,7 @@
 
       spawn-at-startup = [
         (makeCommand "kanata")
+        (makeCommand "better-control")
         (makeCommand "slack")
         (makeCommand "1password")
         (makeCommand "${pkgs.hyprpaper}/bin/hyprpaper")
@@ -355,6 +356,5 @@
         "${ctrl}+${shift}+S" = { action = { screenshot = { }; }; };
       };
     };
-
   };
 }
