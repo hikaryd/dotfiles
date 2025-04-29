@@ -1,7 +1,7 @@
-{ lib, pkgs, ... }: {
+{ lib, inputs, ... }: {
   programs.ghostty = {
     enable = true;
-    package = pkgs.ghostty;
+    package = inputs.ghostty.packages.x86_64-linux.default;
 
     settings = {
       background-opacity = lib.mkForce 0.8;
