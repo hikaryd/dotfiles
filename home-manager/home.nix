@@ -1,9 +1,13 @@
-{ pkgs, inputs, system, lib, ... }: {
+{ pkgs, inputs, system, lib, ... }: 
+
+let
+  username = if system == "x86_64-linux" then "hikary" else "tronin.egor";
+in
+{
   home = {
-    username =
-      if system == "x86_64-linux" then "hikary" else builtins.getEnv "USER";
+    username = username;
     homeDirectory =
-      if system == "x86_64-linux" then "/home/hikary" else "/Users/${builtins.getEnv "USER"}";
+      if system == "x86_64-linux" then "/home/${username}" else "/Users/${username}";
     stateVersion = "24.11";
   };
 
