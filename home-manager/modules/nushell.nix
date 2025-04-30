@@ -1,4 +1,4 @@
-{ pkgs, system, ... }: {
+{ pkgs, system, lib, ... }: {
   programs.carapace.enable = true;
   programs.carapace.enableNushellIntegration = true;
 
@@ -27,6 +27,7 @@
       LANG = "en_US.UTF-8";
       EDITOR = "nvim";
       VISUAL = "nvim";
+      SHELL = "${pkgs.nushell}/bin/nu";
 
       _JAVA_AWT_WM_NONEREPARENTING = "1";
       DISABLE_QT5_COMPAT = "0";
@@ -111,27 +112,35 @@
     extraEnv = ''
       mkdir ~/.cache/zoxide
       $env.__zoxide_hooked = true
-      zoxide init nushell | save -f ~/.cache/zoxide/init.nu
+      ${pkgs.zoxide}/bin/zoxide init nushell | save -f ~/.cache/zoxide/init.nu
     '';
 
     extraConfig = ''
-      # def --env setup_path [] {
-      #   let base_paths = [
-      #     "/usr/local/sbin"
-      #     "/usr/local/bin"
-      #     ($env.HOME + "/.local/bin")
-      #     ($env.HOME + "/.local/share/bin")
-      #     "/usr/bin"
-      #     ($env.HOME + "/.nix-profile/bin")
-      #     "/nix/var/nix/profiles/default/bin"
-      #     "/run/current-system/sw/bin"
-      #     ($env.HOME + "/.cargo/bin")
-      #     ($env.HOME + "/.config/carapace/bin")
-      #   ]
-      #   let joined = ($base_paths | uniq | str join ":")
-      #   $env.PATH = $joined
-      # }
-      # setup_path
+      def --env setup_path [] {
+        let base_paths = [
+          "/usr/local/sbin"
+          "/usr/local/bin"
+          ($env.HOME + "/.local/bin")
+          ($env.HOME + "/.local/share/bin")
+          "/usr/bin"
+          ($env.HOME + "/.nix-profile/bin")
+          "/nix/var/nix/profiles/default/bin"
+          "/run/current-system/sw/bin"
+          ($env.HOME + "/.cargo/bin")
+          ($env.HOME + "/.config/carapace/bin")
+          "/opt/homebrew/bin"
+          "/opt/homebrew/sbin" 
+          "/etc/profiles/per-user/tronin.egor/bin" 
+          "/run/current-system/sw/bin" 
+          "/nix/var/nix/profiles/default/bin" 
+          "/usr/local/bin" 
+          "/usr/bin:/bin" 
+          "/usr/sbin:/sbin"
+        ]
+        let joined = ($base_paths | uniq | str join ":")
+        $env.PATH = $joined
+      }
+      setup_path
 
       # $env.OPENROUTER_API_KEY = (open ($env.HOME + "/creds/open_router") | str trim)
       # $env.GOOGLE_API_KEY = (open ($env.HOME + "/creds/gemini") | str trim)

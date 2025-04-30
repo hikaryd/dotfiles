@@ -1,21 +1,19 @@
 { pkgs, system, ... }: {
   home.packages = with pkgs;
-    if system == "x86_64-linux" then [ kanata ] else [ ];
+    if system == "x86_64-linux" then [ ghostty ] else [ ];
 
   xdg.configFile = {
     "ghostty/config" = {
       text = ''
         background-opacity = 0.8
         minimum-contrast = 1.1
-        font-size = 10
-        term = xterm-256color
+        font-size = 12
         bold-is-bright = true
-
-        # command = ${../../scripts/tmux-session.sh}
-        linux-cgroup = single-instance
 
         theme = stylix
         background-blur-radius = 20
+        background-blur = true
+        macos-titlebar-style = tabs
 
         confirm-close-surface = false
         mouse-hide-while-typing = true
@@ -28,6 +26,15 @@
 
         scrollback-limit = 1000000
         custom-shader-animation = true
+        keybind=cmd+s=new_split:auto
+        keybind=ctrl+h=goto_split:left
+        keybind=ctrl+l=goto_split:right
+        keybind=ctrl+k=goto_split:up
+        keybind=ctrl+j=goto_split:down
+        keybind=ctrl+shift+h=resize_split:left,20
+        keybind=ctrl+shift+l=resize_split:right,20
+        keybind=ctrl+shift+k=resize_split:up,20
+        keybind=ctrl+shift+j=resize_split:down,20
       '';
     };
 

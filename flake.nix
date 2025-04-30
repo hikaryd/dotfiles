@@ -61,7 +61,7 @@
           home-manager.darwinModules.home-manager
           {
             home-manager = {
-              useGlobalPkgs = true;
+              useGlobalPkgs = false;
               useUserPackages = true;
               extraSpecialArgs = { inherit inputs system user; };
               users."tronin.egor" = import ./home-manager/home.nix;

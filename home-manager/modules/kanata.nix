@@ -1,14 +1,47 @@
-{ pkgs, ... }: {
+{ pkgs, ... }:
+let
+  isDarwin = pkgs.stdenv.isDarwin;
+
+  defsrc = if !isDarwin then ''
+    (defsrc
+          esc  f1   f2   f3   f4   f5   f6   f7   f8   f9   f10  f11  f12
+          grv  1    2    3    4    5    6    7    8    9    0    -    =   bspc
+          tab  q    w    e    r    t    y    u    i    o    p    [    ]   \
+          caps a    s    d    f    g    h    j    k    l    ;    '    ret
+          lsft z    x    c    v    b    n    m    ,    .    /    rsft
+          lctl lmet lalt           spc            ralt rmet cmp  rctl
+        )
+
+    	'' else ''
+      (deflocalkeys-macos
+        ß    12
+        ´    13
+        z    21
+        ü    26
+        +    27
+        ö    39
+        ä    40
+        <    41
+        #    43
+        y    44
+        -    53
+        ^    86
+      )
+
+      (defsrc
+        ⎋         f1   f2   f3   f4   f5   f6   f7   f8   f9   f10  f11  f12
+        `         1    2    3    4    5    6    7    8    9    0    ß    ´    ⌫
+        ↹         q    w    e    r    t    z    u    i    o    p    ü    +
+        ⇪         a    s    d    f    g    h    j    k    l    ö    ä    #    ↩
+       ‹⇧   <     y    x    c    v    b    n    m    ,    .    -         ▲    ⇧›
+        fn       ‹⌃   ‹⌥   ‹⌘              ␣              ⌘›   ⌥›   ◀    ▼    ▶
+      )
+    '';
+
+in {
   home.packages = with pkgs; [ kanata ];
   xdg.configFile."kanata/kanata.kbd".text = ''
-    (defsrc
-      esc  f1   f2   f3   f4   f5   f6   f7   f8   f9   f10  f11  f12
-      grv  1    2    3    4    5    6    7    8    9    0    -    =   bspc
-      tab  q    w    e    r    t    y    u    i    o    p    [    ]   \
-      caps a    s    d    f    g    h    j    k    l    ;    '    ret
-      lsft z    x    c    v    b    n    m    ,    .    /    rsft
-      lctl lmet lalt           spc            ralt rmet cmp  rctl
-    )
+    ${defsrc}
 
     (defvar
       tap-timeout 100
@@ -32,6 +65,7 @@
       ;; d (tap-hold-release $tt $ht d lsft)
       f (tap-hold-release $tt $ht f lctl)
       ;; lctrl  (tap-hold-release $tt $ht esc lctrl)
+      fn ‹⌃ 
 
       spc (tap-hold $tt $ht spc (layer-while-held extended))
     )
