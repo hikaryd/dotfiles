@@ -1,5 +1,5 @@
 { pkgs, ... }: {
-  home.packages = with pkgs; [ yabai skhd ];
+  # home.packages = with pkgs; [ yabai skhd ];
 
   xdg.configFile."yabai/yabairc" = {
     executable = true;

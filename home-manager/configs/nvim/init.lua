@@ -52,3 +52,8 @@ require('lazy').setup('plugins', {
 -- Finally load the rest of core
 require('core').setup()
 require 'plugins'
+
+if vim.fn.getenv 'TERM_PROGRAM' == 'ghostty' then
+  vim.opt.title = true
+  vim.opt.titlestring = "%{fnamemodify(getcwd(), ':t')}"
+end

@@ -29,6 +29,7 @@ in {
       grip-grab
       rustup
       typst
+      telegram-desktop
     ];
     linuxOnly = if !isDarwin then
       with pkgs; [

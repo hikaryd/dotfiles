@@ -1,8 +1,7 @@
 { pkgs, ... }: {
-  home.packages = with pkgs; [ sesh tmux ];
+  # home.packages = with pkgs; [ sesh tmux ];
   programs.tmux = {
-    enable = true;
-    terminal = "xterm-256color";
+    enable = false;
     prefix = "C-a";
     baseIndex = 1;
     escapeTime = 0;
@@ -40,6 +39,7 @@
       set -g status-justify centre
 
       set-option -g terminal-overrides ',xterm-256color:RGB'
+      set-option -g default-shell $SHELL
 
       set -g detach-on-destroy off
       set -g renumber-windows on
@@ -107,10 +107,10 @@
       bind-key -n C-k if -F "#{@pane-is-vim}" 'send-keys C-k'  'select-pane -U'
       bind-key -n C-l if -F "#{@pane-is-vim}" 'send-keys C-l'  'select-pane -R'
 
-      bind-key -n M-h if -F "#{@pane-is-vim}" 'send-keys M-h' 'resize-pane -L 3'
-      bind-key -n M-j if -F "#{@pane-is-vim}" 'send-keys M-j' 'resize-pane -D 3'
-      bind-key -n M-k if -F "#{@pane-is-vim}" 'send-keys M-k' 'resize-pane -U 3'
-      bind-key -n M-l if -F "#{@pane-is-vim}" 'send-keys M-l' 'resize-pane -R 3'
+      bind-key -n C-H if -F "#{@pane-is-vim}" 'send-keys M-h' 'resize-pane -L 3'
+      bind-key -n C-J if -F "#{@pane-is-vim}" 'send-keys M-j' 'resize-pane -D 3'
+      bind-key -n C-K if -F "#{@pane-is-vim}" 'send-keys M-k' 'resize-pane -U 3'
+      bind-key -n C-L if -F "#{@pane-is-vim}" 'send-keys M-l' 'resize-pane -R 3'
 
       bind-key -n M-H swap-window -t -1\; select-window -t -1
       bind-key -n M-L swap-window -t +1\; select-window -t +1
@@ -180,62 +180,6 @@
             tmux move-window -s ''${CURRENT_WINDOW} -t ''${NEW_POSITION}
           fi
         '';
-    };
-  };
-
-  xdg.configFile = {
-    "tmuxinator/monitoring.yml" = {
-      text = ''
-        name: monitoring
-        root: ~/
-
-        windows:
-          - base:
-              pre_window: |
-                tmux split-window -v 
-                tmux split-window -h 
-
-              panes:
-                - "ssh -t kvant-mgmt 'ssh -t staging-srv \"sudo su - deploy -c \\\"docker service logs -f nexus_email\\\"\"'"
-                - "ssh -t kvant-mgmt 'ssh -t staging-srv \"sudo su - deploy -c \\\"docker service logs -f nexus_email\\\"\"'"
-                - "ssh -t kvant-mgmt 'sudo tail -f /var/log/nginx/access.log -n 100'"
-
-          - kvant-prod:
-              pre_window: |
-                tmux select-pane -t 0
-
-                tmux split-window -h -p 50
-
-                tmux select-pane -t 0
-                tmux split-window -v -p 50
-
-                tmux select-pane -t 1
-                tmux split-window -v -p 50
-
-              panes:
-                - "ssh -t kvant-mgmt 'ssh -t production-srv \"sudo su - deploy -c \\\"docker service logs -f nexus_deal-api\\\"\"'"
-                - "ssh -t kvant-mgmt 'ssh -t production-srv \"sudo su - deploy -c \\\"docker service logs -f nexus_import\\\"\"'"
-                - "ssh -t kvant-mgmt 'ssh -t production-srv \"sudo su - deploy -c \\\"docker service logs -f nexus_email\\\"\"'"
-                - "ssh -t kvant-mgmt 'ssh -t production-srv \"sudo su - deploy -c \\\"docker service logs -f nexus_sync\\\"\"'"
-
-          - kvant-stage:
-              pre_window: |
-                tmux select-pane -t 0
-
-                tmux split-window -h -p 50
-
-                tmux select-pane -t 0
-                tmux split-window -v -p 50
-
-                tmux select-pane -t 1
-                tmux split-window -v -p 50
-
-              panes:
-                - "ssh -t kvant-mgmt 'ssh -t staging-srv \"sudo su - deploy -c \\\"docker service logs -f nexus_deal-api\\\"\"'"
-                - "ssh -t kvant-mgmt 'ssh -t staging-srv \"sudo su - deploy -c \\\"docker service logs -f nexus_import\\\"\"'"
-                - "ssh -t kvant-mgmt 'ssh -t staging-srv \"sudo su - deploy -c \\\"docker service logs -f nexus_email\\\"\"'"
-                - "ssh -t kvant-mgmt 'ssh -t staging-srv \"sudo su - deploy -c \\\"docker service logs -f nexus_sync\\\"\"'"
-      '';
     };
   };
 }

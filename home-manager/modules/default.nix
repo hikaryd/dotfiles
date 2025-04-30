@@ -5,7 +5,6 @@
       ./lazygit.nix
       ./nvim.nix
       ./yazi.nix
-      ./tmux.nix
       ./starship.nix
       ./nushell.nix
       ./ssh.nix
@@ -15,9 +14,10 @@
       ./kanata.nix
     ];
 
-    darwin-modules = [ ./yabai.nix ./onepassword-darwin.nix ];
+    darwin-modules = [ ./yabai.nix ];
 
     linux-modules = [
+      ./tmux.nix
       ./xdg-mimes.nix
       ./wayland
       ./onepassword.nix
