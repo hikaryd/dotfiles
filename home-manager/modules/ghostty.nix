@@ -26,7 +26,7 @@
 
         scrollback-limit = 1000000
         custom-shader-animation = true
-        keybind=cmd+s=new_split:auto
+        keybind=ctrl+v=new_split:auto
         keybind=ctrl+h=goto_split:left
         keybind=ctrl+l=goto_split:right
         keybind=ctrl+k=goto_split:up

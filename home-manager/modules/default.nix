@@ -11,12 +11,12 @@
       ./ghostty.nix
       ./fzf.nix
       ./bat.nix
-      ./kanata.nix
     ];
 
-    darwin-modules = [ ./yabai.nix ];
+    darwin-modules = [ ];
 
     linux-modules = [
+      ./kanata.nix
       ./tmux.nix
       ./xdg-mimes.nix
       ./wayland

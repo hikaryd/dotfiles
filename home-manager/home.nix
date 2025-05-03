@@ -12,6 +12,7 @@
     ./packages.nix
     ./theme.nix
   ] else [
+    ./theme.nix
     ./modules
     ./packages.nix
   ];

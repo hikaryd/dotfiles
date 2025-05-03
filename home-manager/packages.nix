@@ -29,10 +29,10 @@ in {
       grip-grab
       rustup
       typst
-      telegram-desktop
     ];
     linuxOnly = if !isDarwin then
       with pkgs; [
+        telegram-desktop
         (config.lib.nixGL.wrap spotify)
         sing-geosite
         ansible
@@ -64,6 +64,6 @@ in {
       ]
     else
       [ ];
-    macosOnly = if isDarwin then with pkgs; [ chatgpt spotify ] else [ ];
+    macosOnly = if isDarwin then with pkgs; [ spotify ] else [ ];
   in common ++ linuxOnly ++ macosOnly;
 }
