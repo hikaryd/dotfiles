@@ -1,4 +1,4 @@
-{ pkgs, inputs, ... }: {
+{ pkgs, inputs, lib, ... }: {
   imports = [ inputs.stylix.homeManagerModules.stylix ];
   home.packages = with pkgs; [
     jetbrains-mono
@@ -28,7 +28,7 @@
     base16Scheme = "${pkgs.base16-schemes}/share/themes/tokyodark.yaml";
     image = ../wallpapers/keyboard.png;
 
-    fonts = {
+    fonts = lib.mkIf (!pkgs.stdenv.isDarwin) {
       serif = {
         package = pkgs.nerd-fonts.jetbrains-mono;
         name = "Jetbrains Mono";
@@ -55,7 +55,7 @@
       dunst.enable = false;
       hyprpaper.enable = true;
       qt = {
-        enable = true;
+        enable = if !pkgs.stdenv.isDarwin then true else false;
         platform = "qtct";
       };
     };
