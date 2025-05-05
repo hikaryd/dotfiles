@@ -11,13 +11,13 @@
       ./ghostty.nix
       ./fzf.nix
       ./bat.nix
+      ./tmux.nix
     ];
 
     darwin-modules = [ ];
 
     linux-modules = [
       ./kanata.nix
-      ./tmux.nix
       ./xdg-mimes.nix
       ./wayland
       ./onepassword.nix

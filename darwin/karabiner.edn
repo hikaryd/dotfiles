@@ -1,0 +1,33 @@
+{:profiles {
+   :Default {
+     :default true
+     :sim 20
+   }
+ }
+
+ :templates {
+   :open-ghost "open -n -a \"%s\""
+ }
+
+ :simlayers {
+   :space-layer {:key :spacebar :alone 250}
+ }
+
+ :main [
+   {:des "Simple remaps"
+    :rules [
+      [:##caps_lock :f13]
+      [:##fn        :left_control]
+    ]
+   }
+
+   {:des "Space + hjkl → Arrow keys"
+    :rules [:space-layer
+      [:h :left_arrow]
+      [:j :down_arrow]
+      [:k :up_arrow]
+      [:l :right_arrow]
+    ]
+   }
+ ]
+}

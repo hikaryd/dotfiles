@@ -45,13 +45,13 @@
       QT_QPA_PLATFORM = "wayland;xcb";
       QT_AUTO_SCREEN_SCALE_FACTOR = "1";
       QT_WAYLAND_DISABLE_WINDOWDECORATION = "1";
-      TERM = "ghostty";
+      TERM = "xterm-256color";
     };
 
     shellAliases = {
       v = "nvim";
       ssh = ''env TERM="xterm-256color" ssh'';
-      cat = "bat --style=plain";
+      # cat = "bat --style=plain";
       ".." = "cd ..";
       l = "ls";
       cd = "z";

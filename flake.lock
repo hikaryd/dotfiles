@@ -629,9 +629,31 @@
         "nix-darwin": "nix-darwin",
         "nixgl": "nixgl",
         "nixpkgs": "nixpkgs_3",
+        "sbarlua": "sbarlua",
         "stylix": "stylix",
         "yazi-plugins": "yazi-plugins",
         "zen-browser": "zen-browser"
+      }
+    },
+    "sbarlua": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1738194078,
+        "narHash": "sha256-DuopardZJh7tMqDzkdsWnGVRAAnYaBvF0ufTdzCYg3c=",
+        "owner": "lalit64",
+        "repo": "SbarLua",
+        "rev": "2c42a0925223fa9cb8f0901d33b283e91196af1f",
+        "type": "github"
+      },
+      "original": {
+        "owner": "lalit64",
+        "ref": "nix-darwin-package",
+        "repo": "SbarLua",
+        "type": "github"
       }
     },
     "stylix": {

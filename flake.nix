@@ -28,6 +28,8 @@
       url = "github:LnL7/nix-darwin";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    sbarlua.url = "github:lalit64/SbarLua/nix-darwin-package";
+    sbarlua.inputs.nixpkgs.follows = "nixpkgs";
   };
   outputs = inputs@{ self, nixpkgs, home-manager, nix-darwin, ... }:
     let
