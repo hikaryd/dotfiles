@@ -1,14 +1,18 @@
 { pkgs, ... }: {
-  # home.packages = with pkgs; [ sesh tmux ];
+  home.packages = with pkgs; [ tmux ];
   programs.tmux = {
-    enable = false;
+    enable = true;
+    terminal = "xterm-256color";
     prefix = "C-a";
+    shell = "${pkgs.nushell}/bin/nu";
+    escapeTime = 1;
     baseIndex = 1;
-    escapeTime = 0;
+    customPaneNavigationAndResize = true;
+    clock24 = true;
     historyLimit = 1000000;
-    keyMode = "vi";
     secureSocket = false;
     extraConfig = ''
+      set -ag terminal-overrides ",xterm-256color:RGB"
       set -g window-status-style bg=default
       set -g window-status-current-style bg=default
       set -g status-style bg=default
@@ -39,7 +43,6 @@
       set -g status-justify centre
 
       set-option -g terminal-overrides ',xterm-256color:RGB'
-      set-option -g default-shell $SHELL
 
       set -g detach-on-destroy off
       set -g renumber-windows on
@@ -67,15 +70,6 @@
       bind s split-window -v -c "#{pane_current_path}"
       bind v split-window -h -c "#{pane_current_path}"
       bind '"' choose-window
-
-      # bind h select-pane -L
-      # bind j select-pane -D
-      # bind k select-pane -U
-      # bind l select-pane -R
-      # bind -r -T prefix - resize-pane -L 20
-      # bind -r -T prefix = resize-pane -R 20
-      # bind -r -T prefix _ resize-pane -D 7
-      # bind -r -T prefix + resize-pane -U 7
 
       bind : command-prompt
       bind * setw synchronize-panes
@@ -121,16 +115,17 @@
     '';
 
     plugins = with pkgs; [
-      tmuxPlugins.sensible
       tmuxPlugins.yank
       tmuxPlugins.tmux-thumbs
       {
-        plugin = (pkgs.tmuxPlugins.resurrect.overrideAttrs (oldAttrs: {
-          postFixup = (oldAttrs.postFixup or "") + ''
-            rm -rf $out/share/tmux-plugins/resurrect/tests
-            rm -f $out/share/tmux-plugins/resurrect/run_tests
-          '';
-        }));
+        # plugin = (pkgs.tmuxPlugins.resurrect.overrideAttrs (oldAttrs: {
+        #   postFixup = (oldAttrs.postFixup or "") + ''
+        #     rm -rf $out/share/tmux-plugins/resurrect/tests
+        #     rm -f $out/share/tmux-plugins/resurrect/run_tests
+        #   '';
+        # }));
+
+        plugin = pkgs.tmuxPlugins.resurrect;
         extraConfig = "set -g @resurrect-strategy-nvim 'session'";
       }
 

@@ -7,15 +7,7 @@
     stateVersion = "24.11";
   };
 
-  imports = if system == "x86_64-linux" then [
-    ./modules
-    ./packages.nix
-    ./theme.nix
-  ] else [
-    ./theme.nix
-    ./modules
-    ./packages.nix
-  ];
+  imports = [ ./theme.nix ./modules ./packages.nix ];
 
   programs.home-manager.enable = true;
 

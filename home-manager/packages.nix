@@ -64,6 +64,5 @@ in {
       ]
     else
       [ ];
-    macosOnly = if isDarwin then with pkgs; [ spotify ] else [ ];
-  in common ++ linuxOnly ++ macosOnly;
+  in common ++ linuxOnly;
 }
