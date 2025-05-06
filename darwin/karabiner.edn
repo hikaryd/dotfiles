@@ -29,5 +29,11 @@
       [:l :right_arrow]
     ]
    }
+   {:des "Launch Ghostty with Alt+Enter"
+    :rules [
+      [:!Oreturn_or_enter [:open-ghost "Ghostty"]]
+    ]
+   }
  ]
 }
+

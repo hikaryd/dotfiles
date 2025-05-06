@@ -1,6 +1,6 @@
 { pkgs, ... }: {
   services.aerospace = {
-    enable = true;
+    enable = false;
     package = pkgs.aerospace;
 
     settings = {
@@ -34,14 +34,14 @@
 
       gaps = {
         outer = {
-          bottom = 16;
-          left = 16;
-          right = 16;
-          top = 16;
+          bottom = 20;
+          left = 20;
+          right = 20;
+          top = 20;
         };
         inner = {
-          horizontal = 16;
-          vertical = 16;
+          horizontal = 25;
+          vertical = 25;
         };
       };
 
@@ -61,6 +61,11 @@
           check-further-callbacks = false;
           "if" = { app-id = "com.cisco.secureclient.gui"; };
           run = [ "layout floating" ];
+        }
+        {
+          check-further-callbacks = false;
+          "if" = { app-id = "com.apple.systempreferences"; };
+          run = [ "layout tiling" ];
         }
         {
           check-further-callbacks = false;
@@ -122,6 +127,11 @@
         alt-shift-k = "move up";
         alt-shift-l = "move right";
 
+        cmd-shift-h = "resize width -50";
+        cmd-shift-j = "resize height +50";
+        cmd-shift-k = "resize height -50";
+        cmd-shift-l = "resize width +50";
+
         alt-shift-0 = "balance-sizes";
 
         alt-b = "workspace B";
@@ -168,23 +178,6 @@
         cmd-shift-d = "resize width 1280";
 
         cmd-shift-semicolon = "mode service";
-        cmd-shift-g = "mode lock";
-      };
-
-      mode.lock.binding = {
-        enter = "mode main";
-        esc = "mode main";
-      };
-
-      mode.resize.binding = {
-        l = "resize width -50";
-        j = "resize height +50";
-        k = "resize height -50";
-        h = "resize width +50";
-        b = "balance-sizes";
-
-        enter = "mode main";
-        esc = "mode main";
       };
 
       mode.service.binding = {

@@ -19,6 +19,8 @@ vim.cmd 'set modifiable'
 -- Load core options first
 require 'core.options'
 
+pcall(require, 'impatient')
+
 -- Then initialize lazy.nvim
 require('lazy').setup('plugins', {
   root = vim.fn.stdpath 'data' .. '/lazy',
