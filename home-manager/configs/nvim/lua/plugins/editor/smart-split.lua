@@ -1,5 +1,6 @@
 return {
   'mrjones2014/smart-splits.nvim',
+  event = 'VimResized',
   config = function()
     require('smart-splits').setup {
       ignored_buftypes = {

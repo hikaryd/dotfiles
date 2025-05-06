@@ -41,6 +41,7 @@ in {
     cbfmt
     yq
     yamlfmt
+    ruff
     pylsp
     typstyle
     taplo

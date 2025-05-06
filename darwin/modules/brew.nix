@@ -18,7 +18,9 @@
       "1password-cli"
       "ghostty"
       "hiddenbar"
-      "apple-juice"
+      "swish"
+      "displays"
+      "dimentium/autoraise/autoraiseapp"
     ];
     brews = [
       "libiconv"
