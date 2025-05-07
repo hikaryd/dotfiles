@@ -2,35 +2,30 @@
   homebrew = {
     brewPrefix = "/opt/homebrew/bin";
     enable = true;
-    caskArgs.no_quarantine = true;
     onActivation.cleanup = "zap";
     global = {
       brewfile = true;
       autoUpdate = true;
     };
-    taps = [ ];
+    taps = [ "grishka/grishka" ];
     casks = [
-      "lm-studio"
-      "raycast"
       "telegram"
       "spotify"
-      "zappy"
       "1password-cli"
       "ghostty"
       "hiddenbar"
-      "swish"
-      "displays"
+      "drawio"
       "dimentium/autoraise/autoraiseapp"
+      "raycast"
+      "loop"
+      "grishka/grishka/neardrop"
     ];
     brews = [
-      "libiconv"
-      "switchaudio-osx"
-      "nowplaying-cli"
-      "fonttools"
       {
         name = "ollama";
         start_service = true;
       }
+      "chainloop-cli"
     ];
   };
 }

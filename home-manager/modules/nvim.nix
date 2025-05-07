@@ -1,35 +1,4 @@
-{ pkgs, ... }:
-let
-  treesitterWithGrammars = (pkgs.vimPlugins.nvim-treesitter.withPlugins (p: [
-    p.bash
-    p.comment
-    p.css
-    p.dockerfile
-    p.fish
-    p.gitattributes
-    p.gitignore
-    p.go
-    p.gomod
-    p.gowork
-    p.hcl
-    p.javascript
-    p.jq
-    p.json5
-    p.json
-    p.lua
-    p.make
-    p.markdown
-    p.nix
-    p.python
-    p.rust
-    p.toml
-    p.typescript
-    p.vue
-    p.yaml
-  ]));
-  pylsp = (pkgs.python312.withPackages
-    (ps: with ps; [ python-lsp-server pylsp-mypy ]));
-in {
+{ pkgs, ... }: {
   home.packages = with pkgs; [
     lua-language-server
     nodePackages.vscode-langservers-extracted
@@ -42,7 +11,6 @@ in {
     yq
     yamlfmt
     ruff
-    pylsp
     typstyle
     taplo
     luajit
@@ -54,7 +22,6 @@ in {
     shellcheck
     yamllint
     hadolint
-    hurl
     go
   ];
 
@@ -63,10 +30,8 @@ in {
     defaultEditor = true;
     viAlias = true;
     vimAlias = true;
-    withNodeJs = true;
-    withPython3 = true;
 
-    extraPackages = with pkgs; [ xdg-utils tree-sitter ];
+    extraPackages = with pkgs; [ tree-sitter ];
 
     extraLuaConfig = # lua
       ''
@@ -89,12 +54,6 @@ in {
         ensure_dir(site_dir .. '/pack')
         ensure_dir(site_dir .. '/after')
       '';
-
-    plugins = with pkgs.vimPlugins; [
-      treesitterWithGrammars
-      luasnip
-      friendly-snippets
-    ];
   };
 
   home.file.".config/nvim/" = {

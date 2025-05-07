@@ -1,60 +1,25 @@
-{ pkgs, system, lib, ... }: {
-  programs.carapace.enable = true;
-  programs.carapace.enableNushellIntegration = true;
-
-  # home.activation = {
-  #   addNushellToEtcShells = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-  #     if [ -f /etc/shells ]; then
-  #       nushell_path="$HOME/.nix-profile/bin/nu"
-  #       if ! grep -q "$nushell_path" /etc/shells; then
-  #         echo "Adding $nushell_path to /etc/shells"
-  #         echo "$nushell_path" | sudo tee -a /etc/shells
-  #       fi
-  #     fi
-  #   '';
-  # };
+{ pkgs, ... }: {
+  home.packages = with pkgs; [ zoxide ];
 
   programs.nushell = {
     enable = true;
     package = pkgs.nushell;
 
     environmentVariables = {
-      DOCKER_CONFIG = "/home/hikary/.docker/";
-      XDG_DATA_DIRS = "$HOME/.nix-profile/share:/usr/local/share:/usr/share";
-      PYTHONSTARTUP = "$HOME/.python/pythonrc";
-      LESSHISTFILE = "$XDG_STATE_HOME/less/history";
-      XDG_CURRENT_DESKTOP = "wlroots";
-      LANG = "en_US.UTF-8";
       EDITOR = "nvim";
       VISUAL = "nvim";
-      SHELL = "${pkgs.nushell}/bin/nu";
-
-      _JAVA_AWT_WM_NONEREPARENTING = "1";
-      DISABLE_QT5_COMPAT = "0";
-      ANKI_WAYLAND = "1";
-      QT_QPA_PLATFORMTHEME = "qt5ct";
-      QT_STYLE_OVERRIDE = "kvantum";
-      AMD_VULKAN_ICD = "RADV";
-      LIBVA_DRIVER_NAME = "radeonsi";
-      XDG_SESSION_TYPE = "wayland";
-      GDK_BACKEND = "wayland";
-      MOZ_ENABLE_WAYLAND = "1";
-      SDL_VIDEODRIVER = "wayland";
-      CLUTTER_BACKEND = "wayland";
-      ELECTRON_OZONE_PLATFORM_HINT = "wayland";
-      QT_QPA_PLATFORM = "wayland;xcb";
-      QT_AUTO_SCREEN_SCALE_FACTOR = "1";
-      QT_WAYLAND_DISABLE_WINDOWDECORATION = "1";
-      TERM = "xterm-256color";
     };
 
     shellAliases = {
       v = "nvim";
       ssh = ''env TERM="xterm-256color" ssh'';
-      # cat = "bat --style=plain";
+      cat = "bat --style=plain";
       ".." = "cd ..";
       l = "ls";
       cd = "z";
+
+      nu-open = "open";
+      open = "^open";
       parse_dir =
         "repomix --ignore '*.lock,docs/*,.git/*,.idea/*,.vscode/*,__pycache__'";
       vs = "overlay use .venv/bin/activate.nu";
@@ -101,12 +66,8 @@
       gta = "git tag -a";
 
       # Nix
-      hms = if (system == "aarch64-darwin") then
-        "darwin-rebuild switch --flake '.#hikary-mac' --impure -v"
-      else
-        "home-manager switch --flake '.#hikary' --impure";
-      hmc =
-        "do { nix-collect-garbage -d; home-manager expire-generations '-30 days' }";
+      hms = "nix run nix-darwin -- switch --flake '.#hikary' --impure -v";
+      hmc = "nix-collect-garbage -d";
     };
 
     extraEnv = ''
@@ -116,35 +77,6 @@
     '';
 
     extraConfig = ''
-      def --env setup_path [] {
-        let base_paths = [
-          "/usr/local/sbin"
-          "/usr/local/bin"
-          ($env.HOME + "/.local/bin")
-          ($env.HOME + "/.local/share/bin")
-          "/usr/bin"
-          ($env.HOME + "/.nix-profile/bin")
-          "/nix/var/nix/profiles/default/bin"
-          "/run/current-system/sw/bin"
-          ($env.HOME + "/.cargo/bin")
-          ($env.HOME + "/.config/carapace/bin")
-          "/opt/homebrew/bin"
-          "/opt/homebrew/sbin" 
-          "/etc/profiles/per-user/tronin.egor/bin" 
-          "/run/current-system/sw/bin" 
-          "/nix/var/nix/profiles/default/bin" 
-          "/usr/local/bin" 
-          "/usr/bin:/bin" 
-          "/usr/sbin:/sbin"
-        ]
-        let joined = ($base_paths | uniq | str join ":")
-        $env.PATH = $joined
-      }
-      setup_path
-
-      # $env.OPENROUTER_API_KEY = (open ($env.HOME + "/creds/open_router") | str trim)
-      # $env.GOOGLE_API_KEY = (open ($env.HOME + "/creds/gemini") | str trim)
-
       def extract [file: string] {
         if ($file | is-empty) {
           echo "Usage: extract <file>"
@@ -170,38 +102,6 @@
         }
       }
 
-      def git-cleanup [] {
-        let branches = (
-          run-external "git" "branch" "--merged" "main"
-          | lines
-          | where { |it| not ($it | str contains "* main") }
-        )
-        if not ($branches | is-empty) {
-          $branches | each { |branch| run-external "git" "branch" "-d" ($branch | str trim) }
-        }
-      }
-
-      def git-recent [] {
-        run-external "git" "for-each-ref" "--sort=-committerdate" "refs/heads/" "--format=%(refname:short)"
-        | lines
-        | first 5
-      }
-
-      def git-contrib [] {
-        run-external "git" "shortlog" "-sn" "--all" "--no-merges"
-      }
-
-      def docker-cleanup [] {
-        run-external "docker" "system" "prune" "-af"
-        run-external "docker" "volume" "prune" "-f"
-      }
-
-      def docker-stop-all [] {
-        let containers = (run-external "docker" "ps" "-q" | lines)
-        if not ($containers | is-empty) {
-          $containers | each { |id| run-external "docker" "stop" $id }
-        }
-      }
 
       $env.config = {
         show_banner: false
@@ -227,6 +127,4 @@
       source ~/.cache/zoxide/init.nu
     '';
   };
-
-  home.packages = with pkgs; [ nu_scripts zoxide ];
 }

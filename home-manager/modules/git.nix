@@ -58,10 +58,6 @@
 
   xdg.configFile = {
     "git/gitk" = { source = ../configs/git/gitk; };
-    "git/scripts/generate_commit_message.py" = {
-      executable = true;
-      source = ../configs/git/scripts/generate_commit_message.py;
-    };
     "git/hooks/prepare-commit-msg" = {
       executable = true;
       text = ''
@@ -70,7 +66,7 @@
         export OPENROUTER_API_KEY=$(cat ~/creds/open_router)
         export GOOGLE_API_KEY=$(cat ~/creds/gemini)
 
-        COMMIT_MSG=$(${pkgs.python312}/bin/python ${config.xdg.configHome}/git/scripts/generate_commit_message.py)
+        COMMIT_MSG=$(${../../scripts/ai_helper} --mode commit)
         if [ -n "$COMMIT_MSG" ]; then
           echo "$COMMIT_MSG" > "$COMMIT_MSG_FILE"
         fi

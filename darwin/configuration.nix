@@ -22,8 +22,6 @@
       "/opt/homebrew/bin"
       "/Users/${user}/.local/bin"
       "/Users/${user}/.cargo/bin"
-      "/Users/${user}/Library/pnpm"
-      "/Users/${user}/.bun/bin"
       "/Users/${user}/.lmstudio/bin"
     ];
     pathsToLink = [ "/Applications" ];
