@@ -1,6 +1,4 @@
 { ... }: {
-  # home.packages = with pkgs; [ opentabletdriver ];
-
   home.file.".config/OpenTabletDriver/Plugins/" = {
     source = ../configs/otd/Plugins;
     recursive = true;

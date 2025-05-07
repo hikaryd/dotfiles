@@ -1,20 +1,18 @@
-{ pkgs, system, ... }: {
+{ pkgs, ... }: {
   programs.ghostty = {
     enable = true;
     installBatSyntax = false;
-    package =
-      if system == "x86_64-linux" then pkgs.ghostty else pkgs.emptyDirectory;
+    package = pkgs.emptyDirectory;
     settings = {
       background-opacity = 0.8;
       minimum-contrast = 1.1;
       font-size = 12;
       bold-is-bright = true;
 
-      # command = "${../../scripts/tmux-session.sh}";
-
       macos-titlebar-style = "tabs";
       background-blur-radius = 20;
       background-blur = true;
+      shell-integration = "detect";
       keybind = [
         "ctrl+v=new_split:auto"
         "ctrl+h=goto_split:left"

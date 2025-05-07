@@ -1,298 +1,304 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
+"""
+ai_helper_ollama.py – универсальный CLI‑помощник для локальной Ollama‑инстанции (REST API http://localhost:11434).
+Поддерживает три режима:
+
+  • **mr**        – формирование Title/Description Merge Request по Git‑diff
+  • **commit**    – генерация Conventional Commit‑сообщения на основе staged diff
+  • **refactor**  – исправление текста из буфера обмена
+
+Перед использованием убедитесь, что Ollama запущена (`ollama serve`) и
+загружена нужная модель (по умолчанию `OLLAMA_MODEL`, например `qwen3:4b`).
+
+Запуск:
+    python ai_helper_ollama.py --mode mr
+    python ai_helper_ollama.py --mode commit
+    python ai_helper_ollama.py --mode refactor
+"""
+
+from __future__ import annotations
 
 import argparse
 import json
 import os
+import re
 import subprocess
 import sys
 import urllib.error
 import urllib.request
-from typing import Optional, Dict, Any
+from typing import Optional
 
-MR_PROMPT_TEMPLATE = (
-    """
-    # РОЛЬ: Ты опытный AI-ассистент, специализирующийся на анализе кода и подготовке Merge Request (MR). "
-    "Твоя задача – помочь разработчикам быстро понять суть изменений и ускорить процесс ревью.
-"
-    "# ЗАДАЧА: На основе предоставленного diff изменений между ветками Git, создай информативный заголовок (Title) и "
-    "структурированное подробное описание (Description) для Merge Request. Ответ должен быть полностью на русском языке.
-"
-    "# ВХОДНЫЕ ДАННЫЕ (Diff для анализа):
+###############################################################################
+# PROMPTS (English text; response must be in Russian)
+###############################################################################
+
+MR_PROMPT_TEMPLATE = r"""
+# ROLE: You are an experienced AI assistant specialized in code analysis and Merge Request creation.
+# TASK: Based on the provided Git diff, create an informative Title and a structured, detailed Description for a Merge Request. Please answer in Russian.
+
+# INPUT (diff for analysis):
 {diff}
-"
-    "# ИНСТРУКЦИИ ПО СОЗДАНИЮ MR:
-"
-    "## 1. Заголовок (Title):
-"
-    "* **Краткость и ясность:** Сформулируй лаконично, не более 72 символов.
-"
-    "* **Информативность:** Четко отрази основное изменение или цель данного MR.
-"
-    "* **Формат (Рекомендованный):** Используй префиксы, указывающие на *основной* тип изменений "
-    "(по аналогии с Conventional Commits):
-"
-    "    * `feat:` для новой функциональности.
-"
-    "    * `fix:` для исправления ошибки.
-"
-    "    * `refactor:` для рефакторинга без изменения поведения.
-"
-    "    * `perf:` для улучшения производительности.
-"
-    "    * `docs:` для изменений только в документации.
-"
-    "    * `test:` для добавления/изменения тестов.
-"
-    "    * `chore:` для рутинных задач (обновление зависимостей, конфигов и т.п.).
-"
-    "  *Пример:* `feat(api): Добавить эндпоинт для получения профиля пользователя`
-"
-    "  *Пример:* `fix: Исправить расчет скидки для оптовых заказов`
 
-"
-    "## 2. Описание (Description):
-"
-    "* **Цель:** Предоставить достаточный контекст, объяснить суть изменений и помочь ревьюерам эффективно проверить код.
-"
-    "* **Структура:** Используй Markdown и четкие разделы:
-"
-    "  **Что сделано:**
-"
-    "    * Краткое резюме внесенных изменений.
-"
-    "    * Выдели *все* основные типы изменений, обнаруженные в diff: `feat`, `fix`, `refactor`, `perf`, `docs`, `test`, `chore`, `style`.
-"
-    "  **Зачем это сделано:**
-"
-    "    * Объясни мотивацию или бизнес-требование.
-"
-    "  **Как проверить (опционально):**
-"
-    "    * Шаги для тестирования или проверки.
-"
-    "  **Дополнительные замечания (опционально):**
-"
-    "    * Риски, нерешенные вопросы, моменты для внимания.
+# INSTRUCTIONS:
 
-"
-    "* **Важно:** Фокусируйся на смысле изменений.
-"
-    "# ФОРМАТ ВЫВОДА (строго соблюдать):
-"
-    "Title: <сгенерированный заголовок>
-"
-    "Description: <сгенерированное описание с использованием Markdown и предложенной структуры>
-"
-    """"
-)
+## 1. Title:
+* **Brevity:** No more than 72 characters.
+* **Clarity:** Convey the main change or purpose.
+* **Format (Conventional Commits):** feat:, fix:, refactor:, perf:, docs:, test:, chore:.
+
+## 2. Description:
+* **What was done:** Brief summary and list all change types found: feat, fix, refactor, perf, docs, test, chore, style.
+* **Why it was done:** Motivation or business requirement.
+* **How to verify (optional):** Testing steps.
+* **Additional notes (optional):** Risks, open questions.
+
+# OUTPUT FORMAT (strict):
+Title: <generated title>
+Description: <generated description>
+"""
+
+COMMIT_MESSAGE_PROMPT = r"""
+You are an expert in writing commit messages in Russian, strictly following Conventional Commits rules.
+Create a commit message in Russian based on the provided Git diff.
+
+INPUT:
+diff:
+```
+{diff}
+```
+
+GENERAL RULES:
+* Entirely in Russian.
+* Two parts: title and detailed description, separated by an empty line.
+* Follow Conventional Commits types.
+
+1. Title:
+* **Content:** High-level summary.
+* **Format:** `<scope>: <description>` (scope optional).
+* **Mood:** Imperative.
+* **Length:** ≤ 50 characters.
+* **Capitalization:** First letter uppercase, no period at end.
+
+2. Body:
+* Explain what and why, not how.
+* After title with one blank line.
+* May include bullet points.
+
+Types: feat, fix, docs, style, refactor, perf, test, build, ci, chore.
+
+OUTPUT (strict):
+<Title>
+
+<Body>
+"""
 
 REFRACTOR_PROMPT_TEMPLATE = (
-    "Проанализируй этот текст, найди и исправь ошибки. "
-    "В ответ отправь только сам текст, не добавляя комментариев.\n\n"
-    "{text}"
+    'Проанализируй этот текст, найди и исправь ошибки. '
+    'Верни только исправленный текст без комментариев.\n\n{text}'
 )
+
+###############################################################################
+# UTILS
+###############################################################################
+
+
+def remove_think(text: str) -> str:
+    """Remove any <think>...</think> blocks from AI response."""
+    return re.sub(r'<think>.*?</think>', '', text, flags=re.DOTALL)
 
 
 def notify(title: str, message: str) -> None:
-    """
-    Отправляет системное уведомление на Linux или macOS.
-    """
-    if sys.platform == "darwin":
-        subprocess.run([
-            "osascript", "-e",
-            f'display notification "{message}" with title "{title}"'
-        ])
+    if sys.platform == 'darwin':
+        subprocess.run(
+            [
+                'osascript',
+                '-e',
+                f'display notification "{message}" with title "{title}"',
+            ]
+        )
     else:
-        subprocess.run(["notify-send", title, message])
+        subprocess.run(
+            ['notify-send', '--app-name', 'AI Helper', title, message]
+        )
 
 
 def get_clipboard_text() -> str:
-    """
-    Возвращает текст из буфера обмена (wl-paste или pbpaste).
-    """
+    cmd = ['pbpaste'] if sys.platform == 'darwin' else ['wl-paste']
     try:
-        if sys.platform == "darwin":
-            return subprocess.check_output(["pbpaste"], encoding="utf-8")
-        return subprocess.check_output(["wl-paste"], encoding="utf-8")
+        return subprocess.check_output(cmd, encoding='utf-8')
     except subprocess.CalledProcessError:
-        return ""
+        return ''
 
 
 def set_clipboard_text(text: str) -> None:
-    """
-    Копирует текст в буфер обмена (wl-copy или pbcopy).
-    """
-    if sys.platform == "darwin":
-        proc = subprocess.Popen(["pbcopy"], stdin=subprocess.PIPE)
-    else:
-        proc = subprocess.Popen(["wl-copy"], stdin=subprocess.PIPE)
-    proc.communicate(input=text.encode("utf-8"))
+    cmd = ['pbcopy'] if sys.platform == 'darwin' else ['wl-copy']
+    proc = subprocess.Popen(cmd, stdin=subprocess.PIPE)
+    proc.communicate(input=text.encode('utf-8'))
+
+
+###############################################################################
+# OLLAMA COMMUNICATION
+###############################################################################
 
 
 def send_request(
-    api_key: str,
-    prompt: str,
-    api: str,
-    model: Optional[str] = None
-) -> Optional[Dict[str, Any]]:
-    """
-    Отправляет запрос к выбранному API (openrouter или gemini).
-    """
-    if api == "openrouter":
-        url = "https://openrouter.ai/api/v1/chat/completions"
-        payload = {
-            "model": model or os.getenv("OPENROUTER_MODEL", "google/gemini-2.0-flash-001"),
-            "messages": [{"role": "user", "content": prompt}]
-        }
-        headers = {
-            "Content-Type": "application/json",
-            "Authorization": f"Bearer {api_key}"
-        }
-    else:
-        url = (
-            f"https://generativelanguage.googleapis.com/v1beta/models/"
-            f"gemini-2.5-flash-preview-04-17:generateContent?key={api_key}"
-        )
-        payload = {"contents": [{"parts": [{"text": prompt}]}]}
-        headers = {"Content-Type": "application/json; charset=utf-8"}
+    prompt: str, model: Optional[str] = None, host: Optional[str] = None
+) -> Optional[str]:
+    model = model or os.getenv('OLLAMA_MODEL', 'qwen3:4b')
+    host = host or os.getenv('OLLAMA_HOST', 'http://localhost:11434')
+    url = f'{host.rstrip("/")}/api/chat'
 
-    data = json.dumps(payload).encode("utf-8")
-    req = urllib.request.Request(url, data=data, headers=headers, method="POST")
+    payload = {
+        'model': model,
+        'messages': [{'role': 'user', 'content': prompt}],
+        'stream': False,
+    }
+    data = json.dumps(payload).encode('utf-8')
+    headers = {'Content-Type': 'application/json'}
+
+    req = urllib.request.Request(url, data=data, headers=headers, method='POST')
     try:
         with urllib.request.urlopen(req) as resp:
-            return json.loads(resp.read().decode("utf-8"))
+            resp_json = json.loads(resp.read().decode('utf-8'))
+            return resp_json.get('message', {}).get('content', '').strip()
     except urllib.error.HTTPError as err:
-        notify(f"AI Helper ({api.title()})", f"HTTP Error: {err.code} {err.reason}\n{err.read().decode()}")
+        notify(
+            'AI Helper (Ollama)',
+            f'HTTP Error: {err.code} {err.reason}\n{err.read().decode()}',
+        )
     except urllib.error.URLError as err:
-        notify(f"AI Helper ({api.title()})", f"URL Error: {err.reason}")
+        notify('AI Helper (Ollama)', f'URL Error: {err.reason}')
     return None
 
 
-def extract_answer(response: Dict[str, Any], api: str) -> str:
-    """
-    Извлекает текстовый ответ из словаря.
-    """
-    if api == "gemini":
-        candidates = response.get("candidates")
-        if candidates:
-            parts = candidates[0].get("content", {}).get("parts", [])
-            return "".join(p.get("text", "") for p in parts).strip()
-    else:
-        choices = response.get("choices")
-        if choices:
-            return choices[0]["message"]["content"].strip()
-    return response.get("output", "") or response.get("content", "") or ""
+###############################################################################
+# GIT HELPERS
+###############################################################################
 
 
-def handle_mr(api: str) -> None:
-    """
-    Генерация MR на основе diff.
-    """
-    api_key = (
-        os.getenv("OPENROUTER_API_KEY") if api == "openrouter"
-        else os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
+def git_current_branch() -> str:
+    return subprocess.check_output(
+        ['git', 'rev-parse', '--abbrev-ref', 'HEAD'], encoding='utf-8'
+    ).strip()
+
+
+def git_diff(refspec: str) -> str:
+    return subprocess.check_output(['git', 'diff', refspec], encoding='utf-8')
+
+
+def git_diff_cached() -> str:
+    return subprocess.check_output(
+        [
+            'git',
+            '--no-pager',
+            '-c',
+            'delta.enable=false',
+            'diff',
+            '--cached',
+            '--text',
+        ],
+        encoding='utf-8',
     )
-    if not api_key:
-        notify("AI Helper", f"{api.upper()}_API_KEY не установлена.")
-        sys.exit(1)
 
-    target = input("Введите ветку, в которую делается MR: ").strip()
+
+###############################################################################
+# MODE HANDLERS
+###############################################################################
+
+
+def handle_mr() -> None:
+    target = input('Enter target branch for MR: ').strip()
     if not target:
-        print("Целевая ветка не указана. Выход.")
+        print('No target branch specified. Exit.')
         sys.exit(1)
 
     try:
-        current = subprocess.check_output(["git", "rev-parse", "--abbrev-ref", "HEAD"], encoding="utf-8").strip()
-        diff = subprocess.check_output(["git", "diff", f"{target}..{current}"], encoding="utf-8")
+        diff = git_diff(f'{target}..{git_current_branch()}')
     except subprocess.CalledProcessError as err:
-        notify("AI Helper", f"Ошибка Git: {err}")
+        notify('AI Helper', f'Git error: {err}')
         sys.exit(1)
 
     if not diff.strip():
-        notify("AI Helper", "Нет изменений между ветками.")
+        notify('AI Helper', 'No changes to compare.')
         sys.exit(0)
 
     prompt = MR_PROMPT_TEMPLATE.format(diff=diff)
-    print("Отправка запроса к AI...")
-    resp = send_request(api_key, prompt, api)
-    if not resp:
-        print("Ошибка получения ответа от AI.")
-        sys.exit(1)
-
-    answer = extract_answer(resp, api)
+    answer = send_request(prompt)
     if not answer:
-        print("Не удалось извлечь ответ.")
+        print('Failed to get a response.')
         sys.exit(1)
+    answer = remove_think(answer)
 
-    print(answer)
+    print(f'\n{answer}\n')
     set_clipboard_text(answer)
-    notify("AI Helper", "Ответ скопирован в буфер обмена.")
+    notify('AI Helper', 'MR description copied.')
 
 
-def handle_refactor(api: str) -> None:
-    """
-    Рефакторинг текста из буфера обмена.
-    """
-    api_key = (
-        os.getenv("OPENROUTER_API_KEY") if api == "openrouter"
-        else os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
-    )
-    if not api_key:
-        notify("AI Helper", f"{api.upper()}_API_KEY не установлена.")
+def handle_commit() -> None:
+    diff = git_diff_cached()
+    if not diff.strip():
+        print('No staged changes.')
+        sys.exit(0)
+
+    prompt = COMMIT_MESSAGE_PROMPT.format(diff=diff)
+    answer = send_request(prompt)
+    if not answer:
+        print('Failed to get a response.')
         sys.exit(1)
+    answer = remove_think(answer)
 
+    lines = answer.splitlines()
+    title = lines[0]
+    body = '\n'.join(lines[1:]).strip()
+    commit_msg = f'{title}\n\n{body}' if body else title
+
+    print(f'\n{commit_msg}\n')
+    set_clipboard_text(commit_msg)
+    notify('AI Helper', 'Commit message copied.')
+
+
+def handle_refactor() -> None:
     text = get_clipboard_text()
     if not text:
-        notify("AI Helper", "Буфер обмена пуст.")
+        notify('AI Helper', 'Clipboard is empty.')
         sys.exit(1)
 
     prompt = REFRACTOR_PROMPT_TEMPLATE.format(text=text)
-    notify("AI Helper", "Отправка текста на рефакторинг...")
-    resp = send_request(api_key, prompt, api)
-    if not resp:
-        print("Ошибка получения ответа от AI.")
-        sys.exit(1)
-
-    answer = extract_answer(resp, api)
+    answer = send_request(prompt)
     if not answer:
-        print("Не удалось извлечь ответ.")
+        print('Failed to get a response.')
         sys.exit(1)
+    answer = remove_think(answer)
 
     set_clipboard_text(answer)
-    notify("AI Helper", "Ответ скопирован в буфер обмена.")
+    notify('AI Helper', 'Refactored text copied.')
+
+
+###############################################################################
+# CLI
+###############################################################################
 
 
 def parse_args() -> argparse.Namespace:
-    """
-    Парсит аргументы командной строки.
-
-    --mode: 'mr' для Merge Request или 'refactor' для рефакторинга.
-    --api: 'openrouter' или 'gemini'.
-    """
-    parser = argparse.ArgumentParser(description="AI Helper")
+    parser = argparse.ArgumentParser(description='AI Helper (Ollama edition)')
     parser.add_argument(
-        "--mode",
-        choices=["mr", "refactor"],
+        '--mode',
+        choices=['mr', 'commit', 'refactor'],
         required=True,
-        help="Режим работы: mr или refactor"
-    )
-    parser.add_argument(
-        "--api",
-        choices=["openrouter", "gemini"],
-        default="openrouter",
-        help="API для использования: openrouter или gemini"
+        help='Mode: mr | commit | refactor',
     )
     return parser.parse_args()
 
 
 def main() -> None:
     args = parse_args()
-    if args.mode == "mr":
-        handle_mr(args.api)
+    if args.mode == 'mr':
+        handle_mr()
+    elif args.mode == 'commit':
+        handle_commit()
     else:
-        handle_refactor(args.api)
+        handle_refactor()
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

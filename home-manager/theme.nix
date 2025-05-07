@@ -1,13 +1,10 @@
-{ pkgs, inputs, lib, ... }: {
+{ pkgs, inputs, ... }: {
   imports = [ inputs.stylix.homeManagerModules.stylix ];
   home.packages = with pkgs; [
     noto-fonts
     noto-fonts-emoji
-    bemoji
     nerd-fonts.jetbrains-mono
-
     base16-schemes
-    catppuccin-gtk
   ];
 
   fonts.fontconfig.enable = true;
@@ -17,9 +14,9 @@
     autoEnable = true;
     polarity = "dark";
     base16Scheme = "${pkgs.base16-schemes}/share/themes/catppuccin-mocha.yaml";
-    image = lib.mkIf (pkgs.stdenv.isDarwin) ../wallpapers/keyboard.png;
+    image = ../wallpapers/keyboard.png;
 
-    fonts = lib.mkIf (!pkgs.stdenv.isDarwin) {
+    fonts = {
       serif = {
         package = pkgs.nerd-fonts.jetbrains-mono;
         name = "Jetbrains Mono";
@@ -44,12 +41,9 @@
       waybar.enable = false;
       hyprlock.enable = false;
       dunst.enable = false;
-      qt = {
-        enable = if !pkgs.stdenv.isDarwin then true else false;
-        platform = "qtct";
-      };
+      mako.enable = false;
     };
-    cursor = lib.mkIf (pkgs.stdenv.isDarwin) {
+    cursor = {
       size = 23;
       name = "phinger-cursors-light";
       package = pkgs.phinger-cursors;

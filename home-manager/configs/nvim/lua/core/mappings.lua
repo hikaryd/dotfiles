@@ -12,9 +12,10 @@ map('n', '<Esc>', '<cmd>noh<CR>', 'Clear search highlights')
 map('n', 'v$', 'v$h')
 
 -- File Explorer
-map('n', '<space>e', ':Triptych<CR>')
+map('n', '<space>e', ':Yazi<CR>')
 
--- map('n', '<leader>tt', ':BufTermEnter<CR>')
+-- DocString gen
+map('n', '<space>dg', ':DocscribeGenerate<CR>')
 
 -- Window Management
 map('n', '<A-h>', require('smart-splits').resize_left)

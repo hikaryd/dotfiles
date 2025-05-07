@@ -5,6 +5,7 @@
   programs.starship = {
     enable = true;
     enableFishIntegration = true;
+    enableZshIntegration = true;
     settings = {
       format =
         "$directory$all$shell$line_break$env_var$username$sudo$character";

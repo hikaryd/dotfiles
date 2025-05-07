@@ -118,13 +118,6 @@
       tmuxPlugins.yank
       tmuxPlugins.tmux-thumbs
       {
-        # plugin = (pkgs.tmuxPlugins.resurrect.overrideAttrs (oldAttrs: {
-        #   postFixup = (oldAttrs.postFixup or "") + ''
-        #     rm -rf $out/share/tmux-plugins/resurrect/tests
-        #     rm -f $out/share/tmux-plugins/resurrect/run_tests
-        #   '';
-        # }));
-
         plugin = pkgs.tmuxPlugins.resurrect;
         extraConfig = "set -g @resurrect-strategy-nvim 'session'";
       }

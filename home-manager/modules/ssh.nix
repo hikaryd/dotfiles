@@ -16,5 +16,4 @@ in {
       IdentityAgent "${agent}"
     '';
   };
-  home.packages = with pkgs; [ mosh ];
 }
