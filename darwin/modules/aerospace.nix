@@ -1,6 +1,6 @@
 { pkgs, ... }: {
   services.aerospace = {
-    enable = false;
+    enable = true;
     package = pkgs.aerospace;
 
     settings = {
@@ -19,18 +19,12 @@
 
       accordion-padding = 14;
 
-      default-root-container-layout = "tiles";
+      default-root-container-layout = "tiles"; # bsp-подобная раскладка
       default-root-container-orientation = "horizontal";
 
-      exec-on-workspace-change = [
-        "/bin/zsh"
-        "-c"
-        "${pkgs.sketchybar}/bin/sketchybar --trigger aerospace_workspace_changed FOCUSED_WORKSPACE=$AEROSPACE_FOCUSED_WORKSPACE"
-      ];
+      exec-on-workspace-change = [ ];
 
-      on-focus-changed = [
-        "exec-and-forget ${pkgs.sketchybar}/bin/sketchybar --trigger front_app_switched"
-      ];
+      on-focus-changed = [ "move-mouse window-lazy-center" ];
 
       gaps = {
         outer = {
@@ -40,13 +34,18 @@
           top = 20;
         };
         inner = {
-          horizontal = 25;
-          vertical = 25;
+          horizontal = 12;
+          vertical = 12;
         };
       };
 
       on-window-detected = [
-        ####### Floating Windows #######
+        ####### Floating Windows (manage=off) #######
+        {
+          check-further-callbacks = false;
+          "if" = { app-id = "System Settings"; };
+          run = [ "layout floating" ];
+        }
         {
           check-further-callbacks = false;
           "if" = { app-id = "com.apple.finder"; };
@@ -54,7 +53,60 @@
         }
         {
           check-further-callbacks = false;
-          "if" = { app-id = "hossin.asaadi.V2Box"; };
+          "if" = { app-id = "Orion"; };
+          run = [ "layout floating" ];
+        }
+        {
+          check-further-callbacks = false;
+          "if" = { app-id = "Arc"; };
+          run = [ "layout floating" ];
+        }
+        {
+          check-further-callbacks = false;
+          "if" = { app-id = "System Preferences"; };
+          run = [ "layout floating" ];
+        }
+        {
+          check-further-callbacks = false;
+          "if" = { app-id = "App Store"; };
+          run = [ "layout floating" ];
+        }
+        {
+          check-further-callbacks = false;
+          "if" = { app-id = "Activity Monitor"; };
+          run = [ "layout floating" ];
+        }
+        {
+          check-further-callbacks = false;
+          "if" = { app-id = "KeePassXC"; };
+          run = [ "layout floating" ];
+        }
+        {
+          check-further-callbacks = false;
+          "if" = { app-id = "Calculator"; };
+          run = [ "layout floating" ];
+        }
+        {
+          check-further-callbacks = false;
+          "if" = { app-id = "Dictionary"; };
+          run = [ "layout floating" ];
+        }
+        {
+          check-further-callbacks = false;
+          "if" = { app-id = "mpv"; };
+          run = [ "layout floating" ];
+        }
+        {
+          check-further-callbacks = false;
+          "if" = { window-title-regex-substring = "Software Update"; };
+          run = [ "layout floating" ];
+        }
+        {
+          check-further-callbacks = false;
+          "if" = {
+            app-id = "System Information";
+            window-title-regex-substring = "About This Mac";
+          };
           run = [ "layout floating" ];
         }
         {
@@ -62,23 +114,13 @@
           "if" = { app-id = "com.cisco.secureclient.gui"; };
           run = [ "layout floating" ];
         }
-        {
-          check-further-callbacks = false;
-          "if" = { app-id = "com.apple.systempreferences"; };
-          run = [ "layout tiling" ];
-        }
-        {
-          check-further-callbacks = false;
-          "if" = { app-id = "org.pqrs.Karabiner-Elements.Settings"; };
-          run = [ "layout floating" ];
-        }
+
         ####### Specific spaces for apps #######
         {
           check-further-callbacks = false;
           "if" = { app-id = "com.mitchellh.ghostty"; };
-          run = [ "move-node-to-workspace D" ];
+          run = [ "layout floating" "move-node-to-workspace D" ];
         }
-
         {
           check-further-callbacks = false;
           "if" = { app-id = "company.thebrowser.Browser"; };
@@ -104,13 +146,29 @@
           "if" = { app-id = "com.spotify.client"; };
           run = [ "move-node-to-workspace E" ];
         }
+        {
+          check-further-callbacks = false;
+          "if" = { app-id = "com.openai.chat"; };
+          run = [ "move-node-to-workspace V" ];
+        }
+        {
+          check-further-callbacks = false;
+          "if" = { app-id = "kontur.talk"; };
+          run = [ "move-node-to-workspace P" ];
+        }
       ];
 
+      workspace-to-monitor-force-assignment = {
+        "B" = "main";
+        "E" = "main";
+        "M" = "main";
+        "D" = "main";
+        "V" = [ "secondary" "dell" ];
+        "P" = "main";
+        "O" = "main";
+      };
+
       mode.main.binding = {
-        cmd-alt-h = [ ];
-
-        alt-comma = "layout accordion horizontal vertical";
-
         alt-shift-minus = "resize smart -50";
         alt-shift-equal = "resize smart +50";
 
@@ -127,11 +185,6 @@
         alt-shift-k = "move up";
         alt-shift-l = "move right";
 
-        cmd-shift-h = "resize width -50";
-        cmd-shift-j = "resize height +50";
-        cmd-shift-k = "resize height -50";
-        cmd-shift-l = "resize width +50";
-
         alt-shift-0 = "balance-sizes";
 
         alt-b = "workspace B";
@@ -140,6 +193,7 @@
         alt-d = "workspace D";
         alt-v = "workspace V";
         alt-p = "workspace P";
+        alt-o = "workspace O";
 
         alt-shift-b = [
           "move-node-to-workspace B"
@@ -161,7 +215,6 @@
           "move-node-to-workspace V"
           "exec-and-forget ${pkgs.sketchybar}/bin/sketchybar --trigger space_windows_change"
         ];
-
         alt-shift-p = [
           "move-node-to-workspace P"
           "exec-and-forget ${pkgs.sketchybar}/bin/sketchybar --trigger space_windows_change"
@@ -194,4 +247,3 @@
     };
   };
 }
-

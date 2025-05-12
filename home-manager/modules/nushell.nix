@@ -1,18 +1,24 @@
-{ pkgs, ... }: {
-  home.packages = with pkgs; [ zoxide ];
-
+{ pkgs, user, lib, ... }: {
   programs.nushell = {
     enable = true;
-    package = pkgs.nushell;
 
     environmentVariables = {
       EDITOR = "nvim";
       VISUAL = "nvim";
+      PATH =
+        "/Users/${user}/.nix-profile/bin:/etc/profiles/per-user/${user}/bin:/run/current-system/sw/bin:/nix/var/nix/profiles/default/bin:/usr/local/bin:/opt/homebrew/bin:/Users/${user}/.local/bin:/Users/${user}/.cargo/bin:/Users/${user}/.lmstudio/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin";
+      ENV_CONVERSIONS = {
+        PATH = {
+          from_string =
+            lib.hm.nushell.mkNushellInline "{|s| $s | split row (char esep) }";
+          to_string =
+            lib.hm.nushell.mkNushellInline "{|v| $v | str join (char esep) }";
+        };
+      };
     };
 
     shellAliases = {
       v = "nvim";
-      ssh = ''env TERM="xterm-256color" ssh'';
       cat = "bat --style=plain";
       ".." = "cd ..";
       l = "ls";
@@ -66,7 +72,7 @@
       gta = "git tag -a";
 
       # Nix
-      hms = "nix run nix-darwin -- switch --flake '.#hikary' --impure -v";
+      hms = "darwin-rebuild switch --flake '.#hikary' --impure -v";
       hmc = "nix-collect-garbage -d";
     };
 

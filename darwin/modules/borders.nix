@@ -1,12 +1,11 @@
 { pkgs, ... }: {
   services.jankyborders = {
-    enable = false;
+    enable = true;
     package = pkgs.jankyborders;
-
-    style = "round";
-    width = 3.0;
+    width = 5.0;
+    active_color = "gradient(top_left=0xffDDB6F2,bottom_right=0xff96CDFB)";
+    inactive_color = "gradient(top_right=0x9992B3F5,bottom_left=0x9992B3F5)";
     hidpi = true;
-    active_color = "0xffac8fd4";
-    inactive_color = "2a2a2e";
+    ax_focus = true;
   };
 }
