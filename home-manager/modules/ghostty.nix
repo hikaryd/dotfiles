@@ -8,6 +8,7 @@
       minimum-contrast = 1.1;
       font-size = 12;
       bold-is-bright = true;
+      command = "/etc/profiles/per-user/user/bin/nu";
 
       macos-titlebar-style = "tabs";
       background-blur-radius = 20;

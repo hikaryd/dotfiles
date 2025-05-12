@@ -5,7 +5,7 @@ return {
     require('docscribe').setup {
       llm = {
         provider = 'ollama',
-        model = 'qwen3:4b',
+        model = 'slimsag/starchat2:15b-v0.1-f16-q4_0',
       },
     }
   end,

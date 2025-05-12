@@ -8,7 +8,7 @@ ai_helper_ollama.py – универсальный CLI‑помощник для
   • **refactor**  – исправление текста из буфера обмена
 
 Перед использованием убедитесь, что Ollama запущена (`ollama serve`) и
-загружена нужная модель (по умолчанию `OLLAMA_MODEL`, например `qwen3:4b`).
+загружена нужная модель (по умолчанию `OLLAMA_MODEL`, например `phi4-reasoning:plus`).
 
 Запуск:
     python ai_helper_ollama.py --mode mr
@@ -144,7 +144,7 @@ def set_clipboard_text(text: str) -> None:
 def send_request(
     prompt: str, model: Optional[str] = None, host: Optional[str] = None
 ) -> Optional[str]:
-    model = model or os.getenv('OLLAMA_MODEL', 'qwen3:4b')
+    model = model or os.getenv('OLLAMA_MODEL', 'phi4-reasoning:plus')
     host = host or os.getenv('OLLAMA_HOST', 'http://localhost:11434')
     url = f'{host.rstrip("/")}/api/chat'
 

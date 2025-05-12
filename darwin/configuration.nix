@@ -5,18 +5,24 @@
   };
 
   nix.enable = false;
-  # nix.settings = { experimental-features = "nix-command flakes"; };
-  # nix.optimise.automatic = true;
 
   users.users."${user}" = {
     name = "${user}";
     home = "/Users/${user}";
-    shell = pkgs.nushell;
   };
 
   environment = {
     shells = with pkgs; [ bash zsh nushell ];
-    systemPackages = [ pkgs.coreutils ];
+    systemPackages = [
+      pkgs.coreutils
+      pkgs.neovim
+      pkgs.eza
+      pkgs.bat
+      pkgs.yazi
+      pkgs.atuin
+      pkgs.python3
+      pkgs.kanata
+    ];
     systemPath = [
       "/usr/local/bin"
       "/opt/homebrew/bin"
@@ -27,9 +33,18 @@
     pathsToLink = [ "/Applications" ];
   };
 
+  programs.direnv = {
+    enable = true;
+    direnvrcExtra = ''
+      echo "Loaded direnv "
+    '';
+    silent = true;
+
+  };
+
   system = {
     keyboard.enableKeyMapping = true;
-    keyboard.remapCapsLockToEscape = true;
+    keyboard.swapLeftCtrlAndFn = true;
 
     startup.chime = true;
 
@@ -40,6 +55,8 @@
 
       # hide icons on desktop
       defaults write com.apple.finder CreateDesktop FALSE; killall Finder
+      defaults write com.apple.spaces spans-displays -bool true && killall SystemUIServer
+      defaults write com.apple.spaces spans-displays -bool true && killall SystemUIServer
     '';
 
     defaults = {

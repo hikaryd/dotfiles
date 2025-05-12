@@ -15,10 +15,19 @@
       "ghostty"
       "hiddenbar"
       "drawio"
-      "dimentium/autoraise/autoraiseapp"
       "raycast"
-      "loop"
       "grishka/grishka/neardrop"
+      "orion"
+      "upscayl"
+      "outline"
+      "hyperkey"
+      "chatgpt"
+      "hammerspoon"
+      "lihaoyun6/tap/quickrecorder"
+      "betterdisplay"
+      "caffeine"
+      "pgadmin4"
+      "lm-studio"
     ];
     brews = [
       {

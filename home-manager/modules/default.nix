@@ -13,5 +13,8 @@
     ./tmux.nix
     ./fastfetch.nix
     ./otd.nix
+    ./zsh.nix
+    ./misc.nix
+    ./kanata.nix
   ];
 }
