@@ -13,20 +13,18 @@
       "spotify"
       "1password-cli"
       "ghostty"
-      "hiddenbar"
       "drawio"
       "raycast"
       "grishka/grishka/neardrop"
       "orion"
       "upscayl"
       "outline"
-      "hyperkey"
       "chatgpt"
-      "hammerspoon"
-      "lihaoyun6/tap/quickrecorder"
-      "betterdisplay"
       "caffeine"
       "pgadmin4"
+      "bartender"
+      "zed"
+      "lunar"
       "lm-studio"
     ];
     brews = [
@@ -35,6 +33,7 @@
         start_service = true;
       }
       "chainloop-cli"
+      "bufbuild/buf/buf"
     ];
   };
 }

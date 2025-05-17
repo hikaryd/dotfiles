@@ -78,11 +78,6 @@
         }
         {
           check-further-callbacks = false;
-          "if" = { app-id = "KeePassXC"; };
-          run = [ "layout floating" ];
-        }
-        {
-          check-further-callbacks = false;
           "if" = { app-id = "Calculator"; };
           run = [ "layout floating" ];
         }
@@ -195,30 +190,14 @@
         alt-p = "workspace P";
         alt-o = "workspace O";
 
-        alt-shift-b = [
-          "move-node-to-workspace B"
-          "exec-and-forget ${pkgs.sketchybar}/bin/sketchybar --trigger space_windows_change"
-        ];
-        alt-shift-e = [
-          "move-node-to-workspace E"
-          "exec-and-forget ${pkgs.sketchybar}/bin/sketchybar --trigger space_windows_change"
-        ];
-        alt-shift-m = [
-          "move-node-to-workspace M"
-          "exec-and-forget ${pkgs.sketchybar}/bin/sketchybar --trigger space_windows_change"
-        ];
-        alt-shift-d = [
-          "move-node-to-workspace D"
-          "exec-and-forget ${pkgs.sketchybar}/bin/sketchybar --trigger space_windows_change"
-        ];
-        alt-shift-v = [
-          "move-node-to-workspace V"
-          "exec-and-forget ${pkgs.sketchybar}/bin/sketchybar --trigger space_windows_change"
-        ];
-        alt-shift-p = [
-          "move-node-to-workspace P"
-          "exec-and-forget ${pkgs.sketchybar}/bin/sketchybar --trigger space_windows_change"
-        ];
+        alt-shift-b = [ "move-node-to-workspace B" ];
+        alt-shift-e = [ "move-node-to-workspace E" ];
+        alt-shift-m = [ "move-node-to-workspace M" ];
+        alt-shift-d = [ "move-node-to-workspace D" ];
+        alt-shift-v = [ "move-node-to-workspace V" ];
+        alt-shift-p = [ "move-node-to-workspace P" ];
+
+        alt-shift-o = [ "move-node-to-workspace O" ];
 
         alt-shift-f = "fullscreen";
         alt-shift-tab = "move-workspace-to-monitor --wrap-around next";

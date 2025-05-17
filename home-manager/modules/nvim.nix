@@ -23,6 +23,8 @@
     yamllint
     hadolint
     go
+    basedpyright
+    protobuf_29
   ];
 
   programs.neovim = {
