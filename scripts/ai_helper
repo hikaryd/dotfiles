@@ -1,22 +1,23 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
-ai_helper_ollama.py – универсальный CLI‑помощник для локальной Ollama‑инстанции (REST API http://localhost:11434).
+ai_helper_gemini.py – универсальный CLI-помощник для автоматизированного создания MR, сообщений коммитов и рефакторинга текста через Google Gemini API.
 Поддерживает три режима:
 
-  • **mr**        – формирование Title/Description Merge Request по Git‑diff
-  • **commit**    – генерация Conventional Commit‑сообщения на основе staged diff
+  • **mr**        – формирование Title/Description Merge Request по Git-diff
+  • **commit**    – генерация Conventional Commit-сообщения на основе staged diff
   • **refactor**  – исправление текста из буфера обмена
 
-Перед использованием убедитесь, что Ollama запущена (`ollama serve`) и
-загружена нужная модель (по умолчанию `OLLAMA_MODEL`, например `phi4-reasoning:plus`).
+Перед использованием:
+  1. Запишите ваш ключ API в файл ~/.gemini_key
+  2. Убедитесь, что файл доступен для чтения
+  3. (Опционально) Задайте модель через GEMINI_MODEL (по умолчанию "gemini-2.5-flash-preview-04-17").
 
 Запуск:
-    python ai_helper_ollama.py --mode mr
-    python ai_helper_ollama.py --mode commit
-    python ai_helper_ollama.py --mode refactor
+    python ai_helper_gemini.py --mode mr
+    python ai_helper_gemini.py --mode commit
+    python ai_helper_gemini.py --mode refactor
 """
-
-from __future__ import annotations
 
 import argparse
 import json
@@ -26,149 +27,168 @@ import subprocess
 import sys
 import urllib.error
 import urllib.request
-from typing import Optional
+from typing import Any, Dict, Optional
 
 ###############################################################################
 # PROMPTS (English text; response must be in Russian)
 ###############################################################################
 
-MR_PROMPT_TEMPLATE = r"""
-# ROLE: You are an experienced AI assistant specialized in code analysis and Merge Request creation.
-# TASK: Based on the provided Git diff, create an informative Title and a structured, detailed Description for a Merge Request. Please answer in Russian.
+MR_PROMPT_TEMPLATE = """
+# РОЛЬ: Ты — опытный AI-ассистент, специализирующийся на анализе кода и создании Merge Request.
+# ЗАДАЧА: На основе предоставленного Git diff-а создай информативный заголовок и структурированное, подробное описание Merge Request. Ответь на русском языке.
 
-# INPUT (diff for analysis):
+# ВХОД (diff для анализа):
 {diff}
 
-# INSTRUCTIONS:
+# ИНСТРУКЦИИ:
 
-## 1. Title:
-* **Brevity:** No more than 72 characters.
-* **Clarity:** Convey the main change or purpose.
-* **Format (Conventional Commits):** feat:, fix:, refactor:, perf:, docs:, test:, chore:.
+## 1. Заголовок:
+* **Краткость:** Не более 72 символов.
+* **Ясность:** Отрази основное изменение или цель.
+* **Формат (Conventional Commits):** feat:, fix:, refactor:, perf:, docs:, test:, chore:.
 
-## 2. Description:
-* **What was done:** Brief summary and list all change types found: feat, fix, refactor, perf, docs, test, chore, style.
-* **Why it was done:** Motivation or business requirement.
-* **How to verify (optional):** Testing steps.
-* **Additional notes (optional):** Risks, open questions.
+## 2. Описание:
+* **Что было сделано:** Краткое резюме и перечень всех типов изменений: feat, fix, refactor, perf, docs, test, chore, style.
+* **Зачем это было сделано:** Мотивация или бизнес-требование.
+* **Как проверить (необязательно):** Шаги для тестирования.
+* **Дополнительно (необязательно):** Риски, открытые вопросы.
 
-# OUTPUT FORMAT (strict):
-Title: <generated title>
-Description: <generated description>
+# ФОРМАТ ВЫВОДА (строго соблюдай):
+Title: <сгенерированный заголовок>
+Description: <сгенерированное описание>
 """
 
-COMMIT_MESSAGE_PROMPT = r"""
-You are an expert in writing commit messages in Russian, strictly following Conventional Commits rules.
-Create a commit message in Russian based on the provided Git diff.
+COMMIT_MESSAGE_PROMPT = """
+Ты — эксперт по написанию сообщений коммитов на русском языке, строго соблюдающий правила Conventional Commits.
+Сгенерируй сообщение коммита на русском языке на основе предоставленного Git diff-а.
 
-INPUT:
+ВХОД:
 diff:
-```
 {diff}
-```
+ОБЩИЕ ПРАВИЛА:
+* Полностью на русском языке.
+* Две части: заголовок и подробное описание, разделённые пустой строкой.
+* Используй типы изменений по Conventional Commits.
 
-GENERAL RULES:
-* Entirely in Russian.
-* Two parts: title and detailed description, separated by an empty line.
-* Follow Conventional Commits types.
+1. Заголовок:
+* **Содержание:** Общее краткое описание.
+* **Формат:** `<scope>: <описание>` (scope — необязательно).
+* **Наклонение:** Повелительное.
+* **Длина:** ≤ 50 символов.
+* **Капитализация:** С заглавной буквы, без точки в конце.
 
-1. Title:
-* **Content:** High-level summary.
-* **Format:** `<scope>: <description>` (scope optional).
-* **Mood:** Imperative.
-* **Length:** ≤ 50 characters.
-* **Capitalization:** First letter uppercase, no period at end.
+2. Тело:
+* Объясни, что и зачем сделано (не как).
+* Идёт после заголовка с одной пустой строкой.
+* Может включать маркированные пункты.
 
-2. Body:
-* Explain what and why, not how.
-* After title with one blank line.
-* May include bullet points.
+Типы: feat, fix, docs, style, refactor, perf, test, build, ci, chore.
 
-Types: feat, fix, docs, style, refactor, perf, test, build, ci, chore.
+ВЫВОД (строго соблюдай):
+<Заголовок>
 
-OUTPUT (strict):
-<Title>
-
-<Body>
+<Подробное описание>
 """
 
 REFRACTOR_PROMPT_TEMPLATE = (
-    'Проанализируй этот текст, найди и исправь ошибки. '
-    'Верни только исправленный текст без комментариев.\n\n{text}'
+    "Проанализируй этот текст, найди и исправь ошибки. "
+    "Верни только исправленный текст без комментариев.\n\n{text}"
 )
 
 ###############################################################################
-# UTILS
+# УТИЛИТЫ
 ###############################################################################
 
 
 def remove_think(text: str) -> str:
-    """Remove any <think>...</think> blocks from AI response."""
-    return re.sub(r'<think>.*?</think>', '', text, flags=re.DOTALL)
+    return re.sub(r"<think>.*?</think>", "", text, flags=re.DOTALL)
 
 
 def notify(title: str, message: str) -> None:
-    if sys.platform == 'darwin':
+    if sys.platform == "darwin":
         subprocess.run(
             [
-                'osascript',
-                '-e',
+                "osascript",
+                "-e",
                 f'display notification "{message}" with title "{title}"',
             ]
         )
     else:
-        subprocess.run(
-            ['notify-send', '--app-name', 'AI Helper', title, message]
-        )
+        subprocess.run(["notify-send", title, message])
 
 
 def get_clipboard_text() -> str:
-    cmd = ['pbpaste'] if sys.platform == 'darwin' else ['wl-paste']
+    cmd = ["pbpaste"] if sys.platform == "darwin" else ["wl-paste"]
     try:
-        return subprocess.check_output(cmd, encoding='utf-8')
+        return subprocess.check_output(cmd, encoding="utf-8")
     except subprocess.CalledProcessError:
-        return ''
+        return ""
 
 
 def set_clipboard_text(text: str) -> None:
-    cmd = ['pbcopy'] if sys.platform == 'darwin' else ['wl-copy']
+    cmd = ["pbcopy"] if sys.platform == "darwin" else ["wl-copy"]
     proc = subprocess.Popen(cmd, stdin=subprocess.PIPE)
-    proc.communicate(input=text.encode('utf-8'))
+    proc.communicate(input=text.encode("utf-8"))
 
 
 ###############################################################################
-# OLLAMA COMMUNICATION
+# ЗАГРУЗКА КЛЮЧА API
 ###############################################################################
 
 
-def send_request(
-    prompt: str, model: Optional[str] = None, host: Optional[str] = None
-) -> Optional[str]:
-    model = model or os.getenv('OLLAMA_MODEL', 'phi4-reasoning:plus')
-    host = host or os.getenv('OLLAMA_HOST', 'http://localhost:11434')
-    url = f'{host.rstrip("/")}/api/chat'
+def load_api_key() -> Optional[str]:
+    key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
+    if key:
+        return key
+    path = os.path.expanduser("~/.gemini_key")
+    try:
+        with open(path, encoding="utf-8") as f:
+            return f.read().strip()
+    except (OSError, IOError):
+        return None
 
-    payload = {
-        'model': model,
-        'messages': [{'role': 'user', 'content': prompt}],
-        'stream': False,
-    }
-    data = json.dumps(payload).encode('utf-8')
-    headers = {'Content-Type': 'application/json'}
 
-    req = urllib.request.Request(url, data=data, headers=headers, method='POST')
+###############################################################################
+# GEMINI COMMUNICATION
+###############################################################################
+
+
+def send_request(prompt: str, model: Optional[str] = None) -> Optional[Dict[str, Any]]:
+    api_key = load_api_key()
+    if not api_key:
+        notify(
+            "AI Helper (Gemini)",
+            "Не удалось загрузить API-ключ из окружения или ~/.gemini_key",
+        )
+        sys.exit(1)
+    model = model or os.getenv("GEMINI_MODEL", "gemini-2.5-flash-preview-04-17")
+    url = (
+        f"https://generativelanguage.googleapis.com/v1beta/models/"
+        f"{model}:generateContent?key={api_key}"
+    )
+    payload = {"contents": [{"parts": [{"text": prompt}]}]}
+    data = json.dumps(payload).encode("utf-8")
+    headers = {"Content-Type": "application/json; charset=utf-8"}
+    req = urllib.request.Request(url, data=data, headers=headers, method="POST")
     try:
         with urllib.request.urlopen(req) as resp:
-            resp_json = json.loads(resp.read().decode('utf-8'))
-            return resp_json.get('message', {}).get('content', '').strip()
+            return json.loads(resp.read().decode("utf-8"))
     except urllib.error.HTTPError as err:
         notify(
-            'AI Helper (Ollama)',
-            f'HTTP Error: {err.code} {err.reason}\n{err.read().decode()}',
+            "AI Helper (Gemini)",
+            f"HTTP Error: {err.code} {err.reason}\n{err.read().decode()}",
         )
     except urllib.error.URLError as err:
-        notify('AI Helper (Ollama)', f'URL Error: {err.reason}')
+        notify("AI Helper (Gemini)", f"URL Error: {err.reason}")
     return None
+
+
+def extract_answer(response: Dict[str, Any]) -> str:
+    candidates = response.get("candidates", [])
+    if candidates:
+        parts = candidates[0].get("content", {}).get("parts", [])
+        return "".join(p.get("text", "") for p in parts).strip()
+    return response.get("output", "") or response.get("content", "") or ""
 
 
 ###############################################################################
@@ -178,26 +198,18 @@ def send_request(
 
 def git_current_branch() -> str:
     return subprocess.check_output(
-        ['git', 'rev-parse', '--abbrev-ref', 'HEAD'], encoding='utf-8'
+        ["git", "rev-parse", "--abbrev-ref", "HEAD"], encoding="utf-8"
     ).strip()
 
 
 def git_diff(refspec: str) -> str:
-    return subprocess.check_output(['git', 'diff', refspec], encoding='utf-8')
+    return subprocess.check_output(["git", "diff", refspec], encoding="utf-8")
 
 
 def git_diff_cached() -> str:
     return subprocess.check_output(
-        [
-            'git',
-            '--no-pager',
-            '-c',
-            'delta.enable=false',
-            'diff',
-            '--cached',
-            '--text',
-        ],
-        encoding='utf-8',
+        ["git", "--no-pager", "-c", "delta.enable=false", "diff", "--cached", "--text"],
+        encoding="utf-8",
     )
 
 
@@ -207,71 +219,65 @@ def git_diff_cached() -> str:
 
 
 def handle_mr() -> None:
-    target = input('Enter target branch for MR: ').strip()
+    target = input("Enter target branch for MR: ").strip()
     if not target:
-        print('No target branch specified. Exit.')
+        print("No target branch specified. Exit.")
         sys.exit(1)
-
     try:
-        diff = git_diff(f'{target}..{git_current_branch()}')
+        diff = git_diff(f"{target}..{git_current_branch()}")
     except subprocess.CalledProcessError as err:
-        notify('AI Helper', f'Git error: {err}')
+        notify("AI Helper", f"Git error: {err}")
         sys.exit(1)
-
     if not diff.strip():
-        notify('AI Helper', 'No changes to compare.')
+        notify("AI Helper", "No changes to compare.")
         sys.exit(0)
-
     prompt = MR_PROMPT_TEMPLATE.format(diff=diff)
-    answer = send_request(prompt)
-    if not answer:
-        print('Failed to get a response.')
+    print("Отправка запроса к Gemini...")
+    resp = send_request(prompt)
+    if not resp:
+        print("Failed to get a response.")
         sys.exit(1)
-    answer = remove_think(answer)
-
-    print(f'\n{answer}\n')
+    answer = remove_think(extract_answer(resp))
+    print(f"\n{answer}\n")
     set_clipboard_text(answer)
-    notify('AI Helper', 'MR description copied.')
+    notify("AI Helper", "MR description copied.")
 
 
 def handle_commit() -> None:
     diff = git_diff_cached()
     if not diff.strip():
-        print('No staged changes.')
+        print("No staged changes.")
         sys.exit(0)
-
     prompt = COMMIT_MESSAGE_PROMPT.format(diff=diff)
-    answer = send_request(prompt)
-    if not answer:
-        print('Failed to get a response.')
+    print("Отправка запроса к Gemini...")
+    resp = send_request(prompt)
+    if not resp:
+        print("Failed to get a response.")
         sys.exit(1)
-    answer = remove_think(answer)
-
+    answer = remove_think(extract_answer(resp))
     lines = answer.splitlines()
     title = lines[0]
-    body = '\n'.join(lines[1:]).strip()
-    commit_msg = f'{title}\n\n{body}' if body else title
-
-    print(f'\n{commit_msg}\n')
+    body = "\n".join(lines[1:]).strip()
+    commit_msg = f"{title}\n\n{body}" if body else title
+    print(f"\n{commit_msg}\n")
     set_clipboard_text(commit_msg)
-    notify('AI Helper', 'Commit message copied.')
+    notify("AI Helper", "Commit message copied.")
 
 
 def handle_refactor() -> None:
     text = get_clipboard_text()
     if not text:
-        notify('AI Helper', 'Clipboard is empty.')
+        notify("AI Helper", "Clipboard is empty.")
         sys.exit(1)
-
     prompt = REFRACTOR_PROMPT_TEMPLATE.format(text=text)
-    answer = send_request(prompt)
-    if not answer:
-        print('Failed to get a response.')
+    print("Отправка запроса к Gemini для рефакторинга...")
+    resp = send_request(prompt)
+    if not resp:
+        print("Failed to get a response.")
         sys.exit(1)
-    answer = remove_think(answer)
-
+    answer = remove_think(extract_answer(resp))
     set_clipboard_text(answer)
-    notify('AI Helper', 'Refactored text copied.')
+    notify("AI Helper", "Refactored text copied.")
 
 
 ###############################################################################
@@ -280,25 +286,25 @@ def handle_refactor() -> None:
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description='AI Helper (Ollama edition)')
+    parser = argparse.ArgumentParser(description="AI Helper (Gemini edition)")
     parser.add_argument(
-        '--mode',
-        choices=['mr', 'commit', 'refactor'],
+        "--mode",
+        choices=["mr", "commit", "refactor"],
         required=True,
-        help='Mode: mr | commit | refactor',
+        help="Mode: mr | commit | refactor",
     )
     return parser.parse_args()
 
 
 def main() -> None:
     args = parse_args()
-    if args.mode == 'mr':
+    if args.mode == "mr":
         handle_mr()
-    elif args.mode == 'commit':
+    elif args.mode == "commit":
         handle_commit()
     else:
         handle_refactor()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

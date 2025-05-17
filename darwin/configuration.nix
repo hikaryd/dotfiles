@@ -21,14 +21,12 @@
       pkgs.yazi
       pkgs.atuin
       pkgs.python3
-      pkgs.kanata
     ];
     systemPath = [
       "/usr/local/bin"
       "/opt/homebrew/bin"
       "/Users/${user}/.local/bin"
       "/Users/${user}/.cargo/bin"
-      "/Users/${user}/.lmstudio/bin"
     ];
     pathsToLink = [ "/Applications" ];
   };
@@ -39,7 +37,6 @@
       echo "Loaded direnv "
     '';
     silent = true;
-
   };
 
   system = {
@@ -84,8 +81,7 @@
         type = "png";
       };
       dock = {
-        # Automatically hide and show the Dock
-        autohide = true;
+        autohide = false;
         autohide-delay = 0.0;
         autohide-time-modifier = 0.45;
 
@@ -93,7 +89,7 @@
         orientation = "left";
         show-recents = false;
 
-        persistent-apps = [ "/Applications/Ghostty.app/" ];
+        persistent-apps = [];
       };
       finder = {
         AppleShowAllExtensions = true;
