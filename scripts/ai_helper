@@ -208,7 +208,15 @@ def git_diff(refspec: str) -> str:
 
 def git_diff_cached() -> str:
     return subprocess.check_output(
-        ["git", "--no-pager", "-c", "delta.enable=false", "diff", "--cached", "--text"],
+        [
+            "git",
+            "--no-pager",
+            "-c",
+            "delta.enable=false",
+            "diff",
+            "--cached",
+            "--text",
+        ],
         encoding="utf-8",
     )
 
@@ -232,13 +240,12 @@ def handle_mr() -> None:
         notify("AI Helper", "No changes to compare.")
         sys.exit(0)
     prompt = MR_PROMPT_TEMPLATE.format(diff=diff)
-    print("Отправка запроса к Gemini...")
     resp = send_request(prompt)
     if not resp:
         print("Failed to get a response.")
         sys.exit(1)
     answer = remove_think(extract_answer(resp))
-    print(f"\n{answer}\n")
+    print({answer})
     set_clipboard_text(answer)
     notify("AI Helper", "MR description copied.")
 
@@ -249,7 +256,6 @@ def handle_commit() -> None:
         print("No staged changes.")
         sys.exit(0)
     prompt = COMMIT_MESSAGE_PROMPT.format(diff=diff)
-    print("Отправка запроса к Gemini...")
     resp = send_request(prompt)
     if not resp:
         print("Failed to get a response.")
@@ -257,9 +263,9 @@ def handle_commit() -> None:
     answer = remove_think(extract_answer(resp))
     lines = answer.splitlines()
     title = lines[0]
-    body = "\n".join(lines[1:]).strip()
+    body = "\n".join(lines[2:]).strip()
     commit_msg = f"{title}\n\n{body}" if body else title
-    print(f"\n{commit_msg}\n")
+    print(commit_msg)
     set_clipboard_text(commit_msg)
     notify("AI Helper", "Commit message copied.")
 
@@ -270,7 +276,6 @@ def handle_refactor() -> None:
         notify("AI Helper", "Clipboard is empty.")
         sys.exit(1)
     prompt = REFRACTOR_PROMPT_TEMPLATE.format(text=text)
-    print("Отправка запроса к Gemini для рефакторинга...")
     resp = send_request(prompt)
     if not resp:
         print("Failed to get a response.")

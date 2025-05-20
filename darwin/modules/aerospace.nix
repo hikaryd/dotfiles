@@ -1,6 +1,6 @@
 { pkgs, ... }: {
   services.aerospace = {
-    enable = true;
+    enable = false;
     package = pkgs.aerospace;
 
     settings = {
@@ -8,7 +8,6 @@
       after-startup-command = [
         "exec-and-forget open -a /Applications/Spotify.app"
         "exec-and-forget open -a /Applications/Telegram.app"
-        "exec-and-forget open -a /Applications/Arc.app"
         "exec-and-forget open -a /Applications/Microsoft Outlook.app"
       ];
 
@@ -17,9 +16,9 @@
       enable-normalization-flatten-containers = true;
       enable-normalization-opposite-orientation-for-nested-containers = true;
 
-      accordion-padding = 14;
+      accordion-padding = 5;
 
-      default-root-container-layout = "tiles"; # bsp-подобная раскладка
+      default-root-container-layout = "tiles";
       default-root-container-orientation = "horizontal";
 
       exec-on-workspace-change = [ ];
@@ -28,10 +27,10 @@
 
       gaps = {
         outer = {
-          bottom = 20;
-          left = 20;
-          right = 20;
-          top = 20;
+          bottom = 6;
+          left = 6;
+          right = 6;
+          top = 6;
         };
         inner = {
           horizontal = 12;
@@ -53,12 +52,20 @@
         }
         {
           check-further-callbacks = false;
-          "if" = { app-id = "Orion"; };
+          "if" = {
+            app-id = "com.kagi.kagimacOS";
+            window-title-regex-substring =
+              "^(General|(Tab|Password|Website|Extension)s|AutoFill|Se(arch|curity)|Privacy|Advance)$";
+          };
           run = [ "layout floating" ];
         }
         {
           check-further-callbacks = false;
-          "if" = { app-id = "Arc"; };
+          "if" = {
+            app-id = "company.thebrowser.Browser";
+            window-title-regex-substring =
+              "^(General|(Tab|Password|Website|Extension)s|AutoFill|Se(arch|curity)|Privacy|Advance)$";
+          };
           run = [ "layout floating" ];
         }
         {
@@ -79,6 +86,11 @@
         {
           check-further-callbacks = false;
           "if" = { app-id = "Calculator"; };
+          run = [ "layout floating" ];
+        }
+        {
+          check-further-callbacks = false;
+          "if" = { app-id = "me.tdinh.devutils-setapp"; };
           run = [ "layout floating" ];
         }
         {
@@ -109,17 +121,17 @@
           "if" = { app-id = "com.cisco.secureclient.gui"; };
           run = [ "layout floating" ];
         }
+        {
+          check-further-callbacks = false;
+          "if" = { app-id = "com.kis.keepitshot-setapp"; };
+          run = [ "layout floating" ];
+        }
 
         ####### Specific spaces for apps #######
         {
           check-further-callbacks = false;
           "if" = { app-id = "com.mitchellh.ghostty"; };
           run = [ "layout floating" "move-node-to-workspace D" ];
-        }
-        {
-          check-further-callbacks = false;
-          "if" = { app-id = "company.thebrowser.Browser"; };
-          run = [ "move-node-to-workspace B" ];
         }
         {
           check-further-callbacks = false;
@@ -151,6 +163,11 @@
           "if" = { app-id = "kontur.talk"; };
           run = [ "move-node-to-workspace P" ];
         }
+        {
+          check-further-callbacks = false;
+          "if" = { app-id = "com.setapp.DesktopClient"; };
+          run = [ "move-node-to-workspace P" ];
+        }
       ];
 
       workspace-to-monitor-force-assignment = {
@@ -164,8 +181,8 @@
       };
 
       mode.main.binding = {
-        alt-shift-minus = "resize smart -50";
-        alt-shift-equal = "resize smart +50";
+        alt-shift-minus = "resize smart -100";
+        alt-shift-equal = "resize smart +100";
 
         alt-q = "close";
         alt-enter = "exec-and-forget open -n /Applications/Ghostty.app";
@@ -210,12 +227,12 @@
         cmd-shift-d = "resize width 1280";
 
         cmd-shift-semicolon = "mode service";
+        cmd-shift-f = [ "layout floating tiling" "mode main" ];
       };
 
       mode.service.binding = {
         esc = [ "reload-config" "mode main" ];
         r = [ "flatten-workspace-tree" "mode main" ];
-        f = [ "layout floating tiling" "mode main" ];
         backspace = [ "close-all-windows-but-current" "mode main" ];
 
         "alt-shift-h" = [ "join-with left" "mode main" ];
