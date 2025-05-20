@@ -53,7 +53,6 @@
       # hide icons on desktop
       defaults write com.apple.finder CreateDesktop FALSE; killall Finder
       defaults write com.apple.spaces spans-displays -bool true && killall SystemUIServer
-      defaults write com.apple.spaces spans-displays -bool true && killall SystemUIServer
     '';
 
     defaults = {
@@ -81,7 +80,7 @@
         type = "png";
       };
       dock = {
-        autohide = false;
+        autohide = true;
         autohide-delay = 0.0;
         autohide-time-modifier = 0.45;
 
@@ -89,7 +88,7 @@
         orientation = "left";
         show-recents = false;
 
-        persistent-apps = [];
+        persistent-apps = [ ];
       };
       finder = {
         AppleShowAllExtensions = true;

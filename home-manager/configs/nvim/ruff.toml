@@ -1,15 +1,15 @@
-line-length = 80
+line-length = 100
 indent-width = 4
 fix = true
 unsafe-fixes = false
 cache-dir = "~/.cache/ruff"
 
 [format]
-quote-style = "single"
+# quote-style = "single"
 line-ending = "auto"
 indent-style = "space"
 docstring-code-format = true
-docstring-code-line-length = 20
+# docstring-code-line-length = 20
 
 [lint]
 select = ["ALL"]

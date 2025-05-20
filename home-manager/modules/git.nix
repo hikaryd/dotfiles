@@ -1,4 +1,4 @@
-{ config, pkgs, ... }: {
+{ config, ... }: {
   programs.git = {
     enable = true;
     userName = "hikaryd";
@@ -25,11 +25,28 @@
         "log --color --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit";
     };
     extraConfig = {
-      init.defaultBranch = "main";
+      init.defaultBranch = "dev";
       core = {
         editor = "nvim";
-        whitespace = "trailing-space,space-before-tab";
+        compression = 9;
+        whitespace = "error";
+        preloadindex = true;
         hooksPath = "${config.xdg.configHome}/git/hooks";
+      };
+      push = {
+        default = "current";
+        autoSetupRemote = true;
+        followTags = true;
+      };
+      status = {
+        showStash = true;
+        branch = true;
+        showUntrackedFiles = "all";
+      };
+      advice = {
+        addEmptyPathspec = false;
+        pushNonFastForward = false;
+        statushHints = false;
       };
       color = {
         ui = true;
@@ -37,8 +54,14 @@
         status = "auto";
         branch = "auto";
       };
-      pull.rebase = true;
-      push.default = "simple";
+      pull = {
+        default = "current";
+        rebase = true;
+      };
+      rebase = {
+        autoStash = true;
+        missingCommitsCheck = true;
+      };
       merge.conflictstyle = "diff3";
       diff.colorMoved = "default";
     };

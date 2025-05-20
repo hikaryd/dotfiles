@@ -1,6 +1,6 @@
 { pkgs, ... }: {
   services.jankyborders = {
-    enable = true;
+    enable = false;
     package = pkgs.jankyborders;
     width = 5.0;
     active_color = "gradient(top_left=0xffDDB6F2,bottom_right=0xff96CDFB)";

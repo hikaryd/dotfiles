@@ -7,7 +7,7 @@
       brewfile = true;
       autoUpdate = true;
     };
-    taps = [ "grishka/grishka" ];
+    taps = [ ];
     casks = [
       "telegram"
       "spotify"
@@ -15,25 +15,15 @@
       "ghostty"
       "drawio"
       "raycast"
-      "grishka/grishka/neardrop"
-      "orion"
-      "upscayl"
       "outline"
-      "chatgpt"
-      "caffeine"
-      "pgadmin4"
-      "bartender"
       "zed"
-      "lunar"
-      "lm-studio"
+      "stats"
+      "setapp"
+      "upscayl"
+      "flashspace"
+      "loop"
+      "ollama"
     ];
-    brews = [
-      {
-        name = "ollama";
-        start_service = true;
-      }
-      "chainloop-cli"
-      "bufbuild/buf/buf"
-    ];
+    brews = [ "bufbuild/buf/buf" ];
   };
 }
