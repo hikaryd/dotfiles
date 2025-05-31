@@ -72,7 +72,7 @@
       gta = "git tag -a";
 
       # Nix
-      hms = "darwin-rebuild switch --flake '.#hikary' --impure -v";
+      hms = "sudo darwin-rebuild switch --flake '.#hikary' --impure -v";
       hmc = "nix-collect-garbage -d";
     };
 

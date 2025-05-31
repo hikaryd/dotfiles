@@ -40,20 +40,11 @@
   };
 
   system = {
+    primaryUser = "${user}";
     keyboard.enableKeyMapping = true;
     keyboard.swapLeftCtrlAndFn = true;
 
     startup.chime = true;
-
-    activationScripts.postUserActivation.text = ''
-      # disable .DS_Store files
-      defaults write com.apple.desktopservices DSDontWriteNetworkStores -bool TRUE
-      defaults write com.apple.desktopservices DSDontWriteUSBStores -bool TRUE
-
-      # hide icons on desktop
-      defaults write com.apple.finder CreateDesktop FALSE; killall Finder
-      defaults write com.apple.spaces spans-displays -bool true && killall SystemUIServer
-    '';
 
     defaults = {
       NSGlobalDomain = {
@@ -95,6 +86,18 @@
         _FXShowPosixPathInTitle = true;
       };
     };
+  };
+
+  system.activationScripts = {
+    postActivate.text = ''
+      # disable .DS_Store files
+      sudo -u ${user} defaults write com.apple.desktopservices DSDontWriteNetworkStores -bool TRUE
+      sudo -u ${user} defaults write com.apple.desktopservices DSDontWriteUSBStores -bool TRUE
+
+      # hide icons on desktop
+      sudo -u ${user} defaults write com.apple.finder CreateDesktop FALSE && killall Finder
+      sudo -u ${user} defaults write com.apple.spaces spans-displays -bool true && killall SystemUIServer
+    '';
   };
 
   security.pam.services.sudo_local.touchIdAuth = true;

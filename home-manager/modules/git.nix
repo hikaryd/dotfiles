@@ -86,8 +86,6 @@
       text = ''
         #!/usr/bin/env bash
         COMMIT_MSG_FILE=$1
-        export OPENROUTER_API_KEY=$(cat ~/creds/open_router)
-        export GOOGLE_API_KEY=$(cat ~/creds/gemini)
 
         COMMIT_MSG=$(${../../scripts/ai_helper} --mode commit)
         if [ -n "$COMMIT_MSG" ]; then

@@ -13,7 +13,10 @@
     ruff
     typstyle
     taplo
+    biome
     luajit
+    ty
+    jq-lsp
     pyright
     nixfmt-classic
     nil

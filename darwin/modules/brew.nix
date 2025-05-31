@@ -16,13 +16,13 @@
       "drawio"
       "raycast"
       "outline"
-      "zed"
+      "cursor"
       "stats"
-      "setapp"
       "upscayl"
       "flashspace"
       "loop"
       "ollama"
+      "iina"
     ];
     brews = [ "bufbuild/buf/buf" ];
   };

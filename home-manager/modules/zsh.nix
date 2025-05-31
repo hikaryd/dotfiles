@@ -1,6 +1,6 @@
 {
   programs.zsh = {
-    enable = false;
+    enable = true;
     autocd = true;
     autosuggestion = { enable = true; };
     history = {
