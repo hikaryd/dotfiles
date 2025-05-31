@@ -11,7 +11,7 @@ ai_helper_gemini.py – универсальный CLI-помощник для �
 Перед использованием:
   1. Запишите ваш ключ API в файл ~/.gemini_key
   2. Убедитесь, что файл доступен для чтения
-  3. (Опционально) Задайте модель через GEMINI_MODEL (по умолчанию "gemini-2.5-flash-preview-04-17").
+  3. (Опционально) Задайте модель через GEMINI_MODEL (по умолчанию "gemini-2.5-flash-preview-05-20").
 
 Запуск:
     python ai_helper_gemini.py --mode mr
@@ -161,7 +161,7 @@ def send_request(prompt: str, model: Optional[str] = None) -> Optional[Dict[str,
             "Не удалось загрузить API-ключ из окружения или ~/.gemini_key",
         )
         sys.exit(1)
-    model = model or os.getenv("GEMINI_MODEL", "gemini-2.5-flash-preview-04-17")
+    model = model or os.getenv("GEMINI_MODEL", "gemini-2.5-flash-preview-05-20")
     url = (
         f"https://generativelanguage.googleapis.com/v1beta/models/"
         f"{model}:generateContent?key={api_key}"

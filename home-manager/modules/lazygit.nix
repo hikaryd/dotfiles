@@ -5,7 +5,7 @@
       "key" = "C";
       "command" = "git commit";
       "description" = "Commit (open in nvim)";
-      "subprocess" = true;
+      "output" = "terminal";
       "loadingText" = "Opening nvim...";
       "context" = "files";
     }];

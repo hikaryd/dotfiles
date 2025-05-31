@@ -1,75 +1,73 @@
 return {
-  'neovim/nvim-lspconfig',
-  event = { 'BufReadPre', 'BufNewFile' },
-  ft = { 'nix' },
-  config = function()
-    local lspconfig = require 'lspconfig'
+  {
+    'neovim/nvim-lspconfig',
+    event = { 'BufReadPre', 'BufNewFile' },
+    config = function()
+      local blink_cmp = require 'blink.cmp'
+      local base_caps = blink_cmp.get_lsp_capabilities()
 
-    local function setup_server(server, config)
-      if not config then
-        return
-      end
+      local servers = {
+        html = {},
+        cssls = {},
+        taplo = {},
+        biome = {},
+        yamlls = {},
+        dockerls = {},
+        jqls = {},
+        nushell = {},
+        nil_ls = {},
+        ty = {},
 
-      if type(config) ~= 'table' then
-        config = {}
-      end
-
-      config = vim.tbl_deep_extend('force', {
-        capabilities = require('blink.cmp').get_lsp_capabilities(config.capabilities),
-      }, config)
-
-      lspconfig[server].setup(config)
-    end
-
-    local servers = {
-      'html',
-      'cssls',
-      'lua_ls',
-      'taplo',
-      'biome',
-      'yamlls',
-      'dockerls',
-      'jqls',
-      'nushell',
-      'nil_ls',
-    }
-
-    for _, server in ipairs(servers) do
-      setup_server(server, {})
-    end
-
-    setup_server('lua_ls', {
-      settings = {
-        Lua = {
-          runtime = { version = 'LuaJIT' },
-          diagnostics = { globals = { 'vim' } },
-          workspace = {
-            library = {
-              vim.env.VIMRUNTIME,
-              "${vim.fn.stdpath('config')}/lua",
+        lua_ls = {
+          settings = {
+            Lua = {
+              runtime = { version = 'LuaJIT' },
+              diagnostics = { globals = { 'vim' } },
+              workspace = {
+                library = {
+                  vim.env.VIMRUNTIME,
+                  vim.fn.stdpath 'config' .. '/lua',
+                },
+                checkThirdParty = false,
+              },
+              telemetry = { enable = false },
             },
-            checkThirdParty = false,
           },
-          telemetry = { enable = false },
         },
-      },
-    })
 
-    setup_server('ruff', {
-      settings = {
-        organizeImports = true,
-        fixAll = true,
-      },
-    })
+        ruff = {
+          settings = {
+            organizeImports = true,
+            fixAll = true,
+          },
+        },
 
-    setup_server('pyright', {
-      settings = {
-        pyright = { autoImportCompletion = true },
-        python = { analysis = { autoSearchPaths = true, diagnosticMode = 'openFilesOnly', useLibraryCodeForTypes = true, typeCheckingMode = 'basic' } },
-      },
-    })
+        pyright = {
+          settings = {
+            pyright = { autoImportCompletion = true },
+            python = {
+              analysis = {
+                autoSearchPaths = true,
+                diagnosticMode = 'openFilesOnly',
+                useLibraryCodeForTypes = true,
+                typeCheckingMode = 'off',
+              },
+            },
+          },
+        },
+      }
 
-    local venv_path = os.getenv 'VIRTUAL_ENV' or ''
-    vim.env.PYTHONPATH = venv_path .. '/lib/python3.12/site-packages'
-  end,
+      for name, cfg in pairs(servers) do
+        cfg.capabilities = vim.tbl_deep_extend('force', vim.deepcopy(base_caps), cfg.capabilities or {})
+        vim.lsp.config[name] = vim.tbl_deep_extend('force', vim.lsp.config[name] or {}, cfg)
+      end
+
+      for name in pairs(servers) do
+        vim.lsp.enable(name)
+      end
+
+      local venv = os.getenv 'VIRTUAL_ENV' or ''
+      vim.env.PYTHONPATH = venv .. '/lib/python3.12/site-packages'
+    end,
+  },
 }
