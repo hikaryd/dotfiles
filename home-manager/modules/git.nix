@@ -69,6 +69,7 @@
       ".DS_Store"
       "*.swp"
       "*.swo"
+      ".claude"
       "*~"
       "*.log"
       ".env"

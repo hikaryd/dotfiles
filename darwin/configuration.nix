@@ -31,19 +31,10 @@
     pathsToLink = [ "/Applications" ];
   };
 
-  programs.direnv = {
-    enable = true;
-    direnvrcExtra = ''
-      echo "Loaded direnv "
-    '';
-    silent = true;
-  };
-
   system = {
     primaryUser = "${user}";
     keyboard.enableKeyMapping = true;
     keyboard.swapLeftCtrlAndFn = true;
-
     startup.chime = true;
 
     defaults = {
@@ -53,7 +44,7 @@
         # Show all file extensions
         AppleShowAllExtensions = true;
         # Automatically hide and show the menu bar
-        _HIHideMenuBar = false;
+        _HIHideMenuBar = true;
         # Disable window animations
         NSAutomaticWindowAnimationsEnabled = false;
 
@@ -91,6 +82,7 @@
   system.activationScripts = {
     postActivate.text = ''
       # disable .DS_Store files
+      sudo -u ${user} defaults write -g NSWindowShouldDragOnGesture -bool TRUE
       sudo -u ${user} defaults write com.apple.desktopservices DSDontWriteNetworkStores -bool TRUE
       sudo -u ${user} defaults write com.apple.desktopservices DSDontWriteUSBStores -bool TRUE
 

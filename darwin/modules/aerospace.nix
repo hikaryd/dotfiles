@@ -1,6 +1,6 @@
 { pkgs, ... }: {
   services.aerospace = {
-    enable = false;
+    enable = true;
     package = pkgs.aerospace;
 
     settings = {
@@ -8,7 +8,9 @@
       after-startup-command = [
         "exec-and-forget open -a /Applications/Spotify.app"
         "exec-and-forget open -a /Applications/Telegram.app"
-        "exec-and-forget open -a /Applications/Microsoft Outlook.app"
+        "exec-and-forget open -a /Applications/Ghostty.app"
+        "exec-and-forget open -a /Applications/Safari.app"
+        "exec-and-forget open -a /Applications/Barik.app"
       ];
 
       key-mapping.preset = "qwerty";
@@ -27,10 +29,10 @@
 
       gaps = {
         outer = {
-          bottom = 6;
-          left = 6;
-          right = 6;
-          top = 6;
+          bottom = 12;
+          left = 12;
+          right = 12;
+          top = 52;
         };
         inner = {
           horizontal = 12;
@@ -39,7 +41,7 @@
       };
 
       on-window-detected = [
-        ####### Floating Windows (manage=off) #######
+        ####### xFloating Windows (manage=off) #######
         {
           check-further-callbacks = false;
           "if" = { app-id = "System Settings"; };
@@ -110,6 +112,11 @@
         }
         {
           check-further-callbacks = false;
+          "if" = { app-id = "su.ffg.happ.plus"; };
+          run = [ "layout floating" ];
+        }
+        {
+          check-further-callbacks = false;
           "if" = {
             app-id = "System Information";
             window-title-regex-substring = "About This Mac";
@@ -130,54 +137,64 @@
         ####### Specific spaces for apps #######
         {
           check-further-callbacks = false;
+          "if" = { app-id = "com.apple.Safari"; };
+          run = [ "layout floating" "move-node-to-workspace 1" ];
+        }
+        {
+          check-further-callbacks = false;
           "if" = { app-id = "com.mitchellh.ghostty"; };
-          run = [ "layout floating" "move-node-to-workspace D" ];
+          run = [ "layout floating" "move-node-to-workspace 2" ];
+        }
+        {
+          check-further-callbacks = false;
+          "if" = { app-id = "com.todesktop.230313mzl4w4u92"; };
+          run = [ "move-node-to-workspace 4" ];
+        }
+        {
+          check-further-callbacks = false;
+          "if" = { app-id = "com.apple.iWork.Pages"; };
+          run = [ "move-node-to-workspace 4" ];
+        }
+        {
+          check-further-callbacks = false;
+          "if" = { app-id = "com.apple.iCal"; };
+          run = [ "move-node-to-workspace 7" ];
         }
         {
           check-further-callbacks = false;
           "if" = { app-id = "ru.keepcoder.Telegram"; };
-          run = [ "move-node-to-workspace E" ];
+          run = [ "move-node-to-workspace 3" ];
         }
         {
           check-further-callbacks = false;
           "if" = { app-id = "com.microsoft.Outlook"; };
-          run = [ "move-node-to-workspace M" ];
+          run = [ "move-node-to-workspace 7" ];
         }
         {
           check-further-callbacks = false;
           "if" = { app-id = "ru.unlimitedtech.express.desktop"; };
-          run = [ "move-node-to-workspace M" ];
+          run = [ "move-node-to-workspace 7" ];
         }
         {
           check-further-callbacks = false;
           "if" = { app-id = "com.spotify.client"; };
-          run = [ "move-node-to-workspace E" ];
-        }
-        {
-          check-further-callbacks = false;
-          "if" = { app-id = "com.openai.chat"; };
-          run = [ "move-node-to-workspace V" ];
+          run = [ "move-node-to-workspace 3" ];
         }
         {
           check-further-callbacks = false;
           "if" = { app-id = "kontur.talk"; };
-          run = [ "move-node-to-workspace P" ];
-        }
-        {
-          check-further-callbacks = false;
-          "if" = { app-id = "com.setapp.DesktopClient"; };
-          run = [ "move-node-to-workspace P" ];
+          run = [ "move-node-to-workspace 5" ];
         }
       ];
 
       workspace-to-monitor-force-assignment = {
-        "B" = "main";
-        "E" = "main";
-        "M" = "main";
-        "D" = "main";
-        "V" = [ "secondary" "dell" ];
-        "P" = "main";
-        "O" = "main";
+        "1" = "main";
+        "2" = "main";
+        "3" = "main";
+        "4" = "main";
+        "5" = "main";
+        "6" = "main";
+        "7" = "main";
       };
 
       mode.main.binding = {
@@ -199,34 +216,32 @@
 
         alt-shift-0 = "balance-sizes";
 
-        alt-b = "workspace B";
-        alt-e = "workspace E";
-        alt-m = "workspace M";
-        alt-d = "workspace D";
-        alt-v = "workspace V";
-        alt-p = "workspace P";
-        alt-o = "workspace O";
+        alt-1 = "workspace 1";
+        alt-2 = "workspace 2";
+        alt-3 = "workspace 3";
+        alt-4 = "workspace 4";
+        alt-5 = "workspace 5";
+        alt-6 = "workspace 6";
+        alt-7 = "workspace 7";
 
-        alt-shift-b = [ "move-node-to-workspace B" ];
-        alt-shift-e = [ "move-node-to-workspace E" ];
-        alt-shift-m = [ "move-node-to-workspace M" ];
-        alt-shift-d = [ "move-node-to-workspace D" ];
-        alt-shift-v = [ "move-node-to-workspace V" ];
-        alt-shift-p = [ "move-node-to-workspace P" ];
-
-        alt-shift-o = [ "move-node-to-workspace O" ];
+        alt-shift-1 = [ "move-node-to-workspace 1" ];
+        alt-shift-2 = [ "move-node-to-workspace 2" ];
+        alt-shift-3 = [ "move-node-to-workspace 3" ];
+        alt-shift-4 = [ "move-node-to-workspace 4" ];
+        alt-shift-5 = [ "move-node-to-workspace 5" ];
+        alt-shift-6 = [ "move-node-to-workspace 6" ];
+        alt-shift-7 = [ "move-node-to-workspace 7" ];
 
         alt-shift-f = "fullscreen";
         alt-shift-tab = "move-workspace-to-monitor --wrap-around next";
         alt-tab = "workspace-back-and-forth";
 
         cmd-shift-w = "layout floating tiling";
-        cmd-shift-s = "layout v_accordion";
-        cmd-shift-t = "layout h_accordion";
+        cmd-shift-r = "layout h_accordion";
         cmd-shift-e = "layout tiles horizontal vertical";
-        cmd-shift-d = "resize width 1280";
 
         cmd-shift-semicolon = "mode service";
+        cmd-shift-t = [ "resize width 700" ];
         cmd-shift-f = [ "layout floating tiling" "mode main" ];
       };
 

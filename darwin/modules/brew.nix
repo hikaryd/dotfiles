@@ -15,14 +15,11 @@
       "ghostty"
       "drawio"
       "raycast"
-      "outline"
       "cursor"
-      "stats"
       "upscayl"
-      "flashspace"
-      "loop"
-      "ollama"
-      "iina"
+      "mos"
+      "slimhud"
+      "mocki-toki/formulae/barik"
     ];
     brews = [ "bufbuild/buf/buf" ];
   };
