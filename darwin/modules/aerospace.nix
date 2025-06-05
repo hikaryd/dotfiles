@@ -138,7 +138,7 @@
         {
           check-further-callbacks = false;
           "if" = { app-id = "com.apple.Safari"; };
-          run = [ "layout floating" "move-node-to-workspace 1" ];
+          run = [ "move-node-to-workspace 1" ];
         }
         {
           check-further-callbacks = false;
