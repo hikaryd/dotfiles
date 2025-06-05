@@ -34,7 +34,7 @@
 
       # Docker
       dc = "docker compose";
-      create_mr = "${../../scripts/ai_helper} --mode mr --api gemini";
+      create_mr = "${../../scripts/ai_helper} --mode mr";
       dcl = "docker compose logs -f";
       dcub = "docker compose up --build -d --force-recreate";
       dcd = "docker compose down";
