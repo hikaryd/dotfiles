@@ -18,6 +18,9 @@ space.show-key = true        # show space number (or character, if you use AeroS
 window.show-title = true
 window.title.max-length = 50
 
+[widgets.default.nowplaying.popup]
+view-variant = "horizontal"
+
 [widgets.default.battery]
 show-percentage = true
 warning-level = 30
@@ -28,17 +31,15 @@ format = "E d, J:mm"
 calendar.format = "J:mm"
 
 calendar.show-events = true
-# calendar.allow-list = ["Home", "Personal"] # show only these calendars
-# calendar.deny-list = ["Work", "Boss"] # show all calendars except these
 
 [popup.default.time]
-view-variant = "box"
+view-variant = "vertical"
 
 [background]
 enabled = true
 
 [experimental.background]
-displayed = true
+displayed = false
 height = "default" # available values: default (stretch to full screen), menu-bar (height like system menu bar), <float> (e.g., 40, 33.5)
 blur = 1           # background type: from 1 to 6 for blur intensity, 7 for black color
 

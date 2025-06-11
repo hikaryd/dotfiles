@@ -6,6 +6,7 @@
     settings = {
       background-opacity = 0.8;
       minimum-contrast = 1.1;
+      font-family = "Monaspace Neon";
       font-size = 14;
       bold-is-bright = true;
       command = "/etc/profiles/per-user/user/bin/nu";

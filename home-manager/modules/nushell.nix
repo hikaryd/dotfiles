@@ -24,6 +24,8 @@
       l = "ls";
       cd = "z";
 
+      speedtest = "networkquality";
+
       nu-open = "open";
       open = "^open";
       parse_dir =

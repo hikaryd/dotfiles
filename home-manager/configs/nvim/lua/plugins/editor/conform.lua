@@ -5,7 +5,7 @@ return {
     local conform = require 'conform'
 
     conform.formatters.ruff_format = {
-      prepend_args = { 'format', '--config', '~/.config/nvim/ruff.toml' },
+      prepend_args = { 'format' },
     }
 
     conform.setup {

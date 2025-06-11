@@ -1,5 +1,6 @@
 { ... }: {
   imports = [
+    ./wezterm.nix
     ./barik.nix
     ./git.nix
     ./lazygit.nix

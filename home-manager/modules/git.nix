@@ -85,12 +85,35 @@
     "git/hooks/prepare-commit-msg" = {
       executable = true;
       text = ''
-        #!/usr/bin/env bash
+        #!/bin/sh
         COMMIT_MSG_FILE=$1
 
-        COMMIT_MSG=$(${../../scripts/ai_helper} --mode commit)
-        if [ -n "$COMMIT_MSG" ]; then
-          echo "$COMMIT_MSG" > "$COMMIT_MSG_FILE"
+        AI_COMMIT=$(${../../scripts/ai_helper} --mode commit 2>/dev/null)
+
+        if [ -n "$AI_COMMIT" ]; then
+          BRANCH=$(git rev-parse --abbrev-ref HEAD)
+          PREFIX=$(echo "$BRANCH" | awk -F'[/_]' '{print $2}')
+          
+          if [ -n "$PREFIX" ]; then
+            TITLE=$(echo "$AI_COMMIT" | head -n 1)
+            DESCRIPTION=$(echo "$AI_COMMIT" | tail -n +3)
+            
+            PREFIXED_TITLE="$PREFIX $TITLE"
+            
+            if [ -n "$DESCRIPTION" ]; then
+              printf "%s\n\n%s\n" "$PREFIXED_TITLE" "$DESCRIPTION" > "$COMMIT_MSG_FILE"
+            else
+              echo "$PREFIXED_TITLE" > "$COMMIT_MSG_FILE"
+            fi
+          else
+            echo "$AI_COMMIT" > "$COMMIT_MSG_FILE"
+          fi
+        else
+          BRANCH=$(git rev-parse --abbrev-ref HEAD)
+          PREFIX=$(echo "$BRANCH" | awk -F'[/_]' '{print $2}')
+          if [ -n "$PREFIX" ]; then
+            awk -v prefix="$PREFIX " 'NR==1{print prefix $0; next} {print}' "$COMMIT_MSG_FILE" > "$COMMIT_MSG_FILE.tmp" && mv "$COMMIT_MSG_FILE.tmp" "$COMMIT_MSG_FILE"
+          fi
         fi
       '';
     };
