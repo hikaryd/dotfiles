@@ -44,7 +44,7 @@
         # Show all file extensions
         AppleShowAllExtensions = true;
         # Automatically hide and show the menu bar
-        _HIHideMenuBar = true;
+        _HIHideMenuBar = false;
         # Disable window animations
         NSAutomaticWindowAnimationsEnabled = false;
 
@@ -81,14 +81,33 @@
 
   system.activationScripts = {
     postActivate.text = ''
-      # disable .DS_Store files
+      # Отключение автоматического переключения между рабочими столами (Spaces)
+      # Предотвращает нежелательные переходы между Spaces при использовании Cmd+Tab или клике на иконки в Dock
+      sudo -u ${user} defaults write com.apple.dock workspaces-auto-swoosh -bool NO
+
+      # Включение возможности перетаскивания окон из любого места
+      # Позволяет перемещать окна, удерживая Ctrl+Opt+Cmd и кликнув в любом месте окна (не только за заголовок)
       sudo -u ${user} defaults write -g NSWindowShouldDragOnGesture -bool TRUE
+
+      # Отключение создания .DS_Store файлов на сетевых дисках
+      # Предотвращает засорение сетевых папок служебными файлами macOS, что полезно при работе с Windows/Linux системами
       sudo -u ${user} defaults write com.apple.desktopservices DSDontWriteNetworkStores -bool TRUE
+
+      # Отключение создания .DS_Store файлов на USB накопителях
+      # Предотвращает создание скрытых служебных файлов на флешках и внешних дисках
       sudo -u ${user} defaults write com.apple.desktopservices DSDontWriteUSBStores -bool TRUE
 
-      # hide icons on desktop
-      sudo -u ${user} defaults write com.apple.finder CreateDesktop FALSE && killall Finder
-      sudo -u ${user} defaults write com.apple.spaces spans-displays -bool true && killall SystemUIServer
+      # Скрытие всех иконок на рабочем столе
+      # Полностью убирает все файлы и папки с рабочего стола (файлы остаются, но становятся невидимыми)
+      sudo -u ${user} defaults write com.apple.finder CreateDesktop TRUE # False для включения
+
+      # Включение единого режима Spaces для всех дисплеев  
+      # Заставляет все подключенные мониторы работать как единое пространство вместо отдельных Spaces на каждом экране
+      sudo -u ${user} defaults write com.apple.spaces spans-displays -bool TRUE
+
+      killall SystemUIServer
+      killall Finder
+      killall Dock
     '';
   };
 

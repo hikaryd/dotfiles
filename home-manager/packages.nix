@@ -20,7 +20,6 @@
     fd
     ripgrep
     postgresql_16
-    docker
     luajitPackages.luarocks
     uv
     poetry

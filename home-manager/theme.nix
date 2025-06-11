@@ -5,6 +5,7 @@
     noto-fonts-emoji
     nerd-fonts.jetbrains-mono
     base16-schemes
+    monaspace
   ];
 
   fonts.fontconfig.enable = true;
@@ -14,7 +15,6 @@
     autoEnable = true;
     polarity = "dark";
     base16Scheme = "${pkgs.base16-schemes}/share/themes/catppuccin-mocha.yaml";
-    image = ../wallpapers/keyboard.png;
 
     fonts = {
       serif = {
@@ -34,7 +34,7 @@
         name = "Noto Color Emoji";
       };
 
-      sizes.terminal = 13;
+      sizes.terminal = 15;
     };
 
     targets = {
@@ -43,6 +43,7 @@
       dunst.enable = false;
       mako.enable = false;
     };
+    opacity.terminal = 0.8;
     cursor = {
       size = 23;
       name = "phinger-cursors-light";

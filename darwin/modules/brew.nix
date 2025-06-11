@@ -2,7 +2,11 @@
   homebrew = {
     brewPrefix = "/opt/homebrew/bin";
     enable = true;
-    onActivation.cleanup = "zap";
+    onActivation = {
+      autoUpdate = true;
+      upgrade = true;
+      cleanup = "uninstall";
+    };
     global = {
       brewfile = true;
       autoUpdate = true;
@@ -15,12 +19,14 @@
       "ghostty"
       "drawio"
       "raycast"
-      "cursor"
       "upscayl"
       "mos"
-      "slimhud"
-      "mocki-toki/formulae/barik"
+      "apple-juice"
+      "claude"
+      "ollama"
+      "orion"
+      "jordanbaird-ice"
     ];
-    brews = [ "bufbuild/buf/buf" ];
+    brews = [ "bufbuild/buf/buf" "zoxide" ];
   };
 }

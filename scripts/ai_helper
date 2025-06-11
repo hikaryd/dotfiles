@@ -59,35 +59,25 @@ Description: <сгенерированное описание>
 """
 
 COMMIT_MESSAGE_PROMPT = """
-Ты — эксперт по написанию сообщений коммитов на русском языке, строго соблюдающий правила Conventional Commits.
-Сгенерируй сообщение коммита на русском языке на основе предоставленного Git diff-а.
+Generate a minimal English commit message with title and description following Conventional Commits format.
 
-ВХОД:
-diff:
+INPUT:
 {diff}
-ОБЩИЕ ПРАВИЛА:
-* Полностью на русском языке.
-* Две части: заголовок и подробное описание, разделённые пустой строкой.
-* Используй типы изменений по Conventional Commits.
 
-1. Заголовок:
-* **Содержание:** Общее краткое описание.
-* **Формат:** `<scope>: <описание>` (scope — необязательно).
-* **Наклонение:** Повелительное.
-* **Длина:** ≤ 50 символов.
-* **Капитализация:** С заглавной буквы, без точки в конце.
+RULES:
+* Use English only
+* Two parts: minimal title and minimal description
+* Title: maximum 50 characters, no period
+* Description: 1-2 short sentences maximum
+* Use Conventional Commits types: feat, fix, docs, style, refactor, perf, test, build, ci, chore
+* Format: type: brief description
+* Use imperative mood
+* Be extremely concise and minimal
 
-2. Тело:
-* Объясни, что и зачем сделано (не как).
-* Идёт после заголовка с одной пустой строкой.
-* Может включать маркированные пункты.
+OUTPUT FORMAT:
+<title>
 
-Типы: feat, fix, docs, style, refactor, perf, test, build, ci, chore.
-
-ВЫВОД (строго соблюдай):
-<Заголовок>
-
-<Подробное описание>
+<description>
 """
 
 REFRACTOR_PROMPT_TEMPLATE = (
