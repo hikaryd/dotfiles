@@ -1,6 +1,6 @@
 return {
   'frankroeder/parrot.nvim',
-  lazy = true,
+  enabled = false,
   event = 'VeryLazy',
   dependencies = {
     'ibhagwan/fzf-lua',

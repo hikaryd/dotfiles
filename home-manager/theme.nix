@@ -42,6 +42,8 @@
       hyprlock.enable = false;
       dunst.enable = false;
       mako.enable = false;
+      starship.enable = false;
+      nushell.enable = false;
     };
     opacity.terminal = 0.8;
     cursor = {

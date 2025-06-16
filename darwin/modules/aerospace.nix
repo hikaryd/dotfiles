@@ -8,7 +8,6 @@
       after-startup-command = [
         "exec-and-forget open -a /Applications/Spotify.app"
         "exec-and-forget open -a /Applications/Telegram.app"
-        "exec-and-forget open -a /Applications/Safari.app"
         "exec-and-forget open -a /Applications/Apple Juice.app"
       ];
 
@@ -17,25 +16,27 @@
       enable-normalization-flatten-containers = true;
       enable-normalization-opposite-orientation-for-nested-containers = true;
 
-      accordion-padding = 5;
+      accordion-padding = 35;
 
       default-root-container-layout = "tiles";
-      default-root-container-orientation = "horizontal";
+      default-root-container-orientation = "auto";
 
       exec-on-workspace-change = [ ];
 
+      on-focused-monitor-changed = [ "move-mouse monitor-lazy-center" ];
       on-focus-changed = [ "move-mouse window-lazy-center" ];
+      automatically-unhide-macos-hidden-apps = true;
 
       gaps = {
         outer = {
-          bottom = 12;
-          left = 12;
-          right = 12;
-          top = 12;
+          bottom = 20;
+          left = 20;
+          right = 20;
+          top = 20;
         };
         inner = {
-          horizontal = 12;
-          vertical = 12;
+          horizontal = 20;
+          vertical = 20;
         };
       };
 
@@ -80,6 +81,16 @@
         {
           check-further-callbacks = false;
           "if" = { app-id = "com.apple.Safari"; };
+          run = [ "move-node-to-workspace 1" ];
+        }
+        {
+          check-further-callbacks = false;
+          "if" = { app-id = "com.brave.Browser"; };
+          run = [ "move-node-to-workspace 1" ];
+        }
+        {
+          check-further-callbacks = false;
+          "if" = { app-id = "app.zen-browser.zen"; };
           run = [ "move-node-to-workspace 1" ];
         }
         {
@@ -152,7 +163,7 @@
         "5" = "main";
         "6" = "main";
         "7" = "main";
-        "8" = "main";
+        "8" = "secondary";
       };
 
       mode.main.binding = {

@@ -1,8 +1,9 @@
-{
+{ pkgs, ... }: {
   programs.zsh = {
     enable = true;
     autocd = true;
     autosuggestion = { enable = true; };
+
     history = {
       ignoreDups = true;
       ignoreAllDups = true;
@@ -17,10 +18,8 @@
       home = "cd ~";
       lss = "yazi";
       vs = "source .venv/bin/activate";
-      l = "eza --color=always --icons --group-directories-first";
-      la = "eza -a --color=always --icons --group-directories-first";
-      ll = "eza -l --color=always --icons --group-directories-first";
-      rm = "rm_confirm";
+      la = "eza -la --color=always --icons --group-directories-first";
+      l = "eza -l --color=always --icons --group-directories-first";
       create_mr = "${../../scripts/ai_helper} --mode mr --api gemini";
       dots = "chezmoi";
       fdev = "cd $HOME/Documents/dev";
@@ -28,63 +27,85 @@
       net = "gping www.google.com -c '#88C0D0,#B48EAD,#81A1C1,#8FBCBB'";
       tree = "tre";
       fzf = "fzf --color=16 --border=rounded --margin=1,3 --preview='bat {}'";
+      speedtest = "networkquality";
       zf =
         "nvim $(fzf --color=16 --border=rounded --margin=1,3 --preview='bat {}')";
       "." = "cd ..";
       ".." = "cd ../..";
       "..." = "cd ../../..";
-
-      hms = "nix run nix-darwin -- switch --flake '.#hikary' --impure -v";
+      hms = "sudo darwin-rebuild switch --flake '.#hikary' --impure -v";
       hmc = "nix-collect-garbage -d";
-
       lg = "lazygit";
-      gs = "git status";
-      ga = "git add";
-      gaa = "git add --all";
-      gc = "git commit -m";
-      gp = "git push";
-      gpl = "git pull";
-      gf = "git fetch --all";
-      gb = "git branch";
-      gco = "git checkout";
-      gcb = "git checkout -b";
-      gd = "git diff";
-      gl = "git log --oneline";
-      grs = "git restore --staged";
-      grh = "git reset --hard";
-      gst = "git stash";
-      gstp = "git stash pop";
-      gm = "git merge";
-      grb = "git rebase";
-      gcp = "git cherry-pick";
-      gtl = "git tag -l";
-      gta = "git tag -a";
     };
 
     enableCompletion = true;
-
-    antidote = {
-      enable = true;
-      plugins = [
-        "zdharma-continuum/fast-syntax-highlighting kind:defer"
-        "zsh-users/zsh-history-substring-search"
-      ];
-    };
+    antidote.enable = false;
 
     initContent = ''
-      rm_confirm() {
-          local confirm
+      # Homebrew для macOS
+      if [[ -f "/opt/homebrew/bin/brew" ]] then
+        eval "$(/opt/homebrew/bin/brew shellenv)"
+      fi
 
-              # If not, proceed with the standard confirmation
-              echo -n "Are you sure you wanna run 'rm -rf'? (yes/no): "
-              read confirm
-              if [ "$confirm" = "yes" ]; then
-                  command rm  "$@"
-              else
-                  echo "Operation canceled."
-              fi
+      # Zinit setup
+      ZINIT_HOME="''${XDG_DATA_HOME:-''${HOME}/.local/share}/zinit/zinit.git"
 
-      }
+      # Download Zinit, if it's not there yet
+      if [ ! -d "$ZINIT_HOME" ]; then
+         mkdir -p "$(dirname $ZINIT_HOME)"
+         git clone https://github.com/zdharma-continuum/zinit.git "$ZINIT_HOME"
+      fi
+
+      # Source/Load zinit
+      source "''${ZINIT_HOME}/zinit.zsh"
+
+      zinit ice depth=1
+
+      # Add in zsh plugins
+      zinit light zsh-users/zsh-syntax-highlighting
+      zinit light zsh-users/zsh-completions
+      zinit light zsh-users/zsh-autosuggestions
+      zinit light Aloxaf/fzf-tab
+
+      # Add in snippets
+      zinit snippet OMZL::git.zsh
+      zinit snippet OMZP::git
+      zinit snippet OMZP::sudo
+      zinit snippet OMZP::aws
+      zinit snippet OMZP::kubectl
+      zinit snippet OMZP::kubectx
+      zinit snippet OMZP::command-not-found
+
+      # Load completions
+      autoload -Uz compinit && compinit
+
+      zinit cdreplay -q
+
+      # Keybindings
+      bindkey -e
+      bindkey '^p' history-search-backward
+      bindkey '^n' history-search-forward
+      bindkey '^[w' kill-region
+
+      # Completion styling
+      zstyle ':completion:*' matcher-list 'm:{a-z}={A-Za-z}'
+      zstyle ':completion:*' list-colors "''${(s.:.)LS_COLORS}"
+      zstyle ':completion:*' menu no
+      zstyle ':fzf-tab:complete:cd:*' fzf-preview 'ls --color $realpath'
+      zstyle ':fzf-tab:complete:__zoxide_z:*' fzf-preview 'ls --color $realpath'
+
+      # Shell integrations
+      eval "$(fzf --zsh)"
+      eval "$(zoxide init --cmd cd zsh)"
+      setopt appendhistory
+      setopt sharehistory
+      setopt hist_ignore_space
+      setopt hist_ignore_all_dups
+      setopt hist_save_no_dups
+      setopt hist_ignore_dups
+      setopt hist_find_no_dups
     '';
   };
+
+  home.packages = with pkgs; [ eza ];
 }

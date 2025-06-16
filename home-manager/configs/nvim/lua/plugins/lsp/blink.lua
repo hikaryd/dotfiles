@@ -15,7 +15,7 @@ return {
     end
 
     opts.sources = vim.tbl_deep_extend('force', opts.sources or {}, {
-      default = { 'lsp', 'buffer', 'path', 'emoji', 'dictionary' },
+      default = { 'lsp', 'buffer', 'path', 'emoji', 'dictionary'},
       providers = {
         lsp = {
           name = 'LSP',
@@ -86,6 +86,7 @@ return {
       ghost_text = {
         enabled = false,
       },
+      trigger = { prefetch_on_insert = false },
     }
 
     opts.keymap = {

@@ -14,9 +14,6 @@ map('n', 'v$', 'v$h', 'Visual: select to end of line minus one char')
 -- File Explorer
 map('n', '<Space>e', '<cmd>Yazi<CR>', 'Toggle file explorer')
 
--- Docstring generation
-map('n', '<Space>dg', '<cmd>DocscribeGenerate<CR>', 'Generate docstrings')
-
 -- Window Management
 map('n', '<A-h>', '<cmd>SmartCursorResizeLeft<CR>', 'Resize window left')
 map('n', '<A-j>', '<cmd>SmartCursorResizeDown<CR>', 'Resize window down')
