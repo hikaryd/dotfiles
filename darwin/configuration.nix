@@ -13,15 +13,8 @@
 
   environment = {
     shells = with pkgs; [ bash zsh nushell ];
-    systemPackages = [
-      pkgs.coreutils
-      pkgs.neovim
-      pkgs.eza
-      pkgs.bat
-      pkgs.yazi
-      pkgs.atuin
-      pkgs.python3
-    ];
+    systemPackages =
+      [ pkgs.coreutils pkgs.neovim pkgs.bat pkgs.yazi pkgs.atuin pkgs.python3 ];
     systemPath = [
       "/usr/local/bin"
       "/opt/homebrew/bin"

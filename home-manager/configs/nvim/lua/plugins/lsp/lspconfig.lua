@@ -17,7 +17,6 @@ return {
         nushell = {},
         nil_ls = {},
         ty = {},
-
         lua_ls = {
           settings = {
             Lua = {
@@ -34,14 +33,12 @@ return {
             },
           },
         },
-
         ruff = {
           settings = {
             organizeImports = true,
             fixAll = true,
           },
         },
-
         pyright = {
           settings = {
             pyright = { autoImportCompletion = true },

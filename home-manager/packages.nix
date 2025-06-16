@@ -9,9 +9,6 @@
     p7zip
     asdf
     gping
-    atuin
-    eza
-    rclone
     lrzip
     unrar
     unzip

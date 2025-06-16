@@ -21,12 +21,12 @@
       "raycast"
       "upscayl"
       "mos"
-      "apple-juice"
-      "claude"
-      "ollama"
-      "orion"
       "jordanbaird-ice"
+      "zen"
+      "wakatime"
+      "brave-browser"
+      "claude"
     ];
-    brews = [ "bufbuild/buf/buf" "zoxide" ];
+    brews = [ "spicetify-cli" ];
   };
 }
