@@ -2,6 +2,7 @@ return {
   'nvimtools/none-ls.nvim',
   dependencies = { 'nvim-lua/plenary.nvim' },
   event = 'BufReadPre',
+  enabled = false,
   config = function()
     local null_ls = require 'null-ls'
 

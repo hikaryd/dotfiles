@@ -15,9 +15,9 @@
       url = "github:LnL7/nix-darwin";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    zen-browser.url = "github:0xc000022070/zen-browser-flake";
-    zen-nebula.url =
-      "github:JustAdumbPrsn/Nebula-A-Minimal-Theme-for-Zen-Browser";
+    # zen-browser.url = "github:0xc000022070/zen-browser-flake";
+    # zen-nebula.url =
+    #   "github:JustAdumbPrsn/Nebula-A-Minimal-Theme-for-Zen-Browser";
   };
   outputs = inputs@{ self, home-manager, nix-darwin, ... }:
     let
@@ -40,6 +40,14 @@
               useUserPackages = true;
               extraSpecialArgs = { inherit inputs system user; };
               users."${user}" = import ./home-manager/home.nix;
+              sharedModules = [{
+                nixpkgs.overlays = [
+                  (final: prev: {
+                    nushell = prev.nushell.overrideAttrs
+                      (oldAttrs: { doCheck = false; });
+                  })
+                ];
+              }];
             };
           }
         ];

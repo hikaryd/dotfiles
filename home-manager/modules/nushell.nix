@@ -38,10 +38,10 @@
       create_mr = "${../../scripts/ai_helper} --mode mr";
 
       lg = "lazygit";
-      gaa = "git add -A";
+      gaa = "git ad -A";
 
       # Nix
-      hms = "sudo darwin-rebuild switch --flake '.#hikary' --impure -v";
+      hms = "suo darwin-rebuild switch --flake '.#hikary' --impure -v";
       hmc = "nix-collect-garbage -d";
     };
 
