@@ -1,6 +1,6 @@
 { pkgs, ... }: {
   services.aerospace = {
-    enable = true;
+    enable = false;
     package = pkgs.aerospace;
 
     settings = {
@@ -156,14 +156,14 @@
       ];
 
       workspace-to-monitor-force-assignment = {
-        "1" = "main";
+        "1" = "secondary";
         "2" = "main";
         "3" = "main";
         "4" = "main";
-        "5" = "main";
-        "6" = "main";
-        "7" = "main";
-        "8" = "secondary";
+        "5" = "secondary";
+        "6" = "secondary";
+        "7" = "secondary";
+        "8" = "main";
       };
 
       mode.main.binding = {

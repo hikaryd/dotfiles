@@ -16,7 +16,6 @@
     jq
     fd
     ripgrep
-    postgresql_16
     luajitPackages.luarocks
     uv
     poetry

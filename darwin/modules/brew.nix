@@ -16,16 +16,18 @@
       "telegram"
       "spotify"
       "1password-cli"
+      "1password"
       "ghostty"
       "drawio"
       "raycast"
       "upscayl"
       "mos"
-      "jordanbaird-ice"
       "zen"
       "wakatime"
       "brave-browser"
       "claude"
+      "karabiner-elements"
+      "cursor"
     ];
     brews = [ "spicetify-cli" ];
   };
