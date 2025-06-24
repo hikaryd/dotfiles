@@ -52,11 +52,6 @@ hs.hotkey.bind({ "alt", "shift" }, "0", function()
 	runYabai({ "-m", "space", "--balance" })
 end)
 
--- Запуск Ghostty
-hs.hotkey.bind({ "alt" }, "return", function()
-	hs.application.launchOrFocus("Ghostty")
-end)
-
 -- Перемещение между дисплеями
 hs.hotkey.bind({ "ctrl", "alt" }, "h", function()
 	runYabai({ "-m", "window", "--display", "west" })
