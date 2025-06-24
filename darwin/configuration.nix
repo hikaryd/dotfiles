@@ -54,32 +54,16 @@
         orientation = "left";
         show-recents = false;
         persistent-apps = [ ];
+        mru-spaces = false;
       };
       finder = {
         AppleShowAllExtensions = true;
         _FXShowPosixPathInTitle = true;
       };
+      spaces.spans-displays = false;
     };
   };
-  system.activationScripts = {
-    postActivate.text = ''
-      # Отключение автоматического переключения между рабочими столами (Spaces)
-      # Предотвращает нежелательные переходы между Spaces при использовании Cmd+Tab или клике на иконки в Dock
-      sudo -u ${user} defaults write com.apple.dock workspaces-auto-swoosh -bool NO
-      # Отключение создания .DS_Store файлов на сетевых дисках
-      # Предотвращает засорение сетевых папок служебными файлами macOS, что полезно при работе с Windows/Linux системами
-      sudo -u ${user} defaults write com.apple.desktopservices DSDontWriteNetworkStores -bool TRUE
-      # Отключение создания .DS_Store файлов на USB накопителях
-      # Предотвращает создание скрытых служебных файлов на флешках и внешних дисках
-      sudo -u ${user} defaults write com.apple.desktopservices DSDontWriteUSBStores -bool TRUE
-      # Скрытие всех иконок на рабочем столе
-      # Полностью убирает все файлы и папки с рабочего стола (файлы остаются, но становятся невидимыми)
-      sudo -u ${user} defaults write com.apple.finder CreateDesktop TRUE # False для скрытия
-      killall SystemUIServer
-      killall Finder
-      killall Dock
-    '';
-  };
+
   security.pam.services.sudo_local.reattach = true;
   security.pam.services.sudo_local.touchIdAuth = true;
   imports = [ ./modules ];

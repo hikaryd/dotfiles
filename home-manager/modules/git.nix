@@ -1,8 +1,8 @@
 { config, ... }: {
   programs.git = {
     enable = true;
-    userName = "hikaryd";
-    userEmail = "tronin371@gmail.com";
+    userName = "Egor Tronin";
+    userEmail = "egor.tronin@x5.ru";
     delta = {
       enable = true;
       options = {
