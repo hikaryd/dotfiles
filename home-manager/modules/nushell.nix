@@ -26,6 +26,8 @@
       "..." = "cd ../../..";
       l = "ls";
       cd = "z";
+      ccost = "npx ccusage@latest";
+      clive = "npx ccusage@latest blocks --live";
 
       speedtest = "networkquality";
 
@@ -33,7 +35,7 @@
       open = "^open";
       vs = "overlay use .venv/bin/activate.nu";
 
-      cl = "clear";
+      c = "clear";
 
       create_mr = "${../../scripts/ai_helper} --mode mr";
 
@@ -41,7 +43,7 @@
       gaa = "git ad -A";
 
       # Nix
-      hms = "suo darwin-rebuild switch --flake '.#hikary' --impure -v";
+      hms = "sudo darwin-rebuild switch --flake '.#hikary' --impure -v";
       hmc = "nix-collect-garbage -d";
     };
 

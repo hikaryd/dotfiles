@@ -11,7 +11,7 @@
       brewfile = true;
       autoUpdate = true;
     };
-    taps = [ ];
+    taps = [ "koekeishiya/formulae" ];
     casks = [
       "telegram"
       "spotify"
@@ -28,7 +28,8 @@
       "claude"
       "karabiner-elements"
       "cursor"
+      "hammerspoon"
     ];
-    brews = [ "spicetify-cli" ];
+    brews = [ "spicetify-cli" "koekeishiya/formulae/yabai" ];
   };
 }

@@ -207,7 +207,7 @@
 
         alt-shift-f = "fullscreen";
 
-        cmd-shift-e = "layout tiles horizontal vertical";
+        cmd-shift-e = "layout tiles h_accordion tiling";
         cmd-shift-r = [ "flatten-workspace-tree" "mode main" ];
         cmd-shift-f = [ "layout floating tiling" ];
       };
