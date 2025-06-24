@@ -17,5 +17,7 @@
     ./otd.nix
     ./zsh.nix
     ./misc.nix
+    ./yabai.nix
+    ./hammerspoon.nix
   ];
 }
