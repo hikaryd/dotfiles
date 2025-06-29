@@ -77,6 +77,7 @@
       "result"
       "result-*"
       ".pre-commit-config.yaml"
+      "requirements"
     ];
   };
 

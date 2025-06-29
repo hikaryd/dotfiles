@@ -28,12 +28,15 @@
       cd = "z";
       ccost = "npx ccusage@latest";
       clive = "npx ccusage@latest blocks --live";
+      # gemini = "npx https://github.com/google-gemini/gemini-cli";
+      # GOOGLE_CLOUD_PROJECT = "653255600806";
 
       speedtest = "networkquality";
 
       nu-open = "open";
       open = "^open";
       vs = "overlay use .venv/bin/activate.nu";
+      share_port = "npx tunnelmole 8000";
 
       c = "clear";
 

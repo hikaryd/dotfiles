@@ -1,6 +1,6 @@
 return {
   'saghen/blink.cmp',
-  build = 'nix run .#build-plugin',
+  build = 'cargo build --release',
   dependencies = {
     'moyiz/blink-emoji.nvim',
     'Kaiser-Yang/blink-cmp-dictionary',
@@ -15,7 +15,7 @@ return {
     end
 
     opts.sources = vim.tbl_deep_extend('force', opts.sources or {}, {
-      default = { 'lsp', 'buffer', 'path', 'emoji', 'dictionary'},
+      default = { 'lsp', 'buffer', 'path', 'emoji', 'dictionary' },
       providers = {
         lsp = {
           name = 'LSP',
