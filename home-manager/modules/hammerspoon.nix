@@ -1,3 +1,6 @@
 { ... }: {
-  home.file.".hammerspoon/init.lua" = { source = ../configs/hammerspoon.lua; };
+  home.file.".hammerspoon" = {
+    source = ../configs/hammerspoon;
+    recursive = true;
+  };
 }

@@ -18,6 +18,7 @@
       "1password-cli"
       "1password"
       "ghostty"
+      "warp"
       "drawio"
       "raycast"
       "upscayl"
@@ -27,8 +28,8 @@
       "brave-browser"
       "claude"
       "karabiner-elements"
-      "cursor"
       "hammerspoon"
+      "ollama"
     ];
     brews = [ "spicetify-cli" "koekeishiya/formulae/yabai" ];
   };
