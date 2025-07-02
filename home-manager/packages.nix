@@ -23,6 +23,5 @@
     grip-grab
     rustup
     typst
-    claude-code
   ];
 }

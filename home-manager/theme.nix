@@ -44,8 +44,9 @@
       mako.enable = false;
       starship.enable = false;
       nushell.enable = false;
+      ghostty.enable = false;
     };
-    opacity.terminal = 0.8;
+    opacity.terminal = 0.9;
     cursor = {
       size = 23;
       name = "phinger-cursors-light";

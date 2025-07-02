@@ -4,14 +4,20 @@
     installBatSyntax = false;
     package = pkgs.emptyDirectory;
     settings = {
-      font-family = "Monaspace Neon";
+      font-family = "FiraCode";
       font-size = 14;
+      theme = "catppuccin-mocha";
+      font-feature = "-liga";
+      font-thicken = true;
+
       bold-is-bright = true;
       command = "/etc/profiles/per-user/tronin.egor/bin/nu";
       macos-titlebar-style = "tabs";
+
       background-blur-radius = 20;
+      background-opacity = 0.9;
       background-blur = true;
-      shell-integration = "none";
+      shell-integration-features = "no-cursor";
       macos-option-as-alt = true;
       keybind = [
         "ctrl+v=new_split:auto"
@@ -24,24 +30,22 @@
         "ctrl+shift+k=resize_split:up,20"
         "ctrl+shift+j=resize_split:down,20"
       ];
+      selection-invert-fg-bg = true;
 
       confirm-close-surface = false;
       mouse-hide-while-typing = true;
 
-      window-padding-x = 10;
+      window-padding-x = 15;
+      adjust-cell-height = "9%";
       window-padding-y = 10;
       mouse-scroll-multiplier = 2;
-      window-padding-balance = true;
-      term = "xterm-256color";
-      window-inherit-working-directory = true;
-      window-inherit-font-size = true;
+      # term = "xterm-256color";
 
-      scrollback-limit = 1000000;
-      custom-shader-animation = true;
-      cursor-style = "bar";
+      cursor-style = "block";
       cursor-style-blink = true;
-      window-vsync = true;
-      window-decoration = "auto";
+      cursor-opacity = 0.8;
+      cursor-invert-fg-bg = true;
+
       window-save-state = "always";
       copy-on-select = true;
     };

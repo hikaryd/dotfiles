@@ -1,5 +1,5 @@
 -- =============================================================================
--- Hammerspoon Configuration
+-- Hammerspoon Configuratiion
 -- =============================================================================
 
 -- Глобальный логгер
@@ -91,32 +91,53 @@ end)
 -- ====================
 
 -- Подключаем наш новый модуль
-local windowMover = require("window_mover")
+-- Convert seconds to microseconds
+local timeUnit = 1000 * 1000
+-- delay: in seconds
+function asyncLeftClick(point, delay, onFinished)
+	local module = hs.eventtap
+	module.event.newMouseEvent(module.event.types["leftMouseDown"], point):post()
 
--- Функция-обертка для перемещения текущего сфокусированного окна
-function moveFocusedWindowToSpace(spaceNumber)
-	local focusedWindow = hs.window.focusedWindow()
-	if not focusedWindow then
-		hs.alert.show("Нет сфокусированного окна")
-		log.w("Попытка перемещения без сфокусированного окна")
-		return
-	end
+	hs.timer.doAfter(delay, function()
+		module.event.newMouseEvent(module.event.types["leftMouseUp"], point):post()
+		if onFinished then
+			onFinished()
+		end
+	end)
+end
 
-	local target_space_id = windowMover:getSpaceID(spaceNumber)
-	if not target_space_id then
-		hs.alert.show("Воркспейс с номером " .. spaceNumber .. " не найден!")
-		log.w("Не найден воркспейс с номером " .. spaceNumber)
-		return
-	end
-
-	local success, err = windowMover:moveToSpace(focusedWindow, target_space_id)
-
-	if not success then
-		hs.alert.show("Ошибка перемещения окна: " .. tostring(err))
-		log.e("Ошибка перемещения: " .. tostring(err))
+-- Move window to space
+function moveWindowToSpace(window, spaceNumber)
+	log.i("Moving window " .. window:title() .. " to space " .. spaceNumber)
+	local prevCursorPoint = hs.mouse.absolutePosition()
+	local winFrame = window:frame()
+	local point = hs.geometry(winFrame.x + 5, winFrame.y + 15)
+	asyncLeftClick(point, 1, function()
+		-- Restore cursor position
+		hs.mouse.absolutePosition(prevCursorPoint)
+	end)
+	-- Switch to target space with Mission Control shortcuts
+	if spaceNumber < 10 then
+		hs.eventtap.keyStroke({ "alt" }, tostring(spaceNumber), 0.2 * timeUnit)
+	else
+		hs.eventtap.keyStroke({ "alt", "ctrl" }, tostring(spaceNumber - 10), 0.2 * timeUnit)
 	end
 end
 
+-- Function to move focused window to a specific space
+function moveFocusedWindowToSpace(spaceNumber)
+	local spaceName = "Desktop " .. spaceNumber
+	log.i("Attempting to move window to " .. spaceName)
+	local focusedWindow = hs.window.focusedWindow()
+	if focusedWindow then
+		moveWindowToSpace(focusedWindow, spaceNumber)
+	else
+		log.w("No focused window")
+		hs.alert.show("No focused window")
+	end
+end
+
+-- Bind keys cmd + shift + 0-9
 for i = 1, 9 do
 	hs.hotkey.bind({ "alt", "shift" }, tostring(i), function()
 		moveFocusedWindowToSpace(i)
@@ -166,8 +187,6 @@ log.i("Initial space detected: " .. currentSpace)
 function switchToSpace(spaceNumber)
 	local current = getCurrentSpaceNumber()
 	if current ~= spaceNumber then
-		-- Убедитесь, что у вас в System Settings -> Keyboard -> Keyboard Shortcuts -> Mission Control
-		-- включены шорткаты для "Switch to Desktop [number]"
 		hs.eventtap.keyStroke({ "ctrl" }, tostring(spaceNumber))
 		log.i(string.format("Switched to space %d from %d", spaceNumber, current))
 	else

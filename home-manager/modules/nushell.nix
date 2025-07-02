@@ -32,6 +32,7 @@
       # GOOGLE_CLOUD_PROJECT = "653255600806";
 
       speedtest = "networkquality";
+      claude = " ~/.claude/local/claude";
 
       nu-open = "open";
       open = "^open";
