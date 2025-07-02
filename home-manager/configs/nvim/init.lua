@@ -12,6 +12,15 @@ if not vim.loop.fs_stat(lazypath) then
 end
 vim.opt.rtp:prepend(lazypath)
 
+vim.g.loaded_ruby_provider = 0
+vim.g.loaded_perl_provider = 0
+vim.g.loaded_node_provider = 0
+
+vim.opt.shadafile = 'NONE'
+vim.schedule(function()
+  vim.opt.shadafile = ''
+end)
+
 -- Basic options
 vim.g.mapleader = ' '
 vim.cmd 'set modifiable'

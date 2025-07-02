@@ -11,7 +11,6 @@
       brewfile = true;
       autoUpdate = true;
     };
-    taps = [ "koekeishiya/formulae" ];
     casks = [
       "telegram"
       "spotify"
@@ -26,10 +25,13 @@
       "wakatime"
       "brave-browser"
       "karabiner-elements"
-      "hammerspoon"
-      "ollama"
       "font-fira-code"
+      "notion"
+      "font-sf-pro"
+      "ubar"
+      "font-caskaydia-cove-nerd-font"
     ];
-    brews = [ "koekeishiya/formulae/yabai" ];
+    taps = [ "FelixKratz/formulae" ];
+    brews = [ "sketchybar" ];
   };
 }

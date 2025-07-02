@@ -1,6 +1,7 @@
 return {
   'rmagatti/auto-session',
-  lazy = false,
+  -- lazy = false,
+  enabled = false,
   opts = {
     suppressed_dirs = { '~/Downloads', '/' },
     auto_session_enable_last_session = true,

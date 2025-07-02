@@ -31,9 +31,9 @@
         # Show all file extensions
         AppleShowAllExtensions = true;
         # Automatically hide and show the menu bar
-        _HIHideMenuBar = false;
+        _HIHideMenuBar = true;
         # Disable window animations
-        NSAutomaticWindowAnimationsEnabled = false;
+        NSAutomaticWindowAnimationsEnabled = true;
         "com.apple.trackpad.scaling" = 0.7;
         AppleMeasurementUnits = "Centimeters";
         AppleMetricUnits = 1;

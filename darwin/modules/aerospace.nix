@@ -1,6 +1,6 @@
 { pkgs, ... }: {
   services.aerospace = {
-    enable = false;
+    enable = true;
     package = pkgs.aerospace;
 
     settings = {
@@ -13,26 +13,29 @@
 
       key-mapping.preset = "qwerty";
 
-      enable-normalization-flatten-containers = true;
-      enable-normalization-opposite-orientation-for-nested-containers = true;
-
       accordion-padding = 35;
 
       default-root-container-layout = "tiles";
       default-root-container-orientation = "auto";
 
-      exec-on-workspace-change = [ ];
+      exec-on-workspace-change = [
+        "/bin/bash"
+        "-c"
+        "sketchybar --trigger aerospace_workspace_change AEROSPACE_FOCUSED_WORKSPACE=$AEROSPACE_FOCUSED_WORKSPACE AEROSPACE_PREV_WORKSPACE=$AEROSPACE_PREV_WORKSPACE"
+      ];
 
       on-focused-monitor-changed = [ "move-mouse monitor-lazy-center" ];
       on-focus-changed = [ "move-mouse window-lazy-center" ];
       automatically-unhide-macos-hidden-apps = true;
+      enable-normalization-flatten-containers = false;
+      enable-normalization-opposite-orientation-for-nested-containers = false;
 
       gaps = {
         outer = {
           bottom = 20;
           left = 20;
           right = 20;
-          top = 20;
+          top = 70;
         };
         inner = {
           horizontal = 20;

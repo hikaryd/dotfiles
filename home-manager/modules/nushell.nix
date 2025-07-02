@@ -45,6 +45,8 @@
 
       lg = "lazygit";
       gaa = "git ad -A";
+      nvim-bench = ''
+        hyperfine "nvim --startuptime /tmp/startup.log +qall" --warmup 3 --runs 10'';
 
       # Nix
       hms = "sudo darwin-rebuild switch --flake '.#hikary' --impure -v";
