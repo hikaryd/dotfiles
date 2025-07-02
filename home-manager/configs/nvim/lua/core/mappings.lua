@@ -14,9 +14,6 @@ map('n', 'v$', 'v$h', 'Visual: select to end of line minus one char')
 -- File Explorer
 map('n', '<Space>e', '<cmd>Yazi<CR>', 'Toggle file explorer')
 
--- Term
-map('n', '<C-\\>', '<cmd>FloatermToggle<CR>', 'Toggle terminal')
-
 -- Window Management
 map('n', '<A-h>', '<cmd>SmartCursorResizeLeft<CR>', 'Resize window left')
 map('n', '<A-j>', '<cmd>SmartCursorResizeDown<CR>', 'Resize window down')

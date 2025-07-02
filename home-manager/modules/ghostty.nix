@@ -6,9 +6,10 @@
     settings = {
       font-family = "FiraCode";
       font-size = 14;
-      theme = "catppuccin-mocha";
-      font-feature = "-liga";
+      theme = "light:tokyonight-day,dark:tokyonight";
+      font-feature = "-liga +calt";
       font-thicken = true;
+      window-colorspace = "display-p3";
 
       bold-is-bright = true;
       command = "/etc/profiles/per-user/tronin.egor/bin/nu";

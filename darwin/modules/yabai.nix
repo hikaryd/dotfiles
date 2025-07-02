@@ -1,6 +1,6 @@
 { ... }: {
   services.yabai = {
-    enable = true;
+    enable = false;
     enableScriptingAddition = true;
     extraConfig = ''
       source $HOME/.config/yabai/yabairc
