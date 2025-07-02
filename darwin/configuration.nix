@@ -63,6 +63,13 @@
       spaces.spans-displays = false;
     };
   };
+  system.activationScripts.disableDSStoreCreation = {
+    text = ''
+      # Выполняем команды для отключения .DS_Store на сетевых и USB дисках
+      /usr/bin/defaults write com.apple.desktopservices DSDontWriteNetworkStores -bool TRUE
+      /usr/bin/defaults write com.apple.desktopservices DSDontWriteUSBStores -bool TRUE
+    '';
+  };
 
   security.pam.services.sudo_local.reattach = true;
   security.pam.services.sudo_local.touchIdAuth = true;

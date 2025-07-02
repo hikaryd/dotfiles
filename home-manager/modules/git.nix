@@ -89,7 +89,9 @@
         #!/bin/sh
         COMMIT_MSG_FILE=$1
 
-        AI_COMMIT=$(${../../scripts/ai_helper} --mode commit 2>/dev/null)
+        AI_COMMIT=$(${
+          ../../scripts/ai_helper
+        } --mode commit --provider x5 2>/dev/null)
 
         if [ -n "$AI_COMMIT" ]; then
           BRANCH=$(git rev-parse --abbrev-ref HEAD)

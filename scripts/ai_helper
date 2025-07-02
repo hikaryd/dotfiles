@@ -1,22 +1,23 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
-ai_helper_gemini.py – универсальный CLI-помощник для автоматизированного создания MR, сообщений коммитов и рефакторинга текста через Google Gemini API.
-Поддерживает три режима:
+ai_helper.py – универсальный CLI-помощник для разработчика.
+Поддерживает несколько AI-провайдеров для автоматизации рутинных задач.
 
-  • **mr**        – формирование Title/Description Merge Request по Git-diff
-  • **commit**    – генерация Conventional Commit-сообщения на основе staged diff
-  • **refactor**  – исправление текста из буфера обмена
+Режимы:
+  • mr        – формирование Title/Description Merge Request по Git-diff
+  • commit    – генерация Conventional Commit-сообщения на основе staged diff
+  • refactor  – исправление текста из буфера обмена
 
-Перед использованием:
-  1. Запишите ваш ключ API в файл ~/.gemini_key
-  2. Убедитесь, что файл доступен для чтения
-  3. (Опционально) Задайте модель через GEMINI_MODEL (по умолчанию "gemini-2.5-flash-preview-05-20").
+Провайдеры (--provider):
+  • gemini (по умолчанию)
+    - Ключ API: переменная GEMINI_API_KEY или файл ~/.gemini_key
+    - Модель: переменная GEMINI_MODEL (по умолч. "gemini-1.5-flash-latest")
+  • x5
+    - Конфигурация: JSON-файл ~/.x5_copilot_config.json
 
 Запуск:
-    python ai_helper_gemini.py --mode mr
-    python ai_helper_gemini.py --mode commit
-    python ai_helper_gemini.py --mode refactor
+    python ai_helper.py --mode mr
+    python ai_helper.py --provider x5 --mode commit
 """
 
 import argparse
@@ -27,13 +28,16 @@ import subprocess
 import sys
 import urllib.error
 import urllib.request
-from typing import Any, Dict, Optional
+from abc import ABC, abstractmethod
+from pathlib import Path
+from typing import Any, Final
 
-###############################################################################
-# PROMPTS (English text; response must be in Russian)
-###############################################################################
+# --- Константы ---
 
-MR_PROMPT_TEMPLATE = """
+PROVIDER_GEMINI: Final[str] = "gemini"
+PROVIDER_X5: Final[str] = "x5"
+
+MR_PROMPT_TEMPLATE: Final[str] = """
 # РОЛЬ: Ты — опытный AI-ассистент, специализирующийся на анализе кода и создании Merge Request.
 # ЗАДАЧА: На основе предоставленного Git diff-а создай информативный заголовок и структурированное, подробное описание Merge Request. Ответь на русском языке.
 
@@ -41,24 +45,22 @@ MR_PROMPT_TEMPLATE = """
 {diff}
 
 # ИНСТРУКЦИИ:
-
 ## 1. Заголовок:
-* **Краткость:** Не более 72 символов.
-* **Ясность:** Отрази основное изменение или цель.
-* **Формат (Conventional Commits):** feat:, fix:, refactor:, perf:, docs:, test:, chore:.
-
+* Краткость: Не более 72 символов.
+* Ясность: Отрази основное изменение или цель.
+* Формат (Conventional Commits): feat:, fix:, refactor:, perf:, docs:, test:, chore:.
 ## 2. Описание:
-* **Что было сделано:** Краткое резюме и перечень всех типов изменений: feat, fix, refactor, perf, docs, test, chore, style.
-* **Зачем это было сделано:** Мотивация или бизнес-требование.
-* **Как проверить (необязательно):** Шаги для тестирования.
-* **Дополнительно (необязательно):** Риски, открытые вопросы.
+* Что было сделано: Краткое резюме и перечень всех типов изменений: feat, fix, refactor, perf, docs, test, chore, style.
+* Зачем это было сделано: Мотивация или бизнес-требование.
+* Как проверить (необязательно): Шаги для тестирования.
+* Дополнительно (необязательно): Риски, открытые вопросы.
 
 # ФОРМАТ ВЫВОДА (строго соблюдай):
 Title: <сгенерированный заголовок>
 Description: <сгенерированное описание>
 """
 
-COMMIT_MESSAGE_PROMPT = """
+COMMIT_MESSAGE_PROMPT: Final[str] = """
 Generate a minimal English commit message with title and description following Conventional Commits format.
 
 INPUT:
@@ -80,17 +82,162 @@ OUTPUT FORMAT:
 <description>
 """
 
-REFRACTOR_PROMPT_TEMPLATE = (
+REFACTOR_PROMPT_TEMPLATE: Final[str] = (
     "Проанализируй этот текст, найди и исправь ошибки. "
     "Верни только исправленный текст без комментариев.\n\n{text}"
 )
 
-###############################################################################
-# УТИЛИТЫ
-###############################################################################
+
+class BaseAIProvider(ABC):
+    """Абстрактный базовый класс для AI-провайдеров."""
+
+    def __init__(self, name: str):
+        self.name = name
+
+    @abstractmethod
+    def send_request(self, prompt: str) -> dict[str, Any] | None:
+        pass
+
+    @abstractmethod
+    def extract_answer(self, response: dict[str, Any]) -> str:
+        pass
+
+    def _load_key_from_env_or_file(self, env_var: str, file_path: Path) -> str | None:
+        """Загружает ключ из переменной окружения или файла."""
+        if key := os.getenv(env_var):
+            return key
+        if file_path.exists():
+            return file_path.read_text(encoding="utf-8").strip()
+        return None
 
 
-def remove_think(text: str) -> str:
+class GeminiProvider(BaseAIProvider):
+    """Провайдер для Google Gemini API."""
+
+    def __init__(self):
+        super().__init__("Gemini")
+        self.api_key = self._load_key_from_env_or_file(
+            "GEMINI_API_KEY", Path.home() / ".gemini_key"
+        )
+        self.model = os.getenv("GEMINI_MODEL", "gemini-1.5-flash-latest")
+        if not self.api_key:
+            _exit_with_error(
+                f"AI Helper ({self.name})",
+                "Не удалось загрузить API-ключ из окружения (GEMINI_API_KEY) или файла ~/.gemini_key.",
+            )
+
+    def send_request(self, prompt: str) -> dict[str, Any] | None:
+        url = (
+            f"https://generativelanguage.googleapis.com/v1beta/models/"
+            f"{self.model}:generateContent?key={self.api_key}"
+        )
+        payload = {"contents": [{"parts": [{"text": prompt}]}]}
+        data = json.dumps(payload).encode("utf-8")
+        headers = {"Content-Type": "application/json; charset=utf-8"}
+        req = urllib.request.Request(url, data=data, headers=headers, method="POST")
+
+        try:
+            with urllib.request.urlopen(req) as resp:
+                return json.loads(resp.read().decode("utf-8"))
+        except urllib.error.HTTPError as err:
+            notify(
+                f"AI Helper ({self.name})",
+                f"HTTP Error: {err.code}\n{err.read().decode()}",
+            )
+        except urllib.error.URLError as err:
+            notify(f"AI Helper ({self.name})", f"URL Error: {err.reason}")
+        return None
+
+    def extract_answer(self, response: dict[str, Any]) -> str:
+        try:
+            parts = response["candidates"][0]["content"]["parts"]
+            return "".join(p.get("text", "") for p in parts).strip()
+        except (KeyError, IndexError, TypeError):
+            return ""
+
+
+class X5Provider(BaseAIProvider):
+    """Провайдер для X5 Copilot API."""
+
+    def __init__(self):
+        super().__init__("X5 Copilot")
+        self.api_key: str | None = None
+        self.api_base: str | None = None
+        self.model: str | None = None
+        self._load_config()
+
+    def _load_config(self):
+        config_path = Path.home() / ".x5_copilot_config.json"
+        if not config_path.is_file():
+            _exit_with_error(
+                f"AI Helper ({self.name})",
+                f"Файл конфигурации не найден: {config_path}",
+                (
+                    "Пожалуйста, создайте его со следующим содержимым:\n\n"
+                    "{\n"
+                    '  "api_key": "",\n'
+                    '  "api_base": "",\n'
+                    '  "model": ""\n'
+                    "}"
+                ),
+            )
+        try:
+            config = json.loads(config_path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            _exit_with_error(
+                f"AI Helper ({self.name})",
+                f"Ошибка парсинга JSON в файле {config_path}.",
+            )
+
+        self.api_key = config.get("api_key")
+        self.api_base = config.get("api_base")
+        self.model = config.get("model")
+        if not all([self.api_key, self.api_base, self.model]):
+            _exit_with_error(
+                f"AI Helper ({self.name})",
+                f"Файл {config_path} должен содержать 'api_key', 'api_base' и 'model'.",
+            )
+
+    def send_request(self, prompt: str) -> dict[str, Any] | None:
+        url = f"{self.api_base}/chat/completions"
+        payload = {
+            "provider": PROVIDER_X5,
+            "model": self.model,
+            "messages": [{"role": "user", "content": prompt}],
+            "temperature": 0.5,
+            "max_tokens": 1500,
+            "stream": False,
+        }
+        data = json.dumps(payload).encode("utf-8")
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {self.api_key}",
+        }
+        req = urllib.request.Request(url, data=data, headers=headers, method="POST")
+
+        try:
+            with urllib.request.urlopen(req) as resp:
+                return json.loads(resp.read().decode("utf-8"))
+        except urllib.error.HTTPError as err:
+            notify(
+                f"AI Helper ({self.name})",
+                f"HTTP Error: {err.code}\n{err.read().decode()}",
+            )
+        except urllib.error.URLError as err:
+            notify(f"AI Helper ({self.name})", f"URL Error: {err.reason}")
+        return None
+
+    def extract_answer(self, response: dict[str, Any]) -> str:
+        try:
+            return response["choices"][0]["message"]["content"].strip()
+        except (KeyError, IndexError, TypeError):
+            return ""
+
+
+# --- Утилиты ---
+
+
+def remove_think_tags(text: str) -> str:
     return re.sub(r"<think>.*?</think>", "", text, flags=re.DOTALL)
 
 
@@ -104,202 +251,191 @@ def notify(title: str, message: str) -> None:
             ]
         )
     else:
-        subprocess.run(["notify-send", title, message])
+        try:
+            subprocess.run(
+                ["notify-send", title, message], check=True, capture_output=True
+            )
+        except (FileNotFoundError, subprocess.CalledProcessError):
+            print(f"[{title}] {message}")
 
 
 def get_clipboard_text() -> str:
-    cmd = ["pbpaste"] if sys.platform == "darwin" else ["wl-paste"]
-    try:
-        return subprocess.check_output(cmd, encoding="utf-8")
-    except subprocess.CalledProcessError:
-        return ""
+    commands = {
+        "darwin": ["pbpaste"],
+        "linux": ["wl-paste", ["xclip", "-selection", "clipboard", "-o"]],
+    }
+    cmd_list = commands.get(sys.platform)
+    if not cmd_list:
+        _exit_with_error("Ошибка буфера обмена", "Ваша ОС не поддерживается.")
+
+    for cmd in cmd_list if isinstance(cmd_list[0], list) else [cmd_list]:
+        try:
+            return subprocess.run(
+                cmd, capture_output=True, text=True, check=True
+            ).stdout
+        except (FileNotFoundError, subprocess.CalledProcessError):
+            continue
+    _exit_with_error(
+        "Ошибка буфера обмена",
+        "Не найдены утилиты: pbpaste (macOS) или wl-paste/xclip (Linux).",
+    )
+    return ""
 
 
 def set_clipboard_text(text: str) -> None:
-    cmd = ["pbcopy"] if sys.platform == "darwin" else ["wl-copy"]
-    proc = subprocess.Popen(cmd, stdin=subprocess.PIPE)
-    proc.communicate(input=text.encode("utf-8"))
+    commands = {
+        "darwin": ["pbcopy"],
+        "linux": ["wl-copy", ["xclip", "-selection", "clipboard"]],
+    }
+    cmd_list = commands.get(sys.platform)
+    if not cmd_list:
+        _exit_with_error("Ошибка буфера обмена", "Ваша ОС не поддерживается.")
 
-
-###############################################################################
-# ЗАГРУЗКА КЛЮЧА API
-###############################################################################
-
-
-def load_api_key() -> Optional[str]:
-    key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
-    if key:
-        return key
-    path = os.path.expanduser("~/.gemini_key")
-    try:
-        with open(path, encoding="utf-8") as f:
-            return f.read().strip()
-    except (OSError, IOError):
-        return None
-
-
-###############################################################################
-# GEMINI COMMUNICATION
-###############################################################################
-
-
-def send_request(prompt: str, model: Optional[str] = None) -> Optional[Dict[str, Any]]:
-    api_key = load_api_key()
-    if not api_key:
-        notify(
-            "AI Helper (Gemini)",
-            "Не удалось загрузить API-ключ из окружения или ~/.gemini_key",
-        )
-        sys.exit(1)
-    model = model or os.getenv("GEMINI_MODEL", "gemini-2.5-flash-preview-05-20")
-    url = (
-        f"https://generativelanguage.googleapis.com/v1beta/models/"
-        f"{model}:generateContent?key={api_key}"
+    for cmd in cmd_list if isinstance(cmd_list[0], list) else [cmd_list]:
+        try:
+            subprocess.run(cmd, input=text, text=True, check=True, capture_output=True)
+            return
+        except (FileNotFoundError, subprocess.CalledProcessError):
+            continue
+    _exit_with_error(
+        "Ошибка буфера обмена",
+        "Не найдены утилиты: pbcopy (macOS) или wl-copy/xclip (Linux).",
     )
-    payload = {"contents": [{"parts": [{"text": prompt}]}]}
-    data = json.dumps(payload).encode("utf-8")
-    headers = {"Content-Type": "application/json; charset=utf-8"}
-    req = urllib.request.Request(url, data=data, headers=headers, method="POST")
-    try:
-        with urllib.request.urlopen(req) as resp:
-            return json.loads(resp.read().decode("utf-8"))
-    except urllib.error.HTTPError as err:
-        notify(
-            "AI Helper (Gemini)",
-            f"HTTP Error: {err.code} {err.reason}\n{err.read().decode()}",
-        )
-    except urllib.error.URLError as err:
-        notify("AI Helper (Gemini)", f"URL Error: {err.reason}")
-    return None
-
-
-def extract_answer(response: Dict[str, Any]) -> str:
-    candidates = response.get("candidates", [])
-    if candidates:
-        parts = candidates[0].get("content", {}).get("parts", [])
-        return "".join(p.get("text", "") for p in parts).strip()
-    return response.get("output", "") or response.get("content", "") or ""
-
-
-###############################################################################
-# GIT HELPERS
-###############################################################################
-
-
-def git_current_branch() -> str:
-    return subprocess.check_output(
-        ["git", "rev-parse", "--abbrev-ref", "HEAD"], encoding="utf-8"
-    ).strip()
 
 
 def git_diff(refspec: str) -> str:
-    return subprocess.check_output(["git", "diff", refspec], encoding="utf-8")
+    return subprocess.run(
+        ["git", "diff", refspec], capture_output=True, text=True, check=True
+    ).stdout
 
 
 def git_diff_cached() -> str:
-    return subprocess.check_output(
-        [
-            "git",
-            "--no-pager",
-            "-c",
-            "delta.enable=false",
-            "diff",
-            "--cached",
-            "--text",
-        ],
-        encoding="utf-8",
-    )
+    return subprocess.run(
+        ["git", "--no-pager", "diff", "--cached", "--text"],
+        capture_output=True,
+        text=True,
+        check=True,
+    ).stdout
 
 
-###############################################################################
-# MODE HANDLERS
-###############################################################################
+def _exit_with_error(title: str, message: str, details: str | None = None) -> None:
+    notify(title, message)
+    print(f"Ошибка: {message}", file=sys.stderr)
+    if details:
+        print(f"\n{details}", file=sys.stderr)
+    sys.exit(1)
 
 
-def handle_mr() -> None:
-    target = input("Enter target branch for MR: ").strip()
+# --- Обработчики режимов ---
+
+
+def _process_ai_request(provider: BaseAIProvider, prompt: str) -> str:
+    response = provider.send_request(prompt)
+    if not response:
+        _exit_with_error("AI Helper", "Не удалось получить ответ от AI.")
+
+    answer = provider.extract_answer(response)
+    if not answer:
+        print(
+            f"AI вернул пустой ответ. Полный ответ для отладки:\n{json.dumps(response, indent=2)}",
+            file=sys.stderr,
+        )
+        _exit_with_error("AI Helper", "Пустой ответ от AI.")
+
+    return remove_think_tags(answer)
+
+
+def handle_mr(provider: BaseAIProvider) -> None:
+    target = input("Введите целевую ветку для MR: ").strip()
     if not target:
-        print("No target branch specified. Exit.")
-        sys.exit(1)
+        print("Целевая ветка не указана. Выход.")
+        return
     try:
-        diff = git_diff(f"{target}..{git_current_branch()}")
-    except subprocess.CalledProcessError as err:
-        notify("AI Helper", f"Git error: {err}")
-        sys.exit(1)
+        current_branch = subprocess.run(
+            ["git", "rev-parse", "--abbrev-ref", "HEAD"],
+            capture_output=True,
+            text=True,
+            check=True,
+        ).stdout.strip()
+        diff = git_diff(f"{target}..{current_branch}")
+    except subprocess.CalledProcessError as e:
+        _exit_with_error("Ошибка Git", e.stderr)
     if not diff.strip():
-        notify("AI Helper", "No changes to compare.")
-        sys.exit(0)
-    prompt = MR_PROMPT_TEMPLATE.format(diff=diff)
-    resp = send_request(prompt)
-    if not resp:
-        print("Failed to get a response.")
-        sys.exit(1)
-    answer = remove_think(extract_answer(resp))
-    print({answer})
+        notify("AI Helper", "Нет изменений для создания MR.")
+        return
+    answer = _process_ai_request(provider, MR_PROMPT_TEMPLATE.format(diff=diff))
+    print(answer)
     set_clipboard_text(answer)
-    notify("AI Helper", "MR description copied.")
+    notify("AI Helper", "Описание для MR скопировано.")
 
 
-def handle_commit() -> None:
-    diff = git_diff_cached()
+def handle_commit(provider: BaseAIProvider) -> None:
+    try:
+        diff = git_diff_cached()
+    except subprocess.CalledProcessError as e:
+        _exit_with_error("Ошибка Git", e.stderr)
     if not diff.strip():
-        print("No staged changes.")
-        sys.exit(0)
-    prompt = COMMIT_MESSAGE_PROMPT.format(diff=diff)
-    resp = send_request(prompt)
-    if not resp:
-        print("Failed to get a response.")
-        sys.exit(1)
-    answer = remove_think(extract_answer(resp))
-    lines = answer.splitlines()
-    title = lines[0]
-    body = "\n".join(lines[2:]).strip()
-    commit_msg = f"{title}\n\n{body}" if body else title
+        print("Нет staged-изменений для коммита.")
+        return
+    answer = _process_ai_request(provider, COMMIT_MESSAGE_PROMPT.format(diff=diff))
+    lines = [line for line in answer.splitlines() if line.strip()]
+    title = lines[0] if lines else "fix: "
+    body = "\n".join(lines[1:]) if len(lines) > 1 else ""
+    commit_msg = f"{title}\n\n{body}".strip()
     print(commit_msg)
     set_clipboard_text(commit_msg)
-    notify("AI Helper", "Commit message copied.")
+    notify("AI Helper", "Сообщение коммита скопировано.")
 
 
-def handle_refactor() -> None:
+def handle_refactor(provider: BaseAIProvider) -> None:
     text = get_clipboard_text()
     if not text:
-        notify("AI Helper", "Clipboard is empty.")
-        sys.exit(1)
-    prompt = REFRACTOR_PROMPT_TEMPLATE.format(text=text)
-    resp = send_request(prompt)
-    if not resp:
-        print("Failed to get a response.")
-        sys.exit(1)
-    answer = remove_think(extract_answer(resp))
+        notify("AI Helper", "Буфер обмена пуст.")
+        return
+    answer = _process_ai_request(provider, REFACTOR_PROMPT_TEMPLATE.format(text=text))
+    print(answer)
     set_clipboard_text(answer)
-    notify("AI Helper", "Refactored text copied.")
+    notify("AI Helper", "Исправленный текст скопирован.")
 
 
-###############################################################################
-# CLI
-###############################################################################
+# --- Точка входа ---
 
 
-def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="AI Helper (Gemini edition)")
+def main() -> None:
+    parser = argparse.ArgumentParser(
+        description="AI Helper для разработчика.",
+        formatter_class=argparse.RawTextHelpFormatter,
+    )
     parser.add_argument(
         "--mode",
         choices=["mr", "commit", "refactor"],
         required=True,
-        help="Mode: mr | commit | refactor",
+        help="Режим работы: mr | commit | refactor",
     )
-    return parser.parse_args()
+    parser.add_argument(
+        "--provider",
+        choices=[PROVIDER_GEMINI, PROVIDER_X5],
+        default=PROVIDER_GEMINI,
+        help=f"Используемый AI-провайдер (по умолчанию: {PROVIDER_GEMINI})",
+    )
+    args = parser.parse_args()
 
+    provider: BaseAIProvider = (
+        X5Provider() if args.provider == PROVIDER_X5 else GeminiProvider()
+    )
 
-def main() -> None:
-    args = parse_args()
-    if args.mode == "mr":
-        handle_mr()
-    elif args.mode == "commit":
-        handle_commit()
-    else:
-        handle_refactor()
+    mode_handlers = {
+        "mr": handle_mr,
+        "commit": handle_commit,
+        "refactor": handle_refactor,
+    }
+    handler = mode_handlers[args.mode]
+    handler(provider)
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        print("\nОперация прервана пользователем.", file=sys.stderr)
+        sys.exit(1)
