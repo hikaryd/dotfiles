@@ -1,7 +1,7 @@
 { ... }: {
   imports = [
-    ./zen.nix
     ./git.nix
+    ./zen.nix
     ./lazygit.nix
     ./nvim.nix
     ./yazi.nix

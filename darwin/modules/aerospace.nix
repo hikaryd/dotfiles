@@ -105,7 +105,7 @@
         }
         {
           check-further-callbacks = false;
-          "if" = { app-id = "com.github.wez.wezterm"; };
+          "if" = { app-id = "com.electron.dockerdesktop"; };
           run = [ "move-node-to-workspace 2" ];
         }
         {

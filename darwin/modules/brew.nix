@@ -23,11 +23,9 @@
       "brave-browser"
       "karabiner-elements"
       "notion"
-      "thebrowsercompany-dia"
       "font-caskaydia-cove-nerd-font"
       "Goooler/repo/hiddify"
-      "nordvpn"
-      "nordpass"
+      "zen"
       # "flashspace"
       # "loop"
     ];
