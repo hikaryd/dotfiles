@@ -10,7 +10,14 @@
   };
   environment = {
     shells = with pkgs; [ bash zsh ];
-    systemPackages = with pkgs; [ coreutils neovim bat python3 tableplus ];
+    systemPackages = with pkgs; [
+      coreutils
+      neovim
+      bat
+      python3
+      tableplus
+      rustup
+    ];
     systemPath = [
       "/usr/local/bin"
       "/opt/homebrew/bin"
@@ -51,7 +58,7 @@
         autohide-delay = 0.0;
         autohide-time-modifier = 0.45;
         # Style options
-        orientation = "left";
+        orientation = "right";
         show-recents = false;
         persistent-apps = [ ];
         mru-spaces = false;
@@ -65,7 +72,6 @@
   };
   system.activationScripts.disableDSStoreCreation = {
     text = ''
-      # Выполняем команды для отключения .DS_Store на сетевых и USB дисках
       /usr/bin/defaults write com.apple.desktopservices DSDontWriteNetworkStores -bool TRUE
       /usr/bin/defaults write com.apple.desktopservices DSDontWriteUSBStores -bool TRUE
     '';

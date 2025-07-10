@@ -17,6 +17,6 @@
     ./zsh.nix
     ./misc.nix
     ./yabai.nix
-    ./hammerspoon.nix
+    ./sketchybar.nix
   ];
 }

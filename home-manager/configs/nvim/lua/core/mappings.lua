@@ -34,9 +34,9 @@ map('n', '<A-j>', '<cmd>m .+1<CR>==', 'Move current line down')
 map('n', '<A-k>', '<cmd>m .-2<CR>==', 'Move current line up')
 
 -- Buffer navigation
-for i = 1, 9 do
-  map('n', '<C-' .. i .. '>', '<cmd>BufferLineGoToBuffer ' .. i .. '<CR>', 'Go to buffer ' .. i)
-end
+-- for i = 1, 9 do
+--   map('n', '<C-' .. i .. '>', '<cmd>BufferLineGoToBuffer ' .. i .. '<CR>', 'Go to buffer ' .. i)
+-- end
 map('n', '<C-q>', '<cmd>bd!<CR>', 'Close current buffer')
 
 -- Docstring rewrite (PrtRewrite)
@@ -46,6 +46,8 @@ map(
   [[<cmd>PrtRewrite Сгенерируй докстринг для функции. Описание пиши на русском. Не забывай про кавычки. Вот пример докстринга: def func(arg1, arg2): Тут описание :param arg1: Описание arg1. :param arg2: Описание arg2. :raise: ValueError if arg1 больше arg2 :return: Описание того, что возвращается<CR>]],
   'Generate docstring for function'
 )
+
+map('n', '<leader>or', '<cmd>OverseerRun<CR>', 'Run overseer')
 
 -- LSP
 map('n', 'gd', '<cmd>lua vim.lsp.buf.definition()<CR>', 'LSP: go to definition')

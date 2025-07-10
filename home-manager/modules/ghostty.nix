@@ -16,7 +16,7 @@
       macos-titlebar-style = "tabs";
 
       background-blur-radius = 20;
-      background-opacity = 0.9;
+      background-opacity = 0.7;
       background-blur = true;
       shell-integration-features = "no-cursor";
       macos-option-as-alt = true;

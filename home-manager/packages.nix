@@ -21,7 +21,10 @@
     poetry
     nodejs_22
     grip-grab
-    rustup
     typst
+
+    #apps
+    upscayl
+    tableplus
   ];
 }

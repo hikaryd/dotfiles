@@ -8,21 +8,18 @@
       after-startup-command = [
         "exec-and-forget open -a /Applications/Spotify.app"
         "exec-and-forget open -a /Applications/Telegram.app"
-        "exec-and-forget open -a /Applications/Apple Juice.app"
+        "exec-and-forget open -a /Applications/Brave Browser.app"
+        "exec-and-forget sketchybar"
       ];
 
       key-mapping.preset = "qwerty";
 
-      accordion-padding = 35;
+      accordion-padding = 0;
 
       default-root-container-layout = "tiles";
       default-root-container-orientation = "auto";
 
-      exec-on-workspace-change = [
-        "/bin/bash"
-        "-c"
-        "sketchybar --trigger aerospace_workspace_change AEROSPACE_FOCUSED_WORKSPACE=$AEROSPACE_FOCUSED_WORKSPACE AEROSPACE_PREV_WORKSPACE=$AEROSPACE_PREV_WORKSPACE"
-      ];
+      exec-on-workspace-change = [ ];
 
       on-focused-monitor-changed = [ "move-mouse monitor-lazy-center" ];
       on-focus-changed = [ "move-mouse window-lazy-center" ];
@@ -32,10 +29,10 @@
 
       gaps = {
         outer = {
-          bottom = 20;
-          left = 20;
-          right = 20;
-          top = 70;
+          bottom = 25;
+          left = 25;
+          right = 25;
+          top = 25;
         };
         inner = {
           horizontal = 20;
@@ -47,13 +44,8 @@
         ####### xFloating Windows (manage=off) #######
         {
           check-further-callbacks = false;
-          "if" = { app-id = "com.apple.finder"; };
-          run = [ "layout floating" ];
-        }
-        {
-          check-further-callbacks = false;
           "if" = {
-            app-id = "com.kagi.kagimacOS";
+            app-id = "com.brave.Browser";
             window-title-regex-substring =
               "^(General|(Tab|Password|Website|Extension)s|AutoFill|Se(arch|curity)|Privacy|Advance)$";
           };
@@ -103,8 +95,13 @@
         }
         {
           check-further-callbacks = false;
+          "if" = { app-id = "company.thebrowser.dia"; };
+          run = [ "move-node-to-workspace 1" ];
+        }
+        {
+          check-further-callbacks = false;
           "if" = { app-id = "com.mitchellh.ghostty"; };
-          run = [ "layout floating" "move-node-to-workspace 2" ];
+          run = [ "layout floating" "move-node-to-workspace d" ];
         }
         {
           check-further-callbacks = false;
@@ -120,6 +117,11 @@
           check-further-callbacks = false;
           "if" = { app-id = "com.apple.iWork.Pages"; };
           run = [ "move-node-to-workspace 4" ];
+        }
+        {
+          check-further-callbacks = false;
+          "if" = { app-id = "notion.id"; };
+          run = [ "move-node-to-workspace n" ];
         }
         {
           check-further-callbacks = false;
@@ -153,13 +155,18 @@
         }
         {
           check-further-callbacks = false;
+          "if" = { app-id = "app.hiddify.com"; };
+          run = [ "move-node-to-workspace v" ];
+        }
+        {
+          check-further-callbacks = false;
           "if" = { app-id = "kontur.talk"; };
-          run = [ "move-node-to-workspace 6" ];
+          run = [ "move-node-to-workspace t" ];
         }
       ];
 
       workspace-to-monitor-force-assignment = {
-        "1" = "secondary";
+        "1" = "main";
         "2" = "main";
         "3" = "main";
         "4" = "main";
@@ -167,6 +174,10 @@
         "6" = "secondary";
         "7" = "secondary";
         "8" = "main";
+        "n" = "main";
+        "d" = "main";
+        "v" = "main";
+        "t" = "main";
       };
 
       mode.main.binding = {
@@ -195,6 +206,10 @@
         alt-6 = "workspace 6";
         alt-7 = "workspace 7";
         alt-8 = "workspace 8";
+        alt-n = "workspace n";
+        alt-d = "workspace d";
+        alt-v = "workspace v";
+        alt-t = "workspace t";
 
         alt-shift-1 = [ "move-node-to-workspace 1" ];
         alt-shift-2 = [ "move-node-to-workspace 2" ];
@@ -204,6 +219,10 @@
         alt-shift-6 = [ "move-node-to-workspace 6" ];
         alt-shift-7 = [ "move-node-to-workspace 7" ];
         alt-shift-8 = [ "move-node-to-workspace 8" ];
+        alt-shift-n = [ "move-node-to-workspace n" ];
+        alt-shift-d = [ "move-node-to-workspace d" ];
+        alt-shift-v = [ "move-node-to-workspace v" ];
+        alt-shift-t = [ "move-node-to-workspace t" ];
 
         alt-shift-tab = "move-workspace-to-monitor --wrap-around next";
         alt-tab = "workspace-back-and-forth";
