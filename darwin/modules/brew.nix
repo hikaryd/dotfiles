@@ -17,21 +17,19 @@
       "1password-cli"
       "1password"
       "ghostty"
-      "drawio"
       "raycast"
-      "upscayl"
       "mos"
-      "zen"
       "wakatime"
       "brave-browser"
       "karabiner-elements"
-      "font-fira-code"
       "notion"
-      "font-sf-pro"
-      "ubar"
+      "thebrowsercompany-dia"
       "font-caskaydia-cove-nerd-font"
+      "Goooler/repo/hiddify"
+      "nordvpn"
+      "nordpass"
+      # "flashspace"
+      # "loop"
     ];
-    taps = [ "FelixKratz/formulae" ];
-    brews = [ "sketchybar" ];
   };
 }

@@ -1,1 +1,4 @@
-{ ... }: { imports = [ ./brew.nix ./borders.nix ./aerospace.nix ./yabai.nix ]; }
+{ ... }: {
+  imports =
+    [ ./brew.nix ./borders.nix ./aerospace.nix ./yabai.nix ./sketchybar.nix ];
+}

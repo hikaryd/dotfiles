@@ -43,6 +43,9 @@ case $INFO in
 "Messages")
 	ICON=󰍦
 	;;
+"Telegram")
+	ICON=󰍦
+	;;
 "Notion")
 	ICON_COLOR=#ff000000
 	ICON=󰈄
