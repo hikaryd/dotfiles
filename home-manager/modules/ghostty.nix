@@ -15,7 +15,7 @@
       command = "/etc/profiles/per-user/tronin.egor/bin/nu";
       macos-titlebar-style = "tabs";
 
-      background-blur-radius = 20;
+      background-blur-radius = 10;
       background-opacity = 0.7;
       background-blur = true;
       shell-integration-features = "no-cursor";
@@ -40,7 +40,7 @@
       adjust-cell-height = "9%";
       window-padding-y = 10;
       mouse-scroll-multiplier = 2;
-      # term = "xterm-256color";
+      term = "xterm-256color";
 
       cursor-style = "block";
       cursor-style-blink = true;
