@@ -26,5 +26,6 @@
     #apps
     upscayl
     tableplus
+    ladybird
   ];
 }

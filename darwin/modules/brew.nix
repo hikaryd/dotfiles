@@ -25,8 +25,11 @@
       "notion"
       "font-caskaydia-cove-nerd-font"
       "Goooler/repo/hiddify"
-      "zen"
-      # "flashspace"
+      "drawio"
+      "superwhisper"
+      "flashspace"
+      "rectangle-pro"
+      # "zen"
       # "loop"
     ];
   };

@@ -1,6 +1,6 @@
 { pkgs, ... }: {
   services.aerospace = {
-    enable = true;
+    enable = false;
     package = pkgs.aerospace;
 
     settings = {
@@ -9,7 +9,6 @@
         "exec-and-forget open -a /Applications/Spotify.app"
         "exec-and-forget open -a /Applications/Telegram.app"
         "exec-and-forget open -a /Applications/Brave Browser.app"
-        "exec-and-forget sketchybar"
       ];
 
       key-mapping.preset = "qwerty";
