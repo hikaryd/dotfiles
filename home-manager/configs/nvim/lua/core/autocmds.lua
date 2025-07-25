@@ -1,79 +1,88 @@
 local M = {}
 
-vim.o.updatetime = 50
-
-local diagnosticsHoverGroup = vim.api.nvim_create_augroup('UserDiagnosticsHoverSimple', { clear = true })
-
-vim.api.nvim_create_autocmd('CursorHold', {
-  group = diagnosticsHoverGroup,
-  pattern = '*',
-  desc = 'Показать LSP диагностику на строке при удержании курсора',
-  callback = function()
-    local diag = vim.diagnostic.get(0, { lnum = vim.fn.line '.' - 1 })
-    if #diag > 0 then
-      vim.diagnostic.open_float {
-        scope = 'line', -- Показать для всей строки
-        border = 'rounded', -- Со скругленными рамками
-        focusable = false, -- Окно не должно получать фокус
-        source = 'always', -- Показывать источник (имя LSP сервера)
-        header = '', -- Без заголовка
-        prefix = '', -- Без префикса
-      }
-    end
-  end,
-})
-
 M.preserved_win_sizes = {}
 
 function M.setup()
-  local autocmd = vim.api.nvim_create_autocmd
-  local augroup = vim.api.nvim_create_augroup
+  vim.o.updatetime = 50
 
-  local general = augroup('General Settings', { clear = true })
+  local api, fn = vim.api, vim.fn
 
-  autocmd('TextYankPost', {
-    group = general,
+  local GENERAL = api.nvim_create_augroup('UserGeneral', { clear = true })
+  local FLOATERM = api.nvim_create_augroup('UserFloaterm', { clear = true })
+  local DIAG = api.nvim_create_augroup('UserDiagnosticsHoverSimple', { clear = true })
+
+  -- Floaterm: в терминале ESC прячет окно
+  api.nvim_create_autocmd('TermOpen', {
+    group = FLOATERM,
+    callback = function(ev)
+      if vim.b[ev.buf].floaterm_name then
+        vim.keymap.set('t', '<Esc>', [[<C-\><C-n>:FloatermToggle<CR>]], { buffer = ev.buf, silent = true, desc = 'Floaterm: прятать окно по ESC' })
+      end
+    end,
+  })
+
+  -- Показываем диагностику по удержанию курсора
+  api.nvim_create_autocmd('CursorHold', {
+    group = DIAG,
+    callback = function()
+      local diag = vim.diagnostic.get(0, { lnum = fn.line '.' - 1 })
+      if #diag == 0 then
+        return
+      end
+      vim.diagnostic.open_float(nil, {
+        scope = 'line',
+        border = 'rounded',
+        focusable = false,
+        source = 'always',
+        header = '',
+        prefix = '',
+      })
+    end,
+  })
+
+  -- Подсветка yank'а
+  api.nvim_create_autocmd('TextYankPost', {
+    group = GENERAL,
     callback = function()
       vim.highlight.on_yank { higroup = 'IncSearch', timeout = 100 }
     end,
   })
 
+  -- Сохраняем и восстанавливаем размеры окон после VimResized
   local function preserve_window_sizes()
-    local win_sizes = {}
-    for _, win in ipairs(vim.api.nvim_list_wins()) do
-      win_sizes[win] = {
-        height = vim.api.nvim_win_get_height(win),
-        width = vim.api.nvim_win_get_width(win),
+    local sizes = {}
+    for _, win in ipairs(api.nvim_list_wins()) do
+      sizes[win] = {
+        height = api.nvim_win_get_height(win),
+        width = api.nvim_win_get_width(win),
       }
     end
-    M.preserved_win_sizes = win_sizes
+    M.preserved_win_sizes = sizes
   end
 
   local function restore_window_sizes()
     if not M.preserved_win_sizes then
       return
     end
-    for _, win in ipairs(vim.api.nvim_list_wins()) do
-      local size = M.preserved_win_sizes[win]
-      if size then
-        vim.api.nvim_win_set_height(win, size.height)
-        vim.api.nvim_win_set_width(win, size.width)
+    for win, size in pairs(M.preserved_win_sizes) do
+      if api.nvim_win_is_valid(win) and size then
+        api.nvim_win_set_height(win, size.height)
+        api.nvim_win_set_width(win, size.width)
       end
     end
   end
 
-  autocmd('VimResized', {
-    group = general,
+  api.nvim_create_autocmd('VimResized', {
+    group = GENERAL,
     callback = function()
       preserve_window_sizes()
-      vim.defer_fn(function()
-        restore_window_sizes()
-      end, 50)
+      vim.defer_fn(restore_window_sizes, 50)
     end,
   })
 
-  autocmd('FileType', {
-    group = general,
+  -- Быстрые буферы, закрываемые на 'q'
+  api.nvim_create_autocmd('FileType', {
+    group = GENERAL,
     pattern = {
       'qf',
       'help',
@@ -85,14 +94,15 @@ function M.setup()
       'tsplayground',
       'PlenaryTestPopup',
     },
-    callback = function(event)
-      vim.bo[event.buf].buflisted = false
-      vim.keymap.set('n', 'q', '<cmd>close<cr>', { buffer = event.buf, silent = true })
+    callback = function(ev)
+      vim.bo[ev.buf].buflisted = false
+      vim.keymap.set('n', 'q', '<cmd>close<CR>', { buffer = ev.buf, silent = true })
     end,
   })
 
-  autocmd('FileType', {
-    group = general,
+  -- Markdown / gitcommit
+  api.nvim_create_autocmd('FileType', {
+    group = GENERAL,
     pattern = { 'gitcommit', 'markdown' },
     callback = function()
       vim.opt_local.wrap = true

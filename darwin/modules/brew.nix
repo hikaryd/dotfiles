@@ -20,7 +20,6 @@
       "raycast"
       "mos"
       "wakatime"
-      "brave-browser"
       "karabiner-elements"
       "notion"
       "font-caskaydia-cove-nerd-font"
@@ -29,8 +28,10 @@
       "superwhisper"
       "flashspace"
       "rectangle-pro"
-      # "zen"
-      # "loop"
+      # "firefox"
+      "chatgpt"
+      "claude-code"
+      "dbeaver-community"
     ];
   };
 }
