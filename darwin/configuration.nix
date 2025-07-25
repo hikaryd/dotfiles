@@ -10,14 +10,7 @@
   };
   environment = {
     shells = with pkgs; [ bash zsh ];
-    systemPackages = with pkgs; [
-      coreutils
-      neovim
-      bat
-      python3
-      tableplus
-      rustup
-    ];
+    systemPackages = with pkgs; [ coreutils neovim bat python3 rustup ];
     systemPath = [
       "/usr/local/bin"
       "/opt/homebrew/bin"

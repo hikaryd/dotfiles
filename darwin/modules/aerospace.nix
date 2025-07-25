@@ -1,6 +1,6 @@
-{ pkgs, ... }: {
+{ pkgs, lib, ... }: {
   services.aerospace = {
-    enable = false;
+    enable = lib.mkForce false;
     package = pkgs.aerospace;
 
     settings = {
@@ -44,7 +44,7 @@
         {
           check-further-callbacks = false;
           "if" = {
-            app-id = "com.brave.Browser";
+            app-id = "org.mozilla.firefox";
             window-title-regex-substring =
               "^(General|(Tab|Password|Website|Extension)s|AutoFill|Se(arch|curity)|Privacy|Advance)$";
           };
@@ -79,28 +79,13 @@
         }
         {
           check-further-callbacks = false;
-          "if" = { app-id = "com.brave.Browser"; };
-          run = [ "move-node-to-workspace 1" ];
-        }
-        {
-          check-further-callbacks = false;
-          "if" = { app-id = "app.zen-browser.zen"; };
-          run = [ "move-node-to-workspace 1" ];
-        }
-        {
-          check-further-callbacks = false;
-          "if" = { app-id = "com.kagi.kagimacOS"; };
-          run = [ "move-node-to-workspace 1" ];
-        }
-        {
-          check-further-callbacks = false;
-          "if" = { app-id = "company.thebrowser.dia"; };
+          "if" = { app-id = "org.mozilla.firefox"; };
           run = [ "move-node-to-workspace 1" ];
         }
         {
           check-further-callbacks = false;
           "if" = { app-id = "com.mitchellh.ghostty"; };
-          run = [ "layout floating" "move-node-to-workspace d" ];
+          run = [ "layout tiling" "move-node-to-workspace d" ];
         }
         {
           check-further-callbacks = false;
@@ -109,8 +94,8 @@
         }
         {
           check-further-callbacks = false;
-          "if" = { app-id = "com.todesktop.230313mzl4w4u92"; };
-          run = [ "move-node-to-workspace 4" ];
+          "if" = { app-id = "com.openai.chat"; };
+          run = [ "move-node-to-workspace 2" ];
         }
         {
           check-further-callbacks = false;
@@ -125,7 +110,7 @@
         {
           check-further-callbacks = false;
           "if" = { app-id = "com.apple.iCal"; };
-          run = [ "move-node-to-workspace 7" ];
+          run = [ "move-node-to-workspace e" ];
         }
         {
           check-further-callbacks = false;
@@ -135,27 +120,22 @@
         {
           check-further-callbacks = false;
           "if" = { app-id = "com.microsoft.Outlook"; };
-          run = [ "move-node-to-workspace 7" ];
+          run = [ "move-node-to-workspace e" ];
         }
         {
           check-further-callbacks = false;
-          "if" = { app-id = "ru.unlimitedtech.express.desktop"; };
-          run = [ "move-node-to-workspace 7" ];
+          "if" = { app-id = "com.apple.finder"; };
+          run = [ "move-node-to-workspace w" ];
+        }
+        {
+          check-further-callbacks = false;
+          "if" = { app-id = "com.apple.AppStore"; };
+          run = [ "move-node-to-workspace e" ];
         }
         {
           check-further-callbacks = false;
           "if" = { app-id = "com.spotify.client"; };
           run = [ "move-node-to-workspace 3" ];
-        }
-        {
-          check-further-callbacks = false;
-          "if" = { app-id = "com.anthropic.claudefordesktop"; };
-          run = [ "move-node-to-workspace 5" ];
-        }
-        {
-          check-further-callbacks = false;
-          "if" = { app-id = "app.hiddify.com"; };
-          run = [ "move-node-to-workspace v" ];
         }
         {
           check-further-callbacks = false;
@@ -167,23 +147,20 @@
       workspace-to-monitor-force-assignment = {
         "1" = "main";
         "2" = "main";
-        "3" = "main";
+        "3" = "secondary";
         "4" = "main";
-        "5" = "secondary";
-        "6" = "secondary";
-        "7" = "secondary";
-        "8" = "main";
+        "q" = "secondary";
+        "w" = "secondary";
+        "e" = "secondary";
         "n" = "main";
         "d" = "main";
-        "v" = "main";
-        "t" = "main";
+        "v" = "secondary";
+        "t" = "secondary";
       };
 
       mode.main.binding = {
         alt-shift-minus = "resize smart -100";
         alt-shift-equal = "resize smart +100";
-
-        alt-q = "close";
 
         alt-h = "focus left";
         alt-j = "focus down";
@@ -201,10 +178,9 @@
         alt-2 = "workspace 2";
         alt-3 = "workspace 3";
         alt-4 = "workspace 4";
-        alt-5 = "workspace 5";
-        alt-6 = "workspace 6";
-        alt-7 = "workspace 7";
-        alt-8 = "workspace 8";
+        alt-q = "workspace q";
+        alt-w = "workspace w";
+        alt-e = "workspace e";
         alt-n = "workspace n";
         alt-d = "workspace d";
         alt-v = "workspace v";
@@ -214,10 +190,9 @@
         alt-shift-2 = [ "move-node-to-workspace 2" ];
         alt-shift-3 = [ "move-node-to-workspace 3" ];
         alt-shift-4 = [ "move-node-to-workspace 4" ];
-        alt-shift-5 = [ "move-node-to-workspace 5" ];
-        alt-shift-6 = [ "move-node-to-workspace 6" ];
-        alt-shift-7 = [ "move-node-to-workspace 7" ];
-        alt-shift-8 = [ "move-node-to-workspace 8" ];
+        alt-shift-q = [ "move-node-to-workspace q" ];
+        alt-shift-w = [ "move-node-to-workspace w" ];
+        alt-shift-e = [ "move-node-to-workspace e" ];
         alt-shift-n = [ "move-node-to-workspace n" ];
         alt-shift-d = [ "move-node-to-workspace d" ];
         alt-shift-v = [ "move-node-to-workspace v" ];

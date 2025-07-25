@@ -29,10 +29,8 @@
       ccost = "npx ccusage@latest";
       clive = "npx ccusage@latest blocks --live";
       # gemini = "npx https://github.com/google-gemini/gemini-cli";
-      # GOOGLE_CLOUD_PROJECT = "653255600806";
 
       speedtest = "networkquality";
-      claude = " ~/.claude/local/claude";
 
       nu-open = "open";
       open = "^open";

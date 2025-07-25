@@ -1,6 +1,6 @@
 return {
   'nvim-treesitter/nvim-treesitter',
-  event = { 'BufReadPost', 'BufNewFile' },
+  event = 'VeryLazy',
   cmd = {
     'TSInstall',
     'TSBufEnable',
@@ -44,6 +44,32 @@ return {
           node_incremental = '<CR>',
           scope_incremental = '<S-CR>',
           node_decremental = '<BS>',
+        },
+      },
+      textobjects = {
+        select = {
+          enable = true,
+          lookahead = true,
+          keymaps = {
+            ['af'] = '@function.outer',
+            ['if'] = '@function.inner',
+            ['ac'] = '@class.outer',
+            ['ic'] = '@class.inner',
+            ['a='] = '@assignment.outer',
+            ['i='] = '@assignment.inner',
+          },
+        },
+        move = {
+          enable = true,
+          set_jumps = true,
+          goto_next_start = {
+            [']m'] = '@function.outer',
+            [']]'] = '@class.outer',
+          },
+          goto_previous_start = {
+            ['[m'] = '@function.outer',
+            ['[['] = '@class.outer',
+          },
         },
       },
     }

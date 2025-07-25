@@ -1,7 +1,7 @@
 return {
   'ibhagwan/fzf-lua',
   cmd = 'FzfLua',
-  dependencies = { 'nvim-tree/nvim-web-devicons' },
+  dependencies = { 'echasnovski/mini.icons' },
   opts = {},
   config = function()
     require('fzf-lua').setup {}

@@ -10,7 +10,7 @@ return {
       enabled = vim.fn.executable 'make' == 1,
     },
     'nvim-telescope/telescope-ui-select.nvim',
-    'nvim-tree/nvim-web-devicons',
+    'echasnovski/mini.icons',
   },
   config = function()
     local telescope = require 'telescope'

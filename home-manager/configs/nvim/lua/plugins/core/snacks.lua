@@ -113,13 +113,13 @@ return {
     },
   },
   keys = {
-    {
-      '<leader>gg',
-      function()
-        Snacks.lazygit()
-      end,
-      desc = 'Lazygit',
-    },
+    -- {
+    --   '<leader>gg',
+    --   function()
+    --     Snacks.lazygit()
+    --   end,
+    --   desc = 'Lazygit',
+    -- },
     {
       '<leader>gf',
       function()
@@ -188,13 +188,13 @@ return {
       end,
       desc = 'Diagnostics',
     },
-    -- {
-    --   '<leader>e',
-    --   function()
-    --     Snacks.explorer.open()
-    --   end,
-    --   desc = 'Diagnostics',
-    -- },
+    {
+      '<leader>e',
+      function()
+        Snacks.explorer.open()
+      end,
+      desc = 'Diagnostics',
+    },
     {
       '<leader>qp',
       function()
@@ -202,13 +202,13 @@ return {
       end,
       desc = 'Projects',
     },
-    -- {
-    --   'gd',
-    --   function()
-    --     Snacks.picker.lsp_definitions()
-    --   end,
-    --   desc = 'Goto Definition',
-    -- },
+    {
+      'gd',
+      function()
+        Snacks.picker.lsp_definitions()
+      end,
+      desc = 'Goto Definition',
+    },
     {
       'gr',
       function()
