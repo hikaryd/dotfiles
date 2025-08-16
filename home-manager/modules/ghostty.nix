@@ -21,7 +21,7 @@
       shell-integration-features = "no-cursor";
       macos-option-as-alt = true;
       keybind = [
-        "ctrl+v=new_split:auto"
+        "ctrl+-=new_split:auto"
         "ctrl+h=goto_split:left"
         "ctrl+l=goto_split:right"
         "ctrl+k=goto_split:up"

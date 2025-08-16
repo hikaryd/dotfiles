@@ -26,12 +26,14 @@
       "Goooler/repo/hiddify"
       "drawio"
       "superwhisper"
-      "flashspace"
-      "rectangle-pro"
-      # "firefox"
+      # "flashspace"
+      # "rectangle-pro"
+      "firefox"
       "chatgpt"
       "claude-code"
       "dbeaver-community"
+      "topnotch"
+      "proton-pass"
     ];
   };
 }
