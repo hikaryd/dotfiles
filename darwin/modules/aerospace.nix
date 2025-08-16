@@ -1,6 +1,6 @@
-{ pkgs, lib, ... }: {
+{ pkgs, ... }: {
   services.aerospace = {
-    enable = lib.mkForce false;
+    enable = true;
     package = pkgs.aerospace;
 
     settings = {
@@ -28,14 +28,19 @@
 
       gaps = {
         outer = {
-          bottom = 25;
-          left = 25;
-          right = 25;
-          top = 25;
+          # bottom = 35;
+          # left = 35;
+          # right = 35;
+          # top = 35;
+
+          bottom = 0;
+          left = 0;
+          right = 0;
+          top = 0;
         };
         inner = {
-          horizontal = 20;
-          vertical = 20;
+          horizontal = 0;
+          vertical = 0;
         };
       };
 
@@ -70,8 +75,18 @@
           "if" = { app-id = "com.cisco.secureclient.gui"; };
           run = [ "layout floating" ];
         }
+        {
+          check-further-callbacks = false;
+          "if" = { app-id = "app.hiddify.com"; };
+          run = [ "layout floating" ];
+        }
 
         ####### Specific spaces for apps #######
+        {
+          check-further-callbacks = false;
+          "if" = { app-id = "com.apple.systempreferences"; };
+          run = [ "layout tiling" "move-node-to-workspace e" ];
+        }
         {
           check-further-callbacks = false;
           "if" = { app-id = "com.apple.Safari"; };
@@ -90,7 +105,12 @@
         {
           check-further-callbacks = false;
           "if" = { app-id = "com.electron.dockerdesktop"; };
-          run = [ "move-node-to-workspace 2" ];
+          run = [ "move-node-to-workspace q" ];
+        }
+        {
+          check-further-callbacks = false;
+          "if" = { app-id = "org.jkiss.dbeaver.core.product"; };
+          run = [ "move-node-to-workspace q" ];
         }
         {
           check-further-callbacks = false;
@@ -154,7 +174,6 @@
         "e" = "secondary";
         "n" = "main";
         "d" = "main";
-        "v" = "secondary";
         "t" = "secondary";
       };
 
@@ -183,7 +202,6 @@
         alt-e = "workspace e";
         alt-n = "workspace n";
         alt-d = "workspace d";
-        alt-v = "workspace v";
         alt-t = "workspace t";
 
         alt-shift-1 = [ "move-node-to-workspace 1" ];
@@ -195,7 +213,6 @@
         alt-shift-e = [ "move-node-to-workspace e" ];
         alt-shift-n = [ "move-node-to-workspace n" ];
         alt-shift-d = [ "move-node-to-workspace d" ];
-        alt-shift-v = [ "move-node-to-workspace v" ];
         alt-shift-t = [ "move-node-to-workspace t" ];
 
         alt-shift-tab = "move-workspace-to-monitor --wrap-around next";

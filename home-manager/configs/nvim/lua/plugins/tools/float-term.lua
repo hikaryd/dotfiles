@@ -1,5 +1,6 @@
 return {
   'voldikss/vim-floaterm',
+  enabled = false,
   event = 'VeryLazy',
   cmd = {
     'FloatermNew',
@@ -45,25 +46,15 @@ return {
     end
 
     function M.toggle_main()
-      toggle_or_new 'main'
+      toggle_or_new('main', 'nu')
     end
 
     function M.toggle_pytest_current()
-      local file = vim.api.nvim_buf_get_name(0)
-      if file == '' then
-        vim.notify('Нет открытого файла для pytest', vim.log.levels.WARN)
-        return
-      end
-      file = vim.fn.fnameescape(file)
-      toggle_or_new('pytest', 'pytest -q ' .. file)
-    end
-
-    function M.toggle_pytest_last_failed()
-      toggle_or_new('pytest', 'pytest -q -x --lf')
+      toggle_or_new('pytest', 'nu')
     end
 
     function M.toggle_claude()
-      toggle_or_new('claude', 'claude')
+      toggle_or_new('claude', 'source .venv/bin/activate && claude')
     end
 
     function M.toggle_lazygit()

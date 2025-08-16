@@ -31,7 +31,7 @@
         # Show all file extensions
         AppleShowAllExtensions = true;
         # Automatically hide and show the menu bar
-        _HIHideMenuBar = true;
+        _HIHideMenuBar = false;
         # Disable window animations
         NSAutomaticWindowAnimationsEnabled = true;
         "com.apple.trackpad.scaling" = 0.7;

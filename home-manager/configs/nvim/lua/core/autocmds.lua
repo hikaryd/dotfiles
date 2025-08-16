@@ -16,7 +16,10 @@ function M.setup()
     group = FLOATERM,
     callback = function(ev)
       if vim.b[ev.buf].floaterm_name then
-        vim.keymap.set('t', '<Esc>', [[<C-\><C-n>:FloatermToggle<CR>]], { buffer = ev.buf, silent = true, desc = 'Floaterm: прятать окно по ESC' })
+        vim.keymap.set('t', '<Esc>', [[<C-\><C-n>:FloatermToggle<CR>]], { buffer = ev.buf, silent = true, desc = 'Floaterm: прятать окно' })
+        vim.keymap.set('t', '<C-t>', [[<C-\><C-n>:FloatermToggle<CR>]], { buffer = ev.buf, silent = true, desc = 'Floaterm: прятать окно' })
+        vim.keymap.set('t', '<C-w>', [[<C-\><C-n>:FloatermToggle<CR>]], { buffer = ev.buf, silent = true, desc = 'Floaterm: прятать окно' })
+        vim.keymap.set('t', '<C-l>', [[<C-\><C-n>:FloatermToggle<CR>]], { buffer = ev.buf, silent = true, desc = 'Floaterm: прятать окно' })
       end
     end,
   })
