@@ -26,11 +26,10 @@
       "..." = "cd ../../..";
       l = "ls";
       cd = "z";
-      ccost = "npx ccusage@latest";
-      clive = "npx ccusage@latest blocks --live";
       # gemini = "npx https://github.com/google-gemini/gemini-cli";
 
       speedtest = "networkquality";
+      codex = ''codex -a untrusted -c model_reasoning_effort="high"'';
 
       nu-open = "open";
       open = "^open";

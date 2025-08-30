@@ -11,6 +11,7 @@
       brewfile = true;
       autoUpdate = true;
     };
+    taps = [ "koekeishiya/formulae" ];
     casks = [
       "telegram"
       "spotify"
@@ -21,11 +22,10 @@
       "mos"
       "wakatime"
       "karabiner-elements"
-      "notion"
+      # "notion"
       "font-caskaydia-cove-nerd-font"
-      "Goooler/repo/hiddify"
       "drawio"
-      "superwhisper"
+      # "superwhisper"
       # "flashspace"
       # "rectangle-pro"
       "firefox"
@@ -33,7 +33,15 @@
       "claude-code"
       "dbeaver-community"
       "topnotch"
-      "proton-pass"
+      "brave-browser"
+      "font-victor-mono"
+    ];
+    brews = [
+      "codex"
+      # "koekeishiya/formulae/skhd"
+      # "koekeishiya/formulae/yabai"
+      "neovim"
+      "cliclick"
     ];
   };
 }

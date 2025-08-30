@@ -5,8 +5,8 @@ vim.cmd 'set modifiable'
 vim.opt.termguicolors = true
 vim.opt.number = true
 vim.opt.relativenumber = true
--- vim.opt.signcolumn = 'yes'
--- vim.opt.colorcolumn = '80'
+vim.opt.signcolumn = 'yes'
+vim.opt.colorcolumn = '80'
 vim.opt.pumblend = 0
 vim.opt.winblend = 0
 vim.opt.clipboard = 'unnamedplus'
@@ -47,3 +47,19 @@ vim.opt.fileencoding = 'utf-8'
 vim.opt.spelllang = 'en,ru'
 
 vim.o.completeopt = 'menu,menuone'
+
+vim.diagnostic.config {
+  virtual_text = {
+    prefix = '●', -- "▎"
+    spacing = 1,
+    source = 'if_many',
+    format = function(d)
+      return (d.message or ''):gsub('\n', ' ')
+    end,
+  },
+  signs = true,
+  underline = true,
+  update_in_insert = false,
+  severity_sort = true,
+  float = { border = 'rounded', source = 'always' },
+}

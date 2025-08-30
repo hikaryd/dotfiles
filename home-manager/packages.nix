@@ -25,6 +25,5 @@
 
     #apps
     upscayl
-    tableplus
   ];
 }

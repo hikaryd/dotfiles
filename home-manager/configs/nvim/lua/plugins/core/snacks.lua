@@ -34,6 +34,7 @@ return {
       sources = {
         explorer = {
           auto_close = true,
+          layout = { preset = 'select' },
         },
       },
     },
@@ -114,27 +115,6 @@ return {
   },
   keys = {
     {
-      '<leader>gg',
-      function()
-        Snacks.lazygit()
-      end,
-      desc = 'Lazygit',
-    },
-    {
-      '<leader>gf',
-      function()
-        Snacks.lazygit.log_file()
-      end,
-      desc = 'Lazygit Current File History',
-    },
-    {
-      '<leader>n',
-      function()
-        Snacks.notifier.show_history()
-      end,
-      desc = 'Notification History',
-    },
-    {
       '<leader>/',
       function()
         Snacks.picker.grep()
@@ -154,20 +134,6 @@ return {
       desc = 'Find Files',
     },
     {
-      '<leader>fb',
-      function()
-        Snacks.picker.buffers()
-      end,
-      desc = 'Buffers',
-    },
-    {
-      '<leader>fc',
-      function()
-        Snacks.picker.files { cwd = vim.fn.stdpath 'config' }
-      end,
-      desc = 'Find Config File',
-    },
-    {
       '<leader>fo',
       function()
         Snacks.picker.recent()
@@ -175,14 +141,7 @@ return {
       desc = 'Recent',
     },
     {
-      '<leader>sb',
-      function()
-        Snacks.picker.lines()
-      end,
-      desc = 'Buffer Lines',
-    },
-    {
-      '<leader>xd',
+      '<leader>d',
       function()
         Snacks.picker.diagnostics()
       end,
@@ -191,16 +150,9 @@ return {
     {
       '<leader>e',
       function()
-        Snacks.explorer.open()
+        Snacks.explorer.reveal()
       end,
       desc = 'Diagnostics',
-    },
-    {
-      '<leader>qp',
-      function()
-        Snacks.picker.projects()
-      end,
-      desc = 'Projects',
     },
     {
       'gd',
