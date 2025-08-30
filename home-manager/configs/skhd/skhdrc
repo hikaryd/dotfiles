@@ -1,0 +1,35 @@
+yabai = /opt/homebrew/bin/yabai
+
+# ===== Фокус окна (hjkl) — работает с SIP =====
+alt - h : $yabai -m window --focus west
+alt - j : $yabai -m window --focus south
+alt - k : $yabai -m window --focus north
+alt - l : $yabai -m window --focus east
+
+# ===== Обмен окнами (swap) — работает с SIP =====
+shift + alt - h : $yabai -m window --swap west
+shift + alt - j : $yabai -m window --swap south
+shift + alt - k : $yabai -m window --swap north
+shift + alt - l : $yabai -m window --swap east
+
+# ===== Зум контейнера =====
+shift + alt - f : $yabai -m window --toggle zoom-parent
+
+# ===== Баланс =====
+shift + alt - 0 : $yabai -m space --balance
+
+# ===== Перемещение между дисплеями (если не пускает — это из-за SA) =====
+ctrl + alt - h : $yabai -m window --display west; $yabai -m display --focus west
+ctrl + alt - l : $yabai -m window --display east; $yabai -m display --focus east
+
+# ===== Фокус дисплеев =====
+cmd + shift - h : $yabai -m display --focus prev
+cmd + shift - l : $yabai -m display --focus next
+
+# ===== Перемещение окна на space =====
+
+# ===== Float/tile =====
+cmd + shift - f : $yabai -m window --toggle float
+
+# ===== Перезагрузка skhd =====
+cmd + alt + ctrl - r : skhd --reload

@@ -4,8 +4,8 @@
     installBatSyntax = false;
     package = pkgs.emptyDirectory;
     settings = {
-      font-family = "FiraCode";
-      font-size = 14;
+      font-family = "VictorMono";
+      font-size = 15;
       theme = "light:tokyonight-day,dark:tokyonight";
       font-feature = "-liga +calt";
       font-thicken = true;

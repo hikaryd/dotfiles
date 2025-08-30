@@ -1,7 +1,6 @@
-{ ... }:
-{
-  # xdg.configFile."yabai/yabairc" = {
-  #   source = ../configs/yabai/yabairc;
-  #   executable = true;
-  # };
+{ ... }: {
+  xdg.configFile."yabai/yabairc" = {
+    source = ../configs/yabai/yabairc;
+    executable = true;
+  };
 }

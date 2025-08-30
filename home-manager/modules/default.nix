@@ -16,7 +16,9 @@
     ./otd.nix
     ./zsh.nix
     ./misc.nix
+    ./skhd.nix
     ./yabai.nix
     ./sketchybar.nix
+    ./vscode.nix
   ];
 }

@@ -1,15 +1,9 @@
-{ pkgs, ... }: {
+{ ... }: {
   services.aerospace = {
     enable = true;
-    package = pkgs.aerospace;
-
     settings = {
       after-login-command = [ ];
-      after-startup-command = [
-        "exec-and-forget open -a /Applications/Spotify.app"
-        "exec-and-forget open -a /Applications/Telegram.app"
-        "exec-and-forget open -a /Applications/Brave Browser.app"
-      ];
+      after-startup-command = [ ];
 
       key-mapping.preset = "qwerty";
 
@@ -28,11 +22,6 @@
 
       gaps = {
         outer = {
-          # bottom = 35;
-          # left = 35;
-          # right = 35;
-          # top = 35;
-
           bottom = 0;
           left = 0;
           right = 0;
@@ -49,25 +38,10 @@
         {
           check-further-callbacks = false;
           "if" = {
-            app-id = "org.mozilla.firefox";
+            app-id = "com.brave.Browser";
             window-title-regex-substring =
               "^(General|(Tab|Password|Website|Extension)s|AutoFill|Se(arch|curity)|Privacy|Advance)$";
           };
-          run = [ "layout floating" ];
-        }
-        {
-          check-further-callbacks = false;
-          "if" = { app-id = "Calculator"; };
-          run = [ "layout floating" ];
-        }
-        {
-          check-further-callbacks = false;
-          "if" = { app-id = "me.tdinh.devutils-setapp"; };
-          run = [ "layout floating" ];
-        }
-        {
-          check-further-callbacks = false;
-          "if" = { app-id = "su.ffg.happ.plus"; };
           run = [ "layout floating" ];
         }
         {
@@ -77,7 +51,12 @@
         }
         {
           check-further-callbacks = false;
-          "if" = { app-id = "app.hiddify.com"; };
+          "if" = { app-id = "org.kde.kdeconnect"; };
+          run = [ "layout floating" ];
+        }
+        {
+          check-further-callbacks = false;
+          "if" = { app-id = "com.liguangming.Shadowrocket"; };
           run = [ "layout floating" ];
         }
 
@@ -89,12 +68,7 @@
         }
         {
           check-further-callbacks = false;
-          "if" = { app-id = "com.apple.Safari"; };
-          run = [ "move-node-to-workspace 1" ];
-        }
-        {
-          check-further-callbacks = false;
-          "if" = { app-id = "org.mozilla.firefox"; };
+          "if" = { app-id = "com.brave.Browser"; };
           run = [ "move-node-to-workspace 1" ];
         }
         {
@@ -124,28 +98,18 @@
         }
         {
           check-further-callbacks = false;
-          "if" = { app-id = "notion.id"; };
-          run = [ "move-node-to-workspace n" ];
-        }
-        {
-          check-further-callbacks = false;
-          "if" = { app-id = "com.apple.iCal"; };
-          run = [ "move-node-to-workspace e" ];
-        }
-        {
-          check-further-callbacks = false;
           "if" = { app-id = "ru.keepcoder.Telegram"; };
           run = [ "move-node-to-workspace 3" ];
         }
         {
           check-further-callbacks = false;
-          "if" = { app-id = "com.microsoft.Outlook"; };
+          "if" = { app-id = "com.apple.finder"; };
           run = [ "move-node-to-workspace e" ];
         }
         {
           check-further-callbacks = false;
-          "if" = { app-id = "com.apple.finder"; };
-          run = [ "move-node-to-workspace w" ];
+          "if" = { app-id = "ch.protonmail.desktop"; };
+          run = [ "move-node-to-workspace 3" ];
         }
         {
           check-further-callbacks = false;
@@ -172,7 +136,6 @@
         "q" = "secondary";
         "w" = "secondary";
         "e" = "secondary";
-        "n" = "main";
         "d" = "main";
         "t" = "secondary";
       };
@@ -200,7 +163,6 @@
         alt-q = "workspace q";
         alt-w = "workspace w";
         alt-e = "workspace e";
-        alt-n = "workspace n";
         alt-d = "workspace d";
         alt-t = "workspace t";
 
@@ -211,7 +173,6 @@
         alt-shift-q = [ "move-node-to-workspace q" ];
         alt-shift-w = [ "move-node-to-workspace w" ];
         alt-shift-e = [ "move-node-to-workspace e" ];
-        alt-shift-n = [ "move-node-to-workspace n" ];
         alt-shift-d = [ "move-node-to-workspace d" ];
         alt-shift-t = [ "move-node-to-workspace t" ];
 
@@ -220,6 +181,8 @@
 
         alt-shift-f = "fullscreen";
 
+        cmd-shift-l = "join-with right";
+        cmd-shift-h = "join-with left";
         cmd-shift-e = "layout tiles h_accordion tiling";
         cmd-shift-r = [ "flatten-workspace-tree" "mode main" ];
         cmd-shift-f = [ "layout floating tiling" ];
