@@ -38,11 +38,11 @@
         # Всегда показывать расширения файлов
         AppleShowAllExtensions = true;
         # Скрывать меню-бар
-        _HIHideMenuBar = true;
+        _HIHideMenuBar = false;
         # Отключать анимации окон
         NSAutomaticWindowAnimationsEnabled = false;
         # Скорость трекпада
-        "com.apple.trackpad.scaling" = 0.7;
+        "com.apple.trackpad.scaling" = 0.8;
 
         AppleMeasurementUnits = "Centimeters";
         AppleMetricUnits = 1;
@@ -94,7 +94,7 @@
         persistent-apps = [ ]; # начисто
         mru-spaces = false; # не пересортировывать рабочие столы
 
-        tilesize = 20; # размер иконок
+        tilesize = 30; # размер иконок
         show-process-indicators = true; # точки у запущенных приложений
       };
 

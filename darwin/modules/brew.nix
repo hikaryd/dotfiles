@@ -13,7 +13,7 @@
     };
     taps = [ "koekeishiya/formulae" ];
     casks = [
-      "telegram"
+      "telegram-desktop"
       "spotify"
       "1password-cli"
       "1password"
@@ -29,12 +29,13 @@
       # "flashspace"
       # "rectangle-pro"
       "firefox"
-      "chatgpt"
       "claude-code"
       "dbeaver-community"
       "topnotch"
       "brave-browser"
       "font-victor-mono"
+      "aldente"
+      "jordanbaird-ice"
     ];
     brews = [
       "codex"
@@ -42,6 +43,7 @@
       # "koekeishiya/formulae/yabai"
       "neovim"
       "cliclick"
+      "scrcpy"
     ];
   };
 }

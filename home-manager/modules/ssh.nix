@@ -2,7 +2,7 @@
   programs.ssh = {
     enable = true;
     package = pkgs.openssh_hpn;
-    forwardAgent = true;
+    matchBlocks = { "*" = { forwardAgent = true; }; };
     extraConfig = ''
       AddKeysToAgent yes
       ServerAliveInterval 5

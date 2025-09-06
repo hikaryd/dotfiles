@@ -32,5 +32,5 @@ map('n', '<A-k>', '<cmd>m .-2<CR>==', 'Move current line up')
 
 map('n', '<leader>or', '<cmd>OverseerRun<CR>', 'Run overseer')
 
-vim.keymap.set('n', 'K', '<cmd>Lspsaga hover_doc<CR>', { desc = 'Saga Hover' })
-vim.keymap.set('n', '<leader>do', '<cmd>Lspsaga show_cursor_diagnostics<CR>', { desc = 'Saga diag (focuses)' })
+map('n', 'K', '<cmd>Lspsaga hover_doc<CR>', 'Saga Hover')
+map('n', '<leader>do', '<cmd>Lspsaga show_cursor_diagnostics<CR>', 'Saga diag (focuses)')
