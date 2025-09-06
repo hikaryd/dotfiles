@@ -14,8 +14,8 @@
 
       exec-on-workspace-change = [ ];
 
-      on-focused-monitor-changed = [ "move-mouse monitor-lazy-center" ];
-      on-focus-changed = [ "move-mouse window-lazy-center" ];
+      on-focused-monitor-changed = [ "move-mouse window-lazy-center" ];
+      on-focus-changed = [ ];
       automatically-unhide-macos-hidden-apps = true;
       enable-normalization-flatten-containers = false;
       enable-normalization-opposite-orientation-for-nested-containers = false;
@@ -38,25 +38,10 @@
         {
           check-further-callbacks = false;
           "if" = {
-            app-id = "com.brave.Browser";
+            app-id = "com.apple.Safari";
             window-title-regex-substring =
               "^(General|(Tab|Password|Website|Extension)s|AutoFill|Se(arch|curity)|Privacy|Advance)$";
           };
-          run = [ "layout floating" ];
-        }
-        {
-          check-further-callbacks = false;
-          "if" = { app-id = "com.cisco.secureclient.gui"; };
-          run = [ "layout floating" ];
-        }
-        {
-          check-further-callbacks = false;
-          "if" = { app-id = "org.kde.kdeconnect"; };
-          run = [ "layout floating" ];
-        }
-        {
-          check-further-callbacks = false;
-          "if" = { app-id = "com.liguangming.Shadowrocket"; };
           run = [ "layout floating" ];
         }
 
@@ -68,7 +53,7 @@
         }
         {
           check-further-callbacks = false;
-          "if" = { app-id = "com.brave.Browser"; };
+          "if" = { app-id = "com.apple.Safari"; };
           run = [ "move-node-to-workspace 1" ];
         }
         {
@@ -126,11 +111,21 @@
           "if" = { app-id = "kontur.talk"; };
           run = [ "move-node-to-workspace t" ];
         }
+        {
+          check-further-callbacks = false;
+          "if" = { app-id = "com.cisco.secureclient.gui"; };
+          run = [ "move-node-to-workspace w" ];
+        }
+        {
+          check-further-callbacks = false;
+          "if" = { app-id = "com.liguangming.Shadowrocket"; };
+          run = [ "move-node-to-workspace w" ];
+        }
       ];
 
       workspace-to-monitor-force-assignment = {
         "1" = "main";
-        "2" = "main";
+        "2" = "secondary";
         "3" = "secondary";
         "4" = "main";
         "q" = "secondary";

@@ -65,6 +65,25 @@ return {
             CursorLine = { bg = colors.surface0 },
             CursorLineNr = { fg = colors.lavender, bold = true },
             Search = { bg = colors.surface1, fg = colors.text, bold = true },
+
+            -- Make floats and Telescope transparent
+            NormalFloat = { bg = 'NONE' },
+            FloatBorder = { bg = 'NONE', fg = colors.overlay0 },
+            Pmenu = { bg = 'NONE' },
+            PmenuSel = { bg = colors.surface1 },
+
+            -- Link Telescope to float styles for consistent palette
+            TelescopeNormal = { link = 'NormalFloat' },
+            TelescopeBorder = { link = 'FloatBorder' },
+            TelescopePromptNormal = { link = 'NormalFloat' },
+            TelescopeResultsNormal = { link = 'NormalFloat' },
+            TelescopePreviewNormal = { link = 'NormalFloat' },
+            TelescopePromptBorder = { link = 'FloatBorder' },
+            TelescopeResultsBorder = { link = 'FloatBorder' },
+            TelescopePreviewBorder = { link = 'FloatBorder' },
+            TelescopePromptTitle = { link = 'Title' },
+            TelescopeResultsTitle = { link = 'Title' },
+            TelescopePreviewTitle = { link = 'Title' },
           }
         end,
       }
