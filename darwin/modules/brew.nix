@@ -13,6 +13,7 @@
     };
     taps = [ "koekeishiya/formulae" ];
     casks = [
+      "telegram"
       "telegram-desktop"
       "spotify"
       "1password-cli"
@@ -22,28 +23,19 @@
       "mos"
       "wakatime"
       "karabiner-elements"
-      # "notion"
       "font-caskaydia-cove-nerd-font"
-      "drawio"
-      # "superwhisper"
-      # "flashspace"
-      # "rectangle-pro"
-      "firefox"
-      "claude-code"
       "dbeaver-community"
       "topnotch"
-      "brave-browser"
+      # "brave-browser"
       "font-victor-mono"
       "aldente"
-      "jordanbaird-ice"
+      "rapidapi"
+      # "nikitabobko/tap/aerospace"
+      "typora"
+      "excalidrawz"
+      "hazeover"
+      "koekeishiya/formulae/skhd"
     ];
-    brews = [
-      "codex"
-      # "koekeishiya/formulae/skhd"
-      # "koekeishiya/formulae/yabai"
-      "neovim"
-      "cliclick"
-      "scrcpy"
-    ];
+    brews = [ "codex" "neovim" "cliclick" "scrcpy" ];
   };
 }

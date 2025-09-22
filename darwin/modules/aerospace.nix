@@ -1,6 +1,6 @@
 { ... }: {
   services.aerospace = {
-    enable = true;
+    enable = false;
     settings = {
       after-login-command = [ ];
       after-startup-command = [ ];
@@ -44,8 +44,22 @@
           };
           run = [ "layout floating" ];
         }
+        {
+          check-further-callbacks = false;
+          "if" = {
+            app-id = "com.kagi.kagimacOS";
+            window-title-regex-substring =
+              "^(General|(Tab|Password|Website|Extension)s|AutoFill|Se(arch|curity)|Privacy|Advance)$";
+          };
+          run = [ "layout floating" ];
+        }
 
         ####### Specific spaces for apps #######
+        {
+          check-further-callbacks = false;
+          "if" = { app-id = "com.kagi.kagimacOS"; };
+          run = [ "move-node-to-workspace 1" ];
+        }
         {
           check-further-callbacks = false;
           "if" = { app-id = "com.apple.systempreferences"; };
