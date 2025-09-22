@@ -22,6 +22,9 @@ return {
     },
     animate = {
       enabled = true,
+      duration = 20,
+      easing = 'linear',
+      fps = 60,
     },
     indent = {
       enabled = true,
@@ -34,7 +37,7 @@ return {
       sources = {
         explorer = {
           auto_close = true,
-          layout = { preset = 'select' },
+          layout = { preset = 'vscode' },
         },
       },
     },

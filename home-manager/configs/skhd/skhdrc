@@ -1,35 +1,45 @@
-yabai = /opt/homebrew/bin/yabai
+alt - 1 : komorebic focus-named-workspace 1
+alt - 2 : komorebic focus-named-workspace 2
+alt - 3 : komorebic focus-named-workspace 3
+alt - 4 : komorebic focus-named-workspace 4
+alt - d : komorebic focus-named-workspace d
+alt - e : komorebic focus-named-workspace e
+alt - q : komorebic focus-named-workspace q
+alt - t : komorebic focus-named-workspace t
+alt - w : komorebic focus-named-workspace w
+alt - tab : komorebic focus-last-workspace
 
-# ===== Фокус окна (hjkl) — работает с SIP =====
-alt - h : $yabai -m window --focus west
-alt - j : $yabai -m window --focus south
-alt - k : $yabai -m window --focus north
-alt - l : $yabai -m window --focus east
+# Переброс текущего контейнера на воркспейс (окно остаётсяуправляемым, фокус не прыгает)
+alt + shift - 1 : komorebic send-to-named-workspace 1
+alt + shift - 2 : komorebic send-to-named-workspace 2
+alt + shift - 3 : komorebic send-to-named-workspace 3
+alt + shift - 4 : komorebic send-to-named-workspace 4
+alt + shift - d : komorebic send-to-named-workspace d
+alt + shift - e : komorebic send-to-named-workspace e
+alt + shift - q : komorebic send-to-named-workspace q
+alt + shift - t : komorebic send-to-named-workspace t
+alt + shift - w : komorebic send-to-named-workspace w
+alt + shift - tab : komorebic cycle-move-workspace-to-monitor forward
 
-# ===== Обмен окнами (swap) — работает с SIP =====
-shift + alt - h : $yabai -m window --swap west
-shift + alt - j : $yabai -m window --swap south
-shift + alt - k : $yabai -m window --swap north
-shift + alt - l : $yabai -m window --swap east
+# Фокус и перемещение по сетке
+alt - h : komorebic focus left
+alt - j : komorebic focus down
+alt - k : komorebic focus up
+alt - l : komorebic focus right
+alt + shift - h : komorebic move left
+alt + shift - j : komorebic move down
+alt + shift - k : komorebic move up
+alt + shift - l : komorebic move right
 
-# ===== Зум контейнера =====
-shift + alt - f : $yabai -m window --toggle zoom-parent
+# Ресайз основного контейнера
+# alt + shift - = : komorebic resize-axis horizontal increase
+# alt + shift - - : komorebic resize-axis horizontal decrease
 
-# ===== Баланс =====
-shift + alt - 0 : $yabai -m space --balance
-
-# ===== Перемещение между дисплеями (если не пускает — это из-за SA) =====
-ctrl + alt - h : $yabai -m window --display west; $yabai -m display --focus west
-ctrl + alt - l : $yabai -m window --display east; $yabai -m display --focus east
-
-# ===== Фокус дисплеев =====
-cmd + shift - h : $yabai -m display --focus prev
-cmd + shift - l : $yabai -m display --focus next
-
-# ===== Перемещение окна на space =====
-
-# ===== Float/tile =====
-cmd + shift - f : $yabai -m window --toggle float
-
-# ===== Перезагрузка skhd =====
-cmd + alt + ctrl - r : skhd --reload
+# Балансировка и режимы
+alt + shift - 0 : komorebic retile
+alt + shift - f : komorebic toggle-monocle
+cmd + shift - f : komorebic toggle-workspace-layer
+cmd + shift - e : komorebic change-layout ultrawide-vertical-stack
+cmd + shift - h : komorebic stack left
+cmd + shift - l : komorebic stack right
+cmd + shift - r : komorebic unstack-all && komorebic retile
