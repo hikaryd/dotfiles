@@ -1,6 +1,5 @@
 { ... }: {
   imports = [
-    ./komorebi.nix
     ./aerospace.nix
     ./git.nix
     ./zen.nix

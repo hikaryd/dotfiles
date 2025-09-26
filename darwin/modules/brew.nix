@@ -26,16 +26,15 @@
       "font-caskaydia-cove-nerd-font"
       "dbeaver-community"
       "topnotch"
-      # "brave-browser"
+      "brave-browser"
       "font-victor-mono"
       "aldente"
       "rapidapi"
-      # "nikitabobko/tap/aerospace"
       "typora"
       "excalidrawz"
       "hazeover"
-      "koekeishiya/formulae/skhd"
     ];
-    brews = [ "codex" "neovim" "cliclick" "scrcpy" ];
+    brews =
+      [ "codex" "neovim" "cliclick" "scrcpy" "koekeishiya/formulae/skhd" "gh" ];
   };
 }
