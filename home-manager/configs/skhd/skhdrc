@@ -9,7 +9,6 @@ alt - t : komorebic focus-named-workspace t
 alt - w : komorebic focus-named-workspace w
 alt - tab : komorebic focus-last-workspace
 
-# Переброс текущего контейнера на воркспейс (окно остаётсяуправляемым, фокус не прыгает)
 alt + shift - 1 : komorebic send-to-named-workspace 1
 alt + shift - 2 : komorebic send-to-named-workspace 2
 alt + shift - 3 : komorebic send-to-named-workspace 3
@@ -31,14 +30,13 @@ alt + shift - j : komorebic move down
 alt + shift - k : komorebic move up
 alt + shift - l : komorebic move right
 
-# Ресайз основного контейнера
-# alt + shift - = : komorebic resize-axis horizontal increase
-# alt + shift - - : komorebic resize-axis horizontal decrease
+alt + shift - 0x18 : komorebic resize-axis horizontal increase
+alt + shift - 0x1B : komorebic resize-axis horizontal decrease
 
 # Балансировка и режимы
 alt + shift - 0 : komorebic retile
 alt + shift - f : komorebic toggle-monocle
-cmd + shift - f : komorebic toggle-workspace-layer
+cmd + shift - f : komorebic toggle-float
 cmd + shift - e : komorebic change-layout ultrawide-vertical-stack
 cmd + shift - h : komorebic stack left
 cmd + shift - l : komorebic stack right
