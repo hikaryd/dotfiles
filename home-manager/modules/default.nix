@@ -1,6 +1,7 @@
 { ... }: {
   imports = [
     ./aerospace.nix
+    ./helix.nix
     ./git.nix
     ./zen.nix
     ./lazygit.nix
@@ -20,6 +21,5 @@
     ./skhd.nix
     ./yabai.nix
     ./sketchybar.nix
-    ./vscode.nix
   ];
 }

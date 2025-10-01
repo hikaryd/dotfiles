@@ -21,6 +21,7 @@
       starship.enable = false;
       nushell.enable = false;
       ghostty.enable = false;
+      helix.enable = false;
     };
   };
 }
