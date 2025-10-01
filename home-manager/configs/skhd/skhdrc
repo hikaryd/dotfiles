@@ -41,3 +41,17 @@ cmd + shift - e : komorebic change-layout ultrawide-vertical-stack
 cmd + shift - h : komorebic stack left
 cmd + shift - l : komorebic stack right
 cmd + shift - r : komorebic unstack-all && komorebic retile
+
+# Stack
+alt - left        : komorebic stack left
+alt - down        : komorebic stack down
+alt - up          : komorebic stack up
+alt - right       : komorebic stack right
+
+# пунктуация — только hex keycodes
+alt - 0x29        : komorebic unstack              # ; 
+alt - 0x21        : komorebic cycle-stack previous # [
+alt - 0x1E        : komorebic cycle-stack next     # ]
+
+alt + shift - 0x21 : komorebic cycle-stack-index previous # [
+alt + shift - 0x1E : komorebic cycle-stack-index next     # ]

@@ -33,6 +33,8 @@
       "typora"
       "excalidrawz"
       "hazeover"
+      "claude"
+      "mouseless"
     ];
     brews =
       [ "codex" "neovim" "cliclick" "scrcpy" "koekeishiya/formulae/skhd" "gh" ];
