@@ -109,8 +109,20 @@
       set -g window-active-style 'bg=default'
 
       bind g popup -EE -w 90% -h 90% -d "#{pane_current_path}" lazygit
-      bind-key "T" display-popup -E -w 30% -h 30% "sesh connect \"$( sesh list -i | gum filter --limit 1 --no-sort --fuzzy --no-strip-ansi --placeholder 'Pick a sesh' --height 50 --prompt=' ' )\""
+      bind-key T display-popup -E -w 30% -h 30% 'bash -lc "
+      set -euo pipefail
+      sel=$(sesh list -i \
+        | gum filter --limit 1 --no-sort --fuzzy \
+                     --placeholder \"Pick a sesh\" --height 50 --prompt=\" \")
+      [ -z \"$sel\" ] && exit 0
+      sel=$(printf \"%s\" \"$sel\" | tr -d \"\r\" | sed -E 's/[[:space:]]+$//')
+      exec sesh connect \"$sel\"
+      "'
       bind -N "last-session (via sesh)" L run-shell "sesh last"
+
+      set -g default-shell "${pkgs.nushell}/bin/nu"
+      set -g default-command "${pkgs.nushell}/bin/nu"
+      set-environment -g SHELL "${pkgs.nushell}/bin/nu"
     '';
   };
 }
