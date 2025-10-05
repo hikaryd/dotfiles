@@ -14,10 +14,10 @@ map('n', 'v$', 'v$h', 'Visual: select to end of line minus one char')
 -- File Explorer
 -- map('n', '<Space>e', ':Neotree float reveal=true<CR>', 'Toggle file explorer')
 
-map('n', '<leader>h', '<cmd>SmartCursorMoveLeft<CR>', 'Move to left split')
-map('n', '<leader>j', '<cmd>SmartCursorMoveDown<CR>', 'Move to below split')
-map('n', '<leader>k', '<cmd>SmartCursorMoveUp<CR>', 'Move to above split')
-map('n', '<leader>l', '<cmd>SmartCursorMoveRight<CR>', 'Move to right split')
+map('n', '<leader>h', '<cmd>lua require("tmux").move_left()<CR>', 'Move to left split')
+map('n', '<leader>j', '<cmd>lua require("tmux").move_bottom()<CR>', 'Move to below split')
+map('n', '<leader>k', '<cmd>lua require("tmux").move_top()<CR>', 'Move to above split')
+map('n', '<leader>l', '<cmd>lua require("tmux").move_right()<CR>', 'Move to right split')
 --
 map('n', '<leader>v', '<cmd>vsplit<CR>', 'Vertical split window')
 

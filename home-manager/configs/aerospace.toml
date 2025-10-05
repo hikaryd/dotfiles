@@ -95,6 +95,13 @@ app-id = "com.apple.Safari"
 
 [[on-window-detected]]
 check-further-callbacks = false
+run = ["move-node-to-workspace 1"]
+
+[on-window-detected.if]
+app-id = "net.imput.helium"
+
+[[on-window-detected]]
+check-further-callbacks = false
 run = ["layout tiling", "move-node-to-workspace d"]
 
 [on-window-detected.if]
@@ -144,6 +151,13 @@ app-id = "ru.keepcoder.Telegram"
 
 [[on-window-detected]]
 check-further-callbacks = false
+run = ["move-node-to-workspace 3"]
+
+[on-window-detected.if]
+app-id = "com.tdesktop.Telegram"
+
+[[on-window-detected]]
+check-further-callbacks = false
 run = ["move-node-to-workspace e"]
 
 [on-window-detected.if]
@@ -155,6 +169,13 @@ run = ["move-node-to-workspace 3"]
 
 [on-window-detected.if]
 app-id = "ch.protonmail.desktop"
+
+[[on-window-detected]]
+check-further-callbacks = false
+run = ["move-node-to-workspace 3"]
+
+[on-window-detected.if]
+app-id = "ru.unlimitedtech.express.desktop"
 
 [[on-window-detected]]
 check-further-callbacks = false
@@ -194,7 +215,7 @@ app-id = "com.liguangming.Shadowrocket"
 [workspace-to-monitor-force-assignment]
 1 = "main"
 2 = "secondary"
-3 = "secondary"
+3 = "main"
 4 = "main"
 d = "main"
 e = "secondary"

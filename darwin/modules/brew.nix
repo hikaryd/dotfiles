@@ -23,20 +23,21 @@
       "mos"
       "wakatime"
       "karabiner-elements"
-      "font-caskaydia-cove-nerd-font"
       "dbeaver-community"
       "topnotch"
       "brave-browser"
-      "font-victor-mono"
+      "nikitabobko/tap/aerospace"
       "aldente"
       "rapidapi"
       "typora"
       "excalidrawz"
-      "hazeover"
-      "claude"
-      "mouseless"
+      "claude-code"
+      # fonts
+      "font-symbols-only-nerd-font"
+      "font-sf-mono"
+      "font-sf-pro"
+      "sf-symbols"
     ];
-    brews =
-      [ "codex" "neovim" "cliclick" "scrcpy" "koekeishiya/formulae/skhd" "gh" ];
+    brews = [ "codex" "neovim" "koekeishiya/formulae/skhd" ];
   };
 }

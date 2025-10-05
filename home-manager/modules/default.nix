@@ -3,7 +3,6 @@
     ./aerospace.nix
     ./helix.nix
     ./git.nix
-    ./zen.nix
     ./lazygit.nix
     ./nvim.nix
     ./yazi.nix
@@ -21,5 +20,6 @@
     ./skhd.nix
     ./yabai.nix
     ./sketchybar.nix
+    ./sesh.nix
   ];
 }
