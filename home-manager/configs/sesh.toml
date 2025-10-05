@@ -1,36 +1,30 @@
-projects = ["~/Documents/dev", "~/dotfiles"]
+blacklist = ["^scratch$", "^_"]
 
-[[sessions]]
+[[session]]
 name = "dotfiles"
 path = "~/dotfiles"
 startup_command = "nvim"
 windows = ["editor", "dev"]
 
-[[sessions]]
+[[session]]
 name = "ods"
 path = "~/Documents/dev/operational-data-store"
 startup_command = "nvim"
 windows = ["editor", "dev"]
 
-[[sessions]]
+[[session]]
 name = "bff"
 path = "~/Documents/dev/bff"
 startup_command = "nvim"
 windows = ["editor", "dev"]
 
-[[sessions]]
-name = "bff"
-path = "~/Documents/dev/bff"
-startup_command = "nvim"
-windows = ["editor", "dev"]
-
-[[sessions]]
+[[session]]
 name = "jobboard-scraper"
 path = "~/Documents/dev/jobboard-scraper"
 startup_command = "nvim"
 windows = ["editor", "dev"]
 
-[[sessions]]
+[[session]]
 name = "x5-podbor-ods"
 path = "~/Documents/dev/x5-podbor-ods"
 startup_command = "nvim"
