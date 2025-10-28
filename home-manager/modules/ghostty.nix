@@ -5,19 +5,13 @@
     package = pkgs.emptyDirectory;
     settings = {
       theme = "light:Rose Pine Dawn,dark:Rose Pine";
-      # theme = "light:tokyonight-day,dark:tokyonight";
 
-      # font-family = "VictorMono";
       adjust-cell-height = "45%";
       font-family = "Berkeley Mono";
       font-size = 15;
 
       background-opacity = 0.95;
       background-blur = true;
-      # font-feature = "-liga +calt";
-      # font-thicken = true;
-      # window-colorspace = "display-p3";
-      # bold-is-bright = true;
 
       confirm-close-surface = false;
 
@@ -29,18 +23,12 @@
 
       cursor-style = "block";
       mouse-hide-while-typing = true;
-      # cursor-opacity = 0.8;
-      # cursor-invert-fg-bg = true;
-      # cursor-style-blink = true;
       shell-integration-features = "no-cursor";
       cursor-color = "cell-foreground";
       cursor-text = "cell-background";
 
-      # selection-invert-fg-bg = true;
       title = " ";
 
-      # window-padding-x = 15;
-      # window-padding-y = 10;
       window-padding-x = 6;
       window-padding-y = 6;
 
@@ -57,11 +45,7 @@
         "ctrl+9=csi:57;5u"
       ];
 
-      # term = "xterm-256color";
-      # working-directory = "inherit";
-      # window-inherit-working-directory = true;
-      # window-save-state = "always";
-      # copy-on-select = true;
+      custom-shader = "shaders/ripple_cursor.glsl";
     };
   };
 }

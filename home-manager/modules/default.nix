@@ -1,6 +1,5 @@
 { ... }: {
   imports = [
-    ./aerospace.nix
     ./helix.nix
     ./git.nix
     ./lazygit.nix

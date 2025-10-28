@@ -18,7 +18,8 @@ alt + shift - e : komorebic send-to-named-workspace e
 alt + shift - q : komorebic send-to-named-workspace q
 alt + shift - t : komorebic send-to-named-workspace t
 alt + shift - w : komorebic send-to-named-workspace w
-alt + shift - tab : komorebic cycle-move-workspace-to-monitor forward
+
+cmd + shift - q : komorebic stop
 
 # Фокус и перемещение по сетке
 alt - h : komorebic focus left
@@ -40,7 +41,7 @@ cmd + shift - f : komorebic toggle-float
 cmd + shift - e : komorebic change-layout ultrawide-vertical-stack
 cmd + shift - h : komorebic stack left
 cmd + shift - l : komorebic stack right
-cmd + shift - r : komorebic unstack-all && komorebic retile
+cmd + shift - r : komorebic unstack-all
 
 # Stack
 alt - left        : komorebic stack left
@@ -52,6 +53,7 @@ alt - right       : komorebic stack right
 alt - 0x29        : komorebic unstack              # ; 
 alt - 0x21        : komorebic cycle-stack previous # [
 alt - 0x1E        : komorebic cycle-stack next     # ]
+alt + shift - tab : komorebic cycle-stack next     # ]
 
 alt + shift - 0x21 : komorebic cycle-stack-index previous # [
 alt + shift - 0x1E : komorebic cycle-stack-index next     # ]
