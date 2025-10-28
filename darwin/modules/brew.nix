@@ -11,7 +11,7 @@
       brewfile = true;
       autoUpdate = true;
     };
-    taps = [ "koekeishiya/formulae" ];
+    taps = [ "koekeishiya/formulae" "acsandmann/tap" ];
     casks = [
       "telegram"
       "telegram-desktop"
@@ -25,19 +25,17 @@
       "karabiner-elements"
       "dbeaver-community"
       "topnotch"
-      "brave-browser"
-      "nikitabobko/tap/aerospace"
       "aldente"
-      "rapidapi"
       "typora"
       "excalidrawz"
       "claude-code"
+      "yaak"
       # fonts
       "font-symbols-only-nerd-font"
       "font-sf-mono"
       "font-sf-pro"
       "sf-symbols"
     ];
-    brews = [ "codex" "neovim" "koekeishiya/formulae/skhd" ];
+    brews = [ "codex" "neovim" "acsandmann/tap/rift" ];
   };
 }

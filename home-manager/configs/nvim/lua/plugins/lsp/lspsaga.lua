@@ -10,7 +10,7 @@ return {
       require('lspsaga').setup {
         ui = {
           border = 'rounded',
-          kind = require('catppuccin.groups.integrations.lsp_saga').custom_kind(),
+          -- kind = require('catppuccin.groups.integrations.lsp_saga').custom_kind(),
           code_action = { extend_gitsigns = true, show_server_name = true, border = 'rounded' },
         },
 

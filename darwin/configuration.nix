@@ -38,7 +38,7 @@
         # Всегда показывать расширения файлов
         AppleShowAllExtensions = true;
         # Скрывать меню-бар
-        _HIHideMenuBar = false;
+        _HIHideMenuBar = true;
         # Отключать анимации окон
         NSAutomaticWindowAnimationsEnabled = false;
         # Скорость трекпада
@@ -106,12 +106,10 @@
     };
   };
 
-  # Показать ~/Library
   system.activationScripts.unhideUserLibrary.text = ''
     /usr/bin/chflags nohidden "/Users/${user}/Library" 2>/dev/null || true
   '';
 
-  # Перезапустить Finder и Dock, чтобы настройки применились сразу после switch
   system.activationScripts.restartUiApps.text = ''
     /usr/bin/killall Finder 2>/dev/null || true
     /usr/bin/killall Dock 2>/dev/null || true

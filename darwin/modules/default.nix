@@ -1,3 +1,1 @@
-{ ... }: {
-  imports = [ ./brew.nix ./borders.nix ./aerospace.nix ./sketchybar.nix ];
-}
+{ ... }: { imports = [ ./brew.nix ./borders.nix ./sketchybar.nix ]; }

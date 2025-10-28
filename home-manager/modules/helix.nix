@@ -92,7 +92,7 @@ in {
           "%" = "match_brackets";
 
           space = {
-            e = "file_picker_in_current_directory";
+            e = "file_explorer";
 
             "?" = "command_palette";
             f = "file_picker";

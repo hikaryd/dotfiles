@@ -26,6 +26,24 @@
           set -g @tokyo-night-tmux_show_git 0
         '';
       }
+      {
+        plugin = pkgs.tmuxPlugins.resurrect;
+        extraConfig = ''
+          set -g @resurrect-dir "$HOME/.local/share/tmux/resurrect"
+          set -g @resurrect-capture-pane-contents 'on'
+          set -g @resurrect-strategy-nvim 'session'
+          set -g @resurrect-strategy-vim  'session'
+        '';
+      }
+      {
+        plugin = pkgs.tmuxPlugins.continuum;
+        extraConfig = ''
+          # авто-сейв и авто-восстановление последнего снапшота
+          set -g @continuum-restore 'on'
+          # как часто сохранять (в минутах)
+          set -g @continuum-save-interval '15'
+        '';
+      }
     ];
 
     extraConfig = ''
