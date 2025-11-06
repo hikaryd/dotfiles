@@ -1,0 +1,12 @@
+.DS_Store
+*.swp
+*.swo
+.claude
+*~
+*.log
+.env
+.direnv/
+result
+result-*
+.pre-commit-config.yaml
+requirements

@@ -1,0 +1,41 @@
+blacklist = ["^scratch$", "^_"]
+
+[[session]]
+name = "dots"
+path = "~/dots"
+
+[[session]]
+name = "ods"
+path = "~/Documents/dev/operational-data-store"
+windows = ["pytest"]
+
+[[window]]
+name = "pytest"
+command = "vs"
+
+[[session]]
+name = "bff"
+path = "~/Documents/dev/bff"
+windows = ["pytest"]
+
+[[window]]
+name = "pytest"
+command = "vs"
+
+[[session]]
+name = "jobboard-scraper"
+path = "~/Documents/dev/jobboard-scraper"
+windows = ["pytest"]
+
+[[window]]
+name = "pytest"
+command = "vs"
+
+[[session]]
+name = "x5-podbor-ods"
+path = "~/Documents/dev/x5-podbor-ods"
+windows = ["pytest"]
+
+[[window]]
+name = "pytest"
+command = "vs"

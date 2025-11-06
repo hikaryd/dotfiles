@@ -1,0 +1,11 @@
+- shell:
+    - command: |
+        if ! command -v brew >/dev/null 2>&1; then
+          echo "Homebrew is not installed. Skipping Brewfile."
+          exit 0
+        fi
+        echo "Installing packages from Brewfile ..."
+        brew bundle --file Brewfile --no-upgrade
+      description: Install Homebrew packages via Brewfile
+      stdout: true
+      stderr: true

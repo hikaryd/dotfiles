@@ -1,0 +1,46 @@
+#!/bin/sh
+COMMIT_MSG_FILE="$1"
+
+AI_COMMIT=$(~/dots/scripts/ai_helper --mode commit --provider x5 2>/dev/null)
+
+BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null)
+
+TICKET=$(printf '%s' "$BRANCH" | grep -Eoi 'ATS-[0-9]+' | head -n 1)
+
+if [ -z "$TICKET" ]; then
+  NUM=$(printf '%s' "$BRANCH" | grep -Eo '[0-9]+' | head -n 1)
+  if [ -n "$NUM" ]; then
+    TICKET="ATS-$NUM"
+  fi
+fi
+
+if [ -n "$TICKET" ]; then
+  TICKET=$(printf '%s' "$TICKET" | tr '[:lower:]' '[:upper:]')
+fi
+
+prepend_ticket_to_file() {
+  if [ -n "$TICKET" ]; then
+    if ! head -n 1 "$COMMIT_MSG_FILE" | grep -Eq "^$TICKET([[:space:]]|$)"; then
+      awk -v prefix="$TICKET " 'NR==1{print prefix $0; next} {print}' \
+        "$COMMIT_MSG_FILE" > "$COMMIT_MSG_FILE.tmp" \
+        && mv "$COMMIT_MSG_FILE.tmp" "$COMMIT_MSG_FILE"
+    fi
+  fi
+}
+
+if [ -n "$AI_COMMIT" ]; then
+  TITLE=$(printf '%s' "$AI_COMMIT" | head -n 1)
+  DESCRIPTION=$(printf '%s' "$AI_COMMIT" | tail -n +3)
+
+  if [ -n "$TICKET" ] && ! printf '%s' "$TITLE" | grep -Eq "^$TICKET([[:space:]]|$)"; then
+    TITLE="$TICKET $TITLE"
+  fi
+
+  if [ -n "$DESCRIPTION" ]; then
+    printf "%s\n\n%s\n" "$TITLE" "$DESCRIPTION" > "$COMMIT_MSG_FILE"
+  else
+    printf "%s\n" "$TITLE" > "$COMMIT_MSG_FILE"
+  fi
+else
+  prepend_ticket_to_file
+fi

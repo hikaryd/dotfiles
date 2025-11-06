@@ -1,0 +1,68 @@
+- link:
+    ~/Application Support/nushell/config.nu:
+      path: config/nushell/config.nu
+      create: true
+      force: true
+    ~/.config/nushell/catppuccin_mocha.nu:
+      path: config/nushell/catppuccin_mocha.nu
+      create: true
+      force: true
+    # Tmux
+    ~/.config/tmux/tmux.conf:
+      path: config/tmux/tmux.conf
+      create: true
+      force: true
+    # Git
+    ~/.gitconfig:
+      path: config/git/.gitconfig
+      create: true
+      force: true
+    ~/.gitignore_global:
+      path: config/git/.gitignore_global
+      create: true
+      force: true
+    ~/.config/git/gitk:
+      path: config/git/gitk
+      create: true
+      force: true
+    ~/.config/git/hooks/prepare-commit-msg:
+      path: config/git/hooks/prepare-commit-msg
+      create: true
+      force: true
+    # SSH
+    ~/.ssh/config:
+      path: config/ssh/config
+      create: true
+      force: true
+    # Starship
+    ~/.config/starship.toml:
+      path: config/starship/starship.toml
+      create: true
+      force: true
+    # Fastfetch
+    ~/.config/fastfetch/config.jsonc:
+      path: config/fastfetch/config.jsonc
+      create: true
+      force: true
+    # Sesh
+    ~/.config/sesh/sesh.toml:
+      path: config/sesh/sesh.toml
+      create: true
+      force: true
+- shell:
+    - command: chmod +x ~/.config/git/hooks/prepare-commit-msg
+      description: Making git hook executable
+      stdout: false
+      stderr: false
+    - command: |
+        if [[ ! -d "$HOME/.tmux/plugins/tpm" ]]; then
+          echo "Installing TPM (tmux plugin manager)..."
+          mkdir -p "$HOME/.tmux/plugins"
+          git clone https://github.com/tmux-plugins/tpm "$HOME/.tmux/plugins/tpm"
+        else
+          echo "TPM already present; updating..."
+          git -C "$HOME/.tmux/plugins/tpm" pull --ff-only || true
+        fi
+      description: Installing tmux plugin manager (TPM)
+      stdout: true
+      stderr: true

@@ -1,0 +1,7 @@
+customCommands:
+  - key: "C"
+    command: "git commit"
+    description: "Коммит (открыть в nvim)"
+    output: "terminal"
+    loadingText: "Открывается nvim..."
+    context: "files"

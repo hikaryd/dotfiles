@@ -1,0 +1,6 @@
+- link:
+    # Neovim
+    ~/.config/nvim:
+      path: config/nvim
+      create: true
+      force: true
