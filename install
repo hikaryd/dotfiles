@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+
+set -e
+
+SHELL='/bin/bash'
+export SHELL
+
+readonly DOTBOT_DIR='dotbot'
+readonly DOTBOT_BIN='bin/dotbot'
+readonly BASEDIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+readonly ARGS="$@"
+
+cd "$BASEDIR"
+
+if [[ ! -d "$DOTBOT_DIR" ]]; then
+	echo "Настраивается dotbot..."
+	git submodule add https://github.com/anishathalye/dotbot "$DOTBOT_DIR"
+	git submodule update --init --recursive
+fi
+
+git submodule sync --quiet --recursive
+git submodule update --init --recursive
+
+run_dotbot() {
+	local config
+	config="$1"
+
+	"$BASEDIR/$DOTBOT_DIR/$DOTBOT_BIN" \
+		-d "$BASEDIR" \
+		-c "$config" $ARGS
+}
+
+run_dotbot 'steps/dependencies.yml' || true
+run_dotbot 'steps/terminal.yml' || true
+run_dotbot 'steps/editors.yml' || true
+run_dotbot 'steps/tools.yml' || true
+run_dotbot 'steps/macos.yml' || true

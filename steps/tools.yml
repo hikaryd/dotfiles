@@ -1,0 +1,35 @@
+- link:
+    # Ghostty terminal
+    ~/.config/ghostty/config:
+      path: config/ghostty/config
+      create: true
+      force: true
+    # Yazi file manager
+    ~/.config/yazi/yazi.toml:
+      path: config/yazi/yazi.toml
+      create: true
+      force: true
+    ~/.config/yazi/init.lua:
+      path: config/yazi/init.lua
+      create: true
+      force: true
+    # Lazygit
+    ~/.config/lazygit/config.yml:
+      path: config/lazygit/config.yml
+      create: true
+      force: true
+    # Bat
+    ~/.config/bat/config:
+      path: config/bat/config
+      create: true
+      force: true
+- shell:
+    - command: |
+        # Install yazi plugins if not already installed
+        if [[ ! -d ~/.config/yazi/plugins ]]; then
+          echo "Installing yazi plugins..."
+          git clone --depth 1 https://github.com/yazi-rs/plugins ~/.config/yazi/plugins
+        fi
+      description: Installing yazi plugins
+      stdout: true
+      stderr: true

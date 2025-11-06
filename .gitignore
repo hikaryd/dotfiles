@@ -1,5 +1,7 @@
-result
-result-*
-.direnv
-secrets/ssh.nix
-.aider*
+# macOS
+.DS_Store
+
+# Temporary files
+*.swp
+*.swo
+*~

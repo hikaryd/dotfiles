@@ -1,0 +1,174 @@
+# Конфигурация Starship
+
+# Тема
+palette = "catppuccin_mocha"
+
+# Формат
+format = "$os$username${custom.is_folder_config}$directory$git_branch$c$rust$golang$nodejs$php$java$kotlin$haskell$lua$python$cmake$docker_context$meson$cmd_duration$line_break$character"
+
+add_newline = true
+
+# Операционная система
+[os]
+disabled = false
+style = "bg:color_mantle fg:color_text"
+
+[os.symbols]
+Windows = "󰍲 "
+Ubuntu = "󰕈 "
+SUSE = " "
+Raspbian = "󰐿 "
+Mint = "󰣭 "
+Macos = "󰀵 "
+Manjaro = " "
+Linux = "󰌽 "
+Gentoo = "󰣨 "
+Fedora = "󰣛 "
+Alpine = " "
+Amazon = " "
+Android = " "
+Arch = "󰣇 "
+Artix = "󰣇 "
+CentOS = " "
+Debian = "󰣚 "
+Redhat = "󱄛 "
+RedHatEnterprise = "󱄛 "
+
+# Продолжительность выполнения команды
+[cmd_duration]
+min_time = 1000
+show_notifications = false
+min_time_to_notify = 10000
+show_milliseconds = true
+format = "[$duration ]($style)"
+style = "fg:color_pink bg:color_mantle"
+
+# Директория
+[directory]
+truncate_to_repo = true
+format = "[([$read_only ]($style fg:color_red))$path ]($style)"
+style = "fg:color_text bg:color_mantle"
+truncation_length = 5
+read_only = ""
+
+# Git
+[git_branch]
+symbol = ""
+format = "[$symbol $branch(:$remote_branch) ]($style)"
+style = "fg:color_red bg:color_mantle"
+
+[git_status]
+disabled = false
+
+[git_commit]
+disabled = true
+only_detached = false
+tag_disabled = false
+format = "[$tag #$hash ]($style)"
+style = "fg:color_red bg:color_mantle"
+commit_hash_length = 4
+tag_symbol = ""
+
+# Языки программирования
+[c]
+symbol = "gcc: "
+format = "[$symbol($version )]($style)"
+style = "fg:color_lavender bg:color_mantle"
+
+[docker_context]
+symbol = " "
+format = "[$symbol$context ]($style)"
+style = "fg:color_blue bg:color_mantle"
+
+[golang]
+symbol = ""
+format = "[$symbol ($version )]($style)"
+style = "fg:color_lavender bg:color_mantle"
+
+[lua]
+symbol = ""
+format = "[$symbol ($version )]($style)"
+style = "fg:color_lavender bg:color_mantle"
+
+[nodejs]
+symbol = ""
+format = "[$symbol ($version )]($style)"
+style = "fg:color_lavender bg:color_mantle"
+
+[python]
+symbol = " "
+format = "[${symbol}${version}]($style) "
+style = "fg:color_lavender"
+
+[rust]
+symbol = ""
+format = "[$symbol ($version )]($style)"
+style = "fg:color_lavender bg:color_mantle"
+
+[cmake]
+format = "[$symbol($version )]($style)"
+style = "fg:color_lavender bg:color_mantle"
+
+[meson]
+symbol = "Meson: "
+format = "[$symbol(${project}) ]($style)"
+style = "fg:color_lavender bg:color_mantle"
+
+# Пользовательские
+[custom.is_folder_config]
+disabled = true
+when = "echo $PWD | grep -q '/dotfiles'"
+symbol = " "
+format = "[$symbol]($style)"
+style = "fg:color_blue bg:color_mantle"
+
+# Прочее
+[shell]
+disabled = true
+
+[line_break]
+disabled = false
+
+[status]
+disabled = false
+style = "fg:color_text bg:color_base"
+format = '''
+[
+(Exit code: [$maybe_int]($style fg:color_red))
+(Exit status: [$common_meaning]($style fg:color_peach))
+(Signal: [$signal_name]($style fg:color_yellow))]
+($style)
+'''
+
+[character]
+format = "> "
+disabled = false
+
+# Палитра Catppuccin Mocha
+[palettes.catppuccin_mocha]
+color_rosewater = "#f5e0dc"
+color_flamingo = "#f2cdcd"
+color_pink = "#f5c2e7"
+color_mauve = "#cba6f7"
+color_red = "#f38ba8"
+color_maroon = "#eba0ac"
+color_peach = "#fab387"
+color_yellow = "#f9e2af"
+color_green = "#a6e3a1"
+color_teal = "#94e2d5"
+color_sky = "#89dceb"
+color_sapphire = "#74c7ec"
+color_blue = "#89b4fa"
+color_lavender = "#b4befe"
+color_text = "#cdd6f4"
+color_subtext1 = "#bac2de"
+color_subtext0 = "#a6adc8"
+color_overlay2 = "#9399b2"
+color_overlay1 = "#7f849c"
+color_overlay0 = "#6c7086"
+color_surface2 = "#585b70"
+color_surface1 = "#45475a"
+color_surface0 = "#313244"
+color_base = "#1e1e2e"
+color_mantle = "#0000000"
+color_crust = "#11111b"
