@@ -9,3 +9,19 @@
       description: Install Homebrew packages via Brewfile
       stdout: true
       stderr: true
+    - command: |
+        if ! command -v rustup >/dev/null 2>&1; then
+          echo "Installing Rust with nightly toolchain..."
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain nightly --profile default
+          echo "Rust installed successfully."
+        else
+          echo "Rustup already installed. Ensuring nightly toolchain is set..."
+          rustup default nightly
+        fi
+      description: Install Rust with nightly toolchain
+      stdout: true
+      stderr: true
+    - command: pip3 install pyyaml --break-system-packages
+      description: Install PyYAML for Python
+      stdout: true
+      stderr: true

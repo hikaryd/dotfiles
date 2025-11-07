@@ -54,3 +54,8 @@ cd ~/dots
 ./install -c steps/macos.yml
 ```
 
+Настройки macos
+```
+./scripts/macos-defaults.sh
+```
+

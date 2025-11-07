@@ -22,6 +22,7 @@
 	preloadindex = true
 	hooksPath = ~/.config/git/hooks
 	pager = delta
+	excludesFile = ~/dots/config/git/.gitignore_global
 
 [push]
 	default = current

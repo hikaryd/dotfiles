@@ -20,6 +20,7 @@ alias "." = cd ..
 alias ".." = cd ../..
 alias "..." = cd ../../..
 alias l = ls
+alias bu = brew upgrade --cask --greedy
 # alias cd = z
 
 alias python = python3
@@ -96,3 +97,4 @@ starship init nu | save -f ($nu.data-dir | path join "vendor/autoload/starship.n
 
 zoxide init nushell | save -f ~/.zoxide.nu
 source ~/.zoxide.nu
+source $"($nu.home-path)/.cargo/env.nu"
