@@ -7,12 +7,9 @@
       path: config/sketchybar
       create: true
       force: true
+      # TODO добавить rift
 - shell:
     - command: chmod +x ~/.config/sketchybar/sketchybarrc 2>/dev/null || true
       description: Making sketchybarrc executable
       stdout: false
       stderr: false
-    - command: scripts/macos-defaults.sh
-      description: Configuring macOS system preferences
-      stdout: true
-      stderr: true

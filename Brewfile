@@ -54,13 +54,13 @@ brew "prettier"
 brew "prettierd"
 
 # Python
-brew "basedpyright"
+brew "pyright"
 brew "ruff"
 
 # Rust
 brew "rust-analyzer"
 brew "rustfmt"
-brew "rustup"
+brew "rustup-init"
 
 # Go
 brew "go"

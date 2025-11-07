@@ -54,6 +54,10 @@
       description: Making git hook executable
       stdout: false
       stderr: false
+    - command: git config --global core.excludesFile '~/dots/config/git/.gitignore_global'
+      description: Setting global git excludesFile
+      stdout: true
+      stderr: true
     - command: |
         if [[ ! -d "$HOME/.tmux/plugins/tpm" ]]; then
           echo "Installing TPM (tmux plugin manager)..."
@@ -64,5 +68,26 @@
           git -C "$HOME/.tmux/plugins/tpm" pull --ff-only || true
         fi
       description: Installing tmux plugin manager (TPM)
+      stdout: true
+      stderr: true
+    - command: |
+        if ! grep -q "/opt/homebrew/bin/nu" /etc/shells 2>/dev/null; then
+          echo "Adding nushell to /etc/shells..."
+          sudo sh -c 'echo "/opt/homebrew/bin/nu" >> /etc/shells'
+        else
+          echo "Nushell already in /etc/shells"
+        fi
+      description: Adding nushell to available shells
+      stdout: true
+      stderr: true
+    - command: |
+        if [[ "$SHELL" != "/opt/homebrew/bin/nu" ]]; then
+          echo "Setting nushell as default shell..."
+          chsh -s /opt/homebrew/bin/nu
+          echo "Default shell changed to nushell. Please restart your terminal."
+        else
+          echo "Nushell is already the default shell"
+        fi
+      description: Setting nushell as default shell
       stdout: true
       stderr: true
