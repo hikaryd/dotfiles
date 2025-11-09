@@ -24,9 +24,6 @@
             --command "sketchybar --trigger rift_windows_changed"
 
           echo "✓ rift-cli event subscriptions configured"
-
-          echo "Current subscriptions:"
-          rift-cli subscribe list-cli | jq -r '.cli_subscriptions[] | "  - \(.event) → \(.command)"'
         else
           echo "⚠ rift-cli not found, skipping event subscriptions"
         fi
