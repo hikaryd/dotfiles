@@ -8,22 +8,27 @@
       create: true
       force: true
 - shell:
-    - command: chmod +x ~/.config/sketchybar/sketchybarrc 2>/dev/null || true
-      description: Making sketchybarrc executable
-      stdout: false
-      stderr: false
     - command: |
         if command -v rift-cli &> /dev/null; then
           echo "Setting up rift-cli event subscriptions for sketchybar..."
-          # Удаляем старые подписки, если есть
+
           rift-cli subscribe unsub-cli workspace_changed 2>/dev/null || true
           rift-cli subscribe unsub-cli windows_changed 2>/dev/null || true
-          # Создаем новые подписки
-          rift-cli subscribe cli --event workspace_changed --command "sketchybar --trigger rift_workspace_changed"
-          rift-cli subscribe cli --event windows_changed --command "sketchybar --trigger rift_windows_changed"
-          echo "rift-cli event subscriptions configured successfully"
+
+          rift-cli subscribe cli \
+            --event workspace_changed \
+            --command "sketchybar --trigger rift_workspace_changed"
+
+          rift-cli subscribe cli \
+            --event windows_changed \
+            --command "sketchybar --trigger rift_windows_changed"
+
+          echo "✓ rift-cli event subscriptions configured"
+
+          echo "Current subscriptions:"
+          rift-cli subscribe list-cli | jq -r '.cli_subscriptions[] | "  - \(.event) → \(.command)"'
         else
-          echo "rift-cli not found, skipping event subscriptions"
+          echo "⚠ rift-cli not found, skipping event subscriptions"
         fi
       description: Setting up rift-cli event subscriptions
       stdout: true

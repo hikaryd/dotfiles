@@ -58,4 +58,3 @@ cd ~/dots
 ```
 ./scripts/macos-defaults.sh
 ```
-
