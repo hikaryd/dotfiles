@@ -23,8 +23,6 @@ alias l = ls
 alias bu = brew upgrade --cask --greedy
 # alias cd = z
 
-alias python = python3
-
 alias speedtest = networkquality
 alias codex = codex -a untrusted -c model_reasoning_effort="high"
 

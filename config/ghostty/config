@@ -1,7 +1,7 @@
 theme = light:Rose Pine Dawn,dark:Rose Pine
 
 font-family = Iosevka
-font-size = 17
+font-size = 15
 adjust-cell-height = 45%
 
 background-opacity = 0.95
