@@ -65,6 +65,9 @@ brew "rustup-init"
 # Go
 brew "go"
 brew "gopls"
+brew "gofumpt"
+brew "golangci-lint"
+brew "golines"
 
 # Lua
 brew "lua-language-server"
@@ -128,3 +131,4 @@ cask "font-sf-mono"
 cask "font-sf-pro"
 cask "sf-symbols"
 cask "font-martian-mono"
+cask "font-sketchybar-app-font"
