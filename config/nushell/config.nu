@@ -21,6 +21,8 @@ alias ".." = cd ../..
 alias "..." = cd ../../..
 alias l = ls
 alias bu = brew upgrade --cask --greedy
+alias deploy-dev = ~/dots/scripts/deploy-dev.sh
+
 # alias cd = z
 
 alias speedtest = networkquality

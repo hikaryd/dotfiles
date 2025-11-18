@@ -11,8 +11,8 @@ source $ITEM_DIR/rift.sh
 default=(
 	padding_left=4
 	padding_right=4
-	icon.font="CaskaydiaCove Nerd Font Mono:Regular:20.0"
-	label.font="CaskaydiaCove Nerd Font Mono:Regular:14.0"
+	icon.font="CaskaydiaMono Nerd Font:Regular:20.0"
+	label.font="CaskaydiaMono Nerd Font:Regular:14.0"
 	icon.padding_left=4
 	icon.padding_right=4
 	label.padding_left=4

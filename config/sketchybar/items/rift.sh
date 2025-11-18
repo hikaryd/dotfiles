@@ -29,7 +29,7 @@ for sid in $ALL_WORKSPACES; do
       icon="" \
       icon.color=0xffc9c7cd \
       icon.padding_left=8 \
-      icon.font="CaskaydiaCove Nerd Font Mono:Regular:20.0" \
+      icon.font="CaskaydiaMono Nerd Font:Regular:20.0" \
       label.drawing=off
   fi
 done

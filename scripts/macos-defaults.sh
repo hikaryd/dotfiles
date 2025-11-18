@@ -4,8 +4,8 @@ set -e
 
 echo "Requesting sudo to apply macOS system preferences..."
 if ! sudo -v; then
-  echo "Skipping macOS defaults (no sudo credentials)."
-  exit 0
+	echo "Skipping macOS defaults (no sudo credentials)."
+	exit 0
 fi
 
 echo "Configuring macOS system preferences..."
@@ -19,7 +19,7 @@ defaults write NSGlobalDomain AppleInterfaceStyle -string "Dark"
 defaults write NSGlobalDomain AppleShowAllExtensions -bool true
 
 # Скрывать меню-бар
-defaults write NSGlobalDomain _HIHideMenuBar -bool true
+defaults write NSGlobalDomain _HIHideMenuBar -bool false
 
 # Отключать анимации окон
 defaults write NSGlobalDomain NSAutomaticWindowAnimationsEnabled -bool false
