@@ -107,7 +107,6 @@ brew "fastfetch"
 brew "bat-extras" 
 
 # Приложения
-cask "telegram"
 cask "telegram-desktop"
 cask "spotify"
 cask "1password"
@@ -124,6 +123,8 @@ cask "yaak"
 cask "beekeeper-studio"
 cask "affine"
 cask "upscayl"
+cask "topnotch"
+cask "hazeover"
 
 # Шрифты
 cask "font-symbols-only-nerd-font"

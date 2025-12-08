@@ -4,7 +4,7 @@ font-family = Iosevka
 font-size = 15
 adjust-cell-height = 45%
 
-background-opacity = 0.95
+background-opacity = 0.85
 background-blur = true
 
 macos-titlebar-style = hidden

@@ -1,6 +1,7 @@
 # Переменные окружения
 $env.EDITOR = "nvim"
 $env.VISUAL = "nvim"
+$env.config.edit_mode = "vi"
 
 # Пути
 $env.PATH = (

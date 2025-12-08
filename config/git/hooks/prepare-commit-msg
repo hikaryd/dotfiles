@@ -9,7 +9,7 @@ TICKET=$(printf '%s' "$BRANCH" | grep -Eoi 'ATS-[0-9]+' | head -n 1)
 if [ -z "$TICKET" ]; then
 	NUM=$(printf '%s' "$BRANCH" | grep -Eo '[0-9]+' | head -n 1)
 	if [ -n "$NUM" ]; then
-		TICKET="ATS-$NUM"
+		TICKET="PTHN-$NUM"
 	fi
 fi
 
