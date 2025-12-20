@@ -101,6 +101,7 @@ brew "sesh"
 brew "gum"    
 brew "codex" 
 brew "rift", args: ["tap", "acsandmann/tap"]
+cask "nikitabobko/tap/aerospace"
 brew "fastfetch"    
 
 # Дополнения для bat
@@ -109,6 +110,8 @@ brew "bat-extras"
 # Приложения
 cask "telegram-desktop"
 cask "spotify"
+cask "psst"
+cask "waterfox"
 cask "1password"
 cask "1password-cli"
 cask "ghostty"
