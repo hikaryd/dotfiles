@@ -7,26 +7,11 @@
       path: config/sketchybar
       create: true
       force: true
-- shell:
-    - command: |
-        if command -v rift-cli &> /dev/null; then
-          echo "Setting up rift-cli event subscriptions for sketchybar..."
-
-          rift-cli subscribe unsub-cli workspace_changed 2>/dev/null || true
-          rift-cli subscribe unsub-cli windows_changed 2>/dev/null || true
-
-          rift-cli subscribe cli \
-            --event workspace_changed \
-            --command "sketchybar --trigger rift_workspace_changed"
-
-          rift-cli subscribe cli \
-            --event windows_changed \
-            --command "sketchybar --trigger rift_windows_changed"
-
-          echo "✓ rift-cli event subscriptions configured"
-        else
-          echo "⚠ rift-cli not found, skipping event subscriptions"
-        fi
-      description: Setting up rift-cli event subscriptions
-      stdout: true
-      stderr: true
+    ~/.config/rift/config.toml:
+      path: config/rift/config.toml
+      create: true
+      force: true
+    ~/.config/aerospace/aerospace.toml:
+      path: config/aerospace/aerospace.toml
+      create: true
+      force: true

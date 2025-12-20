@@ -1,0 +1,177 @@
+# AeroSpace configuration
+
+# Core settings
+start-at-login = true
+enable-normalization-flatten-containers = true
+enable-normalization-opposite-orientation-for-nested-containers = true
+
+# Default layout
+default-root-container-layout = 'tiles'
+default-root-container-orientation = 'auto'
+accordion-padding = 30
+
+[gaps]
+inner.horizontal = 10
+inner.vertical = 10
+outer.left = 0
+outer.bottom = 0
+outer.top = 0
+outer.right = 0
+
+# Key bindings
+[mode.main.binding]
+
+# --- Workspace switching (Alt + key) ---
+alt-1 = 'workspace 1'
+alt-2 = 'workspace 2'
+alt-3 = 'workspace 3'
+alt-4 = 'workspace 4'
+alt-d = 'workspace d'
+alt-e = 'workspace e'
+alt-q = 'workspace q'
+alt-t = 'workspace t'
+alt-w = 'workspace w'
+
+# Switch to last workspace (Alt + Tab)
+alt-tab = 'workspace-back-and-forth'
+
+# --- Move window to workspace (Alt + Shift + key) ---
+alt-shift-1 = 'move-node-to-workspace 1'
+alt-shift-2 = 'move-node-to-workspace 2'
+alt-shift-3 = 'move-node-to-workspace 3'
+alt-shift-4 = 'move-node-to-workspace 4'
+alt-shift-d = 'move-node-to-workspace d'
+alt-shift-e = 'move-node-to-workspace e'
+alt-shift-q = 'move-node-to-workspace q'
+alt-shift-t = 'move-node-to-workspace t'
+alt-shift-w = 'move-node-to-workspace w'
+
+# --- Focus movement (Alt + H/J/K/L) ---
+alt-h = 'focus left'
+alt-j = 'focus down'
+alt-k = 'focus up'
+alt-l = 'focus right'
+
+# --- Window movement (Alt + Shift + H/J/K/L) ---
+alt-shift-h = 'move left'
+alt-shift-j = 'move down'
+alt-shift-k = 'move up'
+alt-shift-l = 'move right'
+
+# --- Layout manipulation (Cmd + Shift + keys, matching Rift) ---
+cmd-shift-h = 'join-with left'
+cmd-shift-l = 'join-with right'
+
+# --- Resize (Alt + Shift + Equal/Minus) ---
+alt-shift-equal = 'resize smart +50'
+alt-shift-minus = 'resize smart -50'
+
+# --- Floating and fullscreen ---
+alt-space = 'layout floating tiling'   # Toggle floating
+cmd-shift-f = 'layout floating tiling' # Alternative floating toggle
+alt-f = 'fullscreen'                   # Toggle fullscreen
+
+# --- Service commands ---
+alt-ctrl-s = 'reload-config'
+cmd-shift-q = 'close'
+
+# Window-specific rules (matching Rift's app_rules)
+[[on-window-detected]]
+if.app-id = 'com.apple.Safari'
+if.window-title-regex-substring = '^(General|(Tab|Password|Website|Extension)s|AutoFill|Se(arch|curity)|Privacy|Advance)$|Preferences|Настройки'
+run = 'layout floating'
+
+[[on-window-detected]]
+if.app-id = 'com.brave.Browser'
+if.window-title-regex-substring = '^(General|(Tab|Password|Website|Extension)s|AutoFill|Se(arch|curity)|Privacy|Advance)$|Preferences|Settings'
+run = 'layout floating'
+
+[[on-window-detected]]
+if.app-id = 'com.1password.1password'
+run = 'layout floating'
+
+[[on-window-detected]]
+if.app-id = 'com.apple.finder'
+run = 'layout floating'
+
+[[on-window-detected]]
+if.app-id = 'com.cisco.secureclient'
+run = 'layout floating'
+
+[[on-window-detected]]
+if.app-id = 'com.raycast.macos'
+run = 'layout floating'
+
+[[on-window-detected]]
+if.app-id = 'com.apple.controlcenter'
+run = 'layout floating'
+
+[[on-window-detected]]
+if.app-id = 'pro.aldente.AlDente'
+run = 'layout floating'
+
+# "1": Browsers
+[[on-window-detected]]
+if.app-id = 'com.apple.Safari'
+run = 'move-node-to-workspace 1'
+
+[[on-window-detected]]
+if.app-id = 'com.brave.Browser'
+run = 'move-node-to-workspace 1'
+
+[[on-window-detected]]
+if.app-id = 'company.thebrowser.Browser'
+run = 'move-node-to-workspace 1'
+
+# "3": Messengers, mail, music, video rooms
+[[on-window-detected]]
+if.app-id = 'com.tdesktop.Telegram'
+run = 'move-node-to-workspace 3'
+
+[[on-window-detected]]
+if.app-id = 'ch.protonmail.desktop'
+run = 'move-node-to-workspace 3'
+
+[[on-window-detected]]
+if.app-id = 'com.spotify.client'
+run = 'move-node-to-workspace 3'
+
+[[on-window-detected]]
+if.app-id = 'com.jpochyla.psst'
+run = 'move-node-to-workspace 3'
+
+# "4": Documents and notes
+[[on-window-detected]]
+if.app-id = 'com.apple.iWork.Pages'
+run = 'move-node-to-workspace 4'
+
+[[on-window-detected]]
+if.app-id = 'com.getupnote.desktop'
+run = 'move-node-to-workspace 4'
+
+# "e": System settings
+[[on-window-detected]]
+if.app-id = 'com.apple.systempreferences'
+run = 'move-node-to-workspace e'
+
+[[on-window-detected]]
+if.app-id = 'com.apple.AppStore'
+run = 'move-node-to-workspace e'
+
+[[on-window-detected]]
+if.app-id = 'com.pais.handy'
+run = 'move-node-to-workspace e'
+
+# "q": Dev tools
+[[on-window-detected]]
+if.app-id = 'com.electron.dockerdesktop'
+run = 'move-node-to-workspace q'
+
+[[on-window-detected]]
+if.app-id = 'org.jkiss.dbeaver.core.product'
+run = 'move-node-to-workspace q'
+
+# "d": Terminal
+[[on-window-detected]]
+if.app-id = 'com.mitchellh.ghostty'
+run = 'move-node-to-workspace d'

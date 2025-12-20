@@ -117,7 +117,7 @@ class GeminiProvider(BaseAIProvider):
         self.api_key = self._load_key_from_env_or_file(
             "GEMINI_API_KEY", Path.home() / ".gemini_key"
         )
-        self.model = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+        self.model = os.getenv("GEMINI_MODEL", "gemini-3-flash-preview")
         if not self.api_key:
             _exit_with_error(
                 f"AI Helper ({self.name})",
