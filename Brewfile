@@ -101,7 +101,8 @@ brew "sesh"
 brew "gum"    
 brew "codex" 
 brew "rift", args: ["tap", "acsandmann/tap"]
-cask "nikitabobko/tap/aerospace"
+cask "loop"
+brew "flashspace"
 brew "fastfetch"    
 
 # Дополнения для bat
