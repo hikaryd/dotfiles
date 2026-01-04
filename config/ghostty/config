@@ -4,6 +4,7 @@ font-family = Iosevka
 font-size = 15
 adjust-cell-height = 45%
 
+background = 0B0E14
 background-opacity = 0.85
 background-blur = true
 
