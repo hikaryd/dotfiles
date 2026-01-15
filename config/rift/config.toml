@@ -33,8 +33,8 @@ horizontal = 10
 vertical = 10
 
 [settings.ui.menu_bar]
-enabled = false
-show_empty = false
+enabled = true
+show_empty = true
 
 [settings.ui.stack_line]
 enabled = true

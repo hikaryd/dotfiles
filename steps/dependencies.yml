@@ -5,7 +5,7 @@
           exit 0
         fi
         echo "Installing packages from Brewfile ..."
-        brew bundle --file Brewfile --no-upgrade
+        brew bundle --file Brewfile
       description: Install Homebrew packages via Brewfile
       stdout: true
       stderr: true
@@ -23,5 +23,19 @@
       stderr: true
     - command: pip3 install pyyaml --break-system-packages
       description: Install PyYAML for Python
+      stdout: true
+      stderr: true
+    - command: |
+        if command -v spicetify >/dev/null 2>&1; then
+          echo "Configuring spicetify..."
+          spicetify config spotify_path "/Applications/Spotify.app/Contents/Resources"
+          spicetify backup apply
+          echo "Installing Spicetify Marketplace..."
+          curl -fsSL https://raw.githubusercontent.com/spicetify/marketplace/main/resources/install.sh | sh
+          echo "Spicetify configured successfully."
+        else
+          echo "Spicetify not installed, skipping configuration."
+        fi
+      description: Configure spicetify and install Marketplace
       stdout: true
       stderr: true

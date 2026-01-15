@@ -15,3 +15,15 @@
       path: config/aerospace/aerospace.toml
       create: true
       force: true
+    ~/.config/komorebi:
+      path: config/komorebi
+      create: true
+      force: true
+    ~/.skhdrc:
+      path: config/komorebi/skhdrc
+      create: true
+      force: true
+    ~/Library/LaunchAgents/com.komorebi.start.plist:
+      path: config/komorebi/com.komorebi.start.plist
+      create: true
+      force: true

@@ -1,4 +1,12 @@
 - link:
+    # Komorebi (tiling window manager)
+    ~/.config/komorebi:
+      path: config/komorebi
+      create: true
+      force: true
+    ~/.skhdrc:
+      path: config/komorebi/config/skhdrc
+      force: true
     # Ghostty terminal
     ~/.config/ghostty/config:
       path: config/ghostty/config

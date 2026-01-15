@@ -19,7 +19,7 @@ defaults write NSGlobalDomain AppleInterfaceStyle -string "Dark"
 defaults write NSGlobalDomain AppleShowAllExtensions -bool true
 
 # Скрывать меню-бар
-defaults write NSGlobalDomain _HIHideMenuBar -bool false
+defaults write NSGlobalDomain _HIHideMenuBar -bool true
 
 # Отключать анимации окон
 defaults write NSGlobalDomain NSAutomaticWindowAnimationsEnabled -bool false
