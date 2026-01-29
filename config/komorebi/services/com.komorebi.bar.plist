@@ -6,7 +6,7 @@
     <string>com.komorebi.bar</string>
     <key>ProgramArguments</key>
     <array>
-        <string>/Users/tronin.egor/.local/bin/komorebi-bar</string>
+        <string>/Users/tronin.egor/.cargo/bin/komorebi-bar</string>
         <string>-c</string>
         <string>/Users/tronin.egor/.config/komorebi/config/komorebi.bar.json</string>
     </array>

@@ -98,4 +98,66 @@ starship init nu | save -f ($nu.data-dir | path join "vendor/autoload/starship.n
 
 zoxide init nushell | save -f ~/.zoxide.nu
 source ~/.zoxide.nu
-source $"($nu.home-path)/.cargo/env.nu"
+source $"($nu.home-dir)/.cargo/env.nu"
+
+# Kafka consumer через kcat с SSL
+def kafka-consume [
+  creds_file: path,    # Путь к JSON файлу с кредами
+  brokers: string,     # Kafka брокеры (host:port или host1:port1,host2:port2)
+  topic: string,       # Топик для чтения
+  --from-beginning (-b) # Читать с начала топика
+  --group (-g): string  # Consumer group
+  --json (-j)          # JSON вывод
+] {
+  # Читаем креды
+  let creds = (nu-open $creds_file)
+
+  # Временная директория для сертификатов
+  let temp_dir = (mktemp -d | str trim)
+  let ca_file = $"($temp_dir)/ca.pem"
+  let cert_file = $"($temp_dir)/cert.pem"
+  let key_file = $"($temp_dir)/key.pem"
+
+  # Записываем сертификаты
+  ($creds | get "ca.pem") | save -f $ca_file
+  ($creds | get "cert.pem") | save -f $cert_file
+  ($creds | get "key.pem") | save -f $key_file
+
+  # Базовые аргументы
+  mut args = [
+    -b $brokers
+    -t $topic
+    -C
+    -X $"security.protocol=ssl"
+    -X $"ssl.ca.location=($ca_file)"
+    -X $"ssl.certificate.location=($cert_file)"
+    -X $"ssl.key.location=($key_file)"
+  ]
+
+  # Пароль ключа
+  let key_passwd = ($creds | get -o "kafka.keystore.keypasswd" | default "")
+  if ($key_passwd | is-not-empty) {
+    $args = ($args | append [-X $"ssl.key.password=($key_passwd)"])
+  }
+
+  # Читать с начала
+  if $from_beginning {
+    $args = ($args | append [-o beginning])
+  }
+
+  # Consumer group
+  if $group != null {
+    $args = ($args | append [-G $group $topic])
+  }
+
+  # JSON формат
+  if $json {
+    $args = ($args | append [-J])
+  }
+
+  # Запуск kcat
+  ^kcat ...$args
+
+  # Cleanup
+  rm -rf $temp_dir
+}

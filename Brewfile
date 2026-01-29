@@ -94,7 +94,6 @@ brew "typstyle"
 brew "taplo"
 brew "biome"
 brew "jq-lsp"
-brew "protobuf"
 
 # Другие инструменты разработки
 brew "sesh"    
@@ -107,9 +106,10 @@ brew "fastfetch"
 brew "bat-extras" 
 
 # Приложения
-cask "telegram-desktop"
+cask "ayugram"
 cask "spotify"
 brew "spicetify-cli"
+brew "kcat"
 cask "psst"
 cask "waterfox"
 cask "1password"
