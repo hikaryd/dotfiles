@@ -5,7 +5,7 @@
   "mouse_follows_focus": true,
   "focus_follows_mouse": true,
   "cross_monitor_move_behaviour": "Insert",
-  "default_workspace_padding": 5,
+  "default_workspace_padding": 0,
   "default_container_padding": 5,
   "border": false,
   "border_width": 0,
@@ -123,7 +123,7 @@
       "workspaces": [
         {
           "name": "1",
-          "layout": "BSP",
+          "layout": "UltrawideVerticalStack",
           "initial_workspace_rules": [
             {
               "kind": "Exe",
@@ -158,8 +158,13 @@
         },
         {
           "name": "3",
-          "layout": "RightMainVerticalStack",
+          "layout": "UltrawideVerticalStack",
           "initial_workspace_rules": [
+            {
+              "kind": "Exe",
+              "id": "Толк",
+              "matching_strategy": "Contains"
+            },
             {
               "kind": "Exe",
               "id": "Telegram",
@@ -167,12 +172,7 @@
             },
             {
               "kind": "Exe",
-              "id": "Proton Mail",
-              "matching_strategy": "Contains"
-            },
-            {
-              "kind": "Exe",
-              "id": "Psst",
+              "id": "AyuGram",
               "matching_strategy": "Contains"
             },
             {
@@ -259,11 +259,6 @@
           "name": "t",
           "layout": "Columns",
           "initial_workspace_rules": [
-            {
-              "kind": "Exe",
-              "id": "Толк",
-              "matching_strategy": "Contains"
-            },
             {
               "kind": "Exe",
               "id": "Spotify",

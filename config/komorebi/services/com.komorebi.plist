@@ -6,7 +6,7 @@
     <string>com.komorebi</string>
     <key>ProgramArguments</key>
     <array>
-        <string>/Users/user/.local/bin/komorebi</string>
+        <string>/Users/user/.cargo/bin/komorebi</string>
         <string>-c</string>
         <string>/Users/user/.config/komorebi/config/komorebi.json</string>
     </array>

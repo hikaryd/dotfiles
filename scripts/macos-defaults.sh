@@ -112,7 +112,7 @@ defaults write com.apple.dock tilesize -int 30
 defaults write com.apple.dock show-process-indicators -bool true
 
 # Spaces
-defaults write com.apple.spaces spans-displays -bool false
+defaults write com.apple.spaces spans-displays -bool true
 
 # Screencapture
 USER=$(whoami)
