@@ -21,21 +21,23 @@
       description: Install Rust with nightly toolchain
       stdout: true
       stderr: true
-    - command: pip3 install pyyaml --break-system-packages
+    - command: |
+        if python3 -c "import yaml" 2>/dev/null; then
+          echo "PyYAML already installed"
+        else
+          pip3 install pyyaml --break-system-packages
+        fi
       description: Install PyYAML for Python
       stdout: true
       stderr: true
     - command: |
-        if command -v spicetify >/dev/null 2>&1; then
-          echo "Configuring spicetify..."
-          spicetify config spotify_path "/Applications/Spotify.app/Contents/Resources"
-          spicetify backup apply
-          echo "Installing Spicetify Marketplace..."
-          curl -fsSL https://raw.githubusercontent.com/spicetify/marketplace/main/resources/install.sh | sh
-          echo "Spicetify configured successfully."
+        if command -v rtk >/dev/null 2>&1; then
+          echo "rtk already installed"
         else
-          echo "Spicetify not installed, skipping configuration."
+          echo "Installing rtk..."
+          curl -fsSL https://raw.githubusercontent.com/rtk-ai/rtk/refs/heads/master/install.sh | sh
+          rtk init --global
         fi
-      description: Configure spicetify and install Marketplace
+      description: Install rtk (Rust Token Killer)
       stdout: true
       stderr: true

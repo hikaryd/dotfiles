@@ -1,0 +1,76 @@
+# Alacritty configuration (based on Ghostty config)
+
+[terminal]
+shell = { program = "/opt/homebrew/bin/nu" }
+
+[window]
+decorations = "Buttonless"
+opacity = 0.9
+blur = true
+title = ""
+padding = { x = 6, y = 6 }
+dynamic_padding = true
+
+[font]
+normal = { family = "Iosevka", style = "Regular" }
+bold = { family = "Iosevka", style = "Bold" }
+italic = { family = "Iosevka", style = "Italic" }
+bold_italic = { family = "Iosevka", style = "Bold Italic" }
+size = 12.0
+builtin_box_drawing = true
+
+[font.offset]
+y = 6
+
+[cursor]
+style = { shape = "Block", blinking = "Off" }
+unfocused_hollow = true
+
+[mouse]
+hide_when_typing = true
+
+# Vesper color scheme
+[colors.primary]
+background = "#0B0E14"
+foreground = "#ffffff"
+
+[colors.cursor]
+cursor = "#acb1ab"
+text = "#ffffff"
+
+[colors.selection]
+background = "#988049"
+text = "#b9beb8"
+
+[colors.normal]
+black = "#101010"
+red = "#f5a191"
+green = "#90b99f"
+yellow = "#e6b99d"
+blue = "#aca1cf"
+magenta = "#e29eca"
+cyan = "#ea83a5"
+white = "#a0a0a0"
+
+[colors.bright]
+black = "#7e7e7e"
+red = "#ff8080"
+green = "#99ffe4"
+yellow = "#ffc799"
+blue = "#b9aeda"
+magenta = "#ecaad6"
+cyan = "#f591b2"
+white = "#ffffff"
+
+[keyboard]
+bindings = [
+  { key = "Key1", mods = "Control", chars = "\u001b[49;5u" },
+  { key = "Key2", mods = "Control", chars = "\u001b[50;5u" },
+  { key = "Key3", mods = "Control", chars = "\u001b[51;5u" },
+  { key = "Key4", mods = "Control", chars = "\u001b[52;5u" },
+  { key = "Key5", mods = "Control", chars = "\u001b[53;5u" },
+  { key = "Key6", mods = "Control", chars = "\u001b[54;5u" },
+  { key = "Key7", mods = "Control", chars = "\u001b[55;5u" },
+  { key = "Key8", mods = "Control", chars = "\u001b[56;5u" },
+  { key = "Key9", mods = "Control", chars = "\u001b[57;5u" },
+]

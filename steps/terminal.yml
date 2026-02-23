@@ -7,6 +7,11 @@
       path: config/nushell/catppuccin_mocha.nu
       create: true
       force: true
+    # Alacritty
+    ~/.config/alacritty/alacritty.toml:
+      path: config/alacritty/alacritty.toml
+      create: true
+      force: true
     # Tmux
     ~/.config/tmux/tmux.conf:
       path: config/tmux/tmux.conf
@@ -78,16 +83,5 @@
           echo "Nushell already in /etc/shells"
         fi
       description: Adding nushell to available shells
-      stdout: true
-      stderr: true
-    - command: |
-        if [[ "$SHELL" != "/opt/homebrew/bin/nu" ]]; then
-          echo "Setting nushell as default shell..."
-          chsh -s /opt/homebrew/bin/nu
-          echo "Default shell changed to nushell. Please restart your terminal."
-        else
-          echo "Nushell is already the default shell"
-        fi
-      description: Setting nushell as default shell
       stdout: true
       stderr: true
