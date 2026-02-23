@@ -100,6 +100,8 @@ brew "sesh"
 brew "gum"    
 brew "codex" 
 brew "rift", args: ["tap", "acsandmann/tap"]
+brew "lgug2z/tap/komorebi-for-mac"
+brew "asmvik/formulae/skhd"
 brew "fastfetch"    
 
 # Дополнения для bat
@@ -108,13 +110,11 @@ brew "bat-extras"
 # Приложения
 cask "ayugram"
 cask "spotify"
-brew "spicetify-cli"
 brew "kcat"
-cask "psst"
-cask "waterfox"
 cask "1password"
 cask "1password-cli"
 cask "ghostty"
+cask "alacritty"
 cask "raycast"
 cask "mos"       
 cask "karabiner-elements"

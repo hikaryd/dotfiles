@@ -1,8 +1,4 @@
 - link:
-    ~/.config/OpenTabletDriver:
-      path: config/otd
-      create: true
-      force: true
     ~/.config/sketchybar:
       path: config/sketchybar
       create: true
@@ -17,13 +13,5 @@
       force: true
     ~/.config/komorebi:
       path: config/komorebi
-      create: true
-      force: true
-    ~/.skhdrc:
-      path: config/komorebi/skhdrc
-      create: true
-      force: true
-    ~/Library/LaunchAgents/com.komorebi.start.plist:
-      path: config/komorebi/com.komorebi.start.plist
       create: true
       force: true

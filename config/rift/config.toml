@@ -23,10 +23,11 @@ default_orientation = "horizontal"
 [settings.layout.gaps.outer]
 # top = 45
 # top = 5
-top = 0
-left = 0
-bottom = 0
-right = 0
+# top = 45
+top = 5
+left = 5
+bottom = 5
+right = 5
 
 [settings.layout.gaps.inner]
 horizontal = 10
@@ -130,9 +131,14 @@ app_rules = [
   # "t": Толк
   { app_name = "Толк", workspace = "t" },
   { app_name = "Spotify", workspace = "t" },
+  { app_name = "Музыка", workspace = "t" },
+
+  # "w": Толк
+  { app_name = "Просмотр", workspace = "w" },
 
   # "d": терминал
   { app_name = "Ghostty", workspace = "d" },
+  { app_name = "Alacritty", workspace = "d" },
 ]
 
 [modifier_combinations]

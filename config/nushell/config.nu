@@ -1,7 +1,7 @@
 # Переменные окружения
 $env.EDITOR = "nvim"
 $env.VISUAL = "nvim"
-$env.config.edit_mode = "vi"
+# $env.config.edit_mode = "vi"
 
 # Пути
 $env.PATH = (
@@ -21,6 +21,7 @@ alias "." = cd ..
 alias ".." = cd ../..
 alias "..." = cd ../../..
 alias l = ls
+alias fg = froggit
 alias bu = brew upgrade --cask --greedy
 alias deploy-dev = ~/dots/scripts/deploy-dev.sh
 
@@ -108,6 +109,7 @@ def kafka-consume [
   --from-beginning (-b) # Читать с начала топика
   --group (-g): string  # Consumer group
   --json (-j)          # JSON вывод
+  --skip-metadata (-s) # Пропустить запрос метаданных
 ] {
   # Читаем креды
   let creds = (nu-open $creds_file)
@@ -123,11 +125,8 @@ def kafka-consume [
   ($creds | get "cert.pem") | save -f $cert_file
   ($creds | get "key.pem") | save -f $key_file
 
-  # Базовые аргументы
-  mut args = [
-    -b $brokers
-    -t $topic
-    -C
+  # SSL аргументы
+  let ssl_args = [
     -X $"security.protocol=ssl"
     -X $"ssl.ca.location=($ca_file)"
     -X $"ssl.certificate.location=($cert_file)"
@@ -136,9 +135,29 @@ def kafka-consume [
 
   # Пароль ключа
   let key_passwd = ($creds | get -o "kafka.keystore.keypasswd" | default "")
+  mut ssl_args_full = $ssl_args
   if ($key_passwd | is-not-empty) {
-    $args = ($args | append [-X $"ssl.key.password=($key_passwd)"])
+    $ssl_args_full = ($ssl_args_full | append [-X $"ssl.key.password=($key_passwd)"])
   }
+
+  # Запрос метаданных перед потреблением
+  if not $skip_metadata {
+    print "📊 Получение метаданных топика..."
+    print ""
+    ^kcat -b $brokers -t $topic -L ...$ssl_args_full
+    print ""
+    print "─────────────────────────────────────"
+    print "🚀 Начинаем потребление сообщений..."
+    print ""
+  }
+
+  # Базовые аргументы для потребления
+  mut args = [
+    -b $brokers
+    -t $topic
+    -C
+    ...$ssl_args_full
+  ]
 
   # Читать с начала
   if $from_beginning {
@@ -157,6 +176,57 @@ def kafka-consume [
 
   # Запуск kcat
   ^kcat ...$args
+
+  # Cleanup
+  rm -rf $temp_dir
+}
+
+# Kafka producer через kcat с SSL
+def kafka-produce [
+  creds_file: path,    # Путь к JSON файлу с кредами
+  brokers: string,     # Kafka брокеры (host:port или host1:port1,host2:port2)
+  topic: string,       # Топик для записи
+  message?: string     # Сообщение (если не указано, читает из stdin)
+] {
+  # Читаем креды
+  let creds = (nu-open $creds_file)
+
+  # Временная директория для сертификатов
+  let temp_dir = (mktemp -d | str trim)
+  let ca_file = $"($temp_dir)/ca.pem"
+  let cert_file = $"($temp_dir)/cert.pem"
+  let key_file = $"($temp_dir)/key.pem"
+
+  # Записываем сертификаты
+  ($creds | get "ca.pem") | save -f $ca_file
+  ($creds | get "cert.pem") | save -f $cert_file
+  ($creds | get "key.pem") | save -f $key_file
+
+  # SSL аргументы
+  mut args = [
+    -b $brokers
+    -t $topic
+    -P
+    -X $"security.protocol=ssl"
+    -X $"ssl.ca.location=($ca_file)"
+    -X $"ssl.certificate.location=($cert_file)"
+    -X $"ssl.key.location=($key_file)"
+  ]
+
+  # Пароль ключа
+  let key_passwd = ($creds | get -o "kafka.keystore.keypasswd" | default "")
+  if ($key_passwd | is-not-empty) {
+    $args = ($args | append [-X $"ssl.key.password=($key_passwd)"])
+  }
+
+  # Запуск kcat
+  if $message != null {
+    $message | ^kcat ...$args
+    print $"✅ Сообщение отправлено в топик ($topic)"
+  } else {
+    print "📝 Введите сообщения (Ctrl+D для завершения):"
+    ^kcat ...$args
+  }
 
   # Cleanup
   rm -rf $temp_dir
