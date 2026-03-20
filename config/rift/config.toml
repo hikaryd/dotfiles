@@ -34,7 +34,7 @@ horizontal = 10
 vertical = 10
 
 [settings.ui.menu_bar]
-enabled = true
+enabled = false
 show_empty = true
 
 [settings.ui.stack_line]
@@ -99,9 +99,13 @@ app_rules = [
   # "1": браузеры и Comet
   { app_name = "Safari", workspace = "1" },
   { app_name = "Arc", workspace = "1" },
+  { app_name = "Ora", workspace = "1" },
   { app_name = "Comet", workspace = "1" },
   { app_name = "Brave", workspace = "1" },
   { app_name = "Helium", workspace = "1" },
+
+  # "2": Misc
+  { app_name = "V2BOX", workspace = "2" },
 
   # "3": мессенджер/почта/музыка/видео-комнаты
   { app_name = "Telegram", workspace = "3" },
@@ -109,6 +113,7 @@ app_rules = [
   { app_name = "Proton Mail", workspace = "3" },
   { app_name = "Psst", workspace = "3" },
   { app_name = "X5_Rooms", workspace = "3" },
+  { app_name = "Spotify", workspace = "3" },
 
   # "4": документы/ноуты
   { app_name = "Typora", workspace = "4" },
@@ -124,13 +129,13 @@ app_rules = [
   # "q": дев-инструменты
   { app_name = "Docker Desktop", workspace = "q" },
   { app_name = "DBeaver Community", workspace = "q" },
+  { app_name = "Kubeli", workspace = "q" },
   { app_name = "Lens", workspace = "q" },
   { app_name = "Beekeeper Studio", workspace = "q" },
   { app_name = "WizQl", workspace = "q" },
 
   # "t": Толк
   { app_name = "Толк", workspace = "t" },
-  { app_name = "Spotify", workspace = "t" },
   { app_name = "Музыка", workspace = "t" },
 
   # "w": Толк
@@ -199,5 +204,9 @@ comb1 = "Alt + Shift"
 "Alt + Ctrl + S" = "serialize"
 "Meta + Shift + Q" = "save_and_exit" # cmd+shift+q
 
-# "Meta + 1" = { move_mouse_to_display = 0 }
-# "Meta + 2" = { move_mouse_to_display = 1 }
+# # --- Дисплеи ---
+# "Meta + 1" = { focus_display = 0 }
+# "Meta + 2" = { focus_display = 1 }
+#
+# "Meta + Shift + 1" = { move_window_to_display = 0 }
+# "Meta + Shift + 2" = { move_window_to_display = 1 }

@@ -1,41 +1,11 @@
 #!/bin/bash
 
-LAUNCHAGENTS_DIR="$HOME/Library/LaunchAgents"
-SERVICES_DIR="$HOME/.config/komorebi/services"
-SKHD_CONFIG="$HOME/.config/komorebi/config/skhdrc"
-USER_ID=$(id -u)
+echo "=== Starting Komorebi ==="
 
-echo "=== Installing Komorebi Services ==="
+# Start komorebi + komorebi-bar
+komorebic start --bar
 
-# Copy plist files to LaunchAgents
-cp "$SERVICES_DIR/com.komorebi.plist" "$LAUNCHAGENTS_DIR/"
-cp "$SERVICES_DIR/com.komorebi.bar.plist" "$LAUNCHAGENTS_DIR/"
+# Start skhd with komorebi config
+skhd --config ~/.config/komorebi/skhdrc &
 
-# Unload existing services (ignore errors if not loaded)
-launchctl bootout "gui/$USER_ID/com.komorebi" 2>/dev/null
-launchctl bootout "gui/$USER_ID/com.komorebi.bar" 2>/dev/null
-
-# Stop skhd service
-skhd --stop-service 2>/dev/null
-
-# Kill any remaining processes
-pkill -9 komorebi 2>/dev/null
-pkill -9 komorebi-bar 2>/dev/null
-
-sleep 1
-
-# Load services
-echo "Loading komorebi..."
-launchctl bootstrap "gui/$USER_ID" "$LAUNCHAGENTS_DIR/com.komorebi.plist"
-
-sleep 1
-
-echo "Loading komorebi-bar..."
-launchctl bootstrap "gui/$USER_ID" "$LAUNCHAGENTS_DIR/com.komorebi.bar.plist"
-
-echo "Starting skhd..."
-export SKHD_CONFIG_HOME="$HOME/.config/komorebi/config"
-skhd --start-service
-
-echo "=== Services started ==="
-echo "Logs: /tmp/komorebi.log, /tmp/komorebi-bar.log"
+echo "=== Komorebi started ==="

@@ -5,11 +5,16 @@
       create: true
       force: true
     ~/.skhdrc:
-      path: config/komorebi/config/skhdrc
+      path: config/komorebi/skhdrc
       force: true
     # Ghostty terminal
     ~/.config/ghostty/config:
       path: config/ghostty/config
+      create: true
+      force: true
+    # Attyx terminal
+    ~/.config/attyx/attyx.toml:
+      path: config/attyx/attyx.toml
       create: true
       force: true
     # Yazi file manager
