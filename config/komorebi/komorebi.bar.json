@@ -2,6 +2,7 @@
   "$schema": "https://komorebi-for-mac.lgug2z.com/komorebi.bar.0.1.0.schema.json",
   "font_family": "JetBrainsMono Nerd Font",
   "height": 38,
+  "transparency_alpha": 180,
   "theme": {
     "palette": "Base16",
     "name": "CatppuccinMocha",
@@ -25,6 +26,14 @@
     }
   ],
   "right_widgets": [
+    {
+      "Network": {
+        "enable": true,
+        "show_default_interface": true,
+        "show_activity": false,
+        "show_total_activity": false
+      }
+    },
     {
       "Memory": {
         "enable": true

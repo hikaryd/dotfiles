@@ -11,7 +11,7 @@
       path: config/aerospace/aerospace.toml
       create: true
       force: true
-    ~/.config/komorebi:
-      path: config/komorebi
-      create: true
+    ~/.paneru.toml:
+      path: config/paneru/paneru.toml
+      create: trueaerospace/aerospace.toml
       force: true

@@ -1,0 +1,29 @@
+[theme]
+name = "Vesper"
+
+[font]
+family = "Iosevka"
+size = 14
+cell_height = 20
+fallback = ["Symbols Nerd Font Mono", "Noto Color Emoji"]
+
+[background]
+opacity = 0.9
+blur = 30
+
+[window]
+decorations = false
+padding_x = 6
+padding_y = 6
+
+[cursor]
+shape = "block"
+blink = false
+
+[program]
+shell = "/opt/homebrew/bin/nu"
+args = ["-l"]
+
+[keybindings]
+close_window = "none"
+new_window = "none"

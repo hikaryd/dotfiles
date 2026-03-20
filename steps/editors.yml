@@ -4,3 +4,16 @@
       path: config/nvim
       create: true
       force: true
+    # Fresh
+    ~/.config/fresh/config.json:
+      path: config/fresh/config.json
+      create: true
+      force: true
+    ~/.config/fresh/themes/catppuccin-mocha.json:
+      path: config/fresh/themes/catppuccin-mocha.json
+      create: true
+      force: true
+    ~/.config/fresh/plugins/auto_vi_mode.ts:
+      path: config/fresh/plugins/auto_vi_mode.ts
+      create: true
+      force: true

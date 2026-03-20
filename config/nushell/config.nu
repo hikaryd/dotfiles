@@ -12,6 +12,7 @@ $env.PATH = (
   | prepend "~/.local/bin"
   | prepend "~/.cargo/bin"
   | append "/Applications"
+  | append $"($nu.home-dir)/.dual-graph"
 )
 
 # Алиасы

@@ -11,12 +11,47 @@
       ]
     ]
   },
+  "Cloudflare Warp": {
+    "ignore": [
+      {
+        "kind": "Exe",
+        "id": "Updater",
+        "matching_strategy": "Equals"
+      },
+      [
+        {
+          "kind": "Exe",
+          "id": "Cloudflare WARP",
+          "matching_strategy": "Equals"
+        },
+        {
+          "kind": "Title",
+          "id": "Updating Cloudflare WARP",
+          "matching_strategy": "Equals"
+        }
+      ]
+    ]
+  },
   "Control Center": {
+    "ignore": [
+      {
+        "kind": "Exe",
+        "id": "Control Center",
+        "matching_strategy": "Equals"
+      }
+    ]
+  },
+  "Discord": {
     "ignore": [
       [
         {
           "kind": "Exe",
-          "id": "Control Center",
+          "id": "Discord",
+          "matching_strategy": "Equals"
+        },
+        {
+          "kind": "Title",
+          "id": "DiscordUpdater",
           "matching_strategy": "Equals"
         }
       ]

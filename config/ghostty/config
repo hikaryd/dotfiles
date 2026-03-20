@@ -1,11 +1,11 @@
 theme = Vesper
 
 font-family = Iosevka
-font-size = 12
+font-size = 14
 adjust-cell-height = 45%
 
 background = 0B0E14
-background-opacity = 0.9
+background-opacity = 0.95
 background-blur = true
 
 macos-titlebar-style = hidden
@@ -22,7 +22,7 @@ cursor-text = cell-background
 
 mouse-hide-while-typing = true
 
-command = /opt/homebrew/bin/nu
+command = /bin/bash --login
 shell-integration-features = no-cursor
 
 confirm-close-surface = false

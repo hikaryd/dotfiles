@@ -1,0 +1,239 @@
+{
+  "version": 1,
+  "theme": "catppuccin-mocha",
+  "check_for_updates": true,
+  "editor": {
+    "tab_size": 4,
+    "auto_indent": true,
+    "line_numbers": true,
+    "relative_line_numbers": true,
+    "scroll_offset": 31,
+    "syntax_highlighting": true,
+    "line_wrap": false,
+    "use_terminal_bg": true,
+    "enable_inlay_hints": true,
+    "recovery_enabled": true,
+    "auto_save_interval_secs": 2,
+    "mouse_hover_enabled": true,
+    "mouse_hover_delay_ms": 500,
+    "highlight_matching_brackets": true,
+    "trim_trailing_whitespace_on_save": true,
+    "ensure_final_newline_on_save": true
+  },
+  "file_explorer": {
+    "respect_gitignore": true,
+    "show_hidden": false,
+    "show_gitignored": false,
+    "width": 0.25
+  },
+  "active_keybinding_map": "default",
+  "keybindings": [
+    { "key": ";", "action": "command_palette", "when": "mode == vi-normal" },
+
+    { "key": "s", "modifiers": ["ctrl"], "action": "save" },
+
+    { "keys": [{"key": " "}, {"key": "q"}], "action": "close_buffer", "when": "mode == vi-normal" },
+    { "keys": [{"key": " "}, {"key": "e"}], "action": "toggle_file_explorer", "when": "mode == vi-normal" },
+    { "keys": [{"key": " "}, {"key": "v"}], "action": "split_vertical", "when": "mode == vi-normal" },
+
+    { "keys": [{"key": " "}, {"key": "h"}], "action": "prev_split", "when": "mode == vi-normal" },
+    { "keys": [{"key": " "}, {"key": "l"}], "action": "next_split", "when": "mode == vi-normal" },
+
+    { "keys": [{"key": " "}, {"key": " "}], "action": "open", "when": "mode == vi-normal" },
+    { "keys": [{"key": " "}, {"key": "/"}], "action": "search", "when": "mode == vi-normal" },
+    { "keys": [{"key": " "}, {"key": "d"}], "action": "diagnostics", "when": "mode == vi-normal" },
+
+    { "keys": [{"key": "g"}, {"key": "d"}], "action": "lsp_goto_definition", "when": "mode == vi-normal" },
+    { "keys": [{"key": "g"}, {"key": "r"}], "action": "lsp_references", "when": "mode == vi-normal" },
+
+    { "key": "K", "modifiers": ["shift"], "action": "lsp_hover", "when": "mode == vi-normal" },
+
+    { "key": "j", "modifiers": ["alt"], "action": "move_line_down" },
+    { "key": "k", "modifiers": ["alt"], "action": "move_line_up" },
+
+    { "keys": [{"key": " "}, {"key": "b"}], "action": "prev_buffer", "when": "mode == vi-normal" },
+    { "keys": [{"key": " "}, {"key": "n"}], "action": "next_buffer", "when": "mode == vi-normal" }
+  ],
+  "languages": {
+    "python": {
+      "extensions": ["py", "pyi"],
+      "grammar": "python",
+      "comment_prefix": "#",
+      "auto_indent": true,
+      "formatter": {
+        "command": "ruff",
+        "args": ["format", "-"]
+      },
+      "format_on_save": true
+    },
+    "go": {
+      "extensions": ["go"],
+      "grammar": "go",
+      "comment_prefix": "//",
+      "auto_indent": true,
+      "use_tabs": true,
+      "show_whitespace_tabs": false,
+      "formatter": {
+        "command": "gofumpt"
+      },
+      "format_on_save": true
+    },
+    "rust": {
+      "extensions": ["rs"],
+      "grammar": "rust",
+      "comment_prefix": "//",
+      "auto_indent": true,
+      "formatter": {
+        "command": "rustfmt"
+      },
+      "format_on_save": true
+    },
+    "lua": {
+      "extensions": ["lua"],
+      "grammar": "lua",
+      "comment_prefix": "--",
+      "auto_indent": true,
+      "formatter": {
+        "command": "stylua",
+        "args": ["-"]
+      },
+      "format_on_save": true
+    },
+    "json": {
+      "extensions": ["json", "jsonc"],
+      "grammar": "json",
+      "auto_indent": true,
+      "formatter": {
+        "command": "jq",
+        "args": ["."]
+      },
+      "format_on_save": true
+    },
+    "yaml": {
+      "extensions": ["yml", "yaml"],
+      "grammar": "yaml",
+      "comment_prefix": "#",
+      "auto_indent": true,
+      "formatter": {
+        "command": "yamlfmt",
+        "args": ["-"]
+      },
+      "format_on_save": true
+    },
+    "toml": {
+      "extensions": ["toml"],
+      "filenames": ["Cargo.lock"],
+      "grammar": "toml",
+      "comment_prefix": "#",
+      "auto_indent": true,
+      "formatter": {
+        "command": "taplo",
+        "args": ["fmt", "-"]
+      },
+      "format_on_save": true
+    },
+    "bash": {
+      "extensions": ["sh", "bash"],
+      "filenames": [".bashrc", ".bash_profile", ".zshrc", ".zprofile"],
+      "grammar": "bash",
+      "comment_prefix": "#",
+      "auto_indent": true,
+      "formatter": {
+        "command": "shfmt"
+      },
+      "format_on_save": true
+    },
+    "markdown": {
+      "extensions": ["md", "markdown"],
+      "filenames": ["README"],
+      "grammar": "markdown",
+      "auto_indent": false
+    },
+    "dockerfile": {
+      "extensions": ["dockerfile"],
+      "filenames": ["Dockerfile", "Containerfile"],
+      "grammar": "dockerfile",
+      "comment_prefix": "#",
+      "auto_indent": true
+    },
+    "nushell": {
+      "extensions": ["nu"],
+      "grammar": "nu",
+      "comment_prefix": "#",
+      "auto_indent": true
+    }
+  },
+  "lsp": {
+    "python": {
+      "command": "pyright-langserver",
+      "args": ["--stdio"],
+      "enabled": true,
+      "auto_start": true
+    },
+    "rust": {
+      "command": "rust-analyzer",
+      "args": [],
+      "enabled": true,
+      "auto_start": true,
+      "initialization_options": {
+        "checkOnSave": {
+          "command": "clippy"
+        }
+      }
+    },
+    "go": {
+      "command": "gopls",
+      "args": [],
+      "enabled": true,
+      "auto_start": true
+    },
+    "lua": {
+      "command": "lua-language-server",
+      "args": [],
+      "enabled": true,
+      "auto_start": true
+    },
+    "typescript": {
+      "command": "typescript-language-server",
+      "args": ["--stdio"],
+      "enabled": true,
+      "auto_start": true
+    },
+    "javascript": {
+      "command": "typescript-language-server",
+      "args": ["--stdio"],
+      "enabled": true,
+      "auto_start": true
+    },
+    "html": {
+      "command": "vscode-html-languageserver-bin",
+      "args": ["--stdio"],
+      "enabled": true,
+      "auto_start": true
+    },
+    "css": {
+      "command": "vscode-css-languageserver-bin",
+      "args": ["--stdio"],
+      "enabled": true,
+      "auto_start": true
+    },
+    "yaml": {
+      "command": "yaml-language-server",
+      "args": ["--stdio"],
+      "enabled": true,
+      "auto_start": true
+    },
+    "toml": {
+      "command": "taplo",
+      "args": ["lsp", "stdio"],
+      "enabled": true,
+      "auto_start": true
+    },
+    "json": {
+      "command": "vscode-json-languageserver",
+      "args": ["--stdio"],
+      "enabled": true,
+      "auto_start": true
+    }
+  }
+}
