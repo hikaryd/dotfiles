@@ -63,6 +63,11 @@
       path: config/sesh/sesh.toml
       create: true
       force: true
+    # WezTerm
+    ~/.config/wezterm/wezterm.lua:
+      path: config/wezterm/wezterm.lua
+      create: true
+      force: true
 - shell:
     - command: chmod +x ~/.config/git/hooks/prepare-commit-msg
       description: Making git hook executable

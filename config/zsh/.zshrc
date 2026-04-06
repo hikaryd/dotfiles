@@ -57,7 +57,7 @@ autoload -Uz extract kafka-consume kafka-produce
 bindkey -e
 bindkey '^A' beginning-of-line
 bindkey '^E' end-of-line
-bindkey '^P' up-line-or-search
+bindkey '^P' autosuggest-accept
 bindkey '^N' down-line-or-search
 
 # --- Aliases ---
