@@ -6,3 +6,5 @@
 *.swo
 *~
 .dual-graph/
+/CLAUDE.md
+/.claude/settings.local.json
