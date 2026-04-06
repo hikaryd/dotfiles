@@ -27,12 +27,12 @@ end
 -- =============================================================================
 -- Appearance (from Ghostty config)
 -- =============================================================================
-config.color_scheme = 'Vesper'
+config.color_scheme = 'Catppuccin Mocha'
 config.colors = {
   background = '#0B0E14',
-  cursor_bg = '#ffffff',
+  cursor_bg = '#cdd6f4',
   cursor_fg = '#0B0E14',
-  cursor_border = '#ffffff',
+  cursor_border = '#cdd6f4',
   tab_bar = {
     background = '#0B0E14',
     new_tab = { bg_color = '#0B0E14', fg_color = '#585b70' },
@@ -109,6 +109,17 @@ local last_tab = {}
 local prev_ws = {}
 local last_ws = {}
 
+-- Cached padding value (only recalculated on resize)
+local cached_pad = {}
+
+wezterm.on('window-resized', function(window, pane)
+  local wid = window:window_id()
+  local win_dims = window:get_dimensions()
+  local pane_dims = pane:get_dimensions()
+  local cell_w = pane_dims.pixel_width / math.max(pane_dims.cols, 1)
+  cached_pad[wid] = cell_w > 0 and math.floor(win_dims.pixel_width / cell_w) or pane_dims.cols
+end)
+
 wezterm.on('update-status', function(window, pane)
   local wid = window:window_id()
 
@@ -126,7 +137,16 @@ wezterm.on('update-status', function(window, pane)
   end
   prev_ws[wid] = ws
 
-  -- Centering: compute total tab width, pad left status
+  -- Centering: use cached total_cols from resize event
+  local total_cols = cached_pad[wid]
+  if not total_cols then
+    local win_dims = window:get_dimensions()
+    local pane_dims = pane:get_dimensions()
+    local cell_w = pane_dims.pixel_width / math.max(pane_dims.cols, 1)
+    total_cols = cell_w > 0 and math.floor(win_dims.pixel_width / cell_w) or pane_dims.cols
+    cached_pad[wid] = total_cols
+  end
+
   local total_tw = 0
   for i, t in ipairs(window:mux_window():tabs()) do
     local title = t:active_pane():get_title()
@@ -135,16 +155,14 @@ wezterm.on('update-status', function(window, pane)
   end
 
   local right_w = #ws + 3
-  if window:leader_is_active() then right_w = right_w + 9 end
-  local cols = pane:get_dimensions().cols
-  local pad = math.max(0, math.floor((cols - total_tw - right_w) / 2))
+  local pad = math.max(0, math.floor((total_cols - total_tw - right_w) / 2))
 
   window:set_left_status(wezterm.format {
     { Background = { Color = C.bg } },
     { Text = string.rep(' ', pad) },
   })
 
-  -- Right status: workspace + optional LEADER
+  -- Right status
   local right = {}
   if window:leader_is_active() then
     table.insert(right, { Background = { Color = C.bg } })
@@ -228,15 +246,6 @@ local function get_cwd(pane)
   local url = pane:get_current_working_dir()
   if url then return url.file_path end
   return home
-end
-
--- Detect state type from fuzzy_loader label (workspace/window/tab)
-local function cycled_type(label)
-  if label:find('󱂬') then return 'workspace'
-  elseif label:find('') then return 'window'
-  elseif label:find('󰓩') then return 'tab'
-  end
-  return 'workspace'
 end
 
 local function switch_to_last_tab(window, pane)
@@ -359,6 +368,20 @@ config.keys = {
   -- Close pane: Ctrl-W
   { key = 'w', mods = 'CTRL', action = act.CloseCurrentPane { confirm = false } },
 
+  -- ── Leader+SHIFT bindings ────────────────────────────────────────────────
+
+  -- Workspace picker: Leader+T
+  { key = 't', mods = 'LEADER|SHIFT', action = wezterm.action_callback(workspace_picker) },
+  -- Resurrect save: Leader+S
+  { key = 's', mods = 'LEADER|SHIFT', action = wezterm.action_callback(function(win, pane)
+    if has_resurrect then
+      local state = resurrect.workspace_state.get_workspace_state()
+      resurrect.state_manager.save_state(state)
+      resurrect.state_manager.write_current_state(state.workspace, 'workspace')
+      win:toast_notification('WezTerm', 'Session saved', nil, 3000)
+    end
+  end) },
+
   -- ── Leader bindings (Ctrl-A + key) ──────────────────────────────────────
 
   -- Splits (preserve cwd)
@@ -393,9 +416,8 @@ config.keys = {
   { key = '[', mods = 'LEADER', action = switch_workspace_relative(-1) },
   { key = ']', mods = 'LEADER', action = switch_workspace_relative(1) },
 
-  -- Workspace: last (Leader+Enter or Leader+L)
+  -- Workspace: last (Leader+Enter)
   { key = 'Enter', mods = 'LEADER', action = wezterm.action_callback(switch_to_last_workspace) },
-  { key = 'L', mods = 'LEADER', action = wezterm.action_callback(switch_to_last_workspace) },
 
   -- Lazygit in new tab
   { key = 'g', mods = 'LEADER', action = wezterm.action_callback(function(window, pane)
@@ -406,50 +428,8 @@ config.keys = {
     }, pane)
   end) },
 
-  -- Workspace picker (replaces sesh + gum)
-  { key = 'T', mods = 'LEADER', action = wezterm.action_callback(workspace_picker) },
-
   -- Reload config
   { key = 'r', mods = 'LEADER', action = act.ReloadConfiguration },
-
-  -- Resurrect: manual save (Leader+S)
-  { key = 'S', mods = 'LEADER', action = wezterm.action_callback(function(win, pane)
-    if has_resurrect then
-      local state = resurrect.workspace_state.get_workspace_state()
-      resurrect.state_manager.save_state(state)
-      resurrect.state_manager.write_current_state(state.workspace, 'workspace')
-      win:toast_notification('WezTerm', 'Session saved', nil, 3000)
-    end
-  end) },
-
-  -- Resurrect: fuzzy load saved state (Leader+R)
-  { key = 'R', mods = 'LEADER', action = wezterm.action_callback(function(win, pane)
-    if has_resurrect then
-      resurrect.fuzzy_loader.fuzzy_load(win, pane, function(id, label)
-        local type = cycled_type(label)
-        local state = resurrect.state_manager.load_state(id, type)
-        if type == 'workspace' then
-          resurrect.workspace_state.restore_workspace(state, {
-            relative = true,
-            restore_text = true,
-            on_pane_restore = resurrect.tab_state.default_on_pane_restore,
-          })
-        elseif type == 'window' then
-          resurrect.window_state.restore_window(win:mux_window(), state, {
-            relative = true,
-            restore_text = true,
-            on_pane_restore = resurrect.tab_state.default_on_pane_restore,
-          })
-        elseif type == 'tab' then
-          resurrect.tab_state.restore_tab(pane:tab(), state, {
-            relative = true,
-            restore_text = true,
-            on_pane_restore = resurrect.tab_state.default_on_pane_restore,
-          })
-        end
-      end)
-    end
-  end) },
 }
 
 return config
