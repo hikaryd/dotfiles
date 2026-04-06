@@ -103,9 +103,11 @@ app_rules = [
   { app_name = "Comet", workspace = "1" },
   { app_name = "Brave", workspace = "1" },
   { app_name = "Helium", workspace = "1" },
+  { app_name = "Thorium", workspace = "1" },
 
   # "2": Misc
   { app_name = "V2BOX", workspace = "2" },
+  { app_name = "Keet", workspace = "2" },
 
   # "3": мессенджер/почта/музыка/видео-комнаты
   { app_name = "Telegram", workspace = "3" },
@@ -132,14 +134,16 @@ app_rules = [
   { app_name = "Kubeli", workspace = "q" },
   { app_name = "Lens", workspace = "q" },
   { app_name = "Beekeeper Studio", workspace = "q" },
-  { app_name = "WizQl", workspace = "q" },
+  { app_name = "Postico", workspace = "q" },
 
   # "t": Толк
   { app_name = "Толк", workspace = "t" },
   { app_name = "Музыка", workspace = "t" },
 
-  # "w": Толк
+  # "w": Просмотр/Outlook
   { app_name = "Просмотр", workspace = "w" },
+  { app_name = "Preview", workspace = "w" },
+  { app_name = "Outlook", workspace = "w" },
 
   # "d": терминал
   { app_name = "Ghostty", workspace = "d" },

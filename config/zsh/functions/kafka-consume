@@ -1,0 +1,65 @@
+# Kafka consumer через kcat с SSL
+# Usage: kafka-consume <creds.json> <brokers> <topic> [-b] [-g group] [-j] [-s]
+
+local creds_file="$1" brokers="$2" topic="$3"
+if [[ -z "$creds_file" || -z "$brokers" || -z "$topic" ]]; then
+  echo "Usage: kafka-consume <creds_file> <brokers> <topic> [-b] [-g group] [-j] [-s]"
+  echo "  -b  --from-beginning   Read from beginning"
+  echo "  -g  --group <name>     Consumer group"
+  echo "  -j  --json             JSON output"
+  echo "  -s  --skip-metadata    Skip metadata request"
+  return 1
+fi
+shift 3
+
+local from_beginning=false group="" json_output=false skip_metadata=false
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -b|--from-beginning) from_beginning=true ;;
+    -g|--group) group="$2"; shift ;;
+    -j|--json) json_output=true ;;
+    -s|--skip-metadata) skip_metadata=true ;;
+    *) echo "Unknown option: $1"; return 1 ;;
+  esac
+  shift
+done
+
+local temp_dir
+temp_dir="$(mktemp -d)"
+trap "rm -rf '$temp_dir'" EXIT INT TERM
+
+local ca_file="$temp_dir/ca.pem"
+local cert_file="$temp_dir/cert.pem"
+local key_file="$temp_dir/key.pem"
+
+jq -r '.["ca.pem"]' "$creds_file" > "$ca_file"
+jq -r '.["cert.pem"]' "$creds_file" > "$cert_file"
+jq -r '.["key.pem"]' "$creds_file" > "$key_file"
+
+local -a ssl_args=(
+  -X "security.protocol=ssl"
+  -X "ssl.ca.location=$ca_file"
+  -X "ssl.certificate.location=$cert_file"
+  -X "ssl.key.location=$key_file"
+)
+
+local key_passwd
+key_passwd="$(jq -r '.["kafka.keystore.keypasswd"] // empty' "$creds_file")"
+[[ -n "$key_passwd" ]] && ssl_args+=(-X "ssl.key.password=$key_passwd")
+
+if [[ "$skip_metadata" == false ]]; then
+  echo "Получение метаданных топика..."
+  echo
+  kcat -b "$brokers" -t "$topic" -L "${ssl_args[@]}"
+  echo
+  echo "─────────────────────────────────────"
+  echo "Начинаем потребление сообщений..."
+  echo
+fi
+
+local -a args=(-b "$brokers" -t "$topic" -C "${ssl_args[@]}")
+[[ "$from_beginning" == true ]] && args+=(-o beginning)
+[[ -n "$group" ]] && args+=(-G "$group" "$topic")
+[[ "$json_output" == true ]] && args+=(-J)
+
+kcat "${args[@]}"

@@ -13,5 +13,17 @@
       force: true
     ~/.paneru.toml:
       path: config/paneru/paneru.toml
-      create: trueaerospace/aerospace.toml
+      create: true
       force: true
+    ~/.config/glide/glide.toml:
+      path: config/glide/glide.toml
+      create: true
+      force: true
+
+- shell:
+    - description: "Enable separate Spaces per display (required for aerospace)"
+      command: defaults write com.apple.spaces spans-displays -bool false
+    - description: "Disable auto-rearrange Spaces by recent use"
+      command: defaults write com.apple.dock mru-spaces -bool false
+    - description: "Apply Dock changes"
+      command: killall Dock

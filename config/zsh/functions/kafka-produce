@@ -1,0 +1,40 @@
+# Kafka producer через kcat с SSL
+# Usage: kafka-produce <creds.json> <brokers> <topic> [message]
+
+local creds_file="$1" brokers="$2" topic="$3" message="${4:-}"
+if [[ -z "$creds_file" || -z "$brokers" || -z "$topic" ]]; then
+  echo "Usage: kafka-produce <creds_file> <brokers> <topic> [message]"
+  return 1
+fi
+
+local temp_dir
+temp_dir="$(mktemp -d)"
+trap "rm -rf '$temp_dir'" EXIT INT TERM
+
+local ca_file="$temp_dir/ca.pem"
+local cert_file="$temp_dir/cert.pem"
+local key_file="$temp_dir/key.pem"
+
+jq -r '.["ca.pem"]' "$creds_file" > "$ca_file"
+jq -r '.["cert.pem"]' "$creds_file" > "$cert_file"
+jq -r '.["key.pem"]' "$creds_file" > "$key_file"
+
+local -a args=(
+  -b "$brokers" -t "$topic" -P
+  -X "security.protocol=ssl"
+  -X "ssl.ca.location=$ca_file"
+  -X "ssl.certificate.location=$cert_file"
+  -X "ssl.key.location=$key_file"
+)
+
+local key_passwd
+key_passwd="$(jq -r '.["kafka.keystore.keypasswd"] // empty' "$creds_file")"
+[[ -n "$key_passwd" ]] && args+=(-X "ssl.key.password=$key_passwd")
+
+if [[ -n "$message" ]]; then
+  echo "$message" | kcat "${args[@]}"
+  echo "Сообщение отправлено в топик $topic"
+else
+  echo "Введите сообщения (Ctrl+D для завершения):"
+  kcat "${args[@]}"
+fi

@@ -1,9 +1,13 @@
 # AeroSpace configuration
+# Synced with Rift config
 
-# Core settings
 start-at-login = true
 enable-normalization-flatten-containers = true
 enable-normalization-opposite-orientation-for-nested-containers = true
+
+# Mouse behavior (matching Rift)
+# on-focus-changed = ['move-mouse window-lazy-center']
+on-focus-changed = []
 
 # Default layout
 default-root-container-layout = 'tiles'
@@ -13,15 +17,15 @@ accordion-padding = 30
 [gaps]
 inner.horizontal = 10
 inner.vertical = 10
-outer.left = 0
-outer.bottom = 0
-outer.top = 0
-outer.right = 0
+outer.left = 5
+outer.bottom = 5
+outer.top = 5
+outer.right = 5
 
 # Key bindings
 [mode.main.binding]
 
-# --- Workspace switching (Alt + key) ---
+# --- Переключение воркспейсов (Alt + key) ---
 alt-1 = 'workspace 1'
 alt-2 = 'workspace 2'
 alt-3 = 'workspace 3'
@@ -35,7 +39,7 @@ alt-w = 'workspace w'
 # Switch to last workspace (Alt + Tab)
 alt-tab = 'workspace-back-and-forth'
 
-# --- Move window to workspace (Alt + Shift + key) ---
+# --- Отправка окна на воркспейс (Alt + Shift + key) ---
 alt-shift-1 = 'move-node-to-workspace 1'
 alt-shift-2 = 'move-node-to-workspace 2'
 alt-shift-3 = 'move-node-to-workspace 3'
@@ -46,94 +50,153 @@ alt-shift-q = 'move-node-to-workspace q'
 alt-shift-t = 'move-node-to-workspace t'
 alt-shift-w = 'move-node-to-workspace w'
 
-# --- Focus movement (Alt + H/J/K/L) ---
+# --- Навигация (Alt + H/J/K/L) ---
 alt-h = 'focus left'
 alt-j = 'focus down'
 alt-k = 'focus up'
 alt-l = 'focus right'
 
-# --- Window movement (Alt + Shift + H/J/K/L) ---
+# --- Перемещение окон (Alt + Shift + H/J/K/L) ---
 alt-shift-h = 'move left'
 alt-shift-j = 'move down'
 alt-shift-k = 'move up'
 alt-shift-l = 'move right'
 
-# --- Layout manipulation (Cmd + Shift + keys, matching Rift) ---
+# --- Стек/джойн (Cmd + Shift + keys) ---
+cmd-shift-j = 'layout accordion tiles' # toggle stack
 cmd-shift-h = 'join-with left'
 cmd-shift-l = 'join-with right'
 
-# --- Resize (Alt + Shift + Equal/Minus) ---
+# --- Ресайз (Alt + Shift + Equal/Minus) ---
 alt-shift-equal = 'resize smart +50'
 alt-shift-minus = 'resize smart -50'
 
-# --- Floating and fullscreen ---
-alt-space = 'layout floating tiling'   # Toggle floating
-cmd-shift-f = 'layout floating tiling' # Alternative floating toggle
-alt-f = 'fullscreen'                   # Toggle fullscreen
+# --- Флоат/фуллскрин ---
+alt-space = 'layout floating tiling'
+cmd-shift-f = 'layout floating tiling'
+alt-f = 'fullscreen'
 
-# --- Service commands ---
+# --- Сервисные ---
 alt-ctrl-s = 'reload-config'
 cmd-shift-q = 'close'
+alt-shift-f = 'flatten-workspace-tree'
 
-# Window-specific rules (matching Rift's app_rules)
+# --- Мультимонитор ---
+alt-comma = 'focus-monitor prev'
+alt-period = 'focus-monitor next'
+alt-shift-comma = 'move-node-to-monitor prev'
+alt-shift-period = 'move-node-to-monitor next'
+
+# ============================================
+# Window rules (matching Rift's app_rules)
+# ============================================
+
+# --- Floating windows ---
+
+# Safari settings
 [[on-window-detected]]
 if.app-id = 'com.apple.Safari'
 if.window-title-regex-substring = '^(General|(Tab|Password|Website|Extension)s|AutoFill|Se(arch|curity)|Privacy|Advance)$|Preferences|Настройки'
 run = 'layout floating'
 
+# Brave settings
 [[on-window-detected]]
 if.app-id = 'com.brave.Browser'
 if.window-title-regex-substring = '^(General|(Tab|Password|Website|Extension)s|AutoFill|Se(arch|curity)|Privacy|Advance)$|Preferences|Settings'
 run = 'layout floating'
 
+# Arc settings
+[[on-window-detected]]
+if.app-id = 'company.thebrowser.Browser'
+if.window-title-regex-substring = '^(General|(Tab|Password|Website|Extension)s|AutoFill|Se(arch|curity)|Privacy|Advance)$|Preferences|Settings'
+run = 'layout floating'
+
+# 1Password
 [[on-window-detected]]
 if.app-id = 'com.1password.1password'
 run = 'layout floating'
 
+# Finder
 [[on-window-detected]]
 if.app-id = 'com.apple.finder'
 run = 'layout floating'
 
+# Typora open dialog
+[[on-window-detected]]
+if.app-id = 'abnerworks.Typora'
+if.window-title-regex-substring = 'Открыть'
+run = 'layout floating'
+
+# Cisco Secure Client
 [[on-window-detected]]
 if.app-id = 'com.cisco.secureclient'
 run = 'layout floating'
 
+# v2RayTun
+[[on-window-detected]]
+if.app-id = 'com.yanue.V2rayU'
+run = 'layout floating'
+
+# Raycast
 [[on-window-detected]]
 if.app-id = 'com.raycast.macos'
 run = 'layout floating'
 
+# Control Center
 [[on-window-detected]]
 if.app-id = 'com.apple.controlcenter'
 run = 'layout floating'
 
+# AlDente
 [[on-window-detected]]
-if.app-id = 'pro.aldente.AlDente'
+if.app-id = 'com.apphousekitchen.aldente-pro'
 run = 'layout floating'
 
-# "1": Browsers
+# ============================================
+# Workspace assignments (matching Rift)
+# ============================================
+
+# "1": браузеры
 [[on-window-detected]]
 if.app-id = 'com.apple.Safari'
-run = 'move-node-to-workspace 1'
-
-[[on-window-detected]]
-if.app-id = 'com.brave.Browser'
-run = 'move-node-to-workspace 1'
-
-[[on-window-detected]]
-if.app-id = 'net.waterfox.waterfox'
 run = 'move-node-to-workspace 1'
 
 [[on-window-detected]]
 if.app-id = 'company.thebrowser.Browser'
 run = 'move-node-to-workspace 1'
 
-# "3": Messengers, mail, music, video rooms
 [[on-window-detected]]
-if.app-id = 'com.tdesktop.Telegram'
+if.app-id = 'com.brave.Browser'
+run = 'move-node-to-workspace 1'
+
+[[on-window-detected]]
+if.app-name-regex-substring = 'Ora'
+run = 'move-node-to-workspace 1'
+
+[[on-window-detected]]
+if.app-name-regex-substring = 'Comet'
+run = 'move-node-to-workspace 1'
+
+[[on-window-detected]]
+if.app-name-regex-substring = 'Helium'
+run = 'move-node-to-workspace 1'
+
+[[on-window-detected]]
+if.app-id = 'org.chromium.Thorium'
+run = 'move-node-to-workspace 1'
+
+# "2": Misc
+[[on-window-detected]]
+if.app-name-regex-substring = 'V2BOX'
+run = 'move-node-to-workspace 2'
+
+# "3": мессенджер/почта/музыка
+[[on-window-detected]]
+if.app-id = 'ru.keepcoder.Telegram'
 run = 'move-node-to-workspace 3'
 
 [[on-window-detected]]
-if.app-id = 'ru.unlimitedtech.express.desktop'
+if.app-id = 'one.ayugram.AyuGramDesktop'
 run = 'move-node-to-workspace 3'
 
 [[on-window-detected]]
@@ -141,14 +204,22 @@ if.app-id = 'ch.protonmail.desktop'
 run = 'move-node-to-workspace 3'
 
 [[on-window-detected]]
-if.app-id = 'com.spotify.client'
-run = 'move-node-to-workspace 3'
-
-[[on-window-detected]]
 if.app-id = 'com.jpochyla.psst'
 run = 'move-node-to-workspace 3'
 
-# "4": Documents and notes
+[[on-window-detected]]
+if.app-id = 'ru.unlimitedtech.express.desktop'
+run = 'move-node-to-workspace 3'
+
+[[on-window-detected]]
+if.app-id = 'com.spotify.client'
+run = 'move-node-to-workspace 3'
+
+# "4": документы/ноуты
+[[on-window-detected]]
+if.app-id = 'abnerworks.Typora'
+run = 'move-node-to-workspace 4'
+
 [[on-window-detected]]
 if.app-id = 'com.apple.iWork.Pages'
 run = 'move-node-to-workspace 4'
@@ -157,7 +228,7 @@ run = 'move-node-to-workspace 4'
 if.app-id = 'com.getupnote.desktop'
 run = 'move-node-to-workspace 4'
 
-# "e": System settings
+# "e": системные
 [[on-window-detected]]
 if.app-id = 'com.apple.systempreferences'
 run = 'move-node-to-workspace e'
@@ -166,11 +237,7 @@ run = 'move-node-to-workspace e'
 if.app-id = 'com.apple.AppStore'
 run = 'move-node-to-workspace e'
 
-[[on-window-detected]]
-if.app-id = 'kontur.talk'
-run = 'move-node-to-workspace t'
-
-# "q": Dev tools
+# "q": дев-инструменты
 [[on-window-detected]]
 if.app-id = 'com.electron.dockerdesktop'
 run = 'move-node-to-workspace q'
@@ -179,7 +246,45 @@ run = 'move-node-to-workspace q'
 if.app-id = 'org.jkiss.dbeaver.core.product'
 run = 'move-node-to-workspace q'
 
-# "d": Terminal
+[[on-window-detected]]
+if.app-name-regex-substring = 'Kubeli'
+run = 'move-node-to-workspace q'
+
+[[on-window-detected]]
+if.app-id = 'com.electron.kontena-lens'
+run = 'move-node-to-workspace q'
+
+[[on-window-detected]]
+if.app-id = 'io.beekeeperstudio.app'
+run = 'move-node-to-workspace q'
+
+[[on-window-detected]]
+if.app-name-regex-substring = 'WizQl'
+run = 'move-node-to-workspace q'
+
+# "t": Толк/Музыка
+[[on-window-detected]]
+if.app-name-regex-substring = 'Толк'
+run = 'move-node-to-workspace t'
+
+[[on-window-detected]]
+if.app-id = 'com.apple.Music'
+run = 'move-node-to-workspace t'
+
+# "w": Просмотр/Outlook
+[[on-window-detected]]
+if.app-id = 'com.apple.Preview'
+run = 'move-node-to-workspace w'
+
+[[on-window-detected]]
+if.app-id = 'com.microsoft.Outlook'
+run = 'move-node-to-workspace w'
+
+# "d": терминал
 [[on-window-detected]]
 if.app-id = 'com.mitchellh.ghostty'
+run = 'move-node-to-workspace d'
+
+[[on-window-detected]]
+if.app-id = 'org.alacritty'
 run = 'move-node-to-workspace d'

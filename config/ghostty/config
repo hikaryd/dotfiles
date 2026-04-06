@@ -29,6 +29,7 @@ confirm-close-surface = false
 
 macos-option-as-alt = false
 
+# ── Pass ctrl+number to tmux (CSI u encoding) ──
 keybind = ctrl+1=csi:49;5u
 keybind = ctrl+2=csi:50;5u
 keybind = ctrl+3=csi:51;5u

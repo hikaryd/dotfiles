@@ -1,6 +1,7 @@
 # Taps
 tap "koekeishiya/formulae"
 tap "acsandmann/tap"
+tap "nikitabobko/tap"
 
 # Основные системные пакеты
 brew "coreutils"
@@ -32,8 +33,10 @@ brew "node"
 brew "fzf"      
 brew "zoxide"    
 brew "tmux"       
-brew "zsh"         
-brew "nushell"      
+brew "zsh"
+brew "zsh-autosuggestions"
+brew "zsh-syntax-highlighting"
+brew "nushell"
 brew "starship"      
 brew "media-control" 
 
@@ -114,6 +117,7 @@ brew "kcat"
 cask "1password"
 cask "1password-cli"
 cask "ghostty"
+cask "wezterm"
 cask "alacritty"
 cask "raycast"
 cask "mos"       
@@ -129,6 +133,7 @@ cask "affine"
 cask "upscayl"
 cask "topnotch"
 cask "hazeover"
+cask "nikitabobko/tap/aerospace"
 
 # Шрифты
 cask "font-symbols-only-nerd-font"

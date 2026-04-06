@@ -1,0 +1,90 @@
+# Glide WM Configuration
+# Based on Rift config style
+# https://github.com/glide-wm/glide
+
+[settings]
+animate = true
+default_disable = false
+
+focus_follows_mouse = true
+mouse_follows_focus = false
+mouse_hides_on_focus = true
+
+outer_gap = 5
+inner_gap = 10
+
+default_layout_kind = "tree"
+
+group_bars.enable = true
+group_bars.thickness = 4
+group_bars.horizontal_placement = "bottom"
+group_bars.vertical_placement = "left"
+
+status_icon.enable = true
+
+default_keys = false
+
+[keys]
+# --- Навигация (vim-style) ---
+"Alt + H" = { move_focus = "left" }
+"Alt + J" = { move_focus = "down" }
+"Alt + K" = { move_focus = "up" }
+"Alt + L" = { move_focus = "right" }
+
+# --- Перемещение окон ---
+"Alt + Shift + H" = { move_node = "left" }
+"Alt + Shift + J" = { move_node = "down" }
+"Alt + Shift + K" = { move_node = "up" }
+"Alt + Shift + L" = { move_node = "right" }
+
+# --- Ресайз ---
+"Alt + Ctrl + H" = { resize = { direction = "left", percent = 5 } }
+"Alt + Ctrl + J" = { resize = { direction = "down", percent = 5 } }
+"Alt + Ctrl + K" = { resize = { direction = "up", percent = 5 } }
+"Alt + Ctrl + L" = { resize = { direction = "right", percent = 5 } }
+
+# --- Tree navigation ---
+# "Alt + A" = "ascend"
+"Alt + D" = "descend"
+
+# --- Layout cycling ---
+"Alt + N" = "next_layout"
+"Alt + P" = "prev_layout"
+
+# --- Splitting ---
+"Alt + Backslash" = { split = "horizontal" }
+"Alt + Equal" = { split = "vertical" }
+
+# --- Grouping (tabs/stacks) ---
+"Alt + T" = { group = "horizontal" }
+"Alt + S" = { group = "vertical" }
+"Meta + Shift + E" = "ungroup"
+
+# --- Флоат/фуллскрин ---
+"Alt + Space" = "toggle_window_floating"
+"Meta + Shift + F" = "toggle_window_floating"
+"Alt + F" = "toggle_fullscreen"
+"Alt + Shift + Space" = "toggle_focus_floating"
+
+# --- Space management ---
+"Alt + Z" = "toggle_space_activated"
+
+# --- Сервисные ---
+"Alt + Shift + D" = "debug"
+"Meta + Shift + Q" = "save_and_exit"
+
+[settings.experimental]
+status_icon.space_index = false
+status_icon.color = false
+status_icon.enable = true
+
+# Scroll layout (Niri-like)
+scroll.enable = false
+scroll.center_focused_column = "never"
+scroll.visible_columns = 2
+scroll.column_width_presets = [0.333, 0.5, 0.667, 1.0]
+scroll.new_window_in_column = "new_column"
+scroll.scroll_sensitivity = 20.0
+scroll.invert_scroll_direction = false
+scroll.infinite_loop = false
+scroll.single_column_aspect_ratio = ""
