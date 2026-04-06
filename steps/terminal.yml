@@ -1,10 +1,19 @@
 - link:
-    ~/Library/Application Support/nushell/config.nu:
-      path: config/nushell/config.nu
+    # Zsh
+    ~/.zshrc:
+      path: config/zsh/.zshrc
       create: true
       force: true
-    ~/.config/nushell/catppuccin_mocha.nu:
-      path: config/nushell/catppuccin_mocha.nu
+    ~/.zshenv:
+      path: config/zsh/.zshenv
+      create: true
+      force: true
+    ~/.zprofile:
+      path: config/zsh/.zprofile
+      create: true
+      force: true
+    ~/.config/zsh/functions:
+      path: config/zsh/functions
       create: true
       force: true
     # Alacritty
@@ -76,12 +85,22 @@
       stdout: true
       stderr: true
     - command: |
-        if ! grep -q "/opt/homebrew/bin/nu" /etc/shells 2>/dev/null; then
-          echo "Adding nushell to /etc/shells..."
-          sudo sh -c 'echo "/opt/homebrew/bin/nu" >> /etc/shells'
+        if ! grep -q "/opt/homebrew/bin/zsh" /etc/shells 2>/dev/null; then
+          echo "Adding Homebrew zsh to /etc/shells..."
+          sudo sh -c 'echo "/opt/homebrew/bin/zsh" >> /etc/shells'
         else
-          echo "Nushell already in /etc/shells"
+          echo "Homebrew zsh already in /etc/shells"
         fi
-      description: Adding nushell to available shells
+      description: Adding Homebrew zsh to available shells
+      stdout: true
+      stderr: true
+    - command: |
+        if [[ "$(dscl . -read /Users/$USER UserShell | awk '{print $2}')" != "/opt/homebrew/bin/zsh" ]]; then
+          echo "Setting zsh as default shell..."
+          chsh -s /opt/homebrew/bin/zsh
+        else
+          echo "Zsh is already the default shell"
+        fi
+      description: Setting zsh as default login shell
       stdout: true
       stderr: true
