@@ -9,14 +9,18 @@ ai_helper.py – универсальный CLI-помощник для разр
   • refactor  – исправление текста из буфера обмена
 
 Провайдеры (--provider):
-  • gemini (по умолчанию)
+  • ollama (по умолчанию) — локальная модель через Ollama
+    - Host: переменная OLLAMA_HOST (по умолч. "http://localhost:11434")
+    - Модель: переменная OLLAMA_MODEL (по умолч. "gemma3:4b")
+  • gemini
     - Ключ API: переменная GEMINI_API_KEY или файл ~/.gemini_key
     - Модель: переменная GEMINI_MODEL (по умолч. "gemini-1.5-flash-latest")
   • x5
     - Конфигурация: JSON-файл ~/.x5_copilot_config.json
 
 Запуск:
-    python ai_helper.py --mode mr
+    python ai_helper.py --mode commit                 # ollama (локально)
+    python ai_helper.py --mode mr --provider gemini
     python ai_helper.py --provider x5 --mode commit
 """
 
@@ -34,6 +38,12 @@ from typing import Any, Final
 
 PROVIDER_GEMINI: Final[str] = "gemini"
 PROVIDER_X5: Final[str] = "x5"
+PROVIDER_OLLAMA: Final[str] = "ollama"
+
+OLLAMA_DEFAULT_HOST: Final[str] = "http://localhost:11434"
+OLLAMA_DEFAULT_MODEL: Final[str] = "gemma3:4b"
+OLLAMA_TIMEOUT_SEC: Final[int] = 180
+DIFF_MAX_CHARS: Final[int] = 16000
 
 MR_PROMPT_TEMPLATE: Final[str] = """
 # РОЛЬ: Ты — опытный AI-ассистент, специализирующийся на анализе кода и создании Merge Request.
@@ -261,6 +271,72 @@ class X5Provider(BaseAIProvider):
             return ""
 
 
+class OllamaProvider(BaseAIProvider):
+    """Локальный провайдер через Ollama (http://localhost:11434)."""
+
+    def __init__(self):
+        super().__init__("Ollama")
+        self.host = os.getenv("OLLAMA_HOST", OLLAMA_DEFAULT_HOST).rstrip("/")
+        self.model = os.getenv("OLLAMA_MODEL", OLLAMA_DEFAULT_MODEL)
+
+    def send_request(self, prompt: str) -> dict[str, Any] | None:
+        url = f"{self.host}/api/generate"
+        payload = {
+            "model": self.model,
+            "prompt": prompt,
+            "stream": False,
+            "options": {"temperature": 0.3, "num_ctx": 8192},
+        }
+        data = json.dumps(payload)
+
+        try:
+            result = subprocess.run(
+                [
+                    "curl",
+                    "-s",
+                    "--max-time",
+                    str(OLLAMA_TIMEOUT_SEC),
+                    "-X",
+                    "POST",
+                    "-H",
+                    "Content-Type: application/json",
+                    "-d",
+                    data,
+                    url,
+                ],
+                capture_output=True,
+                text=True,
+                check=True,
+            )
+            if not result.stdout.strip():
+                notify(
+                    f"AI Helper ({self.name})",
+                    f"Пустой ответ от Ollama. Запущен ли сервер на {self.host}?",
+                )
+                return None
+            return json.loads(result.stdout)
+        except subprocess.CalledProcessError as err:
+            notify(
+                f"AI Helper ({self.name})",
+                f"curl error: {err.returncode}. Запущен ли `ollama serve`?",
+            )
+            if err.stderr:
+                print(f"Stderr: {err.stderr}", file=sys.stderr)
+        except json.JSONDecodeError as err:
+            notify(f"AI Helper ({self.name})", f"JSON decode error: {err}")
+            print(f"Response: {result.stdout}", file=sys.stderr)
+        except FileNotFoundError:
+            notify(f"AI Helper ({self.name})", "curl not found. Please install curl.")
+        return None
+
+    def extract_answer(self, response: dict[str, Any]) -> str:
+        if "error" in response:
+            err = response.get("error", "unknown error")
+            notify(f"AI Helper ({self.name})", f"Ollama: {err}")
+            return ""
+        return str(response.get("response", "")).strip()
+
+
 # --- Утилиты ---
 
 
@@ -399,6 +475,14 @@ def handle_mr(provider: BaseAIProvider) -> None:
     notify("AI Helper", "Описание для MR скопировано.")
 
 
+def _truncate_diff(diff: str, limit: int = DIFF_MAX_CHARS) -> str:
+    if len(diff) <= limit:
+        return diff
+    head = diff[: limit // 2]
+    tail = diff[-limit // 2 :]
+    return f"{head}\n...\n[diff обрезан: {len(diff) - limit} символов пропущено]\n...\n{tail}"
+
+
 def handle_commit(provider: BaseAIProvider) -> None:
     try:
         diff = git_diff_cached()
@@ -407,6 +491,7 @@ def handle_commit(provider: BaseAIProvider) -> None:
     if not diff.strip():
         print("Нет staged-изменений для коммита.")
         return
+    diff = _truncate_diff(diff)
     answer = _process_ai_request(provider, COMMIT_MESSAGE_PROMPT.format(diff=diff))
     lines = [line for line in answer.splitlines() if line.strip()]
     title = lines[0] if lines else "fix: "
@@ -444,15 +529,18 @@ def main() -> None:
     )
     parser.add_argument(
         "--provider",
-        choices=[PROVIDER_GEMINI, PROVIDER_X5],
-        default=PROVIDER_GEMINI,
-        help=f"Используемый AI-провайдер (по умолчанию: {PROVIDER_GEMINI})",
+        choices=[PROVIDER_OLLAMA, PROVIDER_GEMINI, PROVIDER_X5],
+        default=PROVIDER_OLLAMA,
+        help=f"Используемый AI-провайдер (по умолчанию: {PROVIDER_OLLAMA})",
     )
     args = parser.parse_args()
 
-    provider: BaseAIProvider = (
-        X5Provider() if args.provider == PROVIDER_X5 else GeminiProvider()
-    )
+    provider_map = {
+        PROVIDER_OLLAMA: OllamaProvider,
+        PROVIDER_X5: X5Provider,
+        PROVIDER_GEMINI: GeminiProvider,
+    }
+    provider: BaseAIProvider = provider_map[args.provider]()
 
     mode_handlers = {
         "mr": handle_mr,

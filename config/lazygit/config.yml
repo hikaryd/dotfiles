@@ -1,7 +1,36 @@
+gui:
+  theme:
+    activeBorderColor:
+      - "#e6b450"
+      - bold
+    inactiveBorderColor:
+      - "#555e73"
+    optionsTextColor:
+      - "#39bae6"
+    selectedLineBgColor:
+      - "#1b1f29"
+    selectedRangeBgColor:
+      - "#1b1f29"
+    cherryPickedCommitBgColor:
+      - "#e6b450"
+    cherryPickedCommitFgColor:
+      - "#0d1017"
+    unstagedChangesColor:
+      - "#f07178"
+    defaultFgColor:
+      - "#bfbdb6"
+    searchingActiveBorderColor:
+      - "#e6b450"
 customCommands:
   - key: "C"
     command: "git commit"
-    description: "Коммит (открыть в nvim)"
+    description: "Коммит (AI-сообщение через локальную Gemma + nvim)"
+    output: "terminal"
+    loadingText: "Генерирую сообщение локальной Gemma..."
+    context: "files"
+  - key: "M"
+    command: "git commit --no-verify"
+    description: "Коммит БЕЗ AI (без hook-ов)"
     output: "terminal"
     loadingText: "Открывается nvim..."
     context: "files"
