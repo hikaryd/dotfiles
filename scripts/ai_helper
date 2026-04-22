@@ -9,19 +9,15 @@ ai_helper.py – универсальный CLI-помощник для разр
   • refactor  – исправление текста из буфера обмена
 
 Провайдеры (--provider):
-  • ollama (по умолчанию) — локальная модель через Ollama
-    - Host: переменная OLLAMA_HOST (по умолч. "http://localhost:11434")
-    - Модель: переменная OLLAMA_MODEL (по умолч. "gemma3:4b")
+  • x5 (по умолчанию)
+    - Конфигурация: JSON-файл ~/.x5_copilot_config.json
   • gemini
     - Ключ API: переменная GEMINI_API_KEY или файл ~/.gemini_key
     - Модель: переменная GEMINI_MODEL (по умолч. "gemini-1.5-flash-latest")
-  • x5
-    - Конфигурация: JSON-файл ~/.x5_copilot_config.json
 
 Запуск:
-    python ai_helper.py --mode commit                 # ollama (локально)
-    python ai_helper.py --mode mr --provider gemini
-    python ai_helper.py --provider x5 --mode commit
+    python ai_helper.py --mode mr
+    python ai_helper.py --provider gemini --mode commit
 """
 
 import argparse
@@ -38,11 +34,7 @@ from typing import Any, Final
 
 PROVIDER_GEMINI: Final[str] = "gemini"
 PROVIDER_X5: Final[str] = "x5"
-PROVIDER_OLLAMA: Final[str] = "ollama"
 
-OLLAMA_DEFAULT_HOST: Final[str] = "http://localhost:11434"
-OLLAMA_DEFAULT_MODEL: Final[str] = "gemma3:4b"
-OLLAMA_TIMEOUT_SEC: Final[int] = 180
 DIFF_MAX_CHARS: Final[int] = 16000
 
 MR_PROMPT_TEMPLATE: Final[str] = """
@@ -271,72 +263,6 @@ class X5Provider(BaseAIProvider):
             return ""
 
 
-class OllamaProvider(BaseAIProvider):
-    """Локальный провайдер через Ollama (http://localhost:11434)."""
-
-    def __init__(self):
-        super().__init__("Ollama")
-        self.host = os.getenv("OLLAMA_HOST", OLLAMA_DEFAULT_HOST).rstrip("/")
-        self.model = os.getenv("OLLAMA_MODEL", OLLAMA_DEFAULT_MODEL)
-
-    def send_request(self, prompt: str) -> dict[str, Any] | None:
-        url = f"{self.host}/api/generate"
-        payload = {
-            "model": self.model,
-            "prompt": prompt,
-            "stream": False,
-            "options": {"temperature": 0.3, "num_ctx": 8192},
-        }
-        data = json.dumps(payload)
-
-        try:
-            result = subprocess.run(
-                [
-                    "curl",
-                    "-s",
-                    "--max-time",
-                    str(OLLAMA_TIMEOUT_SEC),
-                    "-X",
-                    "POST",
-                    "-H",
-                    "Content-Type: application/json",
-                    "-d",
-                    data,
-                    url,
-                ],
-                capture_output=True,
-                text=True,
-                check=True,
-            )
-            if not result.stdout.strip():
-                notify(
-                    f"AI Helper ({self.name})",
-                    f"Пустой ответ от Ollama. Запущен ли сервер на {self.host}?",
-                )
-                return None
-            return json.loads(result.stdout)
-        except subprocess.CalledProcessError as err:
-            notify(
-                f"AI Helper ({self.name})",
-                f"curl error: {err.returncode}. Запущен ли `ollama serve`?",
-            )
-            if err.stderr:
-                print(f"Stderr: {err.stderr}", file=sys.stderr)
-        except json.JSONDecodeError as err:
-            notify(f"AI Helper ({self.name})", f"JSON decode error: {err}")
-            print(f"Response: {result.stdout}", file=sys.stderr)
-        except FileNotFoundError:
-            notify(f"AI Helper ({self.name})", "curl not found. Please install curl.")
-        return None
-
-    def extract_answer(self, response: dict[str, Any]) -> str:
-        if "error" in response:
-            err = response.get("error", "unknown error")
-            notify(f"AI Helper ({self.name})", f"Ollama: {err}")
-            return ""
-        return str(response.get("response", "")).strip()
-
-
 # --- Утилиты ---
 
 
@@ -529,18 +455,15 @@ def main() -> None:
     )
     parser.add_argument(
         "--provider",
-        choices=[PROVIDER_OLLAMA, PROVIDER_GEMINI, PROVIDER_X5],
-        default=PROVIDER_OLLAMA,
-        help=f"Используемый AI-провайдер (по умолчанию: {PROVIDER_OLLAMA})",
+        choices=[PROVIDER_X5, PROVIDER_GEMINI],
+        default=PROVIDER_X5,
+        help=f"Используемый AI-провайдер (по умолчанию: {PROVIDER_X5})",
     )
     args = parser.parse_args()
 
-    provider_map = {
-        PROVIDER_OLLAMA: OllamaProvider,
-        PROVIDER_X5: X5Provider,
-        PROVIDER_GEMINI: GeminiProvider,
-    }
-    provider: BaseAIProvider = provider_map[args.provider]()
+    provider: BaseAIProvider = (
+        GeminiProvider() if args.provider == PROVIDER_GEMINI else X5Provider()
+    )
 
     mode_handlers = {
         "mr": handle_mr,
