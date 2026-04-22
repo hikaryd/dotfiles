@@ -1,0 +1,114 @@
+# Ayu Theme — единый источник цветов для всех конфигов
+# https://github.com/ayu-theme
+#
+# Запуск: python3 palette/generate.py [--variant dark|mirage]
+
+[meta]
+name = "ayu"
+default_variant = "dark"
+
+# ─── Dark ────────────────────────────────────────────────────────────────────
+
+[dark.editor]
+bg      = "#0d1017"
+fg      = "#bfbdb6"
+line    = "#161a24"
+panel   = "#141821"
+
+[dark.ui]
+fg      = "#555e73"
+bg      = "#0d1017"
+line    = "#1b1f29"
+
+[dark.syntax]
+tag      = "#39bae6"
+func     = "#ffb454"
+entity   = "#59c2ff"
+string   = "#aad94c"
+regexp   = "#95e6cb"
+markup   = "#f07178"
+keyword  = "#ff8f40"
+special  = "#e6c08a"
+comment  = "#546178"
+constant = "#d2a6ff"
+operator = "#f29668"
+
+[dark.terminal]
+black          = "#3e4451"
+red            = "#f07178"
+green          = "#aad94c"
+yellow         = "#ffb454"
+blue           = "#39bae6"
+magenta        = "#d2a6ff"
+cyan           = "#95e6cb"
+white          = "#e6e1cf"
+bright_black   = "#4d5566"
+bright_red     = "#f07178"
+bright_green   = "#aad94c"
+bright_yellow  = "#ffb454"
+bright_blue    = "#39bae6"
+bright_magenta = "#d2a6ff"
+bright_cyan    = "#95e6cb"
+bright_white   = "#ffffff"
+
+[dark.vcs]
+added    = "#70bf56"
+modified = "#73b8ff"
+removed  = "#f26d78"
+
+[dark.common]
+accent = "#e6b450"
+error  = "#d95757"
+
+# ─── Mirage ──────────────────────────────────────────────────────────────────
+
+[mirage.editor]
+bg      = "#1f2430"
+fg      = "#cccac2"
+line    = "#1a1f29"
+panel   = "#282e3b"
+
+[mirage.ui]
+fg      = "#707a8c"
+bg      = "#1f2430"
+line    = "#171b24"
+
+[mirage.syntax]
+tag      = "#5ccfe6"
+func     = "#ffd173"
+entity   = "#73d0ff"
+string   = "#d5ff80"
+regexp   = "#95e6cb"
+markup   = "#f28779"
+keyword  = "#ffad66"
+special  = "#ffdfb3"
+comment  = "#6e7f97"
+constant = "#dfbfff"
+operator = "#f29e74"
+
+[mirage.terminal]
+black          = "#3e4451"
+red            = "#f28779"
+green          = "#d5ff80"
+yellow         = "#ffd173"
+blue           = "#5ccfe6"
+magenta        = "#dfbfff"
+cyan           = "#95e6cb"
+white          = "#e6e1cf"
+bright_black   = "#4d5566"
+bright_red     = "#f28779"
+bright_green   = "#d5ff80"
+bright_yellow  = "#ffd173"
+bright_blue    = "#73d0ff"
+bright_magenta = "#dfbfff"
+bright_cyan    = "#95e6cb"
+bright_white   = "#ffffff"
+
+[mirage.vcs]
+added    = "#87d96c"
+modified = "#80bfff"
+removed  = "#f27983"
+
+[mirage.common]
+accent = "#ffcc66"
+error  = "#ff6666"
