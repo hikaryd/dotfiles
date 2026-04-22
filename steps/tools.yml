@@ -36,7 +36,49 @@
       path: config/bat/config
       create: true
       force: true
+    # Thorium browser theme
+    ~/.config/thorium/ayu-dark:
+      path: config/thorium/ayu-dark
+      create: true
+      force: true
 - shell:
+    - command: |
+        # Install Zen Browser user-overrides.js and userChrome.css
+        ZEN_BASE="$HOME/Library/Application Support/zen"
+        if [[ ! -d "$ZEN_BASE/Profiles" ]]; then
+          echo "Zen Browser not found, skipping."
+          exit 0
+        fi
+        INSTALLED=0
+        for profile_dir in "$ZEN_BASE/Profiles/"*/; do
+          # Only install into profiles that have been used (have prefs.js)
+          if [[ -f "$profile_dir/prefs.js" ]]; then
+            echo "Zen profile: $(basename "$profile_dir")"
+            cp "$HOME/dots/config/zen-browser/user-overrides.js" "$profile_dir/user.js"
+            mkdir -p "$profile_dir/chrome"
+            cp "$HOME/dots/config/zen-browser/userChrome.css" "$profile_dir/chrome/userChrome.css"
+            echo "  Installed user.js + userChrome.css"
+            INSTALLED=1
+          fi
+        done
+        if [[ "$INSTALLED" -eq 0 ]]; then
+          echo "No active Zen profiles found, skipping."
+        fi
+      description: Install Zen Browser settings
+      stdout: true
+      stderr: true
+    - command: |
+        # Apply AyuGram theme — copy to tdata for auto-load
+        AYUGRAM_DIR="$HOME/Library/Application Support/AyuGram Desktop/tdata"
+        if [[ -d "$AYUGRAM_DIR" ]]; then
+          cp "$HOME/dots/config/ayugram/ayu-dark.tdesktop-theme" "$AYUGRAM_DIR/" 2>/dev/null
+          echo "AyuGram theme copied. Open the file in AyuGram to apply."
+        else
+          echo "AyuGram not found, skipping theme install"
+        fi
+      description: Copy AyuGram theme to tdata
+      stdout: true
+      stderr: true
     - command: |
         # Install yazi plugins if not already installed
         if [[ ! -d ~/.config/yazi/plugins ]]; then
