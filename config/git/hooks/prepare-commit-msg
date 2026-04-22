@@ -1,6 +1,7 @@
-COMMIT_MSG_FILE="$1"
+#!/usr/bin/env bash
 
-AI_COMMIT=$(~/dots/scripts/ai_helper --mode commit --provider x5 2>/dev/null)
+COMMIT_MSG_FILE="$1"
+COMMIT_SOURCE="$2"
 
 BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null)
 
@@ -26,6 +27,17 @@ prepend_ticket_to_file() {
 		fi
 	fi
 }
+
+# Пропускаем AI-генерацию для merge/squash/amend/template/message,
+# чтобы не затирать уже осмысленные сообщения (например, "Merge branch ...").
+case "$COMMIT_SOURCE" in
+merge | squash | commit | template | message)
+	prepend_ticket_to_file
+	exit 0
+	;;
+esac
+
+AI_COMMIT=$(~/dots/scripts/ai_helper --mode commit --provider ollama 2>/dev/null)
 
 if [ -n "$AI_COMMIT" ]; then
 	TITLE=$(printf '%s' "$AI_COMMIT" | head -n 1)
