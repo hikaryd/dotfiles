@@ -1,0 +1,220 @@
+// Ayu dark theme for AyuGram / Telegram Desktop
+// Generated from palette/ayu.toml
+
+// ── Palette ─────────────────────────────────────────────────────────────
+COLOR_BG: #0d1017;
+COLOR_BG_OVER: #161a24;
+COLOR_BG_RIPPLE: #1b1f29;
+COLOR_FG: #bfbdb6;
+COLOR_FG_DIM: #555e73;
+COLOR_ACCENT: #e6b450;
+COLOR_ACCENT_ON: #0d1017;
+COLOR_ERROR: #d95757;
+COLOR_GREEN: #aad94c;
+COLOR_RED: #f07178;
+COLOR_LINK: #59c2ff;
+COLOR_MSG_IN: #161a24;
+COLOR_MSG_OUT: #1b1f29;
+COLOR_SEL: #1b1f29;
+
+// ── Window ──────────────────────────────────────────────────────────────
+windowBg: COLOR_BG;
+windowFg: COLOR_FG;
+windowBgOver: COLOR_BG_OVER;
+windowBgRipple: COLOR_BG_RIPPLE;
+windowFgOver: COLOR_FG;
+windowSubTextFg: COLOR_FG_DIM;
+windowSubTextFgOver: COLOR_FG;
+windowBoldFg: COLOR_FG;
+windowBoldFgOver: COLOR_FG;
+windowBgActive: COLOR_ACCENT;
+windowFgActive: COLOR_ACCENT_ON;
+windowActiveTextFg: COLOR_ACCENT;
+windowShadowFg: #00000080;
+windowShadowFgFallback: COLOR_BG;
+shadowFg: #00000018;
+slideFadeOutBg: #0d1017c0;
+slideFadeOutShadowFg: #00000000;
+imageBg: COLOR_BG;
+imageBgTransparent: COLOR_BG;
+
+// ── Buttons ─────────────────────────────────────────────────────────────
+activeButtonBg: COLOR_ACCENT;
+activeButtonBgOver: COLOR_ACCENT;
+activeButtonBgRipple: COLOR_ACCENT;
+activeButtonFg: COLOR_ACCENT_ON;
+activeButtonFgOver: COLOR_ACCENT_ON;
+activeButtonSecondaryFg: COLOR_ACCENT_ON;
+activeButtonSecondaryFgOver: COLOR_ACCENT_ON;
+activeLineFg: COLOR_ACCENT;
+activeLineFgError: COLOR_ERROR;
+lightButtonBg: COLOR_BG;
+lightButtonBgOver: COLOR_BG_OVER;
+lightButtonBgRipple: COLOR_BG_RIPPLE;
+lightButtonFg: COLOR_ACCENT;
+lightButtonFgOver: COLOR_ACCENT;
+attentionButtonFg: COLOR_ERROR;
+attentionButtonFgOver: COLOR_ERROR;
+attentionButtonBgOver: COLOR_BG_OVER;
+attentionButtonBgRipple: COLOR_BG_RIPPLE;
+outlineButtonBg: COLOR_BG;
+outlineButtonBgOver: COLOR_BG_OVER;
+outlineButtonOutlineFg: COLOR_ACCENT;
+outlineButtonBgRipple: COLOR_BG_RIPPLE;
+
+// ── Menu / scroll / input ───────────────────────────────────────────────
+menuBg: COLOR_BG;
+menuBgOver: COLOR_BG_OVER;
+menuBgRipple: COLOR_BG_RIPPLE;
+menuIconFg: COLOR_FG_DIM;
+menuIconFgOver: COLOR_FG;
+menuSubmenuArrowFg: COLOR_FG_DIM;
+menuFgDisabled: COLOR_FG_DIM;
+menuSeparatorFg: COLOR_BG_OVER;
+scrollBarBg: #555e7380;
+scrollBarBgOver: #555e73cc;
+scrollBg: #00000015;
+scrollBgOver: #00000025;
+filterInputBorderFg: COLOR_ACCENT;
+filterInputActiveBg: COLOR_BG;
+filterInputInactiveBg: COLOR_BG_OVER;
+
+// ── Title ───────────────────────────────────────────────────────────────
+titleBg: COLOR_BG;
+titleBgActive: COLOR_BG;
+titleButtonBg: COLOR_BG;
+titleButtonFg: COLOR_FG_DIM;
+titleButtonBgOver: COLOR_BG_OVER;
+titleButtonFgOver: COLOR_FG;
+titleButtonCloseBgOver: COLOR_ERROR;
+titleButtonCloseFgOver: #ffffff;
+titleFg: COLOR_FG;
+titleFgActive: COLOR_FG;
+
+// ── Sidebar ─────────────────────────────────────────────────────────────
+sideBarBg: COLOR_BG;
+sideBarBgActive: COLOR_BG_OVER;
+sideBarBgRipple: COLOR_BG_RIPPLE;
+sideBarTextFg: COLOR_FG_DIM;
+sideBarTextFgActive: COLOR_ACCENT;
+sideBarIconFg: COLOR_FG_DIM;
+sideBarIconFgActive: COLOR_ACCENT;
+sideBarBadgeBg: COLOR_ACCENT;
+sideBarBadgeBgMuted: COLOR_FG_DIM;
+sideBarBadgeFg: COLOR_ACCENT_ON;
+
+// ── Dialog list ─────────────────────────────────────────────────────────
+dialogsBg: COLOR_BG;
+dialogsNameFg: COLOR_FG;
+dialogsChatIconFg: COLOR_FG_DIM;
+dialogsDateFg: COLOR_FG_DIM;
+dialogsTextFg: COLOR_FG_DIM;
+dialogsTextFgService: COLOR_ACCENT;
+dialogsDraftFg: COLOR_ERROR;
+dialogsVerifiedIconBg: COLOR_ACCENT;
+dialogsVerifiedIconFg: COLOR_ACCENT_ON;
+dialogsSendingIconFg: COLOR_FG_DIM;
+dialogsSentIconFg: COLOR_ACCENT;
+dialogsUnreadBg: COLOR_ACCENT;
+dialogsUnreadBgMuted: COLOR_FG_DIM;
+dialogsUnreadFg: COLOR_ACCENT_ON;
+dialogsBgOver: COLOR_BG_OVER;
+dialogsNameFgOver: COLOR_FG;
+dialogsChatIconFgOver: COLOR_FG_DIM;
+dialogsDateFgOver: COLOR_FG;
+dialogsTextFgOver: COLOR_FG;
+dialogsTextFgServiceOver: COLOR_ACCENT;
+dialogsDraftFgOver: COLOR_ERROR;
+dialogsUnreadBgOver: COLOR_ACCENT;
+dialogsUnreadFgOver: COLOR_ACCENT_ON;
+dialogsBgActive: COLOR_BG_RIPPLE;
+dialogsNameFgActive: COLOR_FG;
+dialogsDateFgActive: COLOR_FG;
+dialogsTextFgActive: COLOR_FG;
+dialogsTextFgServiceActive: COLOR_ACCENT;
+dialogsOnlineBadgeFg: COLOR_GREEN;
+
+// ── Chat history ────────────────────────────────────────────────────────
+topBarBg: COLOR_BG;
+emojiPanBg: COLOR_BG;
+emojiPanCategories: COLOR_BG;
+emojiPanHeaderFg: COLOR_FG_DIM;
+emojiPanHeaderBg: COLOR_BG;
+historyTextInFg: COLOR_FG;
+historyTextInFgSelected: COLOR_FG;
+historyTextOutFg: COLOR_FG;
+historyTextOutFgSelected: COLOR_FG;
+historyLinkInFg: COLOR_LINK;
+historyLinkInFgSelected: COLOR_LINK;
+historyLinkOutFg: COLOR_LINK;
+historyLinkOutFgSelected: COLOR_LINK;
+historyOutIconFg: COLOR_ACCENT;
+historyOutIconFgSelected: COLOR_ACCENT;
+
+historyPeer1NameFg: #f07178;
+historyPeer1UserpicBg: #f07178;
+historyPeer2NameFg: #aad94c;
+historyPeer2UserpicBg: #aad94c;
+historyPeer3NameFg: #ffb454;
+historyPeer3UserpicBg: #ffb454;
+historyPeer4NameFg: #39bae6;
+historyPeer4UserpicBg: #39bae6;
+historyPeer5NameFg: #d2a6ff;
+historyPeer5UserpicBg: #d2a6ff;
+historyPeer6NameFg: #95e6cb;
+historyPeer6UserpicBg: #95e6cb;
+historyPeer7NameFg: #ff8f40;
+historyPeer7UserpicBg: #ff8f40;
+historyPeer8NameFg: #59c2ff;
+historyPeer8UserpicBg: #59c2ff;
+historyPeerUserpicFg: COLOR_ACCENT_ON;
+
+// ── Message bubbles ─────────────────────────────────────────────────────
+msgInBg: COLOR_MSG_IN;
+msgInBgSelected: COLOR_SEL;
+msgOutBg: COLOR_MSG_OUT;
+msgOutBgSelected: COLOR_SEL;
+msgSelectOverlay: #e6b45040;
+msgStickerOverlay: #e6b45040;
+msgInServiceFg: COLOR_ACCENT;
+msgInServiceFgSelected: COLOR_ACCENT;
+msgOutServiceFg: COLOR_ACCENT;
+msgOutServiceFgSelected: COLOR_ACCENT;
+msgInShadow: #00000020;
+msgInShadowSelected: #00000030;
+msgOutShadow: #00000020;
+msgOutShadowSelected: #00000030;
+msgInDateFg: COLOR_FG_DIM;
+msgInDateFgSelected: COLOR_FG;
+msgOutDateFg: COLOR_FG_DIM;
+msgOutDateFgSelected: COLOR_FG;
+msgInMonoFg: #aad94c;
+msgOutMonoFg: #aad94c;
+msgInReplyBarColor: COLOR_ACCENT;
+msgOutReplyBarColor: COLOR_ACCENT;
+msgWaveformInActive: COLOR_ACCENT;
+msgWaveformInInactive: COLOR_FG_DIM;
+msgWaveformOutActive: COLOR_ACCENT;
+msgWaveformOutInactive: COLOR_FG_DIM;
+
+// ── Compose area ────────────────────────────────────────────────────────
+historyComposeAreaBg: COLOR_BG;
+historyComposeAreaFg: COLOR_FG;
+historyComposeAreaFgService: COLOR_FG_DIM;
+historyComposeIconFg: COLOR_FG_DIM;
+historyComposeIconFgOver: COLOR_FG;
+historySendIconFg: COLOR_ACCENT;
+historySendIconFgOver: COLOR_ACCENT;
+historyPinnedBg: COLOR_BG;
+historyReplyBg: COLOR_BG;
+historyReplyCancelFg: COLOR_FG_DIM;
+historyReplyCancelFgOver: COLOR_ERROR;
+
+// ── Misc ────────────────────────────────────────────────────────────────
+profileBg: COLOR_BG;
+profileStatusFgOver: COLOR_ACCENT;
+notificationBg: COLOR_BG;
+callBg: #0d1017e0;
+callNameFg: COLOR_FG;
+callAnswerBg: COLOR_GREEN;
+callHangupBg: COLOR_ERROR;

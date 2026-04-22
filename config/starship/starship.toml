@@ -1,7 +1,7 @@
 # Конфигурация Starship
 
 # Тема
-palette = "catppuccin_mocha"
+palette = "ayu_dark"
 
 # Формат
 format = "$os$username${custom.is_folder_config}$directory$git_branch$c$rust$golang$nodejs$php$java$kotlin$haskell$lua$python$cmake$docker_context$meson$cmd_duration$line_break$character"
@@ -97,8 +97,9 @@ style = "fg:color_lavender bg:color_mantle"
 
 [python]
 symbol = " "
-format = "[${symbol}${version}]($style) "
+format = "[${symbol}${version}( $virtualenv)]($style) "
 style = "fg:color_lavender"
+detect_env_vars = ['VIRTUAL_ENV']
 
 [rust]
 symbol = ""
@@ -144,31 +145,31 @@ format = '''
 format = "> "
 disabled = false
 
-# Палитра Catppuccin Mocha
-[palettes.catppuccin_mocha]
-color_rosewater = "#f5e0dc"
-color_flamingo = "#f2cdcd"
-color_pink = "#f5c2e7"
-color_mauve = "#cba6f7"
-color_red = "#f38ba8"
-color_maroon = "#eba0ac"
-color_peach = "#fab387"
-color_yellow = "#f9e2af"
-color_green = "#a6e3a1"
-color_teal = "#94e2d5"
-color_sky = "#89dceb"
-color_sapphire = "#74c7ec"
-color_blue = "#89b4fa"
-color_lavender = "#b4befe"
-color_text = "#cdd6f4"
-color_subtext1 = "#bac2de"
-color_subtext0 = "#a6adc8"
-color_overlay2 = "#9399b2"
-color_overlay1 = "#7f849c"
-color_overlay0 = "#6c7086"
-color_surface2 = "#585b70"
-color_surface1 = "#45475a"
-color_surface0 = "#313244"
-color_base = "#1e1e2e"
-color_mantle = "#0000000"
-color_crust = "#11111b"
+# Палитра Ayu Dark
+[palettes.ayu_dark]
+color_rosewater = "#f07178"
+color_flamingo = "#f29668"
+color_pink = "#f07178"
+color_mauve = "#ff8f40"
+color_red = "#f07178"
+color_maroon = "#f07178"
+color_peach = "#f29668"
+color_yellow = "#ffb454"
+color_green = "#aad94c"
+color_teal = "#95e6cb"
+color_sky = "#39bae6"
+color_sapphire = "#59c2ff"
+color_blue = "#39bae6"
+color_lavender = "#d2a6ff"
+color_text = "#bfbdb6"
+color_subtext1 = "#bfbdb6"
+color_subtext0 = "#555e73"
+color_overlay2 = "#555e73"
+color_overlay1 = "#555e73"
+color_overlay0 = "#555e73"
+color_surface2 = "#4d5566"
+color_surface1 = "#3e4451"
+color_surface0 = "#1b1f29"
+color_base = "#0d1017"
+color_mantle = "#0d1017"
+color_crust = "#0d1017"

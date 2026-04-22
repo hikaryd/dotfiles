@@ -1,61 +1,63 @@
+# Ayu dark theme for Nushell
+# Generated from palette/ayu.toml
+
 let theme = {
-  rosewater: "#f5e0dc"
-  flamingo: "#f2cdcd"
-  pink: "#f5c2e7"
-  mauve: "#cba6f7"
-  red: "#f38ba8"
-  maroon: "#eba0ac"
-  peach: "#fab387"
-  yellow: "#f9e2af"
-  green: "#a6e3a1"
-  teal: "#94e2d5"
-  sky: "#89dceb"
-  sapphire: "#74c7ec"
-  blue: "#89b4fa"
-  lavender: "#b4befe"
-  text: "#cdd6f4"
-  subtext1: "#bac2de"
-  subtext0: "#a6adc8"
-  overlay2: "#9399b2"
-  overlay1: "#7f849c"
-  overlay0: "#6c7086"
-  surface2: "#585b70"
-  surface1: "#45475a"
-  surface0: "#313244"
-  base: "#1e1e2e"
-  mantle: "#181825"
-  crust: "#11111b"
+  red: "#f07178"
+  green: "#aad94c"
+  yellow: "#ffb454"
+  blue: "#39bae6"
+  magenta: "#d2a6ff"
+  cyan: "#95e6cb"
+  white: "#e6e1cf"
+  black: "#3e4451"
+  text: "#bfbdb6"
+  accent: "#e6b450"
+  dim: "#555e73"
+  line: "#1b1f29"
+  bg: "#0d1017"
+  tag: "#39bae6"
+  func: "#ffb454"
+  entity: "#59c2ff"
+  string: "#aad94c"
+  regexp: "#95e6cb"
+  markup: "#f07178"
+  keyword: "#ff8f40"
+  special: "#e6c08a"
+  comment: "#546178"
+  constant: "#d2a6ff"
+  operator: "#f29668"
+  error: "#d95757"
 }
 
 let scheme = {
-  recognized_command: $theme.blue
+  recognized_command: $theme.entity
   unrecognized_command: $theme.text
-  constant: $theme.peach
-  punctuation: $theme.overlay2
-  operator: $theme.sky
-  string: $theme.green
-  virtual_text: $theme.surface2
-  variable: { fg: $theme.flamingo attr: i }
-  filepath: $theme.yellow
+  constant: $theme.constant
+  punctuation: $theme.dim
+  operator: $theme.operator
+  string: $theme.string
+  virtual_text: $theme.comment
+  variable: { fg: $theme.special attr: i }
+  filepath: $theme.func
 }
 
 $env.config.color_config = {
-  separator: { fg: $theme.surface2 attr: b }
-  leading_trailing_space_bg: { fg: $theme.lavender attr: u }
+  separator: { fg: $theme.dim attr: b }
+  leading_trailing_space_bg: { fg: $theme.accent attr: u }
   header: { fg: $theme.text attr: b }
   row_index: $scheme.virtual_text
   record: $theme.text
   list: $theme.text
   hints: $scheme.virtual_text
-  search_result: { fg: $theme.base bg: $theme.yellow }
-  shape_closure: $theme.teal
-  closure: $theme.teal
-  shape_flag: { fg: $theme.maroon attr: i }
+  search_result: { fg: $theme.bg bg: $theme.accent }
+  shape_closure: $theme.regexp
+  closure: $theme.regexp
+  shape_flag: { fg: $theme.markup attr: i }
   shape_matching_brackets: { attr: u }
   shape_garbage: $theme.red
-  shape_keyword: $theme.mauve
-  shape_match_pattern: $theme.green
-  shape_signature: $theme.teal
+  shape_keyword: $theme.keyword
+  shape_match_pattern: $theme.string
+  shape_signature: $theme.regexp
   shape_table: $scheme.punctuation
   cell-path: $scheme.punctuation
   shape_list: $scheme.punctuation
@@ -65,53 +67,53 @@ $env.config.color_config = {
   empty: { attr: n }
   filesize: {||
     if $in < 1kb {
-      $theme.teal
+      $theme.cyan
     } else if $in < 10kb {
       $theme.green
     } else if $in < 100kb {
       $theme.yellow
     } else if $in < 10mb {
-      $theme.peach
+      $theme.func
     } else if $in < 100mb {
-      $theme.maroon
+      $theme.markup
     } else if $in < 1gb {
       $theme.red
     } else {
-      $theme.mauve
+      $theme.keyword
     }
   }
   duration: {||
     if $in < 1day {
-      $theme.teal
+      $theme.cyan
     } else if $in < 1wk {
       $theme.green
     } else if $in < 4wk {
       $theme.yellow
     } else if $in < 12wk {
-      $theme.peach
+      $theme.func
     } else if $in < 24wk {
-      $theme.maroon
+      $theme.markup
     } else if $in < 52wk {
       $theme.red
     } else {
-      $theme.mauve
+      $theme.keyword
     }
   }
   date: {|| (date now) - $in |
     if $in < 1day {
-      $theme.teal
+      $theme.cyan
     } else if $in < 1wk {
       $theme.green
     } else if $in < 4wk {
       $theme.yellow
     } else if $in < 12wk {
-      $theme.peach
+      $theme.func
     } else if $in < 24wk {
-      $theme.maroon
+      $theme.markup
     } else if $in < 52wk {
       $theme.red
     } else {
-      $theme.mauve
+      $theme.keyword
     }
   }
   shape_external: $scheme.unrecognized_command
@@ -119,11 +121,11 @@ $env.config.color_config = {
   shape_external_resolved: $scheme.recognized_command
   shape_block: $scheme.recognized_command
   block: $scheme.recognized_command
-  shape_custom: $theme.pink
-  custom: $theme.pink
-  background: $theme.base
+  shape_custom: $theme.tag
+  custom: $theme.tag
+  background: $theme.bg
   foreground: $theme.text
-  cursor: { bg: $theme.rosewater fg: $theme.base }
+  cursor: { bg: $theme.accent fg: $theme.bg }
   shape_range: $scheme.operator
   range: $scheme.operator
   shape_pipe: $scheme.operator
@@ -148,19 +150,19 @@ $env.config.color_config = {
   shape_literal: $scheme.constant
   string: $scheme.string
   shape_string: $scheme.string
-  shape_string_interpolation: $theme.flamingo
+  shape_string_interpolation: $theme.operator
   shape_raw_string: $scheme.string
   shape_externalarg: $scheme.string
 }
 $env.config.highlight_resolved_externals = true
 $env.config.explore = {
-    status_bar_background: { fg: $theme.text, bg: $theme.mantle },
+    status_bar_background: { fg: $theme.text, bg: $theme.bg },
     command_bar_text: { fg: $theme.text },
-    highlight: { fg: $theme.base, bg: $theme.yellow },
+    highlight: { fg: $theme.bg, bg: $theme.accent },
     status: {
         error: $theme.red,
         warn: $theme.yellow,
         info: $theme.blue,
     },
-    selected_cell: { bg: $theme.blue fg: $theme.base },
+    selected_cell: { bg: $theme.entity fg: $theme.bg },
 }

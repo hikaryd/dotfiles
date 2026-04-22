@@ -1,10 +1,10 @@
-theme = Vesper
+theme = Ayu
 
 font-family = Iosevka
 font-size = 14
 adjust-cell-height = 45%
 
-background = 0B0E14
+background = 0d1017
 background-opacity = 0.95
 background-blur = true
 
@@ -22,7 +22,6 @@ cursor-text = cell-background
 
 mouse-hide-while-typing = true
 
-command = /bin/bash --login
 shell-integration-features = no-cursor
 
 confirm-close-surface = false

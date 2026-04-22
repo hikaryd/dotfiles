@@ -32,7 +32,7 @@ return {
 		toggle = {
 			enabled = true,
 		},
-		image = { enabled = true },
+		image = { enabled = false },
 		picker = {
 			sources = {
 				explorer = {

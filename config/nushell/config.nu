@@ -66,7 +66,7 @@ $env.config = {
 }
 
 # Тема
-source ~/.config/nushell/catppuccin_mocha.nu
+source ~/.config/nushell/ayu.nu
 
 # Пользовательские команды
 def extract [file: string] {

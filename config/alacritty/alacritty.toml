@@ -29,37 +29,37 @@ unfocused_hollow = true
 [mouse]
 hide_when_typing = true
 
-# Vesper color scheme
+# Ayu dark color scheme
 [colors.primary]
-background = "#0B0E14"
-foreground = "#ffffff"
+background = "#0d1017"
+foreground = "#bfbdb6"
 
 [colors.cursor]
-cursor = "#acb1ab"
-text = "#ffffff"
+cursor = "#e6b450"
+text = "#0d1017"
 
 [colors.selection]
-background = "#988049"
-text = "#b9beb8"
+background = "#1b1f29"
+text = "#bfbdb6"
 
 [colors.normal]
-black = "#101010"
-red = "#f5a191"
-green = "#90b99f"
-yellow = "#e6b99d"
-blue = "#aca1cf"
-magenta = "#e29eca"
-cyan = "#ea83a5"
-white = "#a0a0a0"
+black = "#3e4451"
+red = "#f07178"
+green = "#aad94c"
+yellow = "#ffb454"
+blue = "#39bae6"
+magenta = "#d2a6ff"
+cyan = "#95e6cb"
+white = "#e6e1cf"
 
 [colors.bright]
-black = "#7e7e7e"
-red = "#ff8080"
-green = "#99ffe4"
-yellow = "#ffc799"
-blue = "#b9aeda"
-magenta = "#ecaad6"
-cyan = "#f591b2"
+black = "#4d5566"
+red = "#f07178"
+green = "#aad94c"
+yellow = "#ffb454"
+blue = "#39bae6"
+magenta = "#d2a6ff"
+cyan = "#95e6cb"
 white = "#ffffff"
 
 [keyboard]

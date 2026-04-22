@@ -9,3 +9,9 @@ result
 result-*
 .pre-commit-config.yaml
 requirements
+
+# Node lockfile (Python-only workflow — never committed)
+package-lock.json
+
+# OMC artifacts (session data, cache, project memory, state)
+.omc/

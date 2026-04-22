@@ -21,17 +21,14 @@ stack_offset = 0.0
 default_orientation = "horizontal"
 
 [settings.layout.gaps.outer]
-# top = 45
-# top = 5
-# top = 45
-top = 5
-left = 5
-bottom = 5
-right = 5
+top = 0
+left = 0
+bottom = 0
+right = 0
 
 [settings.layout.gaps.inner]
-horizontal = 10
-vertical = 10
+horizontal = 0
+vertical = 0
 
 [settings.ui.menu_bar]
 enabled = false
@@ -70,39 +67,26 @@ preserve_focus_per_workspace = true
 workspace_names = ["1", "2", "3", "4", "e", "q", "t", "w", "d"]
 
 app_rules = [
-  { app_name = "Safari", title_regex = "^(General|(Tab|Password|Website|Extension)s|AutoFill|Se(arch|curity)|Privacy|Advance)$", floating = true },
-  { app_name = "Safari", title_substring = "Preferences", floating = true },
-  { app_name = "Safari", title_substring = "Настройки", floating = true },
+  # Floating: настройки браузеров (объединённые regex + workspace)
+  { app_name = "Safari", title_regex = "^(General|(Tab|Password|Website|Extension)s|AutoFill|Se(arch|curity)|Privacy|Advance|Preferences|Настройки)$", floating = true, workspace = "1" },
+  { app_name = "Brave", title_regex = "^(General|Tabs?|Passwords?|Websites?|Extensions?|AutoFill|Search|Security|Privacy|Advance|Preferences|Settings)$", floating = true, workspace = "1" },
+  { app_name = "Arc", title_regex = "^(General|(Tab|Password|Website|Extension)s|AutoFill|Se(arch|curity)|Privacy|Advance|Preferences|Settings)$", floating = true, workspace = "1" },
+  { app_name = "Helium", title_regex = "^(General|(Tab|Password|Website|Extension)s|AutoFill|Se(arch|security)|Privacy|Advance)$", floating = true, workspace = "1" },
 
-  { app_name = "Brave", title_regex = "^(General|(Tab|Password|Website|Extension)s|AutoFill|Se(arch|curity)|Privacy|Advance)$", floating = true },
-  { app_name = "Brave", title_substring = "Preferences", floating = true },
-  { app_name = "Brave", title_substring = "Settings", floating = true },
-
-  { app_name = "Arc", title_regex = "^(General|(Tab|Password|Website|Extension)s|AutoFill|Se(arch|curity)|Privacy|Advance)$", floating = true },
-  { app_name = "Arc", title_substring = "Preferences", floating = true },
-  { app_name = "Arc", title_substring = "Settings", floating = true },
-
-  { app_name = "Helium", title_regex = "^(General|(Tab|Password|Website|Extension)s|AutoFill|Se(arch|security)|Privacy|Advance)$", floating = true },
-
+  # Floating: системные
   { app_name = "1Password", floating = true },
-  { app_name = "Typora", title_substring = "Открыть", floating = true },
-  { app_id = "Finder", floating = true },
-
+  { app_name = "Typora", title_substring = "Открыть", floating = true, workspace = "4" },
+  { app_id = "com.apple.finder", floating = true },
   { app_name = "Cisco Secure Client", floating = true },
   { app_name = "v2RayTun", floating = true },
-
   { app_name = "Raycast", floating = true },
   { app_name = "Пункт управления", floating = true },
   { app_name = "Control Center", floating = true },
   { app_name = "AlDente", floating = true },
 
   # "1": браузеры и Comet
-  { app_name = "Safari", workspace = "1" },
-  { app_name = "Arc", workspace = "1" },
   { app_name = "Ora", workspace = "1" },
   { app_name = "Comet", workspace = "1" },
-  { app_name = "Brave", workspace = "1" },
-  { app_name = "Helium", workspace = "1" },
   { app_name = "Thorium", workspace = "1" },
 
   # "2": Misc
@@ -118,7 +102,6 @@ app_rules = [
   { app_name = "Spotify", workspace = "3" },
 
   # "4": документы/ноуты
-  { app_name = "Typora", workspace = "4" },
   { app_name = "Pages", workspace = "4" },
   { app_name = "UpNote", workspace = "4" },
 
@@ -147,6 +130,7 @@ app_rules = [
 
   # "d": терминал
   { app_name = "Ghostty", workspace = "d" },
+  { app_name = "Wezterm", workspace = "d" },
   { app_name = "Alacritty", workspace = "d" },
 ]
 
