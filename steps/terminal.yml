@@ -58,6 +58,15 @@
       path: config/fastfetch/config.jsonc
       create: true
       force: true
+    # Nushell
+    ~/.config/nushell/config.nu:
+      path: config/nushell/config.nu
+      create: true
+      force: true
+    ~/.config/nushell/ayu.nu:
+      path: config/nushell/ayu.nu
+      create: true
+      force: true
     # Sesh
     ~/.config/sesh/sesh.toml:
       path: config/sesh/sesh.toml

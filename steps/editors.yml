@@ -9,8 +9,8 @@
       path: config/fresh/config.json
       create: true
       force: true
-    ~/.config/fresh/themes/catppuccin-mocha.json:
-      path: config/fresh/themes/catppuccin-mocha.json
+    ~/.config/fresh/themes/ayu-dark.json:
+      path: config/fresh/themes/ayu-dark.json
       create: true
       force: true
     ~/.config/fresh/plugins/auto_vi_mode.ts:
