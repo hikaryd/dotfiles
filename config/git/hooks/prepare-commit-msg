@@ -5,12 +5,37 @@ COMMIT_SOURCE="$2"
 
 BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null)
 
-TICKET=$(printf '%s' "$BRANCH" | grep -Eoi 'ATS-[0-9]+' | head -n 1)
+# Определяем префикс тикета по имени текущей директории (проекта).
+# Поддерживаются имена вида "<project>-<branch>" (например: aihr_backend-feature-123...).
+PROJECT_DIR=$(basename "$PWD")
+case "$PROJECT_DIR" in
+aihr_backend*) PROJECT_PREFIX="PHTN" ;;
+podbor-api*) PROJECT_PREFIX="ATS" ;;
+*) PROJECT_PREFIX="" ;;
+esac
 
-if [ -z "$TICKET" ]; then
-	NUM=$(printf '%s' "$BRANCH" | grep -Eo '[0-9]+' | head -n 1)
-	if [ -n "$NUM" ]; then
-		TICKET="ATS-$NUM"
+TICKET=""
+if [ -n "$PROJECT_PREFIX" ]; then
+	# Ищем <PREFIX>-NNN сразу в бранче,
+	# иначе берём первую последовательность цифр из бранча или директории.
+	TICKET=$(printf '%s' "$BRANCH" | grep -Eoi "${PROJECT_PREFIX}-[0-9]+" | head -n 1)
+	if [ -z "$TICKET" ]; then
+		NUM=$(printf '%s' "$BRANCH" | grep -Eo '[0-9]+' | head -n 1)
+		if [ -z "$NUM" ]; then
+			NUM=$(printf '%s' "$PROJECT_DIR" | grep -Eo '[0-9]+' | head -n 1)
+		fi
+		if [ -n "$NUM" ]; then
+			TICKET="${PROJECT_PREFIX}-${NUM}"
+		fi
+	fi
+else
+	# Фолбэк: старое поведение — ATS-NNN из бранча.
+	TICKET=$(printf '%s' "$BRANCH" | grep -Eoi 'ATS-[0-9]+' | head -n 1)
+	if [ -z "$TICKET" ]; then
+		NUM=$(printf '%s' "$BRANCH" | grep -Eo '[0-9]+' | head -n 1)
+		if [ -n "$NUM" ]; then
+			TICKET="ATS-$NUM"
+		fi
 	fi
 fi
 
@@ -28,16 +53,21 @@ prepend_ticket_to_file() {
 	fi
 }
 
-# Пропускаем AI-генерацию для merge/squash/amend/template/message,
-# чтобы не затирать уже осмысленные сообщения (например, "Merge branch ...").
+# Для merge полностью оставляем сообщение как есть (без AI и без тикета).
+if [ "$COMMIT_SOURCE" = "merge" ]; then
+	exit 0
+fi
+
+# Для остальных "неинтерактивных" источников не запускаем AI,
+# но тикет допишем, если он нужен.
 case "$COMMIT_SOURCE" in
-merge | squash | commit | template | message)
+squash | commit | template | message)
 	prepend_ticket_to_file
 	exit 0
 	;;
 esac
 
-AI_COMMIT=$(~/dots/scripts/ai_helper --mode commit --provider ollama 2>/dev/null)
+AI_COMMIT=$(~/dots/scripts/ai_helper --mode commit --provider x5 2>/dev/null)
 
 if [ -n "$AI_COMMIT" ]; then
 	TITLE=$(printf '%s' "$AI_COMMIT" | head -n 1)

@@ -24,9 +24,9 @@ gui:
 customCommands:
   - key: "C"
     command: "git commit"
-    description: "Коммит (AI-сообщение через локальную Gemma + nvim)"
+    description: "Коммит с AI-сообщением (X5) + nvim"
     output: "terminal"
-    loadingText: "Генерирую сообщение локальной Gemma..."
+    loadingText: "Генерирую AI-сообщение (X5)..."
     context: "files"
   - key: "M"
     command: "git commit --no-verify"
