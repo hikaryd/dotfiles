@@ -1,0 +1,258 @@
+{
+  "name": "ayu-dark",
+  "editor": {
+    "bg": [
+      13,
+      16,
+      23
+    ],
+    "fg": [
+      191,
+      189,
+      182
+    ],
+    "cursor": [
+      230,
+      180,
+      80
+    ],
+    "selection_bg": [
+      27,
+      31,
+      41
+    ],
+    "current_line_bg": [
+      22,
+      26,
+      36
+    ],
+    "line_number_fg": [
+      85,
+      94,
+      115
+    ],
+    "line_number_bg": [
+      13,
+      16,
+      23
+    ]
+  },
+  "ui": {
+    "tab_active_fg": [
+      13,
+      16,
+      23
+    ],
+    "tab_active_bg": [
+      230,
+      180,
+      80
+    ],
+    "tab_inactive_fg": [
+      85,
+      94,
+      115
+    ],
+    "tab_inactive_bg": [
+      27,
+      31,
+      41
+    ],
+    "tab_separator_bg": [
+      13,
+      16,
+      23
+    ],
+    "status_bar_fg": [
+      13,
+      16,
+      23
+    ],
+    "status_bar_bg": [
+      230,
+      180,
+      80
+    ],
+    "prompt_fg": [
+      13,
+      16,
+      23
+    ],
+    "prompt_bg": [
+      170,
+      217,
+      76
+    ],
+    "prompt_selection_fg": [
+      191,
+      189,
+      182
+    ],
+    "prompt_selection_bg": [
+      89,
+      194,
+      255
+    ],
+    "popup_border_fg": [
+      85,
+      94,
+      115
+    ],
+    "popup_bg": [
+      27,
+      31,
+      41
+    ],
+    "popup_selection_bg": [
+      22,
+      26,
+      36
+    ],
+    "popup_text_fg": [
+      191,
+      189,
+      182
+    ],
+    "suggestion_bg": [
+      27,
+      31,
+      41
+    ],
+    "suggestion_selected_bg": [
+      22,
+      26,
+      36
+    ],
+    "help_bg": [
+      13,
+      16,
+      23
+    ],
+    "help_fg": [
+      191,
+      189,
+      182
+    ],
+    "help_key_fg": [
+      149,
+      230,
+      203
+    ],
+    "help_separator_fg": [
+      85,
+      94,
+      115
+    ],
+    "help_indicator_fg": [
+      240,
+      113,
+      120
+    ],
+    "help_indicator_bg": [
+      13,
+      16,
+      23
+    ],
+    "split_separator_fg": [
+      85,
+      94,
+      115
+    ]
+  },
+  "search": {
+    "match_bg": [
+      230,
+      180,
+      80
+    ],
+    "match_fg": [
+      13,
+      16,
+      23
+    ]
+  },
+  "diagnostic": {
+    "error_fg": [
+      217,
+      87,
+      87
+    ],
+    "error_bg": [
+      13,
+      16,
+      23
+    ],
+    "warning_fg": [
+      255,
+      180,
+      84
+    ],
+    "warning_bg": [
+      13,
+      16,
+      23
+    ],
+    "info_fg": [
+      57,
+      186,
+      230
+    ],
+    "info_bg": [
+      13,
+      16,
+      23
+    ],
+    "hint_fg": [
+      85,
+      94,
+      115
+    ],
+    "hint_bg": [
+      13,
+      16,
+      23
+    ]
+  },
+  "syntax": {
+    "keyword": [
+      255,
+      143,
+      64
+    ],
+    "string": [
+      170,
+      217,
+      76
+    ],
+    "comment": [
+      84,
+      97,
+      120
+    ],
+    "function": [
+      255,
+      180,
+      84
+    ],
+    "type": [
+      89,
+      194,
+      255
+    ],
+    "variable": [
+      191,
+      189,
+      182
+    ],
+    "constant": [
+      210,
+      166,
+      255
+    ],
+    "operator": [
+      242,
+      150,
+      104
+    ]
+  }
+}

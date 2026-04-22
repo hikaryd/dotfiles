@@ -5,6 +5,7 @@
 # --- Environment ---
 export EDITOR="nvim"
 export VISUAL="nvim"
+export OPENAI_BASE_URL="https://gateway.ai.cloudflare.com/v1/1a911fb4ac31b7d5e7b5a60fb08aa48f/aihr-proxy/openai"
 
 # PATH (typeset -U removes duplicates)
 typeset -U path
@@ -51,7 +52,7 @@ zstyle ':completion:*' cache-path "$HOME/.zcompcache"
 
 # --- Autoloaded functions (lazy — loaded only on first call) ---
 fpath=("$HOME/.config/zsh/functions" $fpath)
-autoload -Uz extract kafka-consume kafka-produce
+autoload -Uz extract kafka-consume kafka-produce tp
 
 # --- Key bindings ---
 bindkey -e
@@ -72,7 +73,6 @@ alias ..='cd ..'
 alias ...='cd ../..'
 alias ....='cd ../../..'
 
-alias fg='froggit'
 alias bu='brew upgrade --cask --greedy'
 alias deploy-dev='~/dots/scripts/deploy-dev.sh'
 alias speedtest='networkquality'
@@ -127,3 +127,4 @@ eval "$(zoxide init zsh)"
   source /opt/homebrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh
 [[ -f /opt/homebrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ]] && \
   source /opt/homebrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+export PATH="$HOME/.local/bin:$PATH"

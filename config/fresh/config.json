@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "theme": "catppuccin-mocha",
+  "theme": "ayu-dark",
   "check_for_updates": true,
   "editor": {
     "tab_size": 4,

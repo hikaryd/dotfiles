@@ -1,0 +1,101 @@
+{
+  "manifest_version": 3,
+  "version": "1.0",
+  "name": "Ayu Dark",
+  "description": "Ayu dark theme \u2014 generated from palette/ayu.toml",
+  "theme": {
+    "colors": {
+      "frame": [
+        13,
+        16,
+        23
+      ],
+      "frame_inactive": [
+        13,
+        16,
+        23
+      ],
+      "frame_incognito": [
+        13,
+        16,
+        23
+      ],
+      "frame_incognito_inactive": [
+        13,
+        16,
+        23
+      ],
+      "toolbar": [
+        22,
+        26,
+        36
+      ],
+      "tab_text": [
+        191,
+        189,
+        182
+      ],
+      "tab_background_text": [
+        85,
+        94,
+        115
+      ],
+      "tab_background_text_inactive": [
+        85,
+        94,
+        115
+      ],
+      "bookmark_text": [
+        191,
+        189,
+        182
+      ],
+      "ntp_background": [
+        13,
+        16,
+        23
+      ],
+      "ntp_text": [
+        191,
+        189,
+        182
+      ],
+      "ntp_link": [
+        230,
+        180,
+        80
+      ],
+      "ntp_header": [
+        27,
+        31,
+        41
+      ],
+      "button_background": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "omnibox_background": [
+        13,
+        16,
+        23
+      ],
+      "omnibox_text": [
+        191,
+        189,
+        182
+      ]
+    },
+    "tints": {
+      "frame_inactive": [
+        -1,
+        -1,
+        0.7
+      ]
+    },
+    "properties": {
+      "ntp_background_alignment": "center"
+    }
+  }
+}

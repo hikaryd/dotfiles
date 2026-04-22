@@ -24,18 +24,54 @@ if has_resurrect then
 end
 
 -- =============================================================================
+-- Plugin: smart_workspace_switcher (fuzzy workspace picker with zoxide)
+-- =============================================================================
+local has_switcher, workspace_switcher = pcall(wezterm.plugin.require, "https://github.com/MLFlexer/smart_workspace_switcher.wezterm")
+
+if has_switcher then
+	workspace_switcher.zoxide_path = "/opt/homebrew/bin/zoxide"
+end
+
+-- =============================================================================
+-- Plugin integration: resurrect + smart_workspace_switcher
+-- =============================================================================
+if has_resurrect and has_switcher then
+	-- Save current workspace state before switching away
+	wezterm.on("smart_workspace_switcher.workspace_switcher.selected", function(window, path, label)
+		local state = resurrect.workspace_state.get_workspace_state()
+		resurrect.state_manager.save_state(state)
+	end)
+
+	-- Restore workspace state when entering a new workspace via switcher
+	wezterm.on("smart_workspace_switcher.workspace_switcher.created", function(window, path, label)
+		local state = resurrect.state_manager.load_state(label, "workspace")
+		if state then
+			resurrect.workspace_state.restore_workspace(state, {
+				window = window,
+				relative = true,
+				restore_text = true,
+				on_pane_restore = resurrect.tab_state.default_on_pane_restore,
+			})
+		end
+	end)
+end
+
+-- =============================================================================
 -- Appearance (from Ghostty config)
 -- =============================================================================
-config.color_scheme = "Catppuccin Mocha"
+-- colors from palette/ayu.toml (dark)
 config.colors = {
-	background = "#0B0E14",
-	cursor_bg = "#cdd6f4",
-	cursor_fg = "#0B0E14",
-	cursor_border = "#cdd6f4",
+	background = "#0d1017",
+	foreground = "#bfbdb6",
+	cursor_bg = "#e6b450",
+	cursor_fg = "#0d1017",
+	cursor_border = "#e6b450",
+	ansi = { "#3e4451", "#f07178", "#aad94c", "#ffb454", "#39bae6", "#d2a6ff", "#95e6cb", "#e6e1cf" },
+	brights = { "#4d5566", "#f07178", "#aad94c", "#ffb454", "#39bae6", "#d2a6ff", "#95e6cb", "#ffffff" },
 	tab_bar = {
-		background = "#0B0E14",
-		new_tab = { bg_color = "#0B0E14", fg_color = "#585b70" },
-		new_tab_hover = { bg_color = "#0B0E14", fg_color = "#FFC799" },
+		background = "#0d1017",
+		new_tab = { bg_color = "#0d1017", fg_color = "#555e73" },
+		new_tab_hover = { bg_color = "#0d1017", fg_color = "#e6b450" },
 	},
 }
 config.font = wezterm.font("Iosevka")
@@ -75,9 +111,9 @@ config.tab_max_width = 32
 config.status_update_interval = 500
 
 local C = {
-	bg = "#0B0E14",
-	active = "#FFC799",
-	dim = "#585b70",
+	bg = "#0d1017",
+	active = "#e6b450",
+	dim = "#555e73",
 }
 
 -- =============================================================================
@@ -89,17 +125,6 @@ config.default_prog = { "/opt/homebrew/bin/zsh", "-l" }
 -- Leader key: Ctrl-A (replaces tmux prefix)
 -- =============================================================================
 config.leader = { key = "a", mods = "CTRL", timeout_milliseconds = 1000 }
-
--- =============================================================================
--- Workspaces (replaces sesh.toml named sessions)
--- =============================================================================
-local workspaces = {
-	{ name = "dots", cwd = home .. "/dots" },
-	{ name = "ods", cwd = home .. "/Documents/dev/operational-data-store" },
-	{ name = "bff", cwd = home .. "/Documents/dev/bff" },
-	{ name = "jobboard-scraper", cwd = home .. "/Documents/dev/jobboard-scraper" },
-	{ name = "x5-podbor-ods", cwd = home .. "/Documents/dev/x5-podbor-ods" },
-}
 
 -- =============================================================================
 -- State tracking (last tab / last workspace)
@@ -269,15 +294,6 @@ local function switch_to_last_tab(window, pane)
 	end
 end
 
-local function switch_to_last_workspace(window, pane)
-	local target = last_ws[window:window_id()]
-	if target then
-		window:perform_action(act.SwitchToWorkspace({ name = target }), pane)
-	else
-		window:toast_notification("WezTerm", "No previous workspace", nil, 2000)
-	end
-end
-
 local function switch_workspace_relative(direction)
 	return wezterm.action_callback(function(window, pane)
 		local names = mux.get_workspace_names()
@@ -295,66 +311,57 @@ local function switch_workspace_relative(direction)
 	end)
 end
 
-local function workspace_picker(window, pane)
-	local choices = {}
-	local seen = {}
-
-	-- 1. Active workspaces (marked with *)
-	for _, name in ipairs(mux.get_workspace_names()) do
-		seen[name] = true
-		table.insert(choices, { id = name, label = name .. "  *" })
+local function kill_current_workspace(window, pane)
+	local names = mux.get_workspace_names()
+	if #names < 2 then
+		window:toast_notification("WezTerm", "Last workspace — can't delete", nil, 3000)
+		return
 	end
 
-	-- 2. Predefined workspaces from config
-	for _, ws in ipairs(workspaces) do
-		if not seen[ws.name] then
-			seen[ws.name] = true
-			table.insert(choices, { id = ws.cwd, label = ws.name })
-		end
-	end
+	local current = window:active_workspace()
 
-	-- 3. Scan ~/Documents/dev/ for project directories
-	local dev_dir = home .. "/Documents/dev"
-	local ok, dirs = pcall(wezterm.read_dir, dev_dir)
-	if ok then
-		for _, full_path in ipairs(dirs) do
-			local name = full_path:match("([^/]+)$")
-			if name and not seen[name] then
-				seen[name] = true
-				table.insert(choices, { id = full_path, label = name })
+	-- Collect all pane IDs in current workspace
+	local pane_ids = {}
+	for _, mux_win in ipairs(mux.all_windows()) do
+		if mux_win:get_workspace() == current then
+			for _, tab in ipairs(mux_win:tabs()) do
+				for _, p in ipairs(tab:panes()) do
+					table.insert(pane_ids, p:pane_id())
+				end
 			end
 		end
 	end
 
-	window:perform_action(
-		act.InputSelector({
-			action = wezterm.action_callback(function(win, p, id, label)
-				if not id then
-					return
-				end
-				local name = label:gsub("  %*$", "")
-				-- Active workspace — just switch
-				for _, n in ipairs(mux.get_workspace_names()) do
-					if n == name then
-						win:perform_action(act.SwitchToWorkspace({ name = name }), p)
-						return
-					end
-				end
-				-- New workspace with cwd
-				win:perform_action(
-					act.SwitchToWorkspace({
-						name = name,
-						spawn = { cwd = id },
-					}),
-					p
-				)
-			end),
-			fuzzy = true,
-			title = "Switch Workspace",
-			choices = choices,
-		}),
-		pane
-	)
+	-- Pick target workspace (prefer last visited, otherwise next in list)
+	local target = last_ws[window:window_id()]
+	if not target or target == current then
+		for _, name in ipairs(names) do
+			if name ~= current then
+				target = name
+				break
+			end
+		end
+	end
+
+	-- Switch to target workspace first
+	window:perform_action(act.SwitchToWorkspace({ name = target }), pane)
+
+	-- Delay kill until after workspace switch completes
+	-- (perform_action is async — killing panes immediately would kill the callback's own pane)
+	local wezterm_bin = wezterm.executable_dir .. "/wezterm"
+	wezterm.time.call_after(0.5, function()
+		for _, pid in ipairs(pane_ids) do
+			wezterm.run_child_process({ wezterm_bin, "cli", "kill-pane", "--pane-id", tostring(pid) })
+		end
+
+		-- Remove resurrect saved state
+		if has_resurrect then
+			local state_path = resurrect.state_manager.save_state_dir .. "workspace/" .. current .. ".json"
+			os.remove(state_path)
+		end
+	end)
+
+	window:toast_notification("WezTerm", "Deleted: " .. current, nil, 3000)
 end
 
 -- =============================================================================
@@ -390,7 +397,9 @@ config.keys = {
 	-- ── Leader+SHIFT bindings ────────────────────────────────────────────────
 
 	-- Workspace picker: Leader+T
-	{ key = "t", mods = "LEADER|SHIFT", action = wezterm.action_callback(workspace_picker) },
+	{ key = "t", mods = "LEADER|SHIFT", action = has_switcher and workspace_switcher.switch_workspace() or act.Nop },
+	-- Last workspace: Leader+Shift+L
+	{ key = "l", mods = "LEADER|SHIFT", action = has_switcher and workspace_switcher.switch_to_prev_workspace() or act.Nop },
 	-- Resurrect save: Leader+S
 	{
 		key = "s",
@@ -440,7 +449,7 @@ config.keys = {
 	{ key = "]", mods = "LEADER", action = switch_workspace_relative(1) },
 
 	-- Workspace: last (Leader+Enter)
-	{ key = "Enter", mods = "LEADER", action = wezterm.action_callback(switch_to_last_workspace) },
+	{ key = "Enter", mods = "LEADER", action = has_switcher and workspace_switcher.switch_to_prev_workspace() or act.Nop },
 
 	-- Lazygit in new tab
 	{
@@ -459,6 +468,9 @@ config.keys = {
 			)
 		end),
 	},
+
+	-- Kill current workspace
+	{ key = "x", mods = "LEADER", action = wezterm.action_callback(kill_current_workspace) },
 
 	-- Reload config
 	{ key = "r", mods = "LEADER", action = act.ReloadConfiguration },
