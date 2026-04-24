@@ -7,6 +7,27 @@ export EDITOR="nvim"
 export VISUAL="nvim"
 export OPENAI_BASE_URL="https://gateway.ai.cloudflare.com/v1/1a911fb4ac31b7d5e7b5a60fb08aa48f/aihr-proxy/openai"
 
+# Kubeconfig — default (stage/dev) loads automatically; prod requires explicit `kprod`
+if [ -d "$HOME/.kube/configs/default" ]; then
+  export KUBECONFIG=$(find "$HOME/.kube/configs/default" -maxdepth 1 -type f | tr '\n' ':' | sed 's/:$//')
+fi
+
+# kprod — load prod kubeconfigs with confirmation, then run kubectl
+kprod() {
+  local prod_kubeconfig
+  prod_kubeconfig=$(find "$HOME/.kube/configs/prod" -maxdepth 1 -type f 2>/dev/null | tr '\n' ':' | sed 's/:$//')
+  if [ -z "$prod_kubeconfig" ]; then
+    echo "No prod kubeconfigs found in ~/.kube/configs/prod/" >&2
+    return 1
+  fi
+  if [ -z "$KPROD_CONFIRMED" ]; then
+    echo "⚠️  PROD CLUSTER ACCESS — type 'yes' to proceed: \c"
+    read -r answer
+    [ "$answer" = "yes" ] || { echo "Aborted."; return 1; }
+  fi
+  KUBECONFIG="$prod_kubeconfig" kubectl "$@"
+}
+
 # PATH (typeset -U removes duplicates)
 typeset -U path
 path=(

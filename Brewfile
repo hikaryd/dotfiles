@@ -1,6 +1,7 @@
 # Taps
 tap "koekeishiya/formulae"
 tap "acsandmann/tap"
+tap "asmvik/formulae"
 tap "nikitabobko/tap"
 
 # Основные системные пакеты
@@ -101,7 +102,7 @@ brew "jq-lsp"
 # Другие инструменты разработки
 brew "sesh"    
 brew "gum"    
-brew "codex" 
+cask "codex"
 brew "rift", args: ["tap", "acsandmann/tap"]
 brew "lgug2z/tap/komorebi-for-mac"
 brew "asmvik/formulae/skhd"
@@ -119,7 +120,6 @@ cask "1password-cli"
 cask "ghostty"
 cask "wezterm"
 cask "alacritty"
-cask "raycast"
 cask "mos"       
 cask "karabiner-elements"
 cask "aldente"
