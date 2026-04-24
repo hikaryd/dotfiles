@@ -10,6 +10,22 @@
       stdout: true
       stderr: true
     - command: |
+        if ! command -v brew >/dev/null 2>&1; then
+          echo "Homebrew is not installed. Skipping Raycast."
+          exit 0
+        fi
+        if brew list --cask raycast >/dev/null 2>&1 || [[ -d /Applications/Raycast.app ]]; then
+          echo "Raycast already installed"
+          exit 0
+        fi
+        echo "Installing Raycast (optional cask) ..."
+        if ! brew install --cask raycast; then
+          echo "Raycast cask download failed; skipping optional Raycast install."
+        fi
+      description: Install Raycast (optional)
+      stdout: true
+      stderr: true
+    - command: |
         if ! command -v rustup >/dev/null 2>&1; then
           echo "Installing Rust with nightly toolchain..."
           curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain nightly --profile default

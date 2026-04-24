@@ -51,7 +51,7 @@
 
 [rebase]
 	autoStash = true
-	missingCommitsCheck = true
+	missingCommitsCheck = warn
 
 [merge]
 	conflictstyle = diff3

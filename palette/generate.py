@@ -437,6 +437,7 @@ export POPUP_BORDER_COLOR={hex_to_argb(u['fg'], '44')}
 
 export SHADOW_COLOR=$BLACK
 """
+    path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(content)
     print(f"  sketchybar: {path}")
 
