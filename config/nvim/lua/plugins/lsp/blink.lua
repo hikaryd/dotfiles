@@ -3,6 +3,7 @@ return {
   build = 'cargo build --release',
   event = 'InsertEnter',
   dependencies = {
+    'saghen/blink.lib',
     'moyiz/blink-emoji.nvim',
     'Kaiser-Yang/blink-cmp-dictionary',
   },

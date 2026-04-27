@@ -62,7 +62,7 @@ return {
 			refresh = 50,
 		},
 		dashboard = {
-			enabled = true,
+			enabled = false,
 			config = {
 				header = {
 					"                                                     ",
@@ -109,11 +109,18 @@ return {
 						ttl = 5 * 60,
 						indent = 3,
 					},
-					{ section = "startup" },
 				},
 				footer = function()
-					local stats = require("lazy").stats()
-					return { "⚡ Neovim loaded " .. stats.loaded .. "/" .. stats.count .. " plugins" }
+					local ok, garrys = pcall(require, "garrys")
+					if ok and garrys.plugins then
+						local total, loaded = 0, 0
+						for _, p in pairs(garrys.plugins) do
+							total = total + 1
+							if p.loaded then loaded = loaded + 1 end
+						end
+						return { "⚡ Neovim loaded " .. loaded .. "/" .. total .. " plugins" }
+					end
+					return { "⚡ Neovim ready" }
 				end,
 			},
 		},

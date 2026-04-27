@@ -76,7 +76,6 @@ return {
       },
       extensions = {
         'neo-tree',
-        'lazy',
         'mason',
         'trouble',
       },

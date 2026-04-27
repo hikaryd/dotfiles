@@ -1,17 +1,3 @@
--- Bootstrap lazy.nvim
-local lazypath = vim.fn.stdpath 'data' .. '/lazy/lazy.nvim'
-if not vim.loop.fs_stat(lazypath) then
-  vim.fn.system {
-    'git',
-    'clone',
-    '--filter=blob:none',
-    'https://github.com/folke/lazy.nvim.git',
-    '--branch=stable', -- latest stable release
-    lazypath,
-  }
-end
-vim.opt.rtp:prepend(lazypath)
-
 vim.g.loaded_ruby_provider = 0
 vim.g.loaded_perl_provider = 0
 vim.g.loaded_node_provider = 0
@@ -23,46 +9,24 @@ end)
 
 -- Basic options
 vim.g.mapleader = ' '
+vim.g.maplocalleader = '\\'
 vim.cmd 'set modifiable'
+
+-- Enable bytecode cache (нативно в 0.10+)
+if vim.loader and vim.loader.enable then
+  vim.loader.enable()
+end
 
 -- Load core options first
 require 'core.options'
 
 pcall(require, 'impatient')
 
--- Then initialize lazy.nvim
-require('lazy').setup('plugins', {
-  root = vim.fn.stdpath 'data' .. '/lazy',
-  lockfile = vim.fn.stdpath 'config' .. '/lazy-lock.json',
-  rocks = { enabled = false },
-  dev = {
-    path = '~/.local/share/nvim/nix',
-    fallback = false,
-  },
-  defaults = {
-    lazy = true,
-    version = false,
-  },
-  checker = {
-    enabled = true,
-    notify = false,
-  },
-  performance = {
-    rtp = {
-      disabled_plugins = {
-        'gzip',
-        'tarPlugin',
-        'tohtml',
-        'tutor',
-        'zipPlugin',
-      },
-    },
-  },
-})
+-- Load plugins via native pack manager
+require('core.pack').setup(require('plugins'))
 
 -- Finally load the rest of core
 require('core').setup()
-require 'plugins'
 
 if vim.fn.getenv 'TERM_PROGRAM' == 'ghostty' then
   vim.opt.title = true

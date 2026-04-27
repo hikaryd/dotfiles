@@ -104,6 +104,7 @@ brew "sesh"
 brew "gum"    
 cask "codex"
 brew "rift", args: ["tap", "acsandmann/tap"]
+brew "gardesk/tap/tarmac"
 brew "lgug2z/tap/komorebi-for-mac"
 brew "asmvik/formulae/skhd"
 brew "fastfetch"    

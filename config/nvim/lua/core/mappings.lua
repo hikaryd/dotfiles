@@ -13,8 +13,12 @@ map("n", "v$", "v$h", "Visual: select to end of line minus one char")
 
 -- File Explorer
 -- map('n', '<Space>e', ':Neotree float reveal=true<CR>', 'Toggle file explorer')
-local fyler = require("fyler")
 vim.keymap.set("n", "<leader>e", function()
+	local ok, fyler = pcall(require, "fyler")
+	if not ok then
+		vim.notify("fyler.nvim not installed yet", vim.log.levels.WARN)
+		return
+	end
 	fyler.open({ kind = "split_left_most" })
 end, { desc = "Open Fyler View" })
 
