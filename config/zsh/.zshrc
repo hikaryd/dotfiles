@@ -33,6 +33,8 @@ typeset -U path
 path=(
   "$HOME/.cargo/bin"
   "$HOME/.local/bin"
+  /opt/malt/bin
+  /opt/malt/sbin
   /opt/homebrew/bin
   /usr/local/bin
   $path
@@ -149,3 +151,4 @@ eval "$(zoxide init zsh)"
 [[ -f /opt/homebrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ]] && \
   source /opt/homebrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
 export PATH="$HOME/.local/bin:$PATH"
+eval "$(mt shellenv)"

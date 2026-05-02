@@ -10,6 +10,18 @@ vim.opt.colorcolumn = '80'
 vim.opt.pumblend = 0
 vim.opt.winblend = 0
 vim.opt.clipboard = 'unnamedplus'
+vim.g.clipboard = {
+  name = 'pbcopy',
+  copy = {
+    ['+'] = 'pbcopy',
+    ['*'] = 'pbcopy',
+  },
+  paste = {
+    ['+'] = 'pbpaste',
+    ['*'] = 'pbpaste',
+  },
+  cache_enabled = 0,
+}
 vim.opt.laststatus = 3
 vim.opt.equalalways = false
 

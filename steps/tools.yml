@@ -4,9 +4,6 @@
       path: config/komorebi
       create: true
       force: true
-    ~/.skhdrc:
-      path: config/komorebi/skhdrc
-      force: true
     # Ghostty terminal
     ~/.config/ghostty/config:
       path: config/ghostty/config
