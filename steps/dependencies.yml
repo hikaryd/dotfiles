@@ -1,38 +1,12 @@
 - shell:
     - command: |
-        if command -v malt >/dev/null 2>&1; then
-          echo "malt already installed: $(malt --version 2>/dev/null || echo present)"
-          exit 0
-        fi
-        echo "Installing malt (https://github.com/indaco/malt)..."
-        curl -fsSL https://raw.githubusercontent.com/indaco/malt/main/scripts/install.sh | bash
-        if command -v malt >/dev/null 2>&1; then
-          eval "$(malt shellenv)" || true
-          echo "malt installed."
-        else
-          echo "malt installation failed; subsequent malt steps will be skipped."
-        fi
-      description: Install malt (fast Homebrew alternative)
-      stdout: true
-      stderr: true
-    - command: |
-        if ! command -v malt >/dev/null 2>&1; then
-          echo "malt not available. Skipping Maltfile."
-          exit 0
-        fi
-        echo "Installing non-cask packages from Maltfile via malt ..."
-        malt bundle install Maltfile
-      description: Install formulas/taps via malt (Maltfile)
-      stdout: true
-      stderr: true
-    - command: |
         if ! command -v brew >/dev/null 2>&1; then
-          echo "Homebrew is not installed. Skipping Brewfile (casks)."
+          echo "Homebrew is not installed. Skipping Brewfile."
           exit 0
         fi
-        echo "Installing casks from Brewfile via brew ..."
+        echo "Installing packages from Brewfile ..."
         brew bundle --file Brewfile
-      description: Install casks via brew (Brewfile)
+      description: Install Homebrew packages via Brewfile
       stdout: true
       stderr: true
     - command: |
