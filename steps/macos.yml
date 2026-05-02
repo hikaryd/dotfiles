@@ -11,10 +11,6 @@
       path: config/aerospace/aerospace.toml
       create: true
       force: true
-    ~/.config/tarmac/init.lua:
-      path: config/tarmac/init.lua
-      create: true
-      force: true
     ~/.paneru.toml:
       path: config/paneru/paneru.toml
       create: true
