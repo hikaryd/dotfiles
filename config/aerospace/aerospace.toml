@@ -1,31 +1,55 @@
-# AeroSpace configuration
-# Synced with Rift config
+# AeroSpace configuration — синхронизировано с rift/config.toml.
+# workspace_names в rift: ["1", "2", "3", "4", "e", "q", "t", "w", "d"]
 
 start-at-login = true
 enable-normalization-flatten-containers = true
 enable-normalization-opposite-orientation-for-nested-containers = true
 
-# Mouse behavior (matching Rift)
-# on-focus-changed = ['move-mouse window-lazy-center']
-on-focus-changed = []
+# Mouse behavior — телепорт курсора в центр окна при переключении фокуса.
+# `lazy` = курсор летит, только если он вне нового окна (полезно для
+# мультимонитора: при alt+H/L между экранами курсор всегда оказывается
+# в фокусе).
+on-focus-changed = ['move-mouse window-lazy-center']
 
-# Default layout
+# Default layout — rift "traditional" ≈ aerospace tiles/auto
 default-root-container-layout = 'tiles'
 default-root-container-orientation = 'auto'
-accordion-padding = 30
+accordion-padding = 5
 
+# Gaps — rift outer=0, inner=0
 [gaps]
-inner.horizontal = 10
-inner.vertical = 10
-outer.left = 5
-outer.bottom = 5
-outer.top = 5
-outer.right = 5
+inner.horizontal = 0
+inner.vertical = 0
+outer.left = 0
+outer.bottom = 0
+outer.top = 0
+outer.right = 0
 
-# Key bindings
+# ============================================
+# Workspace → Monitor force assignment.
+# Каждый воркспейс физически живёт на конкретном мониторе.
+# Идентификаторы: 'main' (главный), 'secondary' (второй), либо индекс
+# (1, 2, ...). Если монитор отключён — воркспейс остаётся доступен
+# на любом подключённом.
+# ============================================
+[workspace-to-monitor-force-assignment]
+1 = 'main'
+2 = 'main'
+3 = 'secondary'
+4 = 'main'
+q = 'main'
+e = 'main'
+w = 'secondary'
+t = 'secondary'
+
+# ============================================
+# Key bindings (rift parity)
+# ============================================
 [mode.main.binding]
 
-# --- Переключение воркспейсов (Alt + key) ---
+# --- Переключение воркспейсов (Alt + key) — rift switch_to_workspace ---
+#: повторное нажатие хоткея текущего воркспейса
+# возвращает на предыдущий (как `alt+tab`, но прозрачно).
 alt-1 = 'workspace 1'
 alt-2 = 'workspace 2'
 alt-3 = 'workspace 3'
@@ -36,10 +60,10 @@ alt-q = 'workspace q'
 alt-t = 'workspace t'
 alt-w = 'workspace w'
 
-# Switch to last workspace (Alt + Tab)
+# Switch to last workspace (Alt + Tab) — rift switch_to_last_workspace
 alt-tab = 'workspace-back-and-forth'
 
-# --- Отправка окна на воркспейс (Alt + Shift + key) ---
+# --- Отправка окна на воркспейс (Alt + Shift + key) — rift comb1 + key ---
 alt-shift-1 = 'move-node-to-workspace 1'
 alt-shift-2 = 'move-node-to-workspace 2'
 alt-shift-3 = 'move-node-to-workspace 3'
@@ -50,113 +74,122 @@ alt-shift-q = 'move-node-to-workspace q'
 alt-shift-t = 'move-node-to-workspace t'
 alt-shift-w = 'move-node-to-workspace w'
 
-# --- Навигация (Alt + H/J/K/L) ---
+# --- Навигация (Alt + H/J/K/L) — rift move_focus ---
 alt-h = 'focus left'
 alt-j = 'focus down'
 alt-k = 'focus up'
 alt-l = 'focus right'
 
-# --- Перемещение окон (Alt + Shift + H/J/K/L) ---
+# --- Перемещение окон (Alt + Shift + H/J/K/L) — rift move_node ---
 alt-shift-h = 'move left'
 alt-shift-j = 'move down'
 alt-shift-k = 'move up'
 alt-shift-l = 'move right'
 
-# --- Стек/джойн (Cmd + Shift + keys) ---
-cmd-shift-j = 'layout accordion tiles' # toggle stack
-cmd-shift-h = 'join-with left'
-cmd-shift-l = 'join-with right'
+# --- Стек/джойн (Cmd + Shift + keys) — rift Meta+Shift J/H/L ---
+cmd-shift-j = 'layout accordion tiles' # toggle_stack
+cmd-shift-h = 'join-with left'         # join_window left
+cmd-shift-l = 'join-with right'        # join_window right
 
-# --- Ресайз (Alt + Shift + Equal/Minus) ---
+# --- Ресайз (Alt + Shift + =/-) — rift resize_window_grow / shrink ---
 alt-shift-equal = 'resize smart +50'
 alt-shift-minus = 'resize smart -50'
 
-# --- Флоат/фуллскрин ---
-alt-space = 'layout floating tiling'
-cmd-shift-f = 'layout floating tiling'
-alt-f = 'fullscreen'
+# --- Флоат/фуллскрин — rift toggle_window_floating / toggle_fullscreen ---
+alt-space = 'layout floating tiling'   # Alt+Space
+cmd-shift-f = 'layout floating tiling' # Meta+Shift+F
+alt-f = 'fullscreen'                   # Alt+F
+
+# --- Layouts ---
+# Toggle между tiles и accordion. Accordion: одно окно полностью видно,
+# остальные сжаты до полоски — удобно для логов / больших документов.
+# Повторное нажатие циклит обратно к tiles.
+alt-shift-a = 'layout tiles accordion'
 
 # --- Сервисные ---
-alt-ctrl-s = 'reload-config'
-cmd-shift-q = 'close'
+alt-ctrl-s = 'reload-config'           # ближе к rift "serialize"
+cmd-shift-q = 'close'                  # Meta+Shift+Q (rift save_and_exit)
 alt-shift-f = 'flatten-workspace-tree'
 
-# --- Мультимонитор ---
+# --- Мультимонитор (нет в rift; полезное дополнение) ---
 alt-comma = 'focus-monitor prev'
 alt-period = 'focus-monitor next'
 alt-shift-comma = 'move-node-to-monitor prev'
 alt-shift-period = 'move-node-to-monitor next'
 
 # ============================================
-# Window rules (matching Rift's app_rules)
+# Window rules (rift app_rules parity)
 # ============================================
 
-# --- Floating windows ---
-
-# Safari settings
+# --- Floating: окна настроек браузеров (rift: floating + ws=1) ---
 [[on-window-detected]]
 if.app-id = 'com.apple.Safari'
 if.window-title-regex-substring = '^(General|(Tab|Password|Website|Extension)s|AutoFill|Se(arch|curity)|Privacy|Advance)$|Preferences|Настройки'
-run = 'layout floating'
+run = ['layout floating', 'move-node-to-workspace 1']
 
-# Brave settings
 [[on-window-detected]]
 if.app-id = 'com.brave.Browser'
-if.window-title-regex-substring = '^(General|(Tab|Password|Website|Extension)s|AutoFill|Se(arch|curity)|Privacy|Advance)$|Preferences|Settings'
-run = 'layout floating'
+if.window-title-regex-substring = '^(General|Tabs?|Passwords?|Websites?|Extensions?|AutoFill|Search|Security|Privacy|Advance)$|Preferences|Settings'
+run = ['layout floating', 'move-node-to-workspace 1']
 
-# Arc settings
 [[on-window-detected]]
 if.app-id = 'company.thebrowser.Browser'
 if.window-title-regex-substring = '^(General|(Tab|Password|Website|Extension)s|AutoFill|Se(arch|curity)|Privacy|Advance)$|Preferences|Settings'
-run = 'layout floating'
+run = ['layout floating', 'move-node-to-workspace 1']
 
-# 1Password
+[[on-window-detected]]
+if.app-name-regex-substring = 'Helium'
+if.window-title-regex-substring = '^(General|(Tab|Password|Website|Extension)s|AutoFill|Se(arch|security)|Privacy|Advance)$'
+run = ['layout floating', 'move-node-to-workspace 1']
+
+# --- Floating: системные/служебные (rift: floating без workspace) ---
 [[on-window-detected]]
 if.app-id = 'com.1password.1password'
 run = 'layout floating'
 
-# Finder
 [[on-window-detected]]
 if.app-id = 'com.apple.finder'
 run = 'layout floating'
 
-# Typora open dialog
-[[on-window-detected]]
-if.app-id = 'abnerworks.Typora'
-if.window-title-regex-substring = 'Открыть'
-run = 'layout floating'
-
-# Cisco Secure Client
 [[on-window-detected]]
 if.app-id = 'com.cisco.secureclient'
 run = 'layout floating'
 
-# v2RayTun
 [[on-window-detected]]
 if.app-id = 'com.yanue.V2rayU'
 run = 'layout floating'
 
-# Raycast
+[[on-window-detected]]
+if.app-name-regex-substring = 'v2RayTun'
+run = 'layout floating'
+
 [[on-window-detected]]
 if.app-id = 'com.raycast.macos'
 run = 'layout floating'
 
-# Control Center
 [[on-window-detected]]
 if.app-id = 'com.apple.controlcenter'
 run = 'layout floating'
 
-# AlDente
+[[on-window-detected]]
+if.app-name-regex-substring = 'Пункт управления'
+run = 'layout floating'
+
 [[on-window-detected]]
 if.app-id = 'com.apphousekitchen.aldente-pro'
 run = 'layout floating'
 
+# Typora: диалог "Открыть" — floating + ws=4
+[[on-window-detected]]
+if.app-id = 'abnerworks.Typora'
+if.window-title-regex-substring = 'Открыть'
+run = ['layout floating', 'move-node-to-workspace 4']
+
 # ============================================
-# Workspace assignments (matching Rift)
+# Workspace assignments (rift parity)
 # ============================================
 
-# "1": браузеры
+# --- "1": браузеры + Comet/Ora/Helium/Thorium ---
 [[on-window-detected]]
 if.app-id = 'com.apple.Safari'
 run = 'move-node-to-workspace 1'
@@ -185,12 +218,16 @@ run = 'move-node-to-workspace 1'
 if.app-id = 'org.chromium.Thorium'
 run = 'move-node-to-workspace 1'
 
-# "2": Misc
+# --- "2": Misc / VPN GUI ---
 [[on-window-detected]]
 if.app-name-regex-substring = 'V2BOX'
 run = 'move-node-to-workspace 2'
 
-# "3": мессенджер/почта/музыка
+[[on-window-detected]]
+if.app-name-regex-substring = 'Keet'
+run = 'move-node-to-workspace 2'
+
+# --- "3": мессенджер/почта/музыка/видео-комнаты ---
 [[on-window-detected]]
 if.app-id = 'ru.keepcoder.Telegram'
 run = 'move-node-to-workspace 3'
@@ -204,18 +241,26 @@ if.app-id = 'ch.protonmail.desktop'
 run = 'move-node-to-workspace 3'
 
 [[on-window-detected]]
+if.app-name-regex-substring = 'Proton Mail'
+run = 'move-node-to-workspace 3'
+
+[[on-window-detected]]
 if.app-id = 'com.jpochyla.psst'
 run = 'move-node-to-workspace 3'
 
 [[on-window-detected]]
-if.app-id = 'ru.unlimitedtech.express.desktop'
+if.app-name-regex-substring = 'Psst'
+run = 'move-node-to-workspace 3'
+
+[[on-window-detected]]
+if.app-name-regex-substring = 'X5_Rooms'
 run = 'move-node-to-workspace 3'
 
 [[on-window-detected]]
 if.app-id = 'com.spotify.client'
-run = 'move-node-to-workspace 3'
+run = 'move-node-to-workspace 1'
 
-# "4": документы/ноуты
+# --- "4": документы/ноуты ---
 [[on-window-detected]]
 if.app-id = 'abnerworks.Typora'
 run = 'move-node-to-workspace 4'
@@ -225,25 +270,53 @@ if.app-id = 'com.apple.iWork.Pages'
 run = 'move-node-to-workspace 4'
 
 [[on-window-detected]]
+if.app-name-regex-substring = 'Pages'
+run = 'move-node-to-workspace 4'
+
+[[on-window-detected]]
 if.app-id = 'com.getupnote.desktop'
 run = 'move-node-to-workspace 4'
 
-# "e": системные
+[[on-window-detected]]
+if.app-name-regex-substring = 'UpNote'
+run = 'move-node-to-workspace 4'
+
+# --- "e": системные ---
 [[on-window-detected]]
 if.app-id = 'com.apple.systempreferences'
+run = 'move-node-to-workspace e'
+
+[[on-window-detected]]
+if.app-name-regex-substring = 'System Settings'
+run = 'move-node-to-workspace e'
+
+[[on-window-detected]]
+if.app-name-regex-substring = 'System Preferences'
+run = 'move-node-to-workspace e'
+
+[[on-window-detected]]
+if.app-name-regex-substring = 'Системные настройки'
 run = 'move-node-to-workspace e'
 
 [[on-window-detected]]
 if.app-id = 'com.apple.AppStore'
 run = 'move-node-to-workspace e'
 
-# "q": дев-инструменты
+# --- "q": дев-инструменты ---
 [[on-window-detected]]
 if.app-id = 'com.electron.dockerdesktop'
 run = 'move-node-to-workspace q'
 
 [[on-window-detected]]
+if.app-name-regex-substring = 'Docker Desktop'
+run = 'move-node-to-workspace q'
+
+[[on-window-detected]]
 if.app-id = 'org.jkiss.dbeaver.core.product'
+run = 'move-node-to-workspace q'
+
+[[on-window-detected]]
+if.app-name-regex-substring = 'DBeaver'
 run = 'move-node-to-workspace q'
 
 [[on-window-detected]]
@@ -255,14 +328,26 @@ if.app-id = 'com.electron.kontena-lens'
 run = 'move-node-to-workspace q'
 
 [[on-window-detected]]
+if.app-name-regex-substring = 'Lens'
+run = 'move-node-to-workspace q'
+
+[[on-window-detected]]
 if.app-id = 'io.beekeeperstudio.app'
+run = 'move-node-to-workspace q'
+
+[[on-window-detected]]
+if.app-name-regex-substring = 'Beekeeper Studio'
+run = 'move-node-to-workspace q'
+
+[[on-window-detected]]
+if.app-name-regex-substring = 'Postico'
 run = 'move-node-to-workspace q'
 
 [[on-window-detected]]
 if.app-name-regex-substring = 'WizQl'
 run = 'move-node-to-workspace q'
 
-# "t": Толк/Музыка
+# --- "t": Толк / Музыка ---
 [[on-window-detected]]
 if.app-name-regex-substring = 'Толк'
 run = 'move-node-to-workspace t'
@@ -271,20 +356,44 @@ run = 'move-node-to-workspace t'
 if.app-id = 'com.apple.Music'
 run = 'move-node-to-workspace t'
 
-# "w": Просмотр/Outlook
+[[on-window-detected]]
+if.app-name-regex-substring = 'Музыка'
+run = 'move-node-to-workspace t'
+
+# --- "w": Просмотр / Outlook ---
 [[on-window-detected]]
 if.app-id = 'com.apple.Preview'
+run = 'move-node-to-workspace w'
+
+[[on-window-detected]]
+if.app-name-regex-substring = 'Preview'
+run = 'move-node-to-workspace w'
+
+[[on-window-detected]]
+if.app-name-regex-substring = 'Просмотр'
 run = 'move-node-to-workspace w'
 
 [[on-window-detected]]
 if.app-id = 'com.microsoft.Outlook'
 run = 'move-node-to-workspace w'
 
-# "d": терминал
+[[on-window-detected]]
+if.app-name-regex-substring = 'Outlook'
+run = 'move-node-to-workspace w'
+
+# --- "d": терминал ---
 [[on-window-detected]]
 if.app-id = 'com.mitchellh.ghostty'
 run = 'move-node-to-workspace d'
 
 [[on-window-detected]]
 if.app-id = 'org.alacritty'
+run = 'move-node-to-workspace d'
+
+[[on-window-detected]]
+if.app-id = 'com.github.wez.wezterm'
+run = 'move-node-to-workspace d'
+
+[[on-window-detected]]
+if.app-name-regex-substring = 'WezTerm'
 run = 'move-node-to-workspace d'

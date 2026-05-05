@@ -7,25 +7,26 @@ export EDITOR="nvim"
 export VISUAL="nvim"
 export OPENAI_BASE_URL="https://gateway.ai.cloudflare.com/v1/1a911fb4ac31b7d5e7b5a60fb08aa48f/aihr-proxy/openai"
 
-# Kubeconfig — default (stage/dev) loads automatically; prod requires explicit `kprod`
-if [ -d "$HOME/.kube/configs/default" ]; then
-  export KUBECONFIG=$(find "$HOME/.kube/configs/default" -maxdepth 1 -type f | tr '\n' ':' | sed 's/:$//')
+# Kubeconfig — default (stage/dev) loads automatically via native zsh glob (no fork)
+if [[ -d "$HOME/.kube/configs/default" ]]; then
+  local -a _kc=("$HOME/.kube/configs/default"/*(.N))
+  (( ${#_kc} )) && export KUBECONFIG="${(j.:.)_kc}"
+  unset _kc
 fi
 
-# kprod — load prod kubeconfigs with confirmation, then run kubectl
+# kprod — load prod kubeconfigs with confirmation, then run kubectl (lazy: glob runs only on call)
 kprod() {
-  local prod_kubeconfig
-  prod_kubeconfig=$(find "$HOME/.kube/configs/prod" -maxdepth 1 -type f 2>/dev/null | tr '\n' ':' | sed 's/:$//')
-  if [ -z "$prod_kubeconfig" ]; then
+  local -a prod_files=("$HOME/.kube/configs/prod"/*(.N))
+  if (( ! ${#prod_files} )); then
     echo "No prod kubeconfigs found in ~/.kube/configs/prod/" >&2
     return 1
   fi
-  if [ -z "$KPROD_CONFIRMED" ]; then
-    echo "⚠️  PROD CLUSTER ACCESS — type 'yes' to proceed: \c"
+  if [[ -z "$KPROD_CONFIRMED" ]]; then
+    printf "⚠️  PROD CLUSTER ACCESS — type 'yes' to proceed: "
     read -r answer
-    [ "$answer" = "yes" ] || { echo "Aborted."; return 1; }
+    [[ "$answer" = "yes" ]] || { echo "Aborted."; return 1; }
   fi
-  KUBECONFIG="$prod_kubeconfig" kubectl "$@"
+  KUBECONFIG="${(j.:.)prod_files}" kubectl "$@"
 }
 
 # PATH (typeset -U removes duplicates)
@@ -57,12 +58,15 @@ setopt INTERACTIVE_COMMENTS
 setopt NO_BEEP
 setopt GLOB_DOTS
 
-# --- Completion (with daily cache) ---
+# --- Completion (daily cache; -C skips security check on warm runs) ---
 autoload -Uz compinit
-if [[ -n "$HOME/.zcompdump"(#qN.mh+24) ]]; then
-  compinit
+if [[ -n $HOME/.zcompdump(#qNmh-24) ]]; then
+  compinit -C -d "$HOME/.zcompdump"
 else
-  compinit -C
+  compinit -d "$HOME/.zcompdump"
+  # Compile dump for faster subsequent loads
+  [[ -s "$HOME/.zcompdump" && (! -s "$HOME/.zcompdump.zwc" || "$HOME/.zcompdump" -nt "$HOME/.zcompdump.zwc") ]] && \
+    zcompile "$HOME/.zcompdump"
 fi
 
 zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}'
@@ -136,8 +140,14 @@ ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=#585b70'
 ZSH_AUTOSUGGEST_STRATEGY=(history completion)
 
 # --- Integrations ---
-eval "$(starship init zsh)"
-eval "$(zoxide init zsh)"
+# Starship: cache init script (avoids forking starship on every shell start)
+_starship_cache="$HOME/.cache/starship-init.zsh"
+if [[ ! -s "$_starship_cache" || "$(command -v starship)" -nt "$_starship_cache" ]]; then
+  mkdir -p "$HOME/.cache"
+  starship init zsh --print-full-init > "$_starship_cache" 2>/dev/null
+fi
+[[ -s "$_starship_cache" ]] && source "$_starship_cache"
+unset _starship_cache
 
 # fzf
 [[ -f /opt/homebrew/opt/fzf/shell/completion.zsh ]] && source /opt/homebrew/opt/fzf/shell/completion.zsh
@@ -148,4 +158,3 @@ eval "$(zoxide init zsh)"
   source /opt/homebrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh
 [[ -f /opt/homebrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ]] && \
   source /opt/homebrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
-export PATH="$HOME/.local/bin:$PATH"
