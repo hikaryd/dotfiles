@@ -13,6 +13,7 @@ brew "python"
 # CLI утилиты
 brew "htop"
 brew "tree"
+brew "zoxide"
 brew "rsync"
 brew "p7zip"
 brew "gping"
@@ -32,19 +33,16 @@ brew "node"
 
 # Инструменты для шелла и терминала
 brew "fzf"      
-brew "zoxide"    
 brew "tmux"       
 brew "zsh"
 brew "zsh-autosuggestions"
 brew "zsh-syntax-highlighting"
 brew "nushell"
 brew "starship"      
-brew "media-control" 
 
 # Git и инструменты разработки
 brew "git"
 brew "lazygit"
-brew "git-delta"
 
 # Разработка - языковые серверы и форматтеры
 
@@ -104,10 +102,8 @@ brew "sesh"
 brew "gum"    
 cask "codex"
 brew "rift", args: ["tap", "acsandmann/tap"]
-brew "gardesk/tap/tarmac"
-brew "lgug2z/tap/komorebi-for-mac"
-brew "asmvik/formulae/skhd"
 brew "fastfetch"    
+brew "ffmpeg"    
 
 # Дополнения для bat
 brew "bat-extras" 

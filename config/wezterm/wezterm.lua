@@ -24,37 +24,9 @@ if has_resurrect then
 end
 
 -- =============================================================================
--- Plugin: smart_workspace_switcher (fuzzy workspace picker with zoxide)
+-- Workspace switcher (wezterm built-in launcher, replaces smart_workspace_switcher)
 -- =============================================================================
-local has_switcher, workspace_switcher = pcall(wezterm.plugin.require, "https://github.com/MLFlexer/smart_workspace_switcher.wezterm")
-
-if has_switcher then
-	workspace_switcher.zoxide_path = "/opt/homebrew/bin/zoxide"
-end
-
--- =============================================================================
--- Plugin integration: resurrect + smart_workspace_switcher
--- =============================================================================
-if has_resurrect and has_switcher then
-	-- Save current workspace state before switching away
-	wezterm.on("smart_workspace_switcher.workspace_switcher.selected", function(window, path, label)
-		local state = resurrect.workspace_state.get_workspace_state()
-		resurrect.state_manager.save_state(state)
-	end)
-
-	-- Restore workspace state when entering a new workspace via switcher
-	wezterm.on("smart_workspace_switcher.workspace_switcher.created", function(window, path, label)
-		local state = resurrect.state_manager.load_state(label, "workspace")
-		if state then
-			resurrect.workspace_state.restore_workspace(state, {
-				window = window,
-				relative = true,
-				restore_text = true,
-				on_pane_restore = resurrect.tab_state.default_on_pane_restore,
-			})
-		end
-	end)
-end
+local switch_workspace_action = act.ShowLauncherArgs({ flags = "FUZZY|WORKSPACES" })
 
 -- =============================================================================
 -- Appearance (from Ghostty config)
@@ -396,10 +368,10 @@ config.keys = {
 
 	-- ── Leader+SHIFT bindings ────────────────────────────────────────────────
 
-	-- Workspace picker: Leader+T
-	{ key = "t", mods = "LEADER|SHIFT", action = has_switcher and workspace_switcher.switch_workspace() or act.Nop },
+	-- Workspace picker: Leader+T (built-in fuzzy launcher)
+	{ key = "t", mods = "LEADER|SHIFT", action = switch_workspace_action },
 	-- Last workspace: Leader+Shift+L
-	{ key = "l", mods = "LEADER|SHIFT", action = has_switcher and workspace_switcher.switch_to_prev_workspace() or act.Nop },
+	{ key = "l", mods = "LEADER|SHIFT", action = act.SwitchWorkspaceRelative(-1) },
 	-- Resurrect save: Leader+S
 	{
 		key = "s",
@@ -449,7 +421,7 @@ config.keys = {
 	{ key = "]", mods = "LEADER", action = switch_workspace_relative(1) },
 
 	-- Workspace: last (Leader+Enter)
-	{ key = "Enter", mods = "LEADER", action = has_switcher and workspace_switcher.switch_to_prev_workspace() or act.Nop },
+	{ key = "Enter", mods = "LEADER", action = act.SwitchWorkspaceRelative(-1) },
 
 	-- Lazygit in new tab
 	{

@@ -98,8 +98,6 @@ def extract [file: string] {
 mkdir ($nu.data-dir | path join "vendor/autoload")
 starship init nu | save -f ($nu.data-dir | path join "vendor/autoload/starship.nu")
 
-zoxide init nushell | save -f ~/.zoxide.nu
-source ~/.zoxide.nu
 source $"($nu.home-dir)/.cargo/env.nu"
 
 # Kafka consumer через kcat с SSL
