@@ -1,7 +1,7 @@
 # AeroSpace configuration — синхронизировано с rift/config.toml.
 # workspace_names в rift: ["1", "2", "3", "4", "e", "q", "t", "w", "d"]
 
-start-at-login = true
+start-at-login = false
 enable-normalization-flatten-containers = true
 enable-normalization-opposite-orientation-for-nested-containers = true
 
@@ -33,12 +33,12 @@ outer.right = 0
 # на любом подключённом.
 # ============================================
 [workspace-to-monitor-force-assignment]
-1 = 'main'
-2 = 'main'
+1 = 'secondary'
+2 = 'secondary'
 3 = 'secondary'
-4 = 'main'
-q = 'main'
-e = 'main'
+4 = 'secondary'
+q = 'secondary'
+e = 'secondary'
 w = 'secondary'
 t = 'secondary'
 

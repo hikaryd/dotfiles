@@ -116,7 +116,9 @@ return {
 						local total, loaded = 0, 0
 						for _, p in pairs(garrys.plugins) do
 							total = total + 1
-							if p.loaded then loaded = loaded + 1 end
+							if p.loaded then
+								loaded = loaded + 1
+							end
 						end
 						return { "⚡ Neovim loaded " .. loaded .. "/" .. total .. " plugins" }
 					end
@@ -126,29 +128,6 @@ return {
 		},
 	},
 	keys = {
-		{
-			"<leader>/",
-			function()
-				Snacks.picker.grep()
-			end,
-		},
-		{
-			"<leader><space>",
-			function()
-				Snacks.picker.files({
-					finder = "files",
-					format = "file",
-					show_empty = true,
-					supports_live = true,
-				})
-			end,
-		},
-		{
-			"<leader>fo",
-			function()
-				Snacks.picker.recent()
-			end,
-		},
 		{
 			"<leader>d",
 			function()

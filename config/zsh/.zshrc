@@ -158,3 +158,31 @@ unset _starship_cache
   source /opt/homebrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh
 [[ -f /opt/homebrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ]] && \
   source /opt/homebrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+
+# bun completions
+[ -s "/Users/tronin.egor/.bun/_bun" ] && source "/Users/tronin.egor/.bun/_bun"
+
+# bun
+export BUN_INSTALL="$HOME/.bun"
+export PATH="$BUN_INSTALL/bin:$PATH"
+
+# Codex proxy via xray + VLESS
+alias codex-proxy='python3 ~/.config/xray-codex/codex-proxy.py'
+
+# Запуск Codex CLI строго через proxy-переменные
+codex-vpn() {
+  python3 ~/.config/xray-codex/codex-proxy.py --run -- "$@"
+}
+
+# Запуск pi CLI строго через те же proxy-переменные
+pi-vpn() {
+  python3 ~/.config/xray-codex/codex-proxy.py --run-pi -- "$@"
+}
+
+# Экспорт proxy-переменных для обычных запусков (pi/codex/npm/etc.) из текущего shell.
+# codex-proxy --install-codex-env пишет KEY=VALUE без export, поэтому включаем allexport на время source.
+if [[ -f "$HOME/.codex/.env" ]]; then
+  set -a
+  source "$HOME/.codex/.env"
+  set +a
+fi
