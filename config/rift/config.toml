@@ -75,6 +75,7 @@ app_rules = [
 
   # Floating: системные
   { app_name = "1Password", floating = true },
+  { app_name = "Spotify", floating = true },
   { app_name = "Typora", title_substring = "Открыть", floating = true, workspace = "4" },
   { app_id = "com.apple.finder", floating = true },
   { app_name = "Cisco Secure Client", floating = true },
@@ -99,7 +100,6 @@ app_rules = [
   { app_name = "Proton Mail", workspace = "3" },
   { app_name = "Psst", workspace = "3" },
   { app_name = "X5_Rooms", workspace = "3" },
-  { app_name = "Spotify", workspace = "3" },
 
   # "4": документы/ноуты
   { app_name = "Pages", workspace = "4" },

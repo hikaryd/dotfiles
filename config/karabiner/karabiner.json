@@ -1,79 +1,79 @@
 {
-  "global": {
-    "show_in_menu_bar": false
-  },
-  "profiles": [
-    {
-      "complex_modifications": {
-        "parameters": {
-          "basic.simultaneous_threshold_milliseconds": 20
-        }
-      },
-      "devices": [
-        {
-          "identifiers": {
-            "is_keyboard": true
-          },
-          "simple_modifications": [
-            {
-              "from": {
-                "apple_vendor_top_case_key_code": "keyboard_fn"
-              },
-              "to": [
-                {
-                  "key_code": "right_control"
-                }
-              ]
-            },
-            {
-              "from": {
-                "key_code": "left_control"
-              },
-              "to": [
-                {
-                  "key_code": "right_control"
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "identifiers": {
-            "is_keyboard": true,
-            "product_id": 12871,
-            "vendor_id": 6645
-          },
-          "simple_modifications": [
-            {
-              "from": {
-                "key_code": "right_option"
-              },
-              "to": [
-                {
-                  "apple_vendor_top_case_key_code": "keyboard_fn"
-                }
-              ]
-            }
-          ]
-        }
-      ],
-      "name": "Default",
-      "selected": true,
-      "simple_modifications": [
-        {
-          "from": {
-            "key_code": "caps_lock"
-          },
-          "to": [
-            {
-              "key_code": "f13"
-            }
-          ]
-        }
-      ],
-      "virtual_hid_keyboard": {
-        "keyboard_type_v2": "ansi"
-      }
-    }
-  ]
+       "global": {
+              "show_in_menu_bar": false
+       },
+       "profiles": [
+              {
+                     "complex_modifications": {
+                            "parameters": {
+                                   "basic.simultaneous_threshold_milliseconds": 20
+                            }
+                     },
+                     "devices": [
+                            {
+                                   "identifiers": {
+                                          "is_keyboard": true
+                                   },
+                                   "simple_modifications": [
+                                          {
+                                                 "from": {
+                                                        "apple_vendor_top_case_key_code": "keyboard_fn"
+                                                 },
+                                                 "to": [
+                                                        {
+                                                               "key_code": "right_control"
+                                                        }
+                                                 ]
+                                          },
+                                          {
+                                                 "from": {
+                                                        "key_code": "left_control"
+                                                 },
+                                                 "to": [
+                                                        {
+                                                               "key_code": "right_control"
+                                                        }
+                                                 ]
+                                          }
+                                   ]
+                            },
+                            {
+                                   "identifiers": {
+                                          "is_keyboard": true,
+                                          "product_id": 12871,
+                                          "vendor_id": 6645
+                                   },
+                                   "simple_modifications": [
+                                          {
+                                                 "from": {
+                                                        "key_code": "right_option"
+                                                 },
+                                                 "to": [
+                                                        {
+                                                               "apple_vendor_top_case_key_code": "keyboard_fn"
+                                                        }
+                                                 ]
+                                          }
+                                   ]
+                            }
+                     ],
+                     "name": "Default",
+                     "selected": true,
+                     "simple_modifications": [
+                            {
+                                   "from": {
+                                          "key_code": "caps_lock"
+                                   },
+                                   "to": [
+                                          {
+                                                 "key_code": "f13"
+                                          }
+                                   ]
+                            }
+                     ],
+                     "virtual_hid_keyboard": {
+                            "keyboard_type_v2": "ansi"
+                     }
+              }
+       ]
 }
