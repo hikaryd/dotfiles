@@ -216,7 +216,6 @@ class X5Provider(BaseAIProvider):
     def send_request(self, prompt: str) -> dict[str, Any] | None:
         url = f"{self.api_base}/chat/completions"
         payload = {
-            "provider": PROVIDER_X5,
             "model": self.model,
             "messages": [{"role": "user", "content": prompt}],
             "temperature": 0.5,
@@ -230,6 +229,8 @@ class X5Provider(BaseAIProvider):
                 [
                     "curl",
                     "-s",
+                    "--noproxy",
+                    "*",
                     "-X",
                     "POST",
                     "-H",
