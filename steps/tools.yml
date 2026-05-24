@@ -35,6 +35,69 @@
       force: true
 - shell:
     - command: |
+        # Install Firefox and CascadeFox/Cascade userChrome theme
+        FIREFOX_APP="/Applications/Firefox.app/Contents/MacOS/firefox"
+        FIREFOX_BASE="$HOME/Library/Application Support/Firefox"
+        FIREFOX_PROFILES="$FIREFOX_BASE/Profiles"
+        CASCADE_DIR="$HOME/.cache/cascadefox/cascade"
+        CASCADE_REPO="https://github.com/cascadefox/cascade.git"
+
+        if [[ ! -x "$FIREFOX_APP" ]]; then
+          echo "Firefox.app not found, skipping Cascade install."
+          exit 0
+        fi
+
+        mkdir -p "$FIREFOX_PROFILES" "$(dirname "$CASCADE_DIR")"
+
+        if [[ ! -d "$CASCADE_DIR/.git" ]]; then
+          echo "Cloning Cascade theme..."
+          rm -rf "$CASCADE_DIR"
+          git clone --depth 1 "$CASCADE_REPO" "$CASCADE_DIR"
+        else
+          echo "Updating Cascade theme..."
+          git -C "$CASCADE_DIR" pull --ff-only || true
+        fi
+
+        if [[ ! -d "$CASCADE_DIR/chrome" ]]; then
+          echo "Cascade chrome directory not found, skipping."
+          exit 0
+        fi
+
+        shopt -s nullglob
+        profiles=("$FIREFOX_PROFILES"/*/)
+        if [[ ${#profiles[@]} -eq 0 ]]; then
+          echo "Creating Firefox default profile..."
+          "$FIREFOX_APP" -CreateProfile "default-release $FIREFOX_PROFILES/default-release" >/dev/null 2>&1 || true
+          profiles=("$FIREFOX_PROFILES"/*/)
+        fi
+
+        INSTALLED=0
+        for profile_dir in "${profiles[@]}"; do
+          profile_name="$(basename "$profile_dir")"
+          case "$profile_name" in
+            *default*|*release*|*.default|*.default-release|default-release) ;;
+            *)
+              if [[ ! -f "$profile_dir/prefs.js" ]]; then
+                continue
+              fi
+              ;;
+          esac
+
+          echo "Firefox profile: $profile_name"
+          mkdir -p "$profile_dir/chrome"
+          rsync -a --delete "$CASCADE_DIR/chrome/" "$profile_dir/chrome/"
+          cp "$HOME/dots/config/firefox/user.js" "$profile_dir/user.js"
+          echo "  Installed Cascade chrome + Firefox user.js"
+          INSTALLED=1
+        done
+
+        if [[ "$INSTALLED" -eq 0 ]]; then
+          echo "No Firefox profiles found, skipping Cascade install."
+        fi
+      description: Install Firefox Cascade theme
+      stdout: true
+      stderr: true
+    - command: |
         # Install Zen Browser user-overrides.js and userChrome.css
         ZEN_BASE="$HOME/Library/Application Support/zen"
         if [[ ! -d "$ZEN_BASE/Profiles" ]]; then
