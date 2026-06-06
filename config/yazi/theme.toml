@@ -1,0 +1,6 @@
+#:schema https://yazi-rs.github.io/schemas/theme.json
+# Generated from palette/ayu.toml — selects the bundled flavor.
+
+[flavor]
+dark  = "ayu-dark"
+light = "ayu-dark"
