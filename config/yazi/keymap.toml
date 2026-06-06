@@ -1,0 +1,22 @@
+# Yazi keymap — extra bindings layered on top of the built-in defaults.
+# `prepend_keymap` keeps every default key and just adds/overrides these.
+
+[mgr]
+prepend_keymap = [
+	{ on = "l",          run = "plugin smart-enter",             desc = "Enter dir or open file" },
+	{ on = "<Enter>",    run = "plugin smart-enter",             desc = "Enter dir or open file" },
+	{ on = "f",          run = "plugin jump-to-char",            desc = "Jump to a file by char" },
+	{ on = "F",          run = "plugin smart-filter",            desc = "Smart filter (live)" },
+	{ on = "T",          run = "plugin toggle-pane max-preview", desc = "Maximize / restore preview" },
+	{ on = [ "g", "l" ], run = "shell 'lazygit' --block",        desc = "Open lazygit here" },
+
+	# Restore files deleted by Yazi
+	{ on = "u",          run = "plugin restore",                 desc = "Restore last deleted" },
+	{ on = "U",          run = "plugin restore -- --interactive", desc = "Restore (interactive)" },
+
+	# Compress / archive
+	{ on = "C",              run = "plugin ouch",                desc = "Quick zip (ouch)" },
+	{ on = [ "c", "a", "a" ], run = "plugin compress",          desc = "Archive selection" },
+	{ on = [ "c", "a", "p" ], run = "plugin compress -p",       desc = "Archive (password)" },
+	{ on = [ "c", "a", "l" ], run = "plugin compress -l",       desc = "Archive (compression level)" },
+]

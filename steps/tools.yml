@@ -18,6 +18,23 @@
       path: config/yazi/init.lua
       create: true
       force: true
+    ~/.config/yazi/theme.toml:
+      path: config/yazi/theme.toml
+      create: true
+      force: true
+    ~/.config/yazi/flavors:
+      path: config/yazi/flavors
+      create: true
+      force: true
+    ~/.config/yazi/keymap.toml:
+      path: config/yazi/keymap.toml
+      create: true
+      force: true
+    # Custom eza-preview plugin (directory tree preview)
+    ~/.config/yazi/plugins/eza-preview.yazi:
+      path: config/yazi/plugins/eza-preview.yazi
+      create: true
+      force: true
     # Lazygit
     ~/.config/lazygit/config.yml:
       path: config/lazygit/config.yml
@@ -35,33 +52,23 @@
       force: true
 - shell:
     - command: |
-        # Install Firefox and CascadeFox/Cascade userChrome theme
+        # Install Firefox-Mod-Blur userChrome/userContent theme
         FIREFOX_APP="/Applications/Firefox.app/Contents/MacOS/firefox"
         FIREFOX_BASE="$HOME/Library/Application Support/Firefox"
         FIREFOX_PROFILES="$FIREFOX_BASE/Profiles"
-        CASCADE_DIR="$HOME/.cache/cascadefox/cascade"
-        CASCADE_REPO="https://github.com/cascadefox/cascade.git"
+        FIREFOX_MOD_BLUR_CHROME_DIR="$HOME/dots/config/firefox/chrome"
 
         if [[ ! -x "$FIREFOX_APP" ]]; then
-          echo "Firefox.app not found, skipping Cascade install."
+          echo "Firefox.app not found, skipping Firefox-Mod-Blur install."
           exit 0
         fi
 
-        mkdir -p "$FIREFOX_PROFILES" "$(dirname "$CASCADE_DIR")"
-
-        if [[ ! -d "$CASCADE_DIR/.git" ]]; then
-          echo "Cloning Cascade theme..."
-          rm -rf "$CASCADE_DIR"
-          git clone --depth 1 "$CASCADE_REPO" "$CASCADE_DIR"
-        else
-          echo "Updating Cascade theme..."
-          git -C "$CASCADE_DIR" pull --ff-only || true
-        fi
-
-        if [[ ! -d "$CASCADE_DIR/chrome" ]]; then
-          echo "Cascade chrome directory not found, skipping."
+        if [[ ! -d "$FIREFOX_MOD_BLUR_CHROME_DIR" ]]; then
+          echo "Firefox-Mod-Blur chrome directory not found, skipping."
           exit 0
         fi
+
+        mkdir -p "$FIREFOX_PROFILES"
 
         shopt -s nullglob
         profiles=("$FIREFOX_PROFILES"/*/)
@@ -85,16 +92,16 @@
 
           echo "Firefox profile: $profile_name"
           mkdir -p "$profile_dir/chrome"
-          rsync -a --delete "$CASCADE_DIR/chrome/" "$profile_dir/chrome/"
+          rsync -a --delete "$FIREFOX_MOD_BLUR_CHROME_DIR/" "$profile_dir/chrome/"
           cp "$HOME/dots/config/firefox/user.js" "$profile_dir/user.js"
-          echo "  Installed Cascade chrome + Firefox user.js"
+          echo "  Installed Firefox-Mod-Blur chrome + Firefox user.js"
           INSTALLED=1
         done
 
         if [[ "$INSTALLED" -eq 0 ]]; then
-          echo "No Firefox profiles found, skipping Cascade install."
+          echo "No Firefox profiles found, skipping Firefox-Mod-Blur install."
         fi
-      description: Install Firefox Cascade theme
+      description: Install Firefox-Mod-Blur theme
       stdout: true
       stderr: true
     - command: |
@@ -135,11 +142,34 @@
       stdout: true
       stderr: true
     - command: |
-        # Install yazi plugins if not already installed
-        if [[ ! -d ~/.config/yazi/plugins ]]; then
-          echo "Installing yazi plugins..."
-          git clone --depth 1 https://github.com/yazi-rs/plugins ~/.config/yazi/plugins
-        fi
-      description: Installing yazi plugins
+        # Ensure yazi plugins are installed (via `ya pkg`). Idempotent.
+        mkdir -p ~/.config/yazi/plugins
+        install_plugin() {
+          local pkg="$1" dir="$2"
+          local path="$HOME/.config/yazi/plugins/$dir"
+          # Drop a broken symlink (e.g. a stale Nix link) so `ya pkg` can deploy.
+          [[ -L "$path" && ! -e "$path" ]] && rm -f "$path"
+          # Already present (real dir or valid symlink) → nothing to do.
+          [[ -e "$path" ]] && return 0
+          echo "Installing yazi plugin: $dir"
+          ya pkg add "$pkg" 2>/dev/null || echo "  (ya pkg failed for $pkg — skipping)"
+        }
+        # Official UI / navigation plugins
+        install_plugin "yazi-rs/plugins:git"          git.yazi
+        install_plugin "yazi-rs/plugins:full-border"  full-border.yazi
+        install_plugin "yazi-rs/plugins:smart-filter" smart-filter.yazi
+        install_plugin "yazi-rs/plugins:jump-to-char" jump-to-char.yazi
+        install_plugin "yazi-rs/plugins:smart-enter"  smart-enter.yazi
+        install_plugin "yazi-rs/plugins:toggle-pane"  toggle-pane.yazi
+        # Starship prompt in the header (matches the shell prompt)
+        install_plugin "Rolv-Apneseth/starship"       starship.yazi
+        # Previewers, archive tools, status bar
+        install_plugin "ndtoan96/ouch"                ouch.yazi
+        install_plugin "boydaihungst/mediainfo"       mediainfo.yazi
+        install_plugin "Reledia/glow"                 glow.yazi
+        install_plugin "boydaihungst/restore"         restore.yazi
+        install_plugin "KKV9/compress"                compress.yazi
+        install_plugin "imsi32/yatline"               yatline.yazi
+      description: Installing yazi plugins (UI, navigation, previewers, status bar)
       stdout: true
       stderr: true

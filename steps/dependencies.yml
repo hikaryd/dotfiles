@@ -4,19 +4,23 @@
           echo "Homebrew is not installed. Skipping Brewfile."
           exit 0
         fi
-        # Homebrew cannot adopt an already existing .app when its bundle version
-        # differs from the cask version. Move stale Mos.app aside before bundle.
-        if grep -q '^cask "mos"' Brewfile && [[ -d /Applications/Mos.app ]]; then
+        # Reconcile the `mos` cask before bundle: Homebrew chokes both when an
+        # unmanaged Mos.app exists with a different version (adoption conflict)
+        # and when it records mos but the .app is gone (stale state → upgrade
+        # fails with "App source is not there"). Handle both directions.
+        if grep -q '^cask "mos"' Brewfile; then
           INSTALLED_MOS_VERSION=""
-          EXISTING_MOS_VERSION=""
           if brew list --cask mos >/dev/null 2>&1; then
             INSTALLED_MOS_VERSION="$(brew list --cask --versions mos 2>/dev/null | awk '{print $2}')"
           fi
-          EXISTING_MOS_VERSION="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' /Applications/Mos.app/Contents/Info.plist 2>/dev/null || true)"
 
-          if [[ -z "$INSTALLED_MOS_VERSION" && -n "$EXISTING_MOS_VERSION" ]]; then
-            BACKUP_APP="/Applications/Mos.app.backup-${EXISTING_MOS_VERSION}-$(date +%Y%m%d%H%M%S)"
-            echo "Found unmanaged Mos.app $EXISTING_MOS_VERSION; moving it to $BACKUP_APP before brew bundle..."
+          if [[ -n "$INSTALLED_MOS_VERSION" && ! -d /Applications/Mos.app ]]; then
+            echo "Homebrew records Mos $INSTALLED_MOS_VERSION but /Applications/Mos.app is missing; clearing stale state..."
+            brew uninstall --cask mos --force >/dev/null 2>&1 || true
+          elif [[ -z "$INSTALLED_MOS_VERSION" && -d /Applications/Mos.app ]]; then
+            EXISTING_MOS_VERSION="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' /Applications/Mos.app/Contents/Info.plist 2>/dev/null || true)"
+            BACKUP_APP="/Applications/Mos.app.backup-${EXISTING_MOS_VERSION:-unknown}-$(date +%Y%m%d%H%M%S)"
+            echo "Found unmanaged Mos.app ${EXISTING_MOS_VERSION:-?}; moving it to $BACKUP_APP before brew bundle..."
             mv /Applications/Mos.app "$BACKUP_APP"
           fi
         fi
