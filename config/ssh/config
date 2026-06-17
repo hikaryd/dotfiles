@@ -3,4 +3,4 @@ Host *
     AddKeysToAgent yes
     ServerAliveInterval 5
     ServerAliveCountMax 10
-    IdentityAgent "~/.1password/agent.sock"
+    IdentityAgent "~/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"

@@ -55,7 +55,7 @@ EOF
 
 # ─── параметры ───────────────────────────────────────────────────────
 SUB_URL=""; VPS=""; ROUTER_HOST="192.168.254.1"; ROUTER_USER="admin"; ROUTER_PASS=""
-AWG_PORT="51820"; TUN_NET="10.8.2.0/24"; MTU="1420"; ADBLOCK="1"; DHCP_POOL="_WEBADMIN"
+AWG_PORT="51820"; TUN_NET="10.8.2.0/24"; MTU="1280"; ADBLOCK="1"; DHCP_POOL="_WEBADMIN"
 SKIP_VPS=0; SKIP_ROUTER=0
 ADBLOCK_WHITELIST="tmdb.org,themoviedb.org,b-cdn.net"; TPROXY_PORT="7895"; CLASH_PORT="9090"
 

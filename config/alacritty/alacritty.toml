@@ -1,69 +1,109 @@
-# Alacritty configuration (based on Ghostty config)
+# Alacritty configuration mirrored from config/ghostty/config.
+# Ghostty reference:
+#   theme = Ayu
+#   font-family = Iosevka (currently resolves in Ghostty to JetBrainsMono Nerd Font Mono)
+#   font-size = 14
+#   adjust-cell-height = 45%
+#   background = 0d1017
+#   background-opacity = 0.95
+#   background-blur = true
 
 [terminal]
-shell = { program = "/opt/homebrew/bin/nu" }
+# Ghostty does not override shell, so use the same login shell configured for the user.
+shell = { program = "/opt/homebrew/bin/zsh", args = ["-l"] }
 
 [window]
+# Ghostty: macos-titlebar-style = hidden
 decorations = "Buttonless"
-opacity = 0.9
+
+# Ghostty: background-opacity = 0.95, background-blur = true
+opacity = 0.95
 blur = true
+
+# Ghostty: title = ""
 title = ""
+
+# Ghostty: window-padding-x/y = 6, window-padding-balance = true
 padding = { x = 6, y = 6 }
 dynamic_padding = true
 
 [font]
-normal = { family = "Iosevka", style = "Regular" }
-bold = { family = "Iosevka", style = "Bold" }
-italic = { family = "Iosevka", style = "Italic" }
-bold_italic = { family = "Iosevka", style = "Bold Italic" }
-size = 12.0
+# Ghostty config requests Iosevka, but on this machine `ghostty +show-face`
+# resolves to the installed JetBrainsMono Nerd Font Mono face. Use that CoreText
+# family name so Alacritty renders the same glyphs instead of falling back to Menlo.
+normal = { family = "JetBrainsMono Nerd Font Mono", style = "Regular" }
+bold = { family = "JetBrainsMono Nerd Font Mono", style = "Bold" }
+italic = { family = "JetBrainsMono Nerd Font Mono", style = "Italic" }
+bold_italic = { family = "JetBrainsMono Nerd Font Mono", style = "Bold Italic" }
+size = 14.0
 builtin_box_drawing = true
 
 [font.offset]
+# Ghostty: adjust-cell-height = 45%.
+# Alacritty has pixel offsets rather than percentages; +6 px is the closest
+# practical match for 14pt terminal text while keeping glyph proportions unchanged.
 y = 6
 
 [cursor]
+# Ghostty: cursor-style = block, cursor-style-blink = false
 style = { shape = "Block", blinking = "Off" }
 unfocused_hollow = true
 
 [mouse]
+# Ghostty: mouse-hide-while-typing = true
 hide_when_typing = true
 
-# Ayu dark color scheme
+[selection]
+# Keep Alacritty selections in the macOS clipboard. This makes mouse-selected
+# terminal text available to other macOS apps without an extra Cmd+C.
+save_to_clipboard = true
+
+# Exact colors from `ghostty +show-config --changes-only` for `theme = Ayu`,
+# with explicit Ghostty background override `background = #0d1017`.
 [colors.primary]
 background = "#0d1017"
 foreground = "#bfbdb6"
 
-[colors.cursor]
-cursor = "#e6b450"
-text = "#0d1017"
-
+# Ghostty: selection-foreground/background from the Ayu theme.
 [colors.selection]
-background = "#1b1f29"
-text = "#bfbdb6"
+text = "#0b0e14"
+background = "#409fff"
+
+# Do not set [colors.cursor]: Alacritty defaults to CellForeground cursor and
+# CellBackground text, matching Ghostty's `cursor-color = cell-foreground` and
+# `cursor-text = cell-background`.
 
 [colors.normal]
-black = "#3e4451"
-red = "#f07178"
-green = "#aad94c"
-yellow = "#ffb454"
-blue = "#39bae6"
-magenta = "#d2a6ff"
-cyan = "#95e6cb"
-white = "#e6e1cf"
+black = "#11151c"
+red = "#ea6c73"
+green = "#7fd962"
+yellow = "#f9af4f"
+blue = "#53bdfa"
+magenta = "#cda1fa"
+cyan = "#90e1c6"
+white = "#c7c7c7"
 
 [colors.bright]
-black = "#4d5566"
+black = "#686868"
 red = "#f07178"
 green = "#aad94c"
 yellow = "#ffb454"
-blue = "#39bae6"
+blue = "#59c2ff"
 magenta = "#d2a6ff"
 cyan = "#95e6cb"
 white = "#ffffff"
 
 [keyboard]
 bindings = [
+  # Native macOS Cmd+C/Cmd+V bindings are provided by Alacritty defaults.
+  # Add only Russian-layout fallbacks to avoid triggering paste twice.
+  # Cmd+C -> "с" (Cyrillic es), Cmd+V -> "м" (Cyrillic em).
+  { key = "с", mods = "Command", action = "Copy" },
+  { key = "С", mods = "Command", action = "Copy" },
+  { key = "м", mods = "Command", action = "Paste" },
+  { key = "М", mods = "Command", action = "Paste" },
+
+  # Ghostty custom keybinds: pass Ctrl+number to tmux with CSI-u encoding.
   { key = "Key1", mods = "Control", chars = "\u001b[49;5u" },
   { key = "Key2", mods = "Control", chars = "\u001b[50;5u" },
   { key = "Key3", mods = "Control", chars = "\u001b[51;5u" },
