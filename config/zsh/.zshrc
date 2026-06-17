@@ -6,6 +6,7 @@
 export EDITOR="nvim"
 export VISUAL="nvim"
 export OPENAI_BASE_URL="https://gateway.ai.cloudflare.com/v1/1a911fb4ac31b7d5e7b5a60fb08aa48f/aihr-proxy/openai"
+export BUN_INSTALL="$HOME/.bun"
 
 # Kubeconfig — default (stage/dev) loads automatically via native zsh glob (no fork)
 if [[ -d "$HOME/.kube/configs/default" ]]; then
@@ -29,16 +30,25 @@ kprod() {
   KUBECONFIG="${(j.:.)prod_files}" kubectl "$@"
 }
 
-# PATH (typeset -U removes duplicates)
-typeset -U path
+# PATH / fpath (typeset -U removes duplicates)
+typeset -U path fpath
 path=(
+  "$BUN_INSTALL/bin"
   "$HOME/.cargo/bin"
   "$HOME/.local/bin"
   /opt/homebrew/bin
+  /opt/homebrew/sbin
   /usr/local/bin
   $path
   /Applications
   "$HOME/.dual-graph"
+)
+
+# Completion/function search path must be ready before compinit.
+fpath=(
+  "$HOME/.bun"
+  "$HOME/.config/zsh/functions"
+  $fpath
 )
 
 # --- History ---
@@ -60,14 +70,16 @@ setopt GLOB_DOTS
 
 # --- Completion (daily cache; -C skips security check on warm runs) ---
 autoload -Uz compinit
-if [[ -n $HOME/.zcompdump(#qNmh-24) ]]; then
-  compinit -C -d "$HOME/.zcompdump"
+_zcompdump="$HOME/.zcompdump-${ZSH_VERSION}"
+_zcompdump_recent=("${_zcompdump}"(N.mh-24))
+if (( ${#_zcompdump_recent} )); then
+  compinit -C -d "$_zcompdump"
 else
-  compinit -d "$HOME/.zcompdump"
-  # Compile dump for faster subsequent loads
-  [[ -s "$HOME/.zcompdump" && (! -s "$HOME/.zcompdump.zwc" || "$HOME/.zcompdump" -nt "$HOME/.zcompdump.zwc") ]] && \
-    zcompile "$HOME/.zcompdump"
+  compinit -d "$_zcompdump"
 fi
+[[ -s "$_zcompdump" && (! -s "$_zcompdump.zwc" || "$_zcompdump" -nt "$_zcompdump.zwc") ]] && \
+  zcompile "$_zcompdump" &!
+unset _zcompdump _zcompdump_recent
 
 zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}'
 zstyle ':completion:*' menu select
@@ -76,7 +88,6 @@ zstyle ':completion:*' use-cache on
 zstyle ':completion:*' cache-path "$HOME/.zcompcache"
 
 # --- Autoloaded functions (lazy — loaded only on first call) ---
-fpath=("$HOME/.config/zsh/functions" $fpath)
 autoload -Uz extract kafka-consume kafka-produce tp
 
 # --- Key bindings ---
@@ -149,19 +160,31 @@ fi
 [[ -s "$_starship_cache" ]] && source "$_starship_cache"
 unset _starship_cache
 
-# fzf
-[[ -f /opt/homebrew/opt/fzf/shell/completion.zsh ]] && source /opt/homebrew/opt/fzf/shell/completion.zsh
-[[ -f /opt/homebrew/opt/fzf/shell/key-bindings.zsh ]] && source /opt/homebrew/opt/fzf/shell/key-bindings.zsh
+# fzf + plugins are loaded on first ZLE line-init instead of blocking shell
+# startup. zsh-syntax-highlighting is still sourced last inside the loader.
+_zsh_load_deferred_plugins() {
+  (( ${+_zsh_deferred_plugins_loaded} )) && return
+  typeset -g _zsh_deferred_plugins_loaded=1
 
-# --- Plugins (must be last) ---
-[[ -f /opt/homebrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh ]] && \
-  source /opt/homebrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh
-[[ -f /opt/homebrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ]] && \
-  source /opt/homebrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+  [[ -f /opt/homebrew/opt/fzf/shell/completion.zsh ]] && source /opt/homebrew/opt/fzf/shell/completion.zsh
+  [[ -f /opt/homebrew/opt/fzf/shell/key-bindings.zsh ]] && source /opt/homebrew/opt/fzf/shell/key-bindings.zsh
 
-# bun completions
-[ -s "/Users/tronin.egor/.bun/_bun" ] && source "/Users/tronin.egor/.bun/_bun"
+  [[ -f /opt/homebrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh ]] && \
+    source /opt/homebrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh
+  [[ -f /opt/homebrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ]] && \
+    source /opt/homebrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+}
 
-# bun
-export BUN_INSTALL="$HOME/.bun"
-export PATH="$BUN_INSTALL/bin:$PATH"
+if [[ -o interactive ]]; then
+  autoload -Uz add-zle-hook-widget
+  zle -N _zsh_load_deferred_plugins
+  add-zle-hook-widget line-init _zsh_load_deferred_plugins
+fi
+
+# Codex proxy via xray + VLESS
+alias codex-proxy='python3 ~/.config/xray-codex/codex-proxy.py'
+
+# Запуск Codex CLI строго через proxy-переменные
+codex-vpn() {
+  python3 ~/.config/xray-codex/codex-proxy.py --run -- "$@"
+}

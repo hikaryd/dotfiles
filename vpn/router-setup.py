@@ -25,7 +25,7 @@ AWG_PORT = H.get("AWG_PORT", "51820")
 TUN_CLI = H.get("TUN_CLI", "10.8.2.2")
 TUN_SRV = H.get("TUN_SRV", "10.8.2.1")
 TUN_MASK = H.get("TUN_MASK", "255.255.255.0")
-MTU = H.get("MTU", "1420")
+MTU = H.get("MTU", "1280")
 SERVER_PUB = H["SERVER_PUB"]
 ROUTER_KEY = H["ROUTER_KEY"]
 ASC = H["AWG_PARAMS"]  # "Jc Jmin Jmax S1 S2 H1 H2 H3 H4"
@@ -89,6 +89,18 @@ def main():
         f"interface {IFACE} ip mtu {MTU}",
         f"interface {IFACE} wireguard private-key {ROUTER_KEY}",
     ], "Интерфейс + ключ + AWG")
+
+    # 1.5) убрать чужих пиров (напр. от прежнего сервера при миграции):
+    # два пира с allow-ips 0.0.0.0/0 ломают cryptokey-routing и рассинхронят сессию
+    try:
+        si = get(f"/rci/show/interface/{IFACE}")
+        stale = [pe.get("public-key") for pe in si.get("wireguard", {}).get("peer", [])
+                 if pe.get("public-key") and pe.get("public-key") != SERVER_PUB]
+        if stale:
+            run([f"interface {IFACE} no wireguard peer {pk}" for pk in stale],
+                "Удаление чужих пиров")
+    except Exception as e:
+        print("peer cleanup skipped:", e)
 
     # 2) пир (контекст сохраняется в одном POST)
     run([

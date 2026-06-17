@@ -10,7 +10,7 @@ AWG_PORT=${AWG_PORT:-51820}
 TUN_CIDR=${TUN_CIDR:-10.8.2.0/24}
 SRV_CIDR=${SRV_CIDR:-10.8.2.1/24}
 TUN_CLI=${TUN_CLI:-10.8.2.2}
-MTU=${MTU:-1420}
+MTU=${MTU:-1280}
 ADBLOCK=${ADBLOCK:-1}
 TPROXY_PORT=${TPROXY_PORT:-7895}
 CLASH_PORT=${CLASH_PORT:-9090}
@@ -46,17 +46,40 @@ fi
 # shellcheck disable=SC1091
 . ./awg_params.env
 
+say "Go (amneziawg-go требует >= 1.24; apt на старых ОС, напр. Debian 12, даёт 1.19)"
+go_ok=0
+if command -v go >/dev/null; then
+  gv=$(go version 2>/dev/null | grep -oE "go[0-9]+\.[0-9]+" | head -1 | tr -d "go")
+  gmaj=${gv%%.*}; gmin=${gv##*.}
+  if [ "${gmaj:-0}" -gt 1 ] 2>/dev/null || { [ "${gmaj:-0}" -eq 1 ] 2>/dev/null && [ "${gmin:-0}" -ge 24 ] 2>/dev/null; }; then
+    go_ok=1
+  fi
+fi
+if [ "$go_ok" -ne 1 ]; then
+  say "системный Go устарел/отсутствует — ставлю свежий из go.dev"
+  garch=amd64; case "$(uname -m)" in aarch64|arm64) garch=arm64;; esac
+  gver=$(curl -fsSL "https://go.dev/VERSION?m=text" | head -1)
+  curl -fsSL "https://go.dev/dl/${gver}.linux-${garch}.tar.gz" -o /tmp/go.tgz
+  rm -rf /usr/local/go && tar -C /usr/local -xzf /tmp/go.tgz
+  export PATH=/usr/local/go/bin:$PATH
+fi
+
 say "сборка amneziawg-go + amneziawg-tools"
 if ! command -v amneziawg-go >/dev/null; then
   cd /opt && rm -rf amneziawg-go
   git clone --depth=1 https://github.com/amnezia-vpn/amneziawg-go >/dev/null 2>&1
-  cd amneziawg-go && make >/dev/null 2>&1 && cp amneziawg-go /usr/local/bin/
+  cd amneziawg-go
+  make >/tmp/awg-go-build.log 2>&1 || { echo "ОШИБКА сборки amneziawg-go:" >&2; tail -15 /tmp/awg-go-build.log >&2; exit 1; }
+  [ -x amneziawg-go ] || { echo "ОШИБКА: бинарник amneziawg-go не создан" >&2; exit 1; }
+  cp amneziawg-go /usr/local/bin/
   cd "$WORK"
 fi
 if ! command -v awg-quick >/dev/null; then
   cd /opt && rm -rf amneziawg-tools
   git clone --depth=1 https://github.com/amnezia-vpn/amneziawg-tools >/dev/null 2>&1
-  cd amneziawg-tools/src && make >/dev/null 2>&1 && make install >/dev/null 2>&1
+  cd amneziawg-tools/src
+  { make && make install; } >/tmp/awg-tools-build.log 2>&1 || { echo "ОШИБКА сборки amneziawg-tools:" >&2; tail -15 /tmp/awg-tools-build.log >&2; exit 1; }
+  command -v awg-quick >/dev/null || { echo "ОШИБКА: awg-quick не установлен" >&2; exit 1; }
   cd "$WORK"
 fi
 
@@ -94,6 +117,18 @@ net.ipv4.ip_forward = 1
 net.ipv4.conf.all.route_localnet = 1
 EOF
 sysctl -p /etc/sysctl.d/99-awggw.conf >/dev/null
+# systemd-networkd по умолчанию (ManageForeignRoutingPolicyRules=yes) удаляет «чужие»
+# ip rule при переконфигурации сети. Наше fwmark-правило (tproxy → table 100) для него
+# чужое: оно слетает, awg0 остаётся — трафик доходит до сервера, но не попадает в
+# sing-box (rx растёт, tx нет). Запрещаем networkd трогать чужие policy-rule.
+if systemctl is-active --quiet systemd-networkd; then
+  mkdir -p /etc/systemd/networkd.conf.d
+  cat >/etc/systemd/networkd.conf.d/10-keep-foreign-rules.conf <<EOF
+[Network]
+ManageForeignRoutingPolicyRules=no
+EOF
+  systemctl restart systemd-networkd || true
+fi
 cat >/etc/nftables.conf <<EOF
 #!/usr/sbin/nft -f
 flush ruleset
@@ -158,10 +193,20 @@ WantedBy=multi-user.target
 EOF
 cat >/usr/local/bin/awg-watchdog.sh <<'EOF'
 #!/bin/bash
+# поднять awg0, если пропал
 if ! /sbin/ip link show awg0 >/dev/null 2>&1; then
   logger -t awg-watchdog "awg0 missing, restarting"
   systemctl restart awg-quick@awg0 && systemctl restart awg-gateway
 fi
+# восстановить policy-routing tproxy: ip rule fwmark может быть сброшен
+# переконфигурацией сети (networkd/cloud-init), а awg0 при этом остаётся —
+# тогда трафик доходит до сервера, но не попадает в sing-box (rx растёт, tx нет)
+if ! /sbin/ip rule show | grep -q "fwmark 0x1 lookup 100"; then
+  logger -t awg-watchdog "fwmark rule missing, restoring"
+  /sbin/ip rule add fwmark 1 lookup 100
+fi
+/sbin/ip route show table 100 2>/dev/null | grep -q "local default" || \
+  /sbin/ip route replace local 0.0.0.0/0 dev lo table 100
 EOF
 chmod +x /usr/local/bin/awg-watchdog.sh
 cat >/etc/systemd/system/awg-watchdog.service <<EOF
