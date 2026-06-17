@@ -97,22 +97,27 @@ TITLE RULES:
 * Capture the single most important change of the whole diff
 
 BODY RULES:
-* Write a thorough body as a bulleted list ("- " per line) that covers EVERY
-  meaningful change in the diff — do not omit changes just to stay short
-* One bullet per logical change; group related edits into a single bullet
-* For each bullet state WHAT changed and, when not obvious, WHY
-* Mention notable specifics: new/removed files, renamed symbols, config/flag
-  changes, dependency bumps, behavioral or API changes, bug fixes
-* Reference relevant file or module names when it adds clarity
+* Write the body as a bulleted list ("- " per line) of LOGICAL changes, not a
+  file-by-file or line-by-line changelog
+* Group all edits that serve one purpose into a SINGLE bullet, even if they span
+  several files, functions or layers (e.g. backend + frontend + tests)
+* Aim for a small number of bullets — typically 2 to 5; merge related work
+  rather than splitting it. Most commits need 2-4 bullets, not one per file
+* Each bullet describes the change at the level of behavior or intent (WHAT it
+  does and WHY), not implementation mechanics
+* Do NOT enumerate every new symbol, function or file; name a specific
+  file/class only when it genuinely helps a reader, not by default
+* Cover every meaningful area of work, but as themes — never omit a real
+  feature, yet never inflate the list with granular sub-steps
 * Skip pure noise (whitespace/formatting only) unless that is the entire change
-* Keep each line under ~100 characters; do not wrap a single sentence oddly
+* Keep each line under ~100 characters
 * Only describe what is actually present in the diff — never invent changes
 
 OUTPUT FORMAT (title, then one blank line, then the body):
 <title>
 
-- <change 1>
-- <change 2>
+- <logical change 1>
+- <logical change 2>
 - ...
 """
 
