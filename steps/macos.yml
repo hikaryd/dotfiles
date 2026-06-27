@@ -15,6 +15,16 @@
       path: config/paneru/paneru.toml
       create: true
       force: true
+    # Компаньон-демон авто-привязки приложений к рядам paneru.
+    # Симлинки безопасны: LaunchAgent НЕ грузится до launchctl bootstrap.
+    ~/.config/paneru/paneru-rules.py:
+      path: config/paneru/paneru-rules.py
+      create: true
+      force: true
+    ~/Library/LaunchAgents/com.paneru.rules.plist:
+      path: config/paneru/com.paneru.rules.plist
+      create: true
+      force: true
     ~/.config/glide/glide.toml:
       path: config/glide/glide.toml
       create: true

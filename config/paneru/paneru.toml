@@ -1,154 +1,206 @@
 # syntax=toml
 #
-# Example configuration for Paneru.
+# paneru — sliding/scrollable tiling WM (Niri/PaperWM-style).
 #
+# Парадигма vs rift:
+#   rift  = именованные воркспейсы + жёсткий app-пиннинг (комнаты).
+#   paneru = бесконечная ГОРИЗОНТАЛЬНАЯ лента окон + динамические числовые ряды
+#            (virtual workspaces) как вторая, ВЕРТИКАЛЬНАЯ ось.
+#
+# Главная навигация — скролл по ленте (alt+h/l), а не прыжок в комнату.
+# Ряды (alt+1..4) — лёгкая группировка поверх ленты, без привязки приложений
+# в самом конфиге: paneru это не умеет. Базовый app->ряд авто-пиннинг делает
+# компаньон-демон config/paneru/paneru-rules.py (см. его шапку).
+#
+# Конфиг перезагружается на лету. Сокет команд: /tmp/paneru.socket.
+
 [options]
-# Enables focus follows mouse. Enabled by default, set to false to disable.
-# focus_follows_mouse = true
+# rift: focus_follows_mouse=true, mouse_follows_focus=false — повторяю.
+focus_follows_mouse = true
+mouse_follows_focus = false
 
-# Enables mouse follows focus. Enabled by default, set to false to disable.
-# mouse_follows_focus = true
+# Ширины колонок, по которым циклит `window_resize` (alt - r).
+preset_column_widths = [0.33, 0.5, 0.66, 0.75]
 
-# Array of widths used by the `window_resize` action to cycle between.
-# Defaults to 25%, 33%, 50%, 66% and 75%.
-preset_column_widths = [0.25, 0.33, 0.50, 0.66, 0.75]
-
-# How many fingers to use for moving windows left and right.
-# Make sure that it doesn't clash with OS setting for workspace switching.
-# Values lower than 3 will be ignored.
-# Remove the line to disable the gesture feature.
-# Apple touchpads support gestures with more than five fingers (!),
-# but it is probably not that useful to use two hands :)
-swipe_gesture_fingers = 4
-
-# Swiping keeps sliding windows until the first or last window.
-# Set to false to clamp so edge windows stay on-screen. Enabled by default.
-# continuous_swipe = true
-
-# Animation speed in 1/10th of display resolution per second.
-# E.g. a value of 20 means: move at a speed of two display sizes per second.
-# To disable animations, leave this unset or set to a very large value.
+# Скорость анимации: 1/10 ширины дисплея в секунду (50 => 5 экранов/сек).
 animation_speed = 50
 
-# Automatically center the focused window when switching focus with keyboard,
-# i.e. 'window_focus_west' or 'window_focus_east'.
-# auto_center = false
+# Центрировать сфокусированную колонку при скролле по ленте (PaperWM-feel).
+# Вкус: поставь false, если хочешь, чтобы лента не «прыгала» под фокус.
+auto_center = true
 
-# Height of off-screen window slivers as a ratio (0.0–1.0) of the display
-# height. Lower values hide the window's corner radius at screen edges.
-# Default: 1.0 (full height, no inset).
-# sliver_height = 1.0
+# ВАЖНО: false — чтобы воркспейсы вели себя как фиксированные «комнаты» rift.
+# При true paneru удаляет хвостовые пустые ряды и нумерация «съезжает».
+reap_empty_workspaces = false
 
-# Width of off-screen window slivers in pixels. Controls how much of an
-# off-screen window peeks from the screen edge.
-# Default: 5 pixels.
-# sliver_width = 5
+# Новые окна добавляются в КОНЕЦ ленты, а не в середину (предсказуемо).
+insert_windows_mid_strip = false
 
-# Padding applied at screen edges (in pixels). Independent from the
-# between-window gaps set by per-window horizontal/vertical_padding.
-# Default: 0 on all sides.
-# padding_top = 0
-# padding_bottom = 0
-# padding_left = 0
-# padding_right = 0
+# (Свайп окон тачпадом — отдельная секция [swipe.gesture] ниже; в 0.4.x
+#  переехало из [options].swipe_gesture_fingers.)
 
-# When disabled, swiping of windows is clamped so you cannot scroll
-# past the first or last window.
-# When enabled (default) the strip slides freely, exposing the desktop behind.
-# free_slide = true
+# Свайп окон тачпадом: 3+ пальца включает жест (раньше swipe_gesture_fingers).
+[swipe.gesture]
+fingers_count = 4
 
+# Подсветка активного окна (рамка). Экспериментально в 0.4.x (использует
+# недокументированные API window-server). Цвет — ayu accent.
+[decorations.active.border]
+enabled = true
+color = "#e6b450"
+width = 2.0
+radius = "auto"
+
+# ─────────────────────────────────────────────────────────────────────────
+# Хоткеи. Грамматика модификаторов (наследует мышечную память rift):
+#   alt            — ФОКУС / навигация (leader, как Alt в rift)
+#   alt + shift    — ПЕРЕМЕСТИТЬ окно   (как comb1 = Alt+Shift в rift)
+#   alt + cmd      — края ленты / «через» (first/last, дисплеи)
+#   ctrl + alt     — вертикальная ось рядов (virtual workspaces) + сервис
+#   alt + <digit>  — прыжок на ряд N      (сохраняет rift Alt+1..4)
+# ─────────────────────────────────────────────────────────────────────────
 [bindings]
-# Moves the focus between windows. If there are no windows when moving up or
-# down, will swtich focus to the display above or below.
-window_focus_west = ["alt - h"]
-window_focus_east = ["alt - l"]
-window_focus_north = ["alt - k"]
-window_focus_south = ["alt - j"]
 
-# Swaps windows in chosen direction. If there are no windows to swap, will
-# move the window to a display above or below.
-window_swap_west = "alt + shift - h"
-window_swap_east = "alt + shift - l"
-window_swap_north = "alt + shift - k"
+# --- Фокус по ленте (west/east) и внутри стопки (north/south) ---
+# h/l листают ленту; k/j ходят по вертикальной стопке в колонке,
+# а при отсутствии окна сверху/снизу — переключают дисплей.
+window_focus_west  = "alt - h"
+window_focus_south = "alt - j"
+window_focus_north = "alt - k"
+window_focus_east  = "alt - l"
+
+# Вернуться к предыдущему окну (аналог rift Alt+Tab «последний воркспейс»).
+window_focus_managed = "alt - tab"
+
+# --- Переместить (swap) окно — rift comb1 + HJKL ---
+window_swap_west  = "alt + shift - h"
 window_swap_south = "alt + shift - j"
+window_swap_north = "alt + shift - k"
+window_swap_east  = "alt + shift - l"
 
-# Jump to the left-most or right-most windows.
-window_focus_first = "cmd + shift - h"
-window_focus_last = "cmd + shift - l"
+# --- Края ленты: фокус/перенос в самое начало/конец ---
+# Замена rift-овскому «прыжку на воркспейс»: тут — в край горизонтали.
+window_focus_first = "alt + cmd - h"
+window_focus_last  = "alt + cmd - l"
+window_swap_first  = "alt + cmd + shift - h"
+window_swap_last   = "alt + cmd + shift - l"
 
-# Move the current window into the left-most or right-most positions.
-window_swap_first = "alt + shift - h"
-window_swap_last = "alt + shift - l"
+# --- Воркспейсы: фиксированный набор как в rift (reap=false держит номера) ---
+# 5 рядов (ряд «разное»/Alt+2 удалён — не используется). Клавиши rift сохранены:
+#   ряд 1 = браузеры + Толк (+Музыка)   →  Alt+1
+#   ряд 2 = мессенджеры/почта            →  Alt+3
+#   ряд 3 = Outlook + UpNote/документы   →  Alt+W
+#   ряд 4 = система                      →  Alt+E
+#   ряд 5 = терминал + дев/БД            →  Alt+D
 
-# Centers the current window on screen.
-window_center = "alt - c"
+# Переключиться на ряд (rift: Alt + клавиша).
+window_virtualnum_1 = "alt - 1"
+window_virtualnum_2 = "alt - 3"
+window_virtualnum_3 = "alt - w"
+window_virtualnum_4 = "alt - e"
+window_virtualnum_5 = "alt - d"
 
-# Cycles between the window sizes defined in the `preset_column_widths` option.
-window_resize = "alt - r"
+# Перенести окно на ряд + перейти (rift: comb1 = Alt+Shift + клавиша).
+window_virtualmovenum_1 = "alt + shift - 1"
+window_virtualmovenum_2 = "alt + shift - 3"
+window_virtualmovenum_3 = "alt + shift - w"
+window_virtualmovenum_4 = "alt + shift - e"
+window_virtualmovenum_5 = "alt + shift - d"
 
-# Toggle full width for the current focused window.
-window_fullwidth = "alt - f"
+# Соседний ряд вверх/вниз + перенос окна между рядами (ctrl держим, чтобы
+# не конфликтовать с фокусом alt - k/j).
+window_virtual_north     = "ctrl + alt - k"
+window_virtual_south     = "ctrl + alt - j"
+window_virtualmove_north = "ctrl + alt + shift - k"
+window_virtualmove_south = "ctrl + alt + shift - j"
 
-# Toggles the window for management. If unmanaged, the window will be "floating".
-window_manage = "ctrl + alt - t"
+# --- Размер ---
+# Размер колонки: ] = шире, [ = уже  (Alt+Shift+] / Alt+Shift+[).
+# В этой сборке window_resize == grow (дубль), поэтому отдельный alt-r убрал.
+window_grow   = "alt + shift - ]"
+window_shrink = "alt + shift - ["
 
-# Stacks and unstacks a window into the left column. Each window gets a 1/N of the height.
-window_stack = "alt - ]"
-window_unstack = "alt + shift - ]"
+# --- Состояние окна ---
+window_fullwidth = "alt - f"      # rift Alt+F (full-screen → здесь full-width)
+window_manage    = "alt - space"  # rift Alt+Space — tiled <-> floating
+window_center    = "alt - c"      # центрировать колонку (идиом ленты)
 
-# Moves currently focused window to the next display.
-window_nextdisplay = "alt + shift - n"
+# --- Стопка (колонка из нескольких окон по вертикали) ---
+window_stack    = "alt - s"            # rift Meta+Shift+J toggle_stack
+window_unstack  = "alt + shift - s"
+window_equalize = "ctrl + alt - e"     # alt-e занят рядом «система»
+window_snap     = "alt - g"            # вернуть окно в видимую область
 
-# Moves the mouse pointer to the next display.
-mouse_nextdisplay = "alt - n"
+# --- Дисплеи ---
+mouse_nextdisplay      = "alt - n"          # перенести курсор на след. дисплей
+window_nextdisplay     = "alt + shift - n"  # окно на след. дисплей + перейти
+window_nextdisplaysend = "ctrl + alt - n"   # окно на след. дисплей, остаться
 
-# Size stacked windows in the column to equal heights.
-window_equalize = "alt + shift - e"
-
-# Quits the window manager.
+# --- Сервис ---
 quit = "ctrl + alt - q"
 
-# Window properties, matched by a RegExp title string.
+# ─────────────────────────────────────────────────────────────────────────
+# Правила окон. `title` (regex) — ОБЯЗАТЕЛЕН. Чтобы зафлоатить всё приложение:
+#   title = ".*" + bundle_id = "<id>" + floating = true.
+# paneru НЕ умеет назначать окно на ряд здесь — это делает paneru-rules.py.
+# ─────────────────────────────────────────────────────────────────────────
 [windows]
 
 [windows.pip]
-# Title RegExp pattern is required.
+# Picture-in-Picture всегда плавающий.
 title = "Picture.*(in)?.*[Pp]icture"
-# Do not manage this window, e.g. it will be floating.
 floating = true
 
-[windows.neovide]
-# Matches an editor and always inserts its window at index 1.
+# --- Floating-приложения (портировано из rift app_rules) ---
+[windows.onepassword]
 title = ".*"
-bundle_id = "com.neovide.neovide"
-index = 1
-
-[windows.popup]
-# Matches a popup and silently appends it at the end.
-title = "Unimportant popup window"
-dont_focus = true
-index = 100
-
-[windows.neovide_width]
-# Sets a specific initial width for a window (as a ratio of display width).
-title = ".*"
-bundle_id = "com.neovide.neovide"
-width = 0.5
-
-[windows.passwords]
-# Floating window placed on a grid. The format is "cols:rows:x:y:w:h".
-# This divides the display into a 6x6 grid and places the window at cell (1,1)
-# spanning 4 columns and 4 rows — roughly centered covering 2/3 of the display.
-title = "Passwords.*"
+bundle_id = "com.1password.1password"
 floating = true
-grid = "6:6:1:1:4:4"
 
-[windows.all]
-# Matches all windows and adds a few pixels of spacing to their borders.
-# Note: horizontal_padding and vertical_padding create gaps on all sides of
-# each window. At screen edges, the gap is cancelled out so padding only
-# appears between windows. Use the [options] padding_* settings above to
-# control screen edge margins independently.
+[windows.spotify]
 title = ".*"
-horizontal_padding = 4
-vertical_padding = 2
+bundle_id = "com.spotify.client"
+floating = true
+
+[windows.raycast]
+title = ".*"
+bundle_id = "com.raycast.macos"
+floating = true
+
+[windows.finder]
+title = ".*"
+bundle_id = "com.apple.finder"
+floating = true
+
+[windows.controlcenter]
+title = ".*"
+bundle_id = "com.apple.controlcenter"
+floating = true
+
+[windows.cisco]
+title = ".*"
+bundle_id = "com.cisco.secureclient.gui"
+floating = true
+
+[windows.aldente]
+# Не установлен сейчас; bundle_id общеизвестный — правило сработает, когда поставишь.
+title = ".*"
+bundle_id = "com.apphousekitchen.aldente-pro"
+floating = true
+
+[windows.typora_open]
+# rift флоатил только диалог «Открыть» у Typora.
+title = "Открыть|Open"
+bundle_id = "abnerworks.Typora"
+floating = true
+
+[windows.safari_settings]
+# Окна настроек Safari тайлятся плохо — флоатим (scope по bundle_id).
+title = "^(General|(Tab|Password|Website|Extension)s|AutoFill|Se(arch|curity)|Privacy|Advanced|Settings|Настройки)$"
+bundle_id = "com.apple.Safari"
+floating = true
+
+# TODO (не установлены / bundle_id не подтверждён — заполни и раскомментируй):
+#   v2RayTun, V2BOX, Proton Mail, Psst.
+# Узнать bundle_id установленного приложения:
+#   /usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "/Applications/<App>.app/Contents/Info.plist"

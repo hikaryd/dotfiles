@@ -19,6 +19,53 @@ warn() { printf '   %s!%s %s\n' "$YEL" "$R" "$*"; }
 die()  { printf '\n%s✗ %s%s\n' "$RED$B" "$*" "$R" >&2; exit 1; }
 ask()  { local p=$1 d=${2:-} a; if [[ -n $d ]]; then read -rp "   $p [$d]: " a; echo "${a:-$d}"; else read -rp "   $p: " a; echo "$a"; fi; }
 
+# SSH к Entware-шеллу роутера (root, порт 222) тем же паролем, что и веб-админка.
+# Нужен один раз — записать netfilter.d-хук на флешку /opt (RCI этого не умеет).
+router_ssh() {  # $1 = удалённая команда
+  local cmd=$1
+  local o="-p $ROUTER_SSH_PORT -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=10"
+  if command -v sshpass >/dev/null 2>&1; then
+    sshpass -p "$ROUTER_PASS" ssh $o "root@$ROUTER_HOST" "$cmd"
+  elif command -v expect >/dev/null 2>&1; then
+    ROUTER_PASS="$ROUTER_PASS" expect -c "
+      set timeout 30
+      spawn ssh $o root@$ROUTER_HOST {$cmd}
+      expect {
+        -re {[Pp]assword:} { send \"\$env(ROUTER_PASS)\r\"; exp_continue }
+        -re {yes/no}       { send \"yes\r\"; exp_continue }
+        eof
+      }
+      catch wait result
+      exit [lindex \$result 3]
+    "
+  else
+    return 127
+  fi
+}
+
+# Ставит хук «весь LAN через туннель»: жёстко завернуть подсеть LAN в WG-таблицу.
+# Это kill-switch для клиентов: упал WG → клиенты без инета (без утечки на WAN).
+# Сам роутер при падении WG уходит на WAN по ping-check (для подписки/SSH).
+install_lan_hook() {  # $1 = LAN-подсеть (CIDR), $2 = адрес роутера в туннеле (WG src)
+  local lan="$1" wgsrc="$2" hook b64
+  hook=$(cat <<HOOKEOF
+#!/bin/sh
+# LAN ($lan) -> VPN (Wireguard0 / nwg0). Идемпотентно; WG-таблицу находит
+# динамически по источнику $wgsrc, переживает reboot (на каждый netfilter reload).
+[ "\$type" = "ip6tables" ] && exit 0
+LAN="$lan"
+WGSRC="$wgsrc"
+PRIO=1200
+TBL=\$(ip rule list 2>/dev/null | sed -n "s/.*from \${WGSRC} lookup \\([0-9][0-9]*\\).*/\\1/p" | head -1)
+[ -z "\$TBL" ] && exit 0
+ip rule list 2>/dev/null | grep -q "from \${LAN} lookup \${TBL}" || ip rule add from \${LAN} lookup \${TBL} priority \${PRIO}
+exit 0
+HOOKEOF
+)
+  b64=$(printf '%s\n' "$hook" | base64 | tr -d '\n')
+  router_ssh "echo $b64 | base64 -d > /opt/etc/ndm/netfilter.d/50-lan-via-wg && chmod +x /opt/etc/ndm/netfilter.d/50-lan-via-wg && type=iptables /opt/etc/ndm/netfilter.d/50-lan-via-wg && echo HOOK_OK"
+}
+
 banner() {
   printf '%s' "$CYA$B"
   cat <<'ART'
@@ -38,6 +85,8 @@ ${B}Использование:${R} ./install.sh [опции]
   --router-host IP     Адрес роутера Keenetic            (192.168.254.1)
   --router-user USER   Логин веб-админки роутера                 (admin)
   --router-pass PASS   Пароль веб-админки роутера                 [обяз. для роутера]
+  --router-ssh-port N  SSH-порт Entware (root) для хука LAN→VPN       (222)
+  --no-lan-hook        Не ставить хук «весь LAN через туннель»
   --awg-port PORT      UDP-порт AmneziaWG                          (51820)
   --tunnel-net CIDR    Подсеть туннеля (.1 сервер, .2 роутер) (10.8.2.0/24)
   --mtu N              MTU интерфейса                                (1420)
@@ -55,6 +104,7 @@ EOF
 
 # ─── параметры ───────────────────────────────────────────────────────
 SUB_URL=""; VPS=""; ROUTER_HOST="192.168.254.1"; ROUTER_USER="admin"; ROUTER_PASS=""
+ROUTER_SSH_PORT="222"; LAN_HOOK=1
 AWG_PORT="51820"; TUN_NET="10.8.2.0/24"; MTU="1280"; ADBLOCK="1"; DHCP_POOL="_WEBADMIN"
 SKIP_VPS=0; SKIP_ROUTER=0
 ADBLOCK_WHITELIST="tmdb.org,themoviedb.org,b-cdn.net"; TPROXY_PORT="7895"; CLASH_PORT="9090"
@@ -66,6 +116,8 @@ while [[ $# -gt 0 ]]; do
     --router-host) ROUTER_HOST=$2; shift 2;;
     --router-user) ROUTER_USER=$2; shift 2;;
     --router-pass) ROUTER_PASS=$2; shift 2;;
+    --router-ssh-port) ROUTER_SSH_PORT=$2; shift 2;;
+    --no-lan-hook) LAN_HOOK=0; shift;;
     --awg-port) AWG_PORT=$2; shift 2;;
     --tunnel-net) TUN_NET=$2; shift 2;;
     --mtu) MTU=$2; shift 2;;
@@ -163,6 +215,17 @@ if [[ $SKIP_ROUTER -eq 0 ]]; then
   DHCP_POOL="$DHCP_POOL" \
     python3 "$SCRIPT_DIR/router-setup.py" || die "настройка роутера не удалась"
   ok "роутер настроен"
+
+  # весь домашний сегмент через туннель (RCI/ip global этого для форварда не делает)
+  if [[ $LAN_HOOK -eq 1 ]]; then
+    LAN_SUBNET="${ROUTER_HOST%.*}.0/24"
+    if install_lan_hook "$LAN_SUBNET" "$TUN_CLI" 2>/dev/null | grep -q HOOK_OK; then
+      ok "хук LAN→VPN установлен ($LAN_SUBNET → туннель, переживёт reboot)"
+    else
+      warn "не удалось поставить хук LAN→VPN по SSH (root@$ROUTER_HOST:$ROUTER_SSH_PORT)"
+      warn "без него клиенты идут мимо VPN; проверь SSH к Entware или поставь вручную"
+    fi
+  fi
 fi
 
 # ─── проверка ────────────────────────────────────────────────────────
@@ -184,7 +247,8 @@ cat <<EOF
    ${B}Пароль панели:${R}    $PANEL_SECRET
    ${B}Туннель:${R}          $SERVER_HOST:$AWG_PORT  (AmneziaWG, $TUN_CIDR)
    ${B}Маршрутизация:${R}    РФ напрямую · остальное → VPN · adblock $([[ $ADBLOCK == 1 ]] && echo вкл || echo выкл)
-   ${B}Failover:${R}         при падении туннеля — автопереключение на WAN
+   ${B}Клиенты LAN:${R}      $([[ $LAN_HOOK == 1 ]] && echo "весь сегмент → туннель, kill-switch (хук netfilter.d)" || echo "хук отключён (--no-lan-hook); маршрут по ip global")
+   ${B}Failover:${R}         $([[ $LAN_HOOK == 1 ]] && echo "роутер → WAN по ping-check; клиенты — kill-switch (без утечки)" || echo "при падении туннеля — автопереключение на WAN")
 
    ${DIM}Подписка обновляется сама (таймер 6ч). На устройствах обнови
    аренду DHCP (переподключи Wi-Fi), чтобы получить чистый DNS.${R}
