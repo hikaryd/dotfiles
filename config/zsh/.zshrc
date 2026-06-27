@@ -181,10 +181,42 @@ if [[ -o interactive ]]; then
   add-zle-hook-widget line-init _zsh_load_deferred_plugins
 fi
 
-# Codex proxy via xray + VLESS
+# --- Codex (oh-my-codex / omx) через изолированный VLESS-прокси (xray) ---
+# Локальный HTTP-прокси 127.0.0.1:10810 используется ТОЛЬКО процессом omx.
+# Системный трафик, корпоративный VPN и другие приложения не затрагиваются.
+# Управление прокси: codex-proxy --status | --stop | --update | --list
 alias codex-proxy='python3 ~/.config/xray-codex/codex-proxy.py'
 
-# Запуск Codex CLI строго через proxy-переменные
-codex-vpn() {
-  python3 ~/.config/xray-codex/codex-proxy.py --run -- "$@"
+omx() {
+  emulate -L zsh
+  local dir="$HOME/.config/xray-codex"
+  local cfg="$dir/config.json" pidf="$dir/xray.pid"
+  local port="${CODEX_PROXY_PORT:-10810}"
+  local proxy="http://127.0.0.1:$port"
+
+  # Поднять xray, если локальный HTTP-прокси ещё не слушает порт.
+  if ! lsof -nP -iTCP:"$port" -sTCP:LISTEN >/dev/null 2>&1; then
+    [[ -f "$cfg" ]] || { print -u2 "omx: нет $cfg — сначала настрой прокси: codex-proxy"; return 1; }
+    local xray_bin
+    xray_bin=$(command -v xray) || { print -u2 "omx: xray не найден (brew install xray)"; return 1; }
+    print -u2 "omx: поднимаю VLESS-прокси на $proxy ..."
+    nohup "$xray_bin" run -c "$cfg" >/dev/null 2>&1 &
+    print -r -- $! > "$pidf"
+    disown 2>/dev/null
+    local i
+    for i in {1..20}; do
+      lsof -nP -iTCP:"$port" -sTCP:LISTEN >/dev/null 2>&1 && break
+      sleep 0.2
+    done
+    lsof -nP -iTCP:"$port" -sTCP:LISTEN >/dev/null 2>&1 || {
+      print -u2 "omx: не удалось поднять xray на :$port (диагностика: codex-proxy --status)"
+      return 1
+    }
+  fi
+
+  # Запустить настоящий omx-бинарник с proxy-env только для этого процесса.
+  HTTP_PROXY="$proxy" HTTPS_PROXY="$proxy" ALL_PROXY="$proxy" \
+  http_proxy="$proxy" https_proxy="$proxy" all_proxy="$proxy" \
+  NO_PROXY="127.0.0.1,localhost,::1,*.local" no_proxy="127.0.0.1,localhost,::1,*.local" \
+  command omx "$@"
 }

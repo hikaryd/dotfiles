@@ -3,6 +3,7 @@ tap "koekeishiya/formulae"
 tap "acsandmann/tap"
 tap "asmvik/formulae"
 tap "nikitabobko/tap"
+tap "duongductrong/snapzy", "https://github.com/duongductrong/Snapzy"
 
 # Основные системные пакеты
 brew "coreutils"
@@ -103,6 +104,7 @@ brew "sesh"
 brew "gum"    
 cask "codex"
 brew "rift", args: ["tap", "acsandmann/tap"]
+brew "paneru"
 brew "fastfetch"    
 brew "ffmpeg"    
 
@@ -133,6 +135,7 @@ cask "affine"
 cask "upscayl"
 cask "topnotch"
 cask "hazeover"
+cask "duongductrong/snapzy/snapzy"
 cask "nikitabobko/tap/aerospace"
 
 # Шрифты

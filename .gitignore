@@ -8,3 +8,7 @@
 .dual-graph/
 /CLAUDE.md
 /.claude/settings.local.json
+
+# paneru rules daemon bytecode
+config/paneru/__pycache__/
+/.playwright-mcp

@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  LaunchAgent для компаньон-демона авто-привязки приложений к рядам paneru.
+
+  Путь к скрипту машинно-зависимый (личные dotfiles). Если меняется $HOME —
+  поправь путь ниже. Лог: /tmp/paneru-rules.log.
+
+  Активация (config-only по умолчанию; этим симлинком агент НЕ грузится):
+    launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.paneru.rules.plist
+  Остановить/выгрузить:
+    launchctl bootout   gui/$(id -u)/com.paneru.rules
+-->
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.paneru.rules</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/usr/bin/python3</string>
+        <string>/Users/tronin.egor/.config/paneru/paneru-rules.py</string>
+    </array>
+
+    <key>RunAtLoad</key>
+    <true/>
+
+    <key>KeepAlive</key>
+    <true/>
+
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>/opt/homebrew/bin:/Users/tronin.egor/.cargo/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+    </dict>
+
+    <key>StandardOutPath</key>
+    <string>/tmp/paneru-rules.log</string>
+    <key>StandardErrorPath</key>
+    <string>/tmp/paneru-rules.log</string>
+</dict>
+</plist>
