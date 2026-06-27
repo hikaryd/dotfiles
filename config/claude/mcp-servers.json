@@ -1,0 +1,64 @@
+{
+  "kubernetes": {
+    "type": "stdio",
+    "command": "npx",
+    "args": [
+      "-y",
+      "kubernetes-mcp-server@latest",
+      "--read-only",
+      "--kubeconfig",
+      "${KUBECONFIG_PATH}"
+    ],
+    "timeout": 15
+  },
+  "playwright": {
+    "type": "stdio",
+    "command": "npx",
+    "args": [
+      "@playwright/mcp@latest",
+      "--browser",
+      "firefox"
+    ],
+    "timeout": 15
+  },
+  "kubeli": {
+    "type": "stdio",
+    "command": "/Applications/Kubeli.app/Contents/MacOS/Kubeli",
+    "args": [
+      "--mcp"
+    ]
+  },
+  "token-counter": {
+    "type": "stdio",
+    "command": "npx",
+    "args": [
+      "-y",
+      "token-counter-mcp"
+    ],
+    "timeout": 15
+  },
+  "zai-mcp-server": {
+    "type": "stdio",
+    "command": "npx",
+    "args": [
+      "-y",
+      "@z_ai/mcp-server"
+    ],
+    "env": {
+      "Z_AI_MODE": "ZAI",
+      "Z_AI_API_KEY": "${Z_AI_API_KEY}"
+    },
+    "timeout": 15
+  },
+  "magic": {
+    "type": "stdio",
+    "command": "npx",
+    "args": [
+      "-y",
+      "@21st-dev/magic@latest"
+    ],
+    "env": {
+      "API_KEY": "${MAGIC_API_KEY}"
+    }
+  }
+}

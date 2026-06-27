@@ -40,4 +40,5 @@ python3 "$BASEDIR/palette/generate.py" || true
 run_dotbot 'steps/terminal.yml' || true
 run_dotbot 'steps/editors.yml' || true
 run_dotbot 'steps/tools.yml' || true
+run_dotbot 'steps/claude.yml' || true
 run_dotbot 'steps/macos.yml' || true

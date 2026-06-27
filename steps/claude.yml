@@ -1,0 +1,5 @@
+- shell:
+    - command: scripts/claude-apply.sh
+      description: Apply Claude Code config (settings, OMC, MCP servers)
+      stdout: true
+      stderr: true
