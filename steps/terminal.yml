@@ -16,6 +16,29 @@
       path: config/zsh/functions
       create: true
       force: true
+    # Bash
+    ~/.bashrc:
+      path: config/bash/.bashrc
+      create: true
+      force: true
+    ~/.bash_profile:
+      path: config/bash/.bash_profile
+      create: true
+      force: true
+    ~/.profile:
+      path: config/bash/.profile
+      create: true
+      force: true
+    # Shared shell — Codex (omx) VLESS-прокси (общий для bash и zsh)
+    ~/.config/shell/codex-proxy.sh:
+      path: config/shell/codex-proxy.sh
+      create: true
+      force: true
+    # Codex proxy helper script (секреты в ~/.config/xray-codex/ не коммитятся)
+    ~/.config/xray-codex/codex-proxy.py:
+      path: config/xray-codex/codex-proxy.py
+      create: true
+      force: true
     # Alacritty
     ~/.config/alacritty/alacritty.toml:
       path: config/alacritty/alacritty.toml
