@@ -12,3 +12,7 @@
 # paneru rules daemon bytecode
 config/paneru/__pycache__/
 /.playwright-mcp
+
+# Claude Code MCP secrets (real keys live in ~/.claude/.mcp-secrets, never here)
+config/claude/mcp-secrets.sh
+config/claude/.mcp-secrets
