@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC2154  # Jc/Jmin/Jmax/… приходят из awg_params.env
 # Серверная часть: AmneziaWG-сервер + sing-box (tproxy gateway) + adblock + панель.
 # Запускается НА VPS (Debian/Ubuntu) скриптом install.sh. Идемпотентен.
 # Параметры берутся из переменных окружения (см. дефолты ниже).
@@ -9,13 +10,13 @@ SUB_URL=${SUB_URL:?need SUB_URL}
 AWG_PORT=${AWG_PORT:-51820}
 TUN_CIDR=${TUN_CIDR:-10.8.2.0/24}
 SRV_CIDR=${SRV_CIDR:-10.8.2.1/24}
-TUN_CLI=${TUN_CLI:-10.8.2.2}
 MTU=${MTU:-1280}
 ADBLOCK=${ADBLOCK:-1}
 TPROXY_PORT=${TPROXY_PORT:-7895}
 CLASH_PORT=${CLASH_PORT:-9090}
 ADBLOCK_WHITELIST=${ADBLOCK_WHITELIST:-tmdb.org,themoviedb.org,b-cdn.net}
 GEN_SRC=${GEN_SRC:-/tmp/awg-generate.py}
+PEERREG_SRC=${PEERREG_SRC:-/tmp/awg-peer-register.sh}
 WORK=/root/awgvpn
 
 say() { printf '   \033[36m·\033[0m %s\n' "$*"; }
@@ -28,7 +29,7 @@ apt-get install -y -qq wireguard-tools golang git build-essential nftables curl 
 mkdir -p "$WORK"; cd "$WORK"; umask 077
 say "ключи + AWG-параметры"
 [ -f server.key ] || { wg genkey >server.key; wg pubkey <server.key >server.pub; }
-[ -f router.key ] || { wg genkey >router.key; wg pubkey <router.key >router.pub; }
+# ключи роутеров живут в реестре peers/ (peer-register.sh), по одному на роутер
 if [ ! -f awg_params.env ]; then
   python3 - <<'PY'
 import random
@@ -45,6 +46,15 @@ PY
 fi
 # shellcheck disable=SC1091
 . ./awg_params.env
+
+# параметры туннеля — нужны peer-register.sh для пересборки awg0.conf
+cat >server.env <<EOF
+SRV_CIDR=$SRV_CIDR
+AWG_PORT=$AWG_PORT
+MTU=$MTU
+TUN_CIDR=$TUN_CIDR
+EOF
+install -m 0755 "$PEERREG_SRC" "$WORK/peer-register.sh"
 
 say "Go (amneziawg-go требует >= 1.24; apt на старых ОС, напр. Debian 12, даёт 1.19)"
 go_ok=0
@@ -151,28 +161,8 @@ EOF
 systemctl enable --now nftables >/dev/null 2>&1
 nft -f /etc/nftables.conf
 
-say "интерфейс awg0"
-mkdir -p /etc/amnezia/amneziawg
-cat >/etc/amnezia/amneziawg/awg0.conf <<EOF
-[Interface]
-Address = $SRV_CIDR
-ListenPort = $AWG_PORT
-PrivateKey = $(cat server.key)
-Jc = $Jc
-Jmin = $Jmin
-Jmax = $Jmax
-S1 = $S1
-S2 = $S2
-H1 = $H1
-H2 = $H2
-H3 = $H3
-H4 = $H4
-MTU = $MTU
-
-[Peer]
-PublicKey = $(cat router.pub)
-AllowedIPs = $TUN_CLI/32
-EOF
+say "интерфейс awg0 (пиры — из реестра peers/, мигрирует legacy при обновлении)"
+bash "$WORK/peer-register.sh" rebuild
 
 say "systemd: gateway + watchdog + таймер обновления"
 cat >/etc/systemd/system/awg-gateway.service <<EOF
@@ -258,9 +248,9 @@ systemctl restart awg-gateway
 systemctl restart sing-box
 systemctl enable --now awg-watchdog.timer sing-box-update.timer >/dev/null 2>&1
 
+# ключи роутеров тут не печатаем — их выдаёт peer-register.sh register
 echo "===VARS==="
 echo "SERVER_PUB=$(cat server.pub)"
-echo "ROUTER_KEY=$(cat router.key)"
 echo "AWG_PARAMS=$Jc $Jmin $Jmax $S1 $S2 $H1 $H2 $H3 $H4"
 echo "PANEL_SECRET=$(cat /etc/sing-box/secret.txt)"
 echo "===END==="
