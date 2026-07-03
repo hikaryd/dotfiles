@@ -43,12 +43,38 @@
 # только сервер (роутер настрою позже)
 ./install.sh --sub-url URL --vps root@IP --skip-router
 
-# только роутер (сервер уже развёрнут — ключи возьмутся с VPS)
+# только роутер (сервер уже развёрнут — пир зарегистрируется на VPS)
 ./install.sh --vps root@IP --router-pass PASS --skip-vps
 
 # свой порт/подсеть/без adblock
 ./install.sh --sub-url URL --vps root@IP --router-pass PASS \
   --awg-port 51820 --tunnel-net 10.8.2.0/24 --no-adblock
+```
+
+## Несколько роутеров на один сервер
+
+Каждый роутер получает **свой ключ и свой IP** в туннельной подсети — реестр
+пиров живёт на VPS в `/root/awgvpn/peers/<имя>/`. Имя берётся из hostname
+роутера автоматически (или задаётся `--router-name`).
+
+```bash
+# роутер №1 (полная установка, из его сети)
+./install.sh --sub-url URL --vps root@IP --router-pass PASS1
+
+# роутер №2 (из его сети; сервер не трогаем, пир добавляется на лету)
+./install.sh --vps root@IP --router-pass PASS2 --skip-vps
+```
+
+Повторный запуск для того же роутера переиспользует его запись (идемпотентно):
+роутер опознаётся по hostname и по текущему WG-ключу, так что сервер,
+развёрнутый старой версией скрипта, мигрирует без разрыва. Добавление пира
+применяется через `awg syncconf` — сессии остальных роутеров не рвутся.
+
+Управление реестром (на VPS):
+
+```bash
+bash /root/awgvpn/peer-register.sh list           # список пиров
+bash /root/awgvpn/peer-register.sh remove ИМЯ     # отцепить роутер
 ```
 
 ## Файлы
@@ -57,8 +83,9 @@
 |------|-----------|
 | `install.sh` | Оркестратор: аргументы, preflight, запуск частей, проверка, итог |
 | `vps-setup.sh` | Серверная часть (выполняется на VPS): AWG + sing-box + nftables + службы |
+| `peer-register.sh` | Реестр пиров на VPS: свой ключ/IP каждому роутеру, живое добавление/удаление |
 | `generate.py` | Генератор `config.json` sing-box из подписки (читает `/etc/sing-box/vpn.env`) |
-| `router-setup.py` | Настройка Keenetic через HTTP RCI (AWG-клиент, ip global, ping-check, DNS) |
+| `router-setup.py` | Настройка Keenetic через HTTP RCI (AWG-клиент, ip global, ping-check, DNS); режим `identify` |
 
 ## После установки
 

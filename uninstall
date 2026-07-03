@@ -1,0 +1,325 @@
+#!/usr/bin/env bash
+#
+# Откат установки dotfiles — зеркало ./install.
+#
+# Что делает:
+#   · снимает симлинки из steps/*.yml (только те, что указывают в этот репозиторий);
+#   · скопированные конфиги (Firefox/Zen/AyuGram/Claude) и артефакты (TPM,
+#     yazi-плагины) переносит в бэкап-каталог — ничего не удаляется безвозвратно;
+#   · откатывает системные твики: git excludesFile, macOS defaults, шелл по
+#     умолчанию, запись в /etc/shells, LaunchAgent paneru;
+#   · по флагу --packages дополнительно удаляет пакеты из Brewfile.
+#
+# Бэкап: ~/dots-uninstall-backup-<дата>/ + MANIFEST.txt со списком действий.
+set -uo pipefail
+
+BASEDIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+TS=$(date +%Y%m%d-%H%M%S)
+BACKUP_DIR="$HOME/dots-uninstall-backup-$TS"
+DRY=0; ASSUME_YES=0; REMOVE_PACKAGES=0
+
+if [[ -t 1 ]]; then
+  B=$'\033[1m'; DIM=$'\033[2m'; R=$'\033[0m'
+  RED=$'\033[31m'; GRN=$'\033[32m'; YEL=$'\033[33m'; BLU=$'\033[34m'
+else
+  B=''; DIM=''; R=''; RED=''; GRN=''; YEL=''; BLU=''
+fi
+step() { printf '\n%s━━ %s %s\n' "$BLU$B" "$*" "$R"; }
+ok()   { printf '   %s✓%s %s\n' "$GRN" "$R" "$*"; }
+warn() { printf '   %s!%s %s\n' "$YEL" "$R" "$*"; }
+die()  { printf '\n%s✗ %s%s\n' "$RED$B" "$*" "$R" >&2; exit 1; }
+dry()  { printf '   %s[dry]%s %s\n' "$DIM" "$R" "$*"; }
+
+usage() {
+  cat <<EOF
+${B}Использование:${R} ./uninstall [опции]
+
+  --dry-run     Показать, что будет сделано, ничего не меняя
+  --packages    Также удалить пакеты из Brewfile (formulae, casks, taps)
+  --yes         Не спрашивать подтверждений
+  -h, --help    Эта справка
+
+Симлинки берутся из steps/*.yml — скрипт всегда синхронен с install.
+Удаляются только ссылки, указывающие внутрь $BASEDIR.
+Скопированные файлы переезжают в бэкап: ~/dots-uninstall-backup-<дата>/
+EOF
+}
+
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    --dry-run) DRY=1; shift;;
+    --packages) REMOVE_PACKAGES=1; shift;;
+    --yes) ASSUME_YES=1; shift;;
+    -h|--help) usage; exit 0;;
+    *) die "Неизвестная опция: $1";;
+  esac
+done
+
+confirm() {
+  [[ $ASSUME_YES -eq 1 || $DRY -eq 1 ]] && return 0
+  local a; read -rp "   $1 [y/N]: " a
+  [[ $a == y || $a == Y || $a == yes ]]
+}
+
+manifest() {
+  [[ $DRY -eq 1 ]] && return 0
+  mkdir -p "$BACKUP_DIR"
+  printf '%s\n' "$*" >>"$BACKUP_DIR/MANIFEST.txt"
+}
+
+# Переносит файл/каталог в бэкап, сохраняя путь относительно $HOME.
+backup_move() {
+  local p=$1 rel
+  [[ -e $p || -L $p ]] || return 0
+  rel=${p#"$HOME"/}
+  if [[ $DRY -eq 1 ]]; then dry "в бэкап: $p"; return 0; fi
+  mkdir -p "$BACKUP_DIR/$(dirname "$rel")"
+  mv "$p" "$BACKUP_DIR/$rel" || { warn "не удалось перенести $p"; return 1; }
+  manifest "MOVED: $p -> \$BACKUP/$rel"
+  ok "в бэкап: $p"
+}
+
+cd "$BASEDIR" || die "не удалось перейти в $BASEDIR"
+
+# ─── план ────────────────────────────────────────────────────────────
+step "План отката (репозиторий: $BASEDIR)"
+printf '   · симлинки из steps/*.yml (только указывающие в репозиторий)\n'
+printf '   · Firefox/Zen/AyuGram/Claude конфиги → бэкап\n'
+printf '   · TPM, yazi-плагины → бэкап\n'
+printf '   · git excludesFile, macOS defaults, шелл по умолчанию, /etc/shells\n'
+if [[ $REMOVE_PACKAGES -eq 1 ]]; then
+  printf '   · %sпакеты из Brewfile будут УДАЛЕНЫ (--packages)%s\n' "$YEL" "$R"
+else
+  printf '   · пакеты Brewfile НЕ трогаются (для удаления: --packages)\n'
+fi
+[[ $DRY -eq 1 ]] && printf '   %s(режим --dry-run: изменений не будет)%s\n' "$DIM" "$R"
+confirm "Продолжить?" || die "отменено"
+
+# ─── 1. LaunchAgent paneru (выгрузить до снятия симлинка) ────────────
+step "LaunchAgent paneru-rules"
+if launchctl print "gui/$(id -u)/com.paneru.rules" >/dev/null 2>&1; then
+  if [[ $DRY -eq 1 ]]; then dry "launchctl bootout gui/$(id -u)/com.paneru.rules"; else
+    launchctl bootout "gui/$(id -u)/com.paneru.rules" 2>/dev/null \
+      && ok "агент выгружен" || warn "не удалось выгрузить агент"
+  fi
+else
+  ok "агент не загружен"
+fi
+
+# ─── 2. симлинки из steps/*.yml ──────────────────────────────────────
+step "Симлинки"
+LINK_TARGETS=$(python3 - "$BASEDIR" <<'PY'
+import glob, os, re, sys
+
+base = sys.argv[1]
+files = sorted(glob.glob(os.path.join(base, "steps", "*.yml")))
+targets = []
+try:
+    import yaml
+    for f in files:
+        with open(f) as fh:
+            docs = yaml.safe_load(fh) or []
+        for item in docs:
+            if isinstance(item, dict) and "link" in item:
+                targets.extend(item["link"].keys())
+except Exception:
+    # fallback без PyYAML: цели — строки вида "    ~/path:" внутри блока "- link:"
+    pat = re.compile(r"^\s+(~/[^\s:]+):\s*$")
+    for f in files:
+        in_link = False
+        for line in open(f):
+            if re.match(r"^- link:", line):
+                in_link = True
+                continue
+            if re.match(r"^- \w+:", line):
+                in_link = False
+                continue
+            m = pat.match(line)
+            if in_link and m:
+                targets.append(m.group(1))
+print("\n".join(targets))
+PY
+)
+[[ -n $LINK_TARGETS ]] || die "не удалось получить список симлинков из steps/*.yml"
+
+REMOVED_DIRS=()
+while IFS= read -r t; do
+  p=${t/#\~/$HOME}
+  if [[ -L $p ]]; then
+    dest=$(readlink "$p")
+    if [[ $dest == "$BASEDIR"* ]]; then
+      if [[ $DRY -eq 1 ]]; then dry "rm симлинк: $p → $dest"; else
+        rm "$p" && ok "снят: ${p/#$HOME/~}" || warn "не удалось снять $p"
+        manifest "UNLINKED: $p -> $dest"
+      fi
+      REMOVED_DIRS+=("$(dirname "$p")")
+    else
+      warn "симлинк указывает не в репозиторий, пропускаю: $p → $dest"
+    fi
+  elif [[ -e $p ]]; then
+    warn "не симлинк (не трогаю): $p"
+  fi
+done <<<"$LINK_TARGETS"
+
+# подчистить опустевшие каталоги (только пустые, только под ~/.config и ~/.tmux)
+if [[ $DRY -eq 0 ]]; then
+  for d in "${REMOVED_DIRS[@]+"${REMOVED_DIRS[@]}"}"; do
+    while [[ ($d == "$HOME/.config/"* || $d == "$HOME/.tmux/"*) && -d $d ]]; do
+      rmdir "$d" 2>/dev/null || break
+      d=$(dirname "$d")
+    done
+  done
+fi
+
+# ─── 3. скопированные конфиги → бэкап ────────────────────────────────
+step "Firefox / Zen / AyuGram"
+FF_PROFILES="$HOME/Library/Application Support/Firefox/Profiles"
+if [[ -d $FF_PROFILES ]]; then
+  for profile_dir in "$FF_PROFILES"/*/; do
+    [[ -d $profile_dir/chrome || -f $profile_dir/user.js ]] || continue
+    backup_move "${profile_dir%/}/chrome"
+    backup_move "${profile_dir%/}/user.js"
+  done
+else
+  ok "Firefox-профили не найдены"
+fi
+ZEN_PROFILES="$HOME/Library/Application Support/zen/Profiles"
+if [[ -d $ZEN_PROFILES ]]; then
+  for profile_dir in "$ZEN_PROFILES"/*/; do
+    [[ -f $profile_dir/prefs.js ]] || continue
+    backup_move "${profile_dir%/}/user.js"
+    backup_move "${profile_dir%/}/chrome/userChrome.css"
+    rmdir "${profile_dir%/}/chrome" 2>/dev/null || true
+  done
+else
+  ok "Zen-профили не найдены"
+fi
+backup_move "$HOME/Library/Application Support/AyuGram Desktop/tdata/ayu-dark.tdesktop-theme"
+
+step "Claude Code"
+backup_move "$HOME/.claude/settings.json"
+backup_move "$HOME/.claude/.omc-config.json"
+if [[ -f $BASEDIR/config/claude/mcp-servers.json ]] && command -v claude >/dev/null 2>&1; then
+  while IFS= read -r name; do
+    [[ -n $name ]] || continue
+    if [[ $DRY -eq 1 ]]; then dry "claude mcp remove $name -s user"; else
+      claude mcp remove "$name" -s user >/dev/null 2>&1 \
+        && ok "MCP снят: $name" || warn "MCP не снят (не был зарегистрирован?): $name"
+    fi
+  done < <(python3 -c 'import json,sys; print("\n".join(json.load(open(sys.argv[1]))))' \
+           "$BASEDIR/config/claude/mcp-servers.json")
+else
+  warn "claude CLI или mcp-servers.json не найдены — MCP-регистрации не трогаю"
+fi
+printf '   %sбэкапы claude-apply (~/.claude/*.bak-*) не трогаются — прежние настройки там%s\n' "$DIM" "$R"
+
+step "TPM и yazi-плагины"
+backup_move "$HOME/.tmux/plugins"
+# после снятия симлинков в ~/.config/yazi остаются плагины ya pkg и state
+backup_move "$HOME/.config/yazi"
+
+# ─── 4. системные твики ──────────────────────────────────────────────
+step "Git"
+EXCLUDES=$(git config --global core.excludesFile 2>/dev/null || true)
+if [[ $EXCLUDES == *dots/config/git* ]]; then
+  if [[ $DRY -eq 1 ]]; then dry "git config --global --unset core.excludesFile"; else
+    git config --global --unset core.excludesFile && ok "excludesFile снят" || warn "не удалось снять excludesFile"
+    manifest "GIT: unset core.excludesFile ($EXCLUDES)"
+  fi
+else
+  ok "excludesFile не наш ('$EXCLUDES') — не трогаю"
+fi
+
+step "Шелл по умолчанию"
+CURRENT_SHELL=$(dscl . -read "/Users/$USER" UserShell 2>/dev/null | awk '{print $2}')
+if [[ $CURRENT_SHELL == "/opt/homebrew/bin/zsh" ]]; then
+  if [[ $DRY -eq 1 ]]; then dry "chsh -s /bin/zsh"; else
+    chsh -s /bin/zsh && ok "шелл возвращён на /bin/zsh" || warn "chsh не удался — смени шелл вручную"
+    manifest "SHELL: chsh /opt/homebrew/bin/zsh -> /bin/zsh"
+  fi
+else
+  ok "шелл и так $CURRENT_SHELL"
+fi
+if grep -q '^/opt/homebrew/bin/zsh$' /etc/shells 2>/dev/null; then
+  if [[ $DRY -eq 1 ]]; then dry "удалить /opt/homebrew/bin/zsh из /etc/shells (sudo)"; else
+    if sudo sed -i '' '\|^/opt/homebrew/bin/zsh$|d' /etc/shells 2>/dev/null; then
+      ok "/etc/shells очищен"
+      manifest "SHELLS: removed /opt/homebrew/bin/zsh from /etc/shells"
+    else
+      warn "не удалось поправить /etc/shells (sudo) — строку можно оставить, это безвредно"
+    fi
+  fi
+fi
+
+step "macOS defaults"
+if [[ $DRY -eq 1 ]]; then
+  dry "defaults delete com.apple.spaces spans-displays; defaults delete com.apple.dock mru-spaces; killall Dock"
+else
+  defaults delete com.apple.spaces spans-displays 2>/dev/null || true
+  defaults delete com.apple.dock mru-spaces 2>/dev/null || true
+  killall Dock 2>/dev/null || true
+  ok "defaults возвращены к системным (spans-displays, mru-spaces)"
+  manifest "DEFAULTS: deleted com.apple.spaces spans-displays, com.apple.dock mru-spaces"
+fi
+
+# ─── 5. пакеты Brewfile (опционально) ────────────────────────────────
+if [[ $REMOVE_PACKAGES -eq 1 ]]; then
+  step "Пакеты Brewfile"
+  if ! command -v brew >/dev/null 2>&1; then
+    warn "brew не найден — пропускаю"
+  else
+    FORMULAE=$(brew bundle list --file="$BASEDIR/Brewfile" --formula 2>/dev/null || true)
+    CASKS=$(brew bundle list --file="$BASEDIR/Brewfile" --cask 2>/dev/null || true)
+    TAPS=$(brew bundle list --file="$BASEDIR/Brewfile" --tap 2>/dev/null || true)
+    CASKS=$(printf '%s\nraycast\n' "$CASKS")  # raycast ставится отдельным шагом install
+    printf '   к удалению: %s formulae, %s casks\n' \
+      "$(grep -c . <<<"$FORMULAE" || true)" "$(grep -c . <<<"$CASKS" || true)"
+    if confirm "Удалить ВСЕ эти пакеты?"; then
+      if [[ $DRY -eq 1 ]]; then
+        dry "brew uninstall всех formulae/casks из Brewfile + untap"
+      else
+        while IFS= read -r c; do
+          [[ -n $c ]] || continue
+          brew uninstall --cask "$c" >/dev/null 2>&1 && ok "cask удалён: $c" || warn "cask не удалён: $c"
+        done <<<"$CASKS"
+        # два прохода: во втором удаляются те, кого держали зависимости из первого
+        for pass in 1 2; do
+          while IFS= read -r f; do
+            [[ -n $f ]] || continue
+            brew list --formula "$f" >/dev/null 2>&1 || continue
+            brew uninstall "$f" >/dev/null 2>&1 && ok "formula удалена: $f" \
+              || { [[ $pass -eq 2 ]] && warn "не удалена (зависимость других пакетов?): $f"; }
+          done <<<"$FORMULAE"
+        done
+        while IFS= read -r t; do
+          [[ -n $t ]] || continue
+          brew untap "$t" >/dev/null 2>&1 && ok "untap: $t" || warn "untap не удался: $t"
+        done <<<"$TAPS"
+        manifest "PACKAGES: removed Brewfile formulae/casks/taps"
+      fi
+    else
+      warn "удаление пакетов пропущено"
+    fi
+  fi
+fi
+
+# ─── итог ────────────────────────────────────────────────────────────
+step "Готово"
+if [[ $DRY -eq 1 ]]; then
+  printf '   %sЭто был --dry-run: ничего не изменено.%s\n' "$DIM" "$R"
+else
+  if [[ -d $BACKUP_DIR ]]; then
+    printf '   %sБэкап:%s %s (список действий — в MANIFEST.txt)\n' "$B" "$R" "$BACKUP_DIR"
+  else
+    printf '   Бэкап не понадобился (нечего было переносить).\n'
+  fi
+fi
+cat <<EOF
+
+   ${B}Оставлено как есть${R} (удалять по желанию, вручную):
+   ${DIM}· rustup/cargo:   rustup self uninstall   (~/.rustup, ~/.cargo)
+   · rtk:            бинарник + ~/.rtk (см. установщик rtk)
+   · PyYAML:         pip3 uninstall pyyaml --break-system-packages
+   · Homebrew сам:   /opt/homebrew (см. официальный uninstall-скрипт brew)
+   · сгенерированные palette-конфиги внутри репозитория${R}
+EOF

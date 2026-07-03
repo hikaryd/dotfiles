@@ -85,6 +85,7 @@ ${B}Использование:${R} ./install.sh [опции]
   --router-host IP     Адрес роутера Keenetic            (192.168.254.1)
   --router-user USER   Логин веб-админки роутера                 (admin)
   --router-pass PASS   Пароль веб-админки роутера                 [обяз. для роутера]
+  --router-name NAME   Имя роутера в реестре пиров VPS   (авто: hostname)
   --router-ssh-port N  SSH-порт Entware (root) для хука LAN→VPN       (222)
   --no-lan-hook        Не ставить хук «весь LAN через туннель»
   --awg-port PORT      UDP-порт AmneziaWG                          (51820)
@@ -96,14 +97,18 @@ ${B}Использование:${R} ./install.sh [опции]
   --skip-router        Пропустить настройку роутера (только VPS)
   -h, --help           Эта справка
 
-Пример:
+Примеры:
   ./install.sh --sub-url 'https://host/sub/TOKEN' --vps root@203.0.113.10 \\
                --router-pass 'СекретРоутера'
+
+  # второй роутер на тот же сервер (запускать из сети второго роутера):
+  ./install.sh --vps root@203.0.113.10 --router-pass 'Секрет' --skip-vps
 EOF
 }
 
 # ─── параметры ───────────────────────────────────────────────────────
 SUB_URL=""; VPS=""; ROUTER_HOST="192.168.254.1"; ROUTER_USER="admin"; ROUTER_PASS=""
+ROUTER_NAME=""; ROUTER_CURPUB=""
 ROUTER_SSH_PORT="222"; LAN_HOOK=1
 AWG_PORT="51820"; TUN_NET="10.8.2.0/24"; MTU="1280"; ADBLOCK="1"; DHCP_POOL="_WEBADMIN"
 SKIP_VPS=0; SKIP_ROUTER=0
@@ -116,6 +121,7 @@ while [[ $# -gt 0 ]]; do
     --router-host) ROUTER_HOST=$2; shift 2;;
     --router-user) ROUTER_USER=$2; shift 2;;
     --router-pass) ROUTER_PASS=$2; shift 2;;
+    --router-name) ROUTER_NAME=$2; shift 2;;
     --router-ssh-port) ROUTER_SSH_PORT=$2; shift 2;;
     --no-lan-hook) LAN_HOOK=0; shift;;
     --awg-port) AWG_PORT=$2; shift 2;;
@@ -134,9 +140,13 @@ banner
 SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 
 # ─── интерактивный доспрос ───────────────────────────────────────────
-[[ -z $SUB_URL ]] && SUB_URL=$(ask "Ссылка на подписку")
-[[ -z $VPS ]]     && VPS=$(ask "SSH к VPS (root@IP)")
-[[ -z $SUB_URL || -z $VPS ]] && die "Нужны --sub-url и --vps"
+[[ $SKIP_VPS -eq 1 && $SKIP_ROUTER -eq 1 ]] && die "нечего делать: --skip-vps и --skip-router одновременно"
+if [[ $SKIP_VPS -eq 0 ]]; then
+  [[ -z $SUB_URL ]] && SUB_URL=$(ask "Ссылка на подписку")
+  [[ -z $SUB_URL ]] && die "Нужен --sub-url (или --skip-vps, если сервер уже развёрнут)"
+fi
+[[ -z $VPS ]] && VPS=$(ask "SSH к VPS (root@IP)")
+[[ -z $VPS ]] && die "Нужен --vps"
 if [[ $SKIP_ROUTER -eq 0 && -z $ROUTER_PASS ]]; then
   ROUTER_PASS=$(ask "Пароль роутера ($ROUTER_USER@$ROUTER_HOST)")
 fi
@@ -151,18 +161,25 @@ SERVER_HOST=${VPS##*@}   # IP без user@
 step "Проверки окружения"
 for b in ssh scp python3 curl; do command -v "$b" >/dev/null || die "нет утилиты: $b"; done
 ok "локальные утилиты на месте"
-for f in vps-setup.sh generate.py router-setup.py; do
+for f in vps-setup.sh generate.py router-setup.py peer-register.sh; do
   [[ -f "$SCRIPT_DIR/$f" ]] || die "не найден $SCRIPT_DIR/$f"
 done
 ok "файлы установщика на месте"
-if [[ $SKIP_VPS -eq 0 ]]; then
-  ssh -o BatchMode=yes -o ConnectTimeout=10 "$VPS" 'echo ok' >/dev/null 2>&1 \
-    || die "нет SSH-доступа к $VPS (нужен ключ/доступ root)"
-  ok "SSH к VPS ($SERVER_HOST) работает"
-fi
+# SSH к VPS нужен всегда: и для установки, и для регистрации пира роутера
+ssh -o BatchMode=yes -o ConnectTimeout=10 "$VPS" 'echo ok' >/dev/null 2>&1 \
+  || die "нет SSH-доступа к $VPS (нужен ключ/доступ root)"
+ok "SSH к VPS ($SERVER_HOST) работает"
 if [[ $SKIP_ROUTER -eq 0 ]]; then
   curl -s -m 6 -o /dev/null "http://$ROUTER_HOST/" || die "роутер $ROUTER_HOST недоступен по HTTP"
   ok "роутер $ROUTER_HOST отвечает"
+  # имя роутера (для реестра пиров) + его текущий WG-ключ (для миграции/идемпотентности)
+  IDENT=$(ROUTER_HOST="$ROUTER_HOST" ROUTER_USER="$ROUTER_USER" ROUTER_PASS="$ROUTER_PASS" \
+          ACTION=identify python3 "$SCRIPT_DIR/router-setup.py") \
+    || die "не удалось опросить роутер (проверь пароль веб-админки)"
+  [[ -z $ROUTER_NAME ]] && ROUTER_NAME=$(sed -n 's/^NAME=//p' <<<"$IDENT" | head -1)
+  ROUTER_CURPUB=$(sed -n 's/^CURPUB=//p' <<<"$IDENT" | head -1)
+  [[ -n $ROUTER_NAME ]] || die "не удалось определить имя роутера — задай --router-name"
+  ok "роутер опознан: $ROUTER_NAME"
 fi
 
 printf '\n%s   подписка:%s %s…\n' "$DIM" "$R" "${SUB_URL:0:42}"
@@ -171,43 +188,60 @@ printf '%s   AWG-порт:%s %s   %sMTU:%s %s   %sadblock:%s %s\n' "$DIM" "$R" "
 
 # ─── VPS ─────────────────────────────────────────────────────────────
 VARS_FILE=$(mktemp)
+trap 'rm -f "$VARS_FILE"' EXIT  # в VARS бывает приватный ключ — не оставлять в /tmp
+get_var() { sed -n "s/^$1=//p" "$VARS_FILE" | head -1; }
+PANEL_SECRET=""
 if [[ $SKIP_VPS -eq 0 ]]; then
   step "Настройка VPS ($SERVER_HOST)"
   scp -q "$SCRIPT_DIR/generate.py" "$VPS:/tmp/awg-generate.py"
   scp -q "$SCRIPT_DIR/vps-setup.sh" "$VPS:/tmp/awg-vps-setup.sh"
+  scp -q "$SCRIPT_DIR/peer-register.sh" "$VPS:/tmp/awg-peer-register.sh"
   ok "файлы загружены на VPS, запускаю установку…"
-  ssh "$VPS" "env \
+  if ! ssh "$VPS" "env \
     SUB_URL='$SUB_URL' AWG_PORT='$AWG_PORT' TUN_CIDR='$TUN_CIDR' SRV_CIDR='$SRV_CIDR' \
-    TUN_CLI='$TUN_CLI' MTU='$MTU' ADBLOCK='$ADBLOCK' TPROXY_PORT='$TPROXY_PORT' \
+    MTU='$MTU' ADBLOCK='$ADBLOCK' TPROXY_PORT='$TPROXY_PORT' \
     CLASH_PORT='$CLASH_PORT' ADBLOCK_WHITELIST='$ADBLOCK_WHITELIST' GEN_SRC=/tmp/awg-generate.py \
-    bash /tmp/awg-vps-setup.sh" | tee "$VARS_FILE"
+    PEERREG_SRC=/tmp/awg-peer-register.sh \
+    bash /tmp/awg-vps-setup.sh" | tee "$VARS_FILE"; then
+    die "установка на VPS завершилась с ошибкой (см. вывод выше)"
+  fi
   grep -q '===VARS===' "$VARS_FILE" || die "установка VPS не дошла до конца (нет блока VARS)"
+  PANEL_SECRET=$(get_var PANEL_SECRET)
   ok "VPS настроен"
-else
-  step "Пропуск VPS — забираю параметры с $SERVER_HOST"
-  ssh "$VPS" 'cd /root/awgvpn && . ./awg_params.env && {
-    echo "===VARS==="
-    echo "SERVER_PUB=$(cat server.pub)"
-    echo "ROUTER_KEY=$(cat router.key)"
-    echo "AWG_PARAMS=$Jc $Jmin $Jmax $S1 $S2 $H1 $H2 $H3 $H4"
-    echo "PANEL_SECRET=$(cat /etc/sing-box/secret.txt)"
-    echo "===END==="
-  }' > "$VARS_FILE" || die "не удалось забрать параметры с VPS"
-  ok "параметры получены"
 fi
 
-# распарсить VARS
-get_var() { sed -n "s/^$1=//p" "$VARS_FILE" | head -1; }
-SERVER_PUB=$(get_var SERVER_PUB)
-ROUTER_KEY=$(get_var ROUTER_KEY)
-AWG_PARAMS=$(get_var AWG_PARAMS)
-PANEL_SECRET=$(get_var PANEL_SECRET)
+# ─── регистрация роутера в реестре пиров VPS ─────────────────────────
+# У каждого роутера свой ключ и IP: один сервер обслуживает несколько роутеров,
+# повторный запуск для того же роутера переиспользует его запись.
+if [[ $SKIP_ROUTER -eq 0 ]]; then
+  step "Регистрация роутера «$ROUTER_NAME» на VPS"
+  ssh "$VPS" 'test -f /root/awgvpn/server.key' 2>/dev/null \
+    || die "VPS не настроен (нет /root/awgvpn) — сначала запуск без --skip-vps"
+  # свежая копия реестра — работает и с сервером, развёрнутым старой версией
+  scp -q "$SCRIPT_DIR/peer-register.sh" "$VPS:/root/awgvpn/peer-register.sh"
+  ssh "$VPS" "bash /root/awgvpn/peer-register.sh register '$ROUTER_NAME' '$ROUTER_CURPUB'" > "$VARS_FILE" \
+    || die "регистрация пира на VPS не удалась"
+  grep -q '===VARS===' "$VARS_FILE" || die "реестр пиров не вернул параметры (нет блока VARS)"
+  SERVER_PUB=$(get_var SERVER_PUB)
+  ROUTER_KEY=$(get_var ROUTER_KEY)
+  AWG_PARAMS=$(get_var AWG_PARAMS)
+  PANEL_SECRET=$(get_var PANEL_SECRET)
+  TUN_CLI=$(get_var ROUTER_IP)
+  # параметры сервера авторитетны (важно при --skip-vps с нестандартным портом/подсетью)
+  AWG_PORT=$(get_var AWG_PORT); AWG_PORT=${AWG_PORT:-51820}
+  MTU=$(get_var MTU); MTU=${MTU:-1280}
+  SRV_TUN=$(get_var TUN_SRV); [[ -n $SRV_TUN ]] && TUN_SRV=$SRV_TUN
+  SRV_NET=$(get_var TUN_CIDR); [[ -n $SRV_NET ]] && TUN_CIDR=$SRV_NET
+  [[ -n $SERVER_PUB && -n $ROUTER_KEY && -n $AWG_PARAMS && -n $TUN_CLI ]] \
+    || die "не удалось получить ключи/параметры AWG из реестра"
+  ok "пир зарегистрирован: $ROUTER_NAME → $TUN_CLI"
+fi
 rm -f "$VARS_FILE"
-[[ -n $SERVER_PUB && -n $ROUTER_KEY && -n $AWG_PARAMS ]] || die "не удалось получить ключи/параметры AWG"
 
 # ─── роутер ──────────────────────────────────────────────────────────
 if [[ $SKIP_ROUTER -eq 0 ]]; then
   step "Настройка роутера Keenetic ($ROUTER_HOST)"
+  # shellcheck disable=SC2097,SC2098  # одноимённый проброс env в python — значения из родителя
   ROUTER_HOST="$ROUTER_HOST" ROUTER_USER="$ROUTER_USER" ROUTER_PASS="$ROUTER_PASS" \
   ROUTER_LAN_IP="$ROUTER_HOST" SERVER_HOST="$SERVER_HOST" AWG_PORT="$AWG_PORT" \
   TUN_CLI="$TUN_CLI" TUN_SRV="$TUN_SRV" TUN_MASK="$TUN_MASK" MTU="$MTU" \
@@ -246,6 +280,7 @@ cat <<EOF
    ${B}Панель sing-box:${R}  http://$SERVER_HOST:$CLASH_PORT/ui/
    ${B}Пароль панели:${R}    $PANEL_SECRET
    ${B}Туннель:${R}          $SERVER_HOST:$AWG_PORT  (AmneziaWG, $TUN_CIDR)
+   ${B}Роутер:${R}           $([[ $SKIP_ROUTER == 0 ]] && echo "$ROUTER_NAME → $TUN_CLI (реестр пиров: peer-register.sh list на VPS)" || echo "пропущен (--skip-router)")
    ${B}Маршрутизация:${R}    РФ напрямую · остальное → VPN · adblock $([[ $ADBLOCK == 1 ]] && echo вкл || echo выкл)
    ${B}Клиенты LAN:${R}      $([[ $LAN_HOOK == 1 ]] && echo "весь сегмент → туннель, kill-switch (хук netfilter.d)" || echo "хук отключён (--no-lan-hook); маршрут по ip global")
    ${B}Failover:${R}         $([[ $LAN_HOOK == 1 ]] && echo "роутер → WAN по ping-check; клиенты — kill-switch (без утечки)" || echo "при падении туннеля — автопереключение на WAN")

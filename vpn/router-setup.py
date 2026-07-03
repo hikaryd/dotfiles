@@ -1,14 +1,19 @@
 #!/usr/bin/env python3
 """Настройка роутера Keenetic через HTTP RCI.
 
-Создаёт AmneziaWG-клиент (WireGuard + asc-обфускация), делает его маршрутом по
-умолчанию, поднимает ping-check (failover на WAN), заворачивает DNS в туннель.
+Режимы (env ACTION, по умолчанию install):
+  install    — AmneziaWG-клиент (WireGuard + asc-обфускация), маршрут по
+               умолчанию, ping-check (failover на WAN), DNS в туннель.
+  identify   — печатает NAME= (hostname/модель) и CURPUB= (текущий WG-ключ)
+               для реестра пиров на VPS.
+
 Все параметры берутся из переменных окружения (их задаёт install.sh).
 """
 import hashlib
 import http.cookiejar
 import json
 import os
+import re
 import sys
 import time
 import urllib.error
@@ -20,17 +25,8 @@ LOGIN = H.get("ROUTER_USER", "admin")
 PASS = H["ROUTER_PASS"]
 LAN_IP = H.get("ROUTER_LAN_IP", H.get("ROUTER_HOST", "192.168.254.1"))
 IFACE = H.get("WG_IFACE", "Wireguard0")
-SERVER_HOST = H["SERVER_HOST"]
-AWG_PORT = H.get("AWG_PORT", "51820")
-TUN_CLI = H.get("TUN_CLI", "10.8.2.2")
-TUN_SRV = H.get("TUN_SRV", "10.8.2.1")
-TUN_MASK = H.get("TUN_MASK", "255.255.255.0")
-MTU = H.get("MTU", "1280")
-SERVER_PUB = H["SERVER_PUB"]
-ROUTER_KEY = H["ROUTER_KEY"]
-ASC = H["AWG_PARAMS"]  # "Jc Jmin Jmax S1 S2 H1 H2 H3 H4"
-PRIORITY = H.get("PRIORITY", "1000")
 DHCP_POOL = H.get("DHCP_POOL", "_WEBADMIN")
+ACTION = H.get("ACTION", "install")
 
 cj = http.cookiejar.CookieJar()
 op = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(cj))
@@ -75,7 +71,45 @@ def get(path):
     return json.loads(raw(path).read().decode())
 
 
-def main():
+def identify():
+    """Стабильное имя роутера + его текущий WG-ключ (для реестра пиров на VPS)."""
+    auth()
+    name = ""
+    try:
+        name = str(get("/rci/show/system").get("hostname") or "")
+    except Exception:
+        pass
+    if not name:
+        try:
+            ver = get("/rci/show/version")
+            name = str(ver.get("device") or ver.get("model") or "")
+        except Exception:
+            pass
+    if not name:
+        name = "router-" + H.get("ROUTER_HOST", "unknown")
+    slug = re.sub(r"[^A-Za-z0-9_-]+", "-", name).strip("-") or "router"
+    curpub = ""
+    try:
+        si = get(f"/rci/show/interface/{IFACE}")
+        curpub = str((si.get("wireguard") or {}).get("public-key") or "")
+    except Exception:
+        pass
+    print(f"NAME={slug}")
+    print(f"CURPUB={curpub}")
+
+
+def install():
+    server_host = H["SERVER_HOST"]
+    awg_port = H.get("AWG_PORT", "51820")
+    tun_cli = H.get("TUN_CLI", "10.8.2.2")
+    tun_srv = H.get("TUN_SRV", "10.8.2.1")
+    tun_mask = H.get("TUN_MASK", "255.255.255.0")
+    mtu = H.get("MTU", "1280")
+    server_pub = H["SERVER_PUB"]
+    router_key = H["ROUTER_KEY"]
+    asc = H["AWG_PARAMS"]  # "Jc Jmin Jmax S1 S2 H1 H2 H3 H4"
+    priority = H.get("PRIORITY", "1000")
+
     auth()
     print(f"Авторизация на {BASE} — ок")
 
@@ -83,11 +117,11 @@ def main():
     run([
         f"interface {IFACE}",
         f"interface {IFACE} description AWG-VPN",
-        f"interface {IFACE} wireguard asc {ASC}",
+        f"interface {IFACE} wireguard asc {asc}",
         f"interface {IFACE} security-level public",
-        f"interface {IFACE} ip address {TUN_CLI} {TUN_MASK}",
-        f"interface {IFACE} ip mtu {MTU}",
-        f"interface {IFACE} wireguard private-key {ROUTER_KEY}",
+        f"interface {IFACE} ip address {tun_cli} {tun_mask}",
+        f"interface {IFACE} ip mtu {mtu}",
+        f"interface {IFACE} wireguard private-key {router_key}",
     ], "Интерфейс + ключ + AWG")
 
     # 1.5) убрать чужих пиров (напр. от прежнего сервера при миграции):
@@ -95,7 +129,7 @@ def main():
     try:
         si = get(f"/rci/show/interface/{IFACE}")
         stale = [pe.get("public-key") for pe in si.get("wireguard", {}).get("peer", [])
-                 if pe.get("public-key") and pe.get("public-key") != SERVER_PUB]
+                 if pe.get("public-key") and pe.get("public-key") != server_pub]
         if stale:
             run([f"interface {IFACE} no wireguard peer {pk}" for pk in stale],
                 "Удаление чужих пиров")
@@ -105,8 +139,8 @@ def main():
     # 2) пир (контекст сохраняется в одном POST)
     run([
         f"interface {IFACE}",
-        f"wireguard peer {SERVER_PUB}",
-        f"endpoint {SERVER_HOST}:{AWG_PORT}",
+        f"wireguard peer {server_pub}",
+        f"endpoint {server_host}:{awg_port}",
         "keepalive-interval 25",
         "allow-ips 0.0.0.0/0",
         "exit", "exit",
@@ -114,12 +148,12 @@ def main():
     ], "Пир + endpoint + поднятие")
 
     # 3) маршрут по умолчанию через туннель
-    run([f"interface {IFACE} ip global {PRIORITY}"], "Default route через WG")
+    run([f"interface {IFACE} ip global {priority}"], "Default route через WG")
 
     # 4) ping-check (failover на WAN)
     run([
         "ping-check profile WGCHECK",
-        f"host {TUN_SRV}",
+        f"host {tun_srv}",
         "update-interval 5",
         "max-fails 3",
         "timeout 3",
@@ -156,6 +190,14 @@ def main():
     print(f"\nИтог: link={si.get('link')} connected={si.get('connected')} "
           f"global={si.get('global')} | peer online={pe.get('online')} "
           f"handshake={pe.get('last-handshake')}s")
+
+
+def main():
+    actions = {"install": install, "identify": identify}
+    if ACTION not in actions:
+        print(f"неизвестный ACTION={ACTION} (install|identify)", file=sys.stderr)
+        sys.exit(2)
+    actions[ACTION]()
 
 
 if __name__ == "__main__":
