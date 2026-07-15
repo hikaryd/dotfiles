@@ -20,6 +20,8 @@ ai_helper.py – универсальный CLI-помощник для разр
     python ai_helper.py --provider gemini --mode commit
 """
 
+from __future__ import annotations
+
 import argparse
 import json
 import os

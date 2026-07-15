@@ -1,4 +1,16 @@
 {
+  "browser": {
+    "command": "npx",
+    "args": [
+      "@railsblueprint/blueprint-mcp@latest"
+    ],
+    "type": "stdio",
+    "timeout": 15
+  },
+  "cloudflare-browser": {
+    "url": "https://browser.mcp.cloudflare.com/mcp",
+    "type": "http"
+  },
   "kubernetes": {
     "type": "stdio",
     "command": "npx",
