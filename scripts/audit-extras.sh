@@ -81,7 +81,11 @@ INST_FORMULAE=$(for r in "$CELLAR"/*/*/INSTALL_RECEIPT.json; do
   jq -e '.installed_on_request == true' "$r" >/dev/null 2>&1 \
     && basename "$(dirname "$(dirname "$r")")"
 done | sort -u)
-INST_CASKS=$(brew list --cask 2>/dev/null | base | sort -u)
+# `brew list --cask` also reports metadata-only Caskroom leftovers after an
+# incomplete/manual uninstall. Use Homebrew's installed JSON instead so the
+# audit matches `brew info --cask <token>` / `brew uninstall --cask <token>`.
+BREW_INSTALLED_JSON=$(brew info --json=v2 --installed 2>/dev/null || printf '{"formulae":[],"casks":[]}')
+INST_CASKS=$(jq -r '.casks[].token' <<<"$BREW_INSTALLED_JSON" | base | sort -u)
 INST_TAPS=$(brew tap 2>/dev/null | sort -u)
 
 X_FORMULAE=$(comm -23 <(printf '%s\n' "$INST_FORMULAE") <(printf '%s\n' "$BF_FORMULAE"))
@@ -89,8 +93,7 @@ X_CASKS=$(comm -23 <(printf '%s\n' "$INST_CASKS") <(printf '%s\n' "$BF_CASKS"))
 X_TAPS=$(comm -23 <(printf '%s\n' "$INST_TAPS") <(printf '%s\n' "$BF_TAPS"))
 
 # .app мимо brew и App Store
-CASK_APPS=$(brew info --json=v2 --installed 2>/dev/null \
-  | jq -r '.casks[].artifacts[]? | objects | .app[]? | strings' 2>/dev/null | base | sort -u)
+CASK_APPS=$(jq -r '.casks[].artifacts[]? | objects | .app[]? | strings' <<<"$BREW_INSTALLED_JSON" 2>/dev/null | base | sort -u)
 norm() { tr '[:upper:]' '[:lower:]' | tr -cd 'a-z0-9'; }
 CASK_TOKENS_NORM=$(printf '%s\n' "$INST_CASKS" | while IFS= read -r t; do printf '%s\n' "$t" | norm; echo; done | sort -u)
 X_APPS=""; MAS_APPS=""

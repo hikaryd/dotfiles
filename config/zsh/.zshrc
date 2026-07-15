@@ -45,9 +45,16 @@ path=(
 )
 
 # Completion/function search path must be ready before compinit.
+# Стабильные (версионно-независимые) пути Homebrew добавлены ЯВНО: встроенный
+# $fpath ниже указывает на Cellar/zsh/<версия>/…, который brew удаляет при
+# `brew upgrade zsh` — тогда уже запущенные сессии ломаются с
+# «_main_complete: function definition file not found». share-пути brew
+# переносит на новую версию, поэтому они переживают апгрейд.
 fpath=(
   "$HOME/.bun"
   "$HOME/.config/zsh/functions"
+  /opt/homebrew/share/zsh/site-functions
+  /opt/homebrew/share/zsh/functions
   $fpath
 )
 
@@ -100,7 +107,7 @@ bindkey '^N' down-line-or-search
 # --- Aliases ---
 alias v='nvim'
 alias cat='bat --style=plain'
-alias l='ls'
+alias l='nls'
 alias c='clear'
 alias lg='lazygit'
 alias gaa='git add -A'

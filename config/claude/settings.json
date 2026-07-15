@@ -32,6 +32,7 @@
     "ask": [],
     "defaultMode": "auto"
   },
+  "model": "claude-fable-5[1m]",
   "hooks": {
     "Notification": [
       {
@@ -182,7 +183,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "npx block-no-verify@1.1.2"
+            "command": "node \"$HOME/.claude/scripts/hooks/vendor/block-no-verify/dist/cli.js\""
           }
         ]
       },
@@ -417,11 +418,11 @@
   "language": "Russia",
   "effortLevel": "xhigh",
   "autoUpdatesChannel": "latest",
+  "tui": "fullscreen",
   "skipWorkflowUsageWarning": true,
   "theme": "dark-daltonized",
   "agentPushNotifEnabled": true,
   "skipAutoPermissionPrompt": true,
   "voiceEnabled": true,
-  "effort": "xhigh",
-  "tui": "fullscreen"
+  "effort": "xhigh"
 }

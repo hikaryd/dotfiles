@@ -230,3 +230,4 @@ def kafka-produce [
   # Cleanup
   rm -rf $temp_dir
 }
+source "~/.cargo/env.nu"

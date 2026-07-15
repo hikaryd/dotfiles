@@ -25,9 +25,28 @@
           fi
         fi
 
+        # Новый Homebrew отказывается ставить формулы из недоверенных сторонних tap'ов
+        brew trust homebrew-zathura/zathura >/dev/null 2>&1 || true
+
         echo "Installing packages from Brewfile ..."
         brew bundle --file Brewfile
       description: Install Homebrew packages via Brewfile
+      stdout: true
+      stderr: true
+    - command: |
+        # zathura из homebrew-zathura не видит плагины автоматически — dylib нужно
+        # линковать вручную (https://github.com/zegervdv/homebrew-zathura/issues/19).
+        # Симлинк живёт внутри Cellar-версии, поэтому после brew upgrade zathura
+        # этот шаг нужно прогонять заново.
+        if ! command -v brew >/dev/null 2>&1 || ! brew list zathura-pdf-poppler >/dev/null 2>&1; then
+          echo "zathura-pdf-poppler is not installed. Skipping plugin link."
+          exit 0
+        fi
+        mkdir -p "$(brew --prefix zathura)/lib/zathura"
+        ln -sf "$(brew --prefix zathura-pdf-poppler)/libpdf-poppler.dylib" \
+          "$(brew --prefix zathura)/lib/zathura/libpdf-poppler.dylib"
+        echo "zathura PDF plugin linked"
+      description: Link zathura PDF plugin (homebrew-zathura quirk)
       stdout: true
       stderr: true
     - command: |

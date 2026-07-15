@@ -10,6 +10,17 @@ sort_dir_first = true
 sort_reverse   = false
 sort_sensitive = false
 
+[opener]
+pdf = [
+	{ run = 'zathura "$@"', orphan = true, desc = "zathura" },
+]
+
+[open]
+prepend_rules = [
+	# PDF → zathura (fallback на системный open через меню "O")
+	{ mime = "application/pdf", use = ["pdf", "open"] },
+]
+
 [preview]
 tab_size      = 2
 max_width     = 1000
