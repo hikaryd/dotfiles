@@ -161,6 +161,34 @@ EOF
 systemctl enable --now nftables >/dev/null 2>&1
 nft -f /etc/nftables.conf
 
+# UFW has a ufw-not-local guard which drops TPROXY packets: their original
+# destination is still a public IP even though policy routing sends mark=1 to
+# the local sing-box socket.  Permit only marked traffic arriving from the
+# authenticated AWG interface, before ufw-not-local, and expose the AWG UDP
+# listener itself.  Without both rules the tunnel may handshake yet blackhole
+# all router traffic (or never handshake at all).
+if command -v ufw >/dev/null 2>&1 && ufw status | grep -q '^Status: active'; then
+  say "UFW: AWG-порт + TPROXY-трафик"
+  ufw allow "$AWG_PORT/udp" comment 'AmneziaWG tunnel' >/dev/null
+  UFW_BEFORE=/etc/ufw/before.rules
+  if ! grep -q 'OMX-AWG-TPROXY' "$UFW_BEFORE"; then
+    sed -i '/^# ufw-not-local$/i\
+# OMX-AWG-TPROXY: marked packets must reach the local sing-box TPROXY socket\
+-A ufw-before-input -i awg0 -m mark --mark 0x1 -j ACCEPT\
+' "$UFW_BEFORE"
+  fi
+  # nftables.conf starts with "flush ruleset".  Always load UFW afterwards;
+  # otherwise boot ordering can either restore UFW without the AWG exceptions
+  # or erase the firewall while ufw still reports itself active.
+  mkdir -p /etc/systemd/system/ufw.service.d
+  cat >/etc/systemd/system/ufw.service.d/10-after-nftables.conf <<EOF
+[Unit]
+After=nftables.service
+EOF
+  systemctl daemon-reload
+  ufw reload >/dev/null
+fi
+
 say "интерфейс awg0 (пиры — из реестра peers/, мигрирует legacy при обновлении)"
 bash "$WORK/peer-register.sh" rebuild
 

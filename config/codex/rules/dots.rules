@@ -1,0 +1,20 @@
+# Curated cross-machine approval rules managed by ~/dots.
+# Codex-learned and machine-specific rules remain in local default.rules.
+
+prefix_rule(
+    pattern = ["npm", "--version"],
+    decision = "allow",
+    justification = "Read the installed npm version.",
+)
+
+prefix_rule(
+    pattern = ["cargo", "tauri", "--version"],
+    decision = "allow",
+    justification = "Read the installed Tauri CLI version.",
+)
+
+prefix_rule(
+    pattern = ["omx", "team", "api"],
+    decision = "allow",
+    justification = "Use the local OMX team runtime API.",
+)

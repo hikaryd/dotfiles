@@ -1,0 +1,5 @@
+- shell:
+    - command: scripts/codex-apply.sh
+      description: Merge personal Codex config and install portable rules
+      stdout: true
+      stderr: true
