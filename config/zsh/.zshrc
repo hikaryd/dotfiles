@@ -30,8 +30,8 @@ kprod() {
   KUBECONFIG="${(j.:.)prod_files}" kubectl "$@"
 }
 
-# PATH / fpath (typeset -U removes duplicates)
-typeset -U path fpath
+# PATH / function and module paths (typeset -U removes duplicates)
+typeset -U path fpath module_path
 path=(
   "$BUN_INSTALL/bin"
   "$HOME/.cargo/bin"
@@ -57,6 +57,10 @@ fpath=(
   /opt/homebrew/share/zsh/functions
   $fpath
 )
+
+# Homebrew embeds its current Cellar version in zsh's default module_path.
+# Prefer the stable opt symlink so complist/computil keep loading after upgrades.
+[[ -d /opt/homebrew/lib/zsh ]] && module_path=(/opt/homebrew/lib $module_path)
 
 # --- History ---
 HISTFILE="$HOME/.zsh_history"
@@ -84,6 +88,16 @@ if (( ${#_zcompdump_recent} )); then
 else
   compinit -d "$_zcompdump"
 fi
+
+# Keep the completion dispatcher resident in long-lived tmux shells. Homebrew
+# removes the previous Cellar directory during an upgrade; a lazy autoload from
+# that deleted directory would otherwise fail the next time completion runs.
+if ! autoload +X _main_complete 2>/dev/null; then
+  rm -f "$_zcompdump" "$_zcompdump.zwc"
+  compinit -d "$_zcompdump"
+  autoload +X _main_complete
+fi
+
 [[ -s "$_zcompdump" && (! -s "$_zcompdump.zwc" || "$_zcompdump" -nt "$_zcompdump.zwc") ]] && \
   zcompile "$_zcompdump" &!
 unset _zcompdump _zcompdump_recent

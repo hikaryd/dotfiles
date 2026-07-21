@@ -5,6 +5,8 @@
 *.swp
 *.swo
 *~
+__pycache__/
+*.py[cod]
 .dual-graph/
 /CLAUDE.md
 /.claude/settings.local.json
@@ -16,3 +18,7 @@ config/paneru/__pycache__/
 # Claude Code MCP secrets (real keys live in ~/.claude/.mcp-secrets, never here)
 config/claude/mcp-secrets.sh
 config/claude/.mcp-secrets
+
+# Codex private render values (real values live in ~/.codex/.mcp-secrets)
+config/codex/mcp-secrets.sh
+config/codex/.mcp-secrets
