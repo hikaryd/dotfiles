@@ -22,3 +22,6 @@ config/claude/.mcp-secrets
 # Codex private render values (real values live in ~/.codex/.mcp-secrets)
 config/codex/mcp-secrets.sh
 config/codex/.mcp-secrets
+
+# Private Kubernetes watcher inventories live under ~/.config, never in dots.
+**/deploy-watch.resources

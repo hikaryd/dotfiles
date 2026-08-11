@@ -6,6 +6,7 @@ tap "nikitabobko/tap"
 tap "duongductrong/snapzy", "https://github.com/duongductrong/Snapzy"
 tap "homebrew-zathura/zathura"
 tap "ajrosen/tap"
+tap "kunkka19xx/tap"
 
 # Основные системные пакеты
 brew "coreutils"
@@ -42,7 +43,6 @@ brew "yazi"
 brew "zathura"
 brew "zathura-pdf-poppler" # PDF-плагин; линкуется в steps/dependencies.yml
 brew "nolight132/tap/nls"
-brew "bitwarden-accelerator"
 
 # Инструменты для шелла и терминала
 brew "fzf"
@@ -115,12 +115,11 @@ brew "jq-lsp"
 # Другие инструменты разработки
 brew "sesh"    
 brew "gum"    
-cask "codex"
 brew "rift", args: ["tap", "acsandmann/tap"]
 brew "paneru"
 brew "fastfetch"    
 brew "ffmpeg"    
-cask "alfred"    
+cask "raycast"    
 cask "rustdesk"    
 
 # Дополнения для bat
@@ -128,15 +127,14 @@ brew "bat-extras"
 
 # Приложения
 cask "ayugram"
+cask "telegram-desktop"
 cask "spotify"
 brew "kcat"
 cask "1password"
-cask "bitwarden"
 cask "1password-cli"
 cask "ghostty"
 cask "mos"       
 cask "karabiner-elements"
-cask "claude-code"
 cask "duongductrong/snapzy/snapzy"
 cask "caffeine"
 cask "logi-options+"

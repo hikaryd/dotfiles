@@ -101,6 +101,17 @@
       create: true
       force: true
 - shell:
+    - command: |
+        mkdir -p "$HOME/.local/bin"
+        cd "$HOME/dots/tools/podbor-rollout"
+        go build -o "$HOME/.local/bin/podbor-deploy-watch" .
+        cd "$HOME/dots/tools/podbor-log-watch"
+        go build -o "$HOME/.local/bin/podbor-log-watch" .
+        cd "$HOME/dots/tools/podbor-pod-analyze"
+        go build -o "$HOME/.local/bin/podbor-pod-analyze" .
+      description: Building read-only Podbor Kubernetes watchers
+      stdout: true
+      stderr: true
     - command: chmod +x ~/.config/git/hooks/prepare-commit-msg
       description: Making git hook executable
       stdout: false
