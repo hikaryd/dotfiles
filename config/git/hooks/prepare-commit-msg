@@ -58,10 +58,10 @@ if [ "$COMMIT_SOURCE" = "merge" ]; then
 	exit 0
 fi
 
-# Для остальных "неинтерактивных" источников не запускаем AI,
+# Для остальных неинтерактивных источников не запускаем AI,
 # но тикет допишем, если он нужен.
 case "$COMMIT_SOURCE" in
-squash | commit | template | message)
+squash | commit | template)
 	prepend_ticket_to_file
 	exit 0
 	;;

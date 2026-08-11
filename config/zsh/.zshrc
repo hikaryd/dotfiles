@@ -15,19 +15,171 @@ if [[ -d "$HOME/.kube/configs/default" ]]; then
   unset _kc
 fi
 
-# kprod — load prod kubeconfigs with confirmation, then run kubectl (lazy: glob runs only on call)
-kprod() {
-  local -a prod_files=("$HOME/.kube/configs/prod"/*(.N))
-  if (( ! ${#prod_files} )); then
-    echo "No prod kubeconfigs found in ~/.kube/configs/prod/" >&2
+# Podbor Kubernetes environments.
+# Wrappers always pin both kubeconfig and context, so commands cannot accidentally
+# fall through to another environment from the merged default KUBECONFIG.
+export PODBOR_DEV_KUBECONFIG="$HOME/.kube/configs/default/kubeconfig-kube-podbor-dev-2-07368e16-s4.yaml"
+export PODBOR_DEV_CONTEXT="ats-dev"
+export PODBOR_DEV_NAMESPACE="podbor-dev"
+
+export PODBOR_STAGE_KUBECONFIG="$HOME/.kube/configs/default/podbor-stage.yaml"
+export PODBOR_STAGE_CONTEXT="aihr-stage"
+export PODBOR_STAGE_NAMESPACE="podbor-stage"
+
+export PODBOR_PROD_KUBECONFIG="$HOME/.kube/configs/prod/podbor-prod.yaml"
+export PODBOR_PROD_CONTEXT="cluster-admin@cluster"
+export PODBOR_PROD_NAMESPACE="podbor-prod"
+
+_podbor_kubectl() {
+  local kubeconfig="$1"
+  local context="$2"
+  local namespace="$3"
+  shift 3
+
+  if [[ ! -r "$kubeconfig" ]]; then
+    echo "Kubeconfig is not readable: $kubeconfig" >&2
     return 1
   fi
-  if [[ -z "$KPROD_CONFIRMED" ]]; then
-    printf "⚠️  PROD CLUSTER ACCESS — type 'yes' to proceed: "
-    read -r answer
-    [[ "$answer" = "yes" ]] || { echo "Aborted."; return 1; }
-  fi
-  KUBECONFIG="${(j.:.)prod_files}" kubectl "$@"
+
+  local -a namespace_arg=()
+  [[ -n "$namespace" ]] && namespace_arg=(--namespace="$namespace")
+
+  KUBECONFIG="$kubeconfig" \
+    kubectl --context="$context" "${namespace_arg[@]}" "$@"
+}
+
+_podbor_prod_confirm() {
+  [[ "$KPROD_CONFIRMED" = "1" ]] && return 0
+
+  printf "⚠️  PROD MUTATING COMMAND — type 'yes' to proceed: "
+  local answer
+  read -r answer
+  [[ "$answer" = "yes" ]] || {
+    echo "Aborted."
+    return 1
+  }
+}
+
+_podbor_kubectl_is_read_only() {
+  local command="${1:-}"
+  local subcommand="${2:-}"
+
+  case "$command" in
+    get|describe|logs|top|events|explain|api-resources|api-versions|cluster-info|version|diff|wait)
+      return 0
+      ;;
+    rollout)
+      [[ "$subcommand" = "status" || "$subcommand" = "history" ]]
+      return
+      ;;
+    auth)
+      [[ "$subcommand" = "can-i" || "$subcommand" = "whoami" ]]
+      return
+      ;;
+    *)
+      return 1
+      ;;
+  esac
+}
+
+_podbor_prod_confirm_if_mutating() {
+  _podbor_kubectl_is_read_only "$@" && return 0
+  _podbor_prod_confirm
+}
+
+# Cluster-wide kubectl wrappers.
+kdev() {
+  _podbor_kubectl "$PODBOR_DEV_KUBECONFIG" "$PODBOR_DEV_CONTEXT" "" "$@"
+}
+
+kstage() {
+  _podbor_kubectl "$PODBOR_STAGE_KUBECONFIG" "$PODBOR_STAGE_CONTEXT" "" "$@"
+}
+
+kprod() {
+  _podbor_prod_confirm_if_mutating "$@" || return
+  _podbor_kubectl "$PODBOR_PROD_KUBECONFIG" "$PODBOR_PROD_CONTEXT" "" "$@"
+}
+
+# Namespace-pinned kubectl wrappers.
+kpdev() {
+  _podbor_kubectl \
+    "$PODBOR_DEV_KUBECONFIG" "$PODBOR_DEV_CONTEXT" "$PODBOR_DEV_NAMESPACE" "$@"
+}
+
+kpstage() {
+  _podbor_kubectl \
+    "$PODBOR_STAGE_KUBECONFIG" "$PODBOR_STAGE_CONTEXT" "$PODBOR_STAGE_NAMESPACE" "$@"
+}
+
+kpprod() {
+  _podbor_prod_confirm_if_mutating "$@" || return
+  _podbor_kubectl \
+    "$PODBOR_PROD_KUBECONFIG" "$PODBOR_PROD_CONTEXT" "$PODBOR_PROD_NAMESPACE" "$@"
+}
+
+# Interactive pod logs, manual CronJob runs, and rollout monitoring.
+[[ -f "$HOME/dots/config/zsh/kube-tools.zsh" ]] &&
+  source "$HOME/dots/config/zsh/kube-tools.zsh"
+
+# Explicit connection checks; no network request is made until one is called.
+kdev-connect() {
+  kdev cluster-info
+}
+
+kstage-connect() {
+  kstage cluster-info
+}
+
+kprod-connect() {
+  kprod cluster-info
+}
+
+podbor-kube-help() {
+  cat <<'EOF'
+Podbor Kubernetes commands:
+  kdev <args>       kubectl in ats-dev
+  kstage <args>     kubectl in aihr-stage
+  kprod <args>      kubectl in prod (confirmation only for mutations)
+
+  kpdev <args>      kubectl in podbor-dev namespace
+  kpstage <args>    kubectl in podbor-stage namespace
+  kpprod <args>     kubectl in podbor-prod (confirmation only for mutations)
+
+  kdev-connect      check dev connection
+  kstage-connect    check stage connection
+  kprod-connect     check prod connection
+
+  kpdev-logs [text]       choose a pod and follow all container logs
+  kpdev-logs-save [text]  choose a pod and save all available logs
+  kpdev-cron-run [text]   ACTION: run CronJob; save logs to ~/Documents/kube-logs
+  kpdev-exec              choose target, bash/Python, and working directory
+  kpdev-exec [target] -- <command>  execute an explicit command
+  kpdev-log-search [pod-pattern] [text]  search all matching pod logs
+  kpdev-jobs [text]       choose a recent Job and follow all of its pod logs
+  kpdev-jobs-save [text]  choose a recent Job and save all pod/container logs
+  kpdev-deploy-watch [text]  watch a workload rollout; read-only
+  kpdev-pod-analyze [text]   live CPU/RAM/status/events with local history charts
+  kpdev-pod-restart [text]   ACTION: delete a pod, wait for replacement, follow logs
+
+  Replace "dev" with "stage" or "prod" in all interactive commands.
+
+Examples:
+  kpdev get pods
+  kpstage get cronjobs
+  kpprod get deployments
+  kpdev-logs worker
+  kpdev-jobs-save request-creation
+  kpstage-cron-run request-creation
+  kpstage-exec
+  kpstage-log-search 'podbor-api*' 'trace-id'
+  kpstage-jobs security-checker
+  kpdev-deploy-watch podbor-api
+  kpstage-pod-analyze service-api
+  kpstage-pod-restart service-api
+
+Set KPROD_CONFIRMED=1 only for a deliberately pre-confirmed prod shell.
+EOF
 }
 
 # PATH / function and module paths (typeset -U removes duplicates)
@@ -109,7 +261,7 @@ zstyle ':completion:*' use-cache on
 zstyle ':completion:*' cache-path "$HOME/.zcompcache"
 
 # --- Autoloaded functions (lazy — loaded only on first call) ---
-autoload -Uz extract kafka-consume kafka-produce tp
+autoload -Uz extract graphify-merge-fix kafka-consume kafka-produce tp
 
 # --- Key bindings ---
 bindkey -e
@@ -121,10 +273,12 @@ bindkey '^N' down-line-or-search
 # --- Aliases ---
 alias v='nvim'
 alias cat='bat --style=plain'
+alias y='yazi'
 alias l='nls'
 alias c='clear'
 alias lg='lazygit'
 alias gaa='git add -A'
+alias gmf='graphify-merge-fix'
 
 alias ..='cd ..'
 alias ...='cd ../..'
@@ -205,3 +359,6 @@ fi
 # Codex (oh-my-codex / omx) через изолированный VLESS-прокси (xray).
 # Источник (общий для bash и zsh): ~/.config/shell/codex-proxy.sh
 [[ -f ~/.config/shell/codex-proxy.sh ]] && source ~/.config/shell/codex-proxy.sh
+
+# Run OMX without the tmux HUD/status pane.
+export OMX_LAUNCH_POLICY=direct

@@ -1,0 +1,100 @@
+# Быстрое разрешение конфликтов сгенерированных Graphify-артефактов.
+# Usage: graphify-merge-fix [--force]
+
+emulate -L zsh
+setopt local_options pipe_fail
+
+local force_update=false
+case "${1:-}" in
+  '') ;;
+  --force) force_update=true ;;
+  *)
+    echo "Usage: graphify-merge-fix [--force]" >&2
+    return 2
+    ;;
+esac
+
+local repo_root
+repo_root="$(git rev-parse --show-toplevel 2>/dev/null)" || {
+  echo "Ошибка: текущая директория не находится в Git-репозитории." >&2
+  return 1
+}
+
+local -a artifacts=(
+  graphify-out/graph.json
+  graphify-out/graph.html
+  graphify-out/GRAPH_REPORT.md
+  graphify-out/manifest.json
+)
+local -a unmerged
+local unmerged_output
+unmerged_output="$(git -C "$repo_root" diff --name-only --diff-filter=U)" || return 1
+
+if [[ -z "$unmerged_output" ]]; then
+  echo "Graphify-конфликтов нет. Нечего исправлять."
+  return 0
+fi
+unmerged=("${(@f)unmerged_output}")
+
+local conflict_path
+for conflict_path in "${unmerged[@]}"; do
+  if (( ! ${artifacts[(Ie)$conflict_path]} )); then
+    echo "Ошибка: сначала разреши конфликт исходника: $conflict_path" >&2
+    return 1
+  fi
+done
+
+if ! command -v graphify >/dev/null 2>&1; then
+  echo "Ошибка: команда graphify не найдена в PATH." >&2
+  return 1
+fi
+
+local graph_conflicted=false
+[[ -n "$(git -C "$repo_root" ls-files -u -- graphify-out/graph.json)" ]] && graph_conflicted=true
+
+echo "Временно принимаю текущую сторону для Graphify-артефактов..."
+git -C "$repo_root" checkout --ours -- "${unmerged[@]}" || return 1
+
+if [[ "$graph_conflicted" == true ]]; then
+  echo "graph.json конфликтует — выполняю полную AST-only пересборку..."
+  (
+    cd -- "$repo_root" &&
+      graphify extract . --code-only --force --max-workers 1
+  ) || return 1
+else
+  local -a update_args=(update .)
+  [[ "$force_update" == true ]] && update_args+=(--force)
+
+  echo "Обновляю Graphify по итоговому рабочему дереву..."
+  (
+    cd -- "$repo_root" &&
+      graphify "${update_args[@]}"
+  ) || {
+    echo "Graphify не обновлён. Если сработал shrink guard, повтори: gmf --force" >&2
+    return 1
+  }
+fi
+
+git -C "$repo_root" add -- "${artifacts[@]}" || return 1
+
+local -a remaining
+local remaining_output
+remaining_output="$(git -C "$repo_root" diff --name-only --diff-filter=U)" || return 1
+if [[ -n "$remaining_output" ]]; then
+  remaining=("${(@f)remaining_output}")
+  echo "Ошибка: после пересборки остались конфликты:" >&2
+  printf '  %s\n' "${remaining[@]}" >&2
+  return 1
+fi
+
+git -C "$repo_root" diff --cached --check -- "${artifacts[@]}" || return 1
+git -C "$repo_root" status --short -- graphify-out
+
+if git -C "$repo_root" rev-parse -q --verify MERGE_HEAD >/dev/null; then
+  echo "Готово. Следующий шаг после проверки: git merge --continue"
+elif [[ -d "$(git -C "$repo_root" rev-parse --git-path rebase-merge)" || \
+        -d "$(git -C "$repo_root" rev-parse --git-path rebase-apply)" ]]; then
+  echo "Готово. Следующий шаг после проверки: git rebase --continue"
+else
+  echo "Готово. Graphify-артефакты пересобраны и добавлены в index."
+fi
