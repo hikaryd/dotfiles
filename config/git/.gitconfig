@@ -1,6 +1,5 @@
-[user]
-	name = hikaryd
-	email = 86579751+hikaryd@users.noreply.github.com
+[include]
+	path = ~/.config/git/private.inc
 
 [alias]
 	st = status
@@ -68,3 +67,8 @@
 
 [interactive]
 	diffFilter = delta --color-only
+[maintenance]
+	repo = /Users/user/Workspace/worktrees/podbor-api-feature-3499327_autopub
+	repo = /Users/user/Documents/dev/podbor-api
+	repo = /Users/user/Documents/dev/podbor-api-2
+	repo = /Users/user/Documents/dev/podbor-api-3

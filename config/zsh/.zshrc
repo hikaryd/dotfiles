@@ -5,182 +5,17 @@
 # --- Environment ---
 export EDITOR="nvim"
 export VISUAL="nvim"
-export OPENAI_BASE_URL="https://gateway.ai.cloudflare.com/v1/1a911fb4ac31b7d5e7b5a60fb08aa48f/aihr-proxy/openai"
 export BUN_INSTALL="$HOME/.bun"
 
-# Kubeconfig — default (stage/dev) loads automatically via native zsh glob (no fork)
-if [[ -d "$HOME/.kube/configs/default" ]]; then
-  local -a _kc=("$HOME/.kube/configs/default"/*(.N))
-  (( ${#_kc} )) && export KUBECONFIG="${(j.:.)_kc}"
-  unset _kc
-fi
+# Secrets, identities, service endpoints, and cluster coordinates stay outside
+# this repository. See config/zsh/private.example.zsh for the supported keys.
+typeset -g DOTS_PRIVATE_ZSH="${DOTS_PRIVATE_ZSH:-${XDG_CONFIG_HOME:-$HOME/.config}/dots/private.zsh}"
+[[ -r "$DOTS_PRIVATE_ZSH" ]] && source "$DOTS_PRIVATE_ZSH"
 
-# Podbor Kubernetes environments.
-# Wrappers always pin both kubeconfig and context, so commands cannot accidentally
-# fall through to another environment from the merged default KUBECONFIG.
-export PODBOR_DEV_KUBECONFIG="$HOME/.kube/configs/default/kubeconfig-kube-podbor-dev-2-07368e16-s4.yaml"
-export PODBOR_DEV_CONTEXT="ats-dev"
-export PODBOR_DEV_NAMESPACE="podbor-dev"
-
-export PODBOR_STAGE_KUBECONFIG="$HOME/.kube/configs/default/podbor-stage.yaml"
-export PODBOR_STAGE_CONTEXT="aihr-stage"
-export PODBOR_STAGE_NAMESPACE="podbor-stage"
-
-export PODBOR_PROD_KUBECONFIG="$HOME/.kube/configs/prod/podbor-prod.yaml"
-export PODBOR_PROD_CONTEXT="cluster-admin@cluster"
-export PODBOR_PROD_NAMESPACE="podbor-prod"
-
-_podbor_kubectl() {
-  local kubeconfig="$1"
-  local context="$2"
-  local namespace="$3"
-  shift 3
-
-  if [[ ! -r "$kubeconfig" ]]; then
-    echo "Kubeconfig is not readable: $kubeconfig" >&2
-    return 1
-  fi
-
-  local -a namespace_arg=()
-  [[ -n "$namespace" ]] && namespace_arg=(--namespace="$namespace")
-
-  KUBECONFIG="$kubeconfig" \
-    kubectl --context="$context" "${namespace_arg[@]}" "$@"
-}
-
-_podbor_prod_confirm() {
-  [[ "$KPROD_CONFIRMED" = "1" ]] && return 0
-
-  printf "⚠️  PROD MUTATING COMMAND — type 'yes' to proceed: "
-  local answer
-  read -r answer
-  [[ "$answer" = "yes" ]] || {
-    echo "Aborted."
-    return 1
-  }
-}
-
-_podbor_kubectl_is_read_only() {
-  local command="${1:-}"
-  local subcommand="${2:-}"
-
-  case "$command" in
-    get|describe|logs|top|events|explain|api-resources|api-versions|cluster-info|version|diff|wait)
-      return 0
-      ;;
-    rollout)
-      [[ "$subcommand" = "status" || "$subcommand" = "history" ]]
-      return
-      ;;
-    auth)
-      [[ "$subcommand" = "can-i" || "$subcommand" = "whoami" ]]
-      return
-      ;;
-    *)
-      return 1
-      ;;
-  esac
-}
-
-_podbor_prod_confirm_if_mutating() {
-  _podbor_kubectl_is_read_only "$@" && return 0
-  _podbor_prod_confirm
-}
-
-# Cluster-wide kubectl wrappers.
-kdev() {
-  _podbor_kubectl "$PODBOR_DEV_KUBECONFIG" "$PODBOR_DEV_CONTEXT" "" "$@"
-}
-
-kstage() {
-  _podbor_kubectl "$PODBOR_STAGE_KUBECONFIG" "$PODBOR_STAGE_CONTEXT" "" "$@"
-}
-
-kprod() {
-  _podbor_prod_confirm_if_mutating "$@" || return
-  _podbor_kubectl "$PODBOR_PROD_KUBECONFIG" "$PODBOR_PROD_CONTEXT" "" "$@"
-}
-
-# Namespace-pinned kubectl wrappers.
-kpdev() {
-  _podbor_kubectl \
-    "$PODBOR_DEV_KUBECONFIG" "$PODBOR_DEV_CONTEXT" "$PODBOR_DEV_NAMESPACE" "$@"
-}
-
-kpstage() {
-  _podbor_kubectl \
-    "$PODBOR_STAGE_KUBECONFIG" "$PODBOR_STAGE_CONTEXT" "$PODBOR_STAGE_NAMESPACE" "$@"
-}
-
-kpprod() {
-  _podbor_prod_confirm_if_mutating "$@" || return
-  _podbor_kubectl \
-    "$PODBOR_PROD_KUBECONFIG" "$PODBOR_PROD_CONTEXT" "$PODBOR_PROD_NAMESPACE" "$@"
-}
-
-# Interactive pod logs, manual CronJob runs, and rollout monitoring.
-[[ -f "$HOME/dots/config/zsh/kube-tools.zsh" ]] &&
+# Все Kubernetes-команды и guards живут в одном модуле. Его source не делает
+# сетевых запросов; подключение к кластеру начинается только при вызове команды.
+[[ -r "$HOME/dots/config/zsh/kube-tools.zsh" ]] &&
   source "$HOME/dots/config/zsh/kube-tools.zsh"
-
-# Explicit connection checks; no network request is made until one is called.
-kdev-connect() {
-  kdev cluster-info
-}
-
-kstage-connect() {
-  kstage cluster-info
-}
-
-kprod-connect() {
-  kprod cluster-info
-}
-
-podbor-kube-help() {
-  cat <<'EOF'
-Podbor Kubernetes commands:
-  kdev <args>       kubectl in ats-dev
-  kstage <args>     kubectl in aihr-stage
-  kprod <args>      kubectl in prod (confirmation only for mutations)
-
-  kpdev <args>      kubectl in podbor-dev namespace
-  kpstage <args>    kubectl in podbor-stage namespace
-  kpprod <args>     kubectl in podbor-prod (confirmation only for mutations)
-
-  kdev-connect      check dev connection
-  kstage-connect    check stage connection
-  kprod-connect     check prod connection
-
-  kpdev-logs [text]       choose a pod and follow all container logs
-  kpdev-logs-save [text]  choose a pod and save all available logs
-  kpdev-cron-run [text]   ACTION: run CronJob; save logs to ~/Documents/kube-logs
-  kpdev-exec              choose target, bash/Python, and working directory
-  kpdev-exec [target] -- <command>  execute an explicit command
-  kpdev-log-search [pod-pattern] [text]  search all matching pod logs
-  kpdev-jobs [text]       choose a recent Job and follow all of its pod logs
-  kpdev-jobs-save [text]  choose a recent Job and save all pod/container logs
-  kpdev-deploy-watch [text]  watch a workload rollout; read-only
-  kpdev-pod-analyze [text]   live CPU/RAM/status/events with local history charts
-  kpdev-pod-restart [text]   ACTION: delete a pod, wait for replacement, follow logs
-
-  Replace "dev" with "stage" or "prod" in all interactive commands.
-
-Examples:
-  kpdev get pods
-  kpstage get cronjobs
-  kpprod get deployments
-  kpdev-logs worker
-  kpdev-jobs-save request-creation
-  kpstage-cron-run request-creation
-  kpstage-exec
-  kpstage-log-search 'podbor-api*' 'trace-id'
-  kpstage-jobs security-checker
-  kpdev-deploy-watch podbor-api
-  kpstage-pod-analyze service-api
-  kpstage-pod-restart service-api
-
-Set KPROD_CONFIRMED=1 only for a deliberately pre-confirmed prod shell.
-EOF
-}
 
 # PATH / function and module paths (typeset -U removes duplicates)
 typeset -U path fpath module_path
@@ -261,7 +96,7 @@ zstyle ':completion:*' use-cache on
 zstyle ':completion:*' cache-path "$HOME/.zcompcache"
 
 # --- Autoloaded functions (lazy — loaded only on first call) ---
-autoload -Uz extract graphify-merge-fix kafka-consume kafka-produce tp
+autoload -Uz _dots-zoxide-init extract graphify-merge-fix kafka-consume kafka-produce tp y z zi
 
 # --- Key bindings ---
 bindkey -e
@@ -269,11 +104,13 @@ bindkey '^A' beginning-of-line
 bindkey '^E' end-of-line
 bindkey '^P' autosuggest-accept
 bindkey '^N' down-line-or-search
+autoload -Uz edit-command-line
+zle -N edit-command-line
+bindkey '^[e' edit-command-line
 
 # --- Aliases ---
 alias v='nvim'
 alias cat='bat --style=plain'
-alias y='yazi'
 alias l='nls'
 alias c='clear'
 alias lg='lazygit'
@@ -304,6 +141,7 @@ export FZF_DEFAULT_OPTS=" \
 
 # --- Catppuccin Mocha — syntax highlighting ---
 typeset -A ZSH_HIGHLIGHT_STYLES
+ZSH_HIGHLIGHT_MAXLENGTH=512
 ZSH_HIGHLIGHT_STYLES[command]='fg=#89b4fa'
 ZSH_HIGHLIGHT_STYLES[builtin]='fg=#89b4fa'
 ZSH_HIGHLIGHT_STYLES[alias]='fg=#89b4fa'
@@ -323,37 +161,57 @@ ZSH_HIGHLIGHT_STYLES[arg0]='fg=#89b4fa'
 
 # --- Catppuccin Mocha — autosuggestions ---
 ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=#585b70'
-ZSH_AUTOSUGGEST_STRATEGY=(history completion)
+# Completion-based suggestions spawn a nested completion PTY for novel input.
+# History-only suggestions stay asynchronous and avoid input/Ctrl+C stalls.
+ZSH_AUTOSUGGEST_STRATEGY=(history)
+ZSH_AUTOSUGGEST_BUFFER_MAX_SIZE=256
+typeset -g ZSH_AUTOSUGGEST_MANUAL_REBIND=1
 
 # --- Integrations ---
-# Starship: cache init script (avoids forking starship on every shell start)
-_starship_cache="$HOME/.cache/starship-init.zsh"
-if [[ ! -s "$_starship_cache" || "$(command -v starship)" -nt "$_starship_cache" ]]; then
-  mkdir -p "$HOME/.cache"
-  starship init zsh --print-full-init > "$_starship_cache" 2>/dev/null
+# Native prompt avoids a Starship process on every redraw. Set
+# DOTS_USE_STARSHIP=1 before starting zsh to restore the full Starship prompt.
+if [[ "${DOTS_USE_STARSHIP:-0}" == 1 ]]; then
+  _starship_cache="$HOME/.cache/starship-init.zsh"
+  if [[ ! -s "$_starship_cache" || "$(command -v starship)" -nt "$_starship_cache" ]]; then
+    mkdir -p "$HOME/.cache"
+    starship init zsh --print-full-init > "$_starship_cache" 2>/dev/null
+  fi
+  [[ -s "$_starship_cache" ]] && source "$_starship_cache"
+  unset _starship_cache
+else
+  setopt PROMPT_SUBST
+  zmodload zsh/datetime
+  autoload -Uz add-zsh-hook _dots-prompt-find-git-dir _dots-prompt-precmd _dots-prompt-preexec
+  add-zsh-hook preexec _dots-prompt-preexec
+  add-zsh-hook precmd _dots-prompt-precmd
+  PROMPT='%F{#bfbdb6}󰀵 %5~ %f'$'\n> '
 fi
-[[ -s "$_starship_cache" ]] && source "$_starship_cache"
-unset _starship_cache
 
-# fzf + plugins are loaded on first ZLE line-init instead of blocking shell
-# startup. zsh-syntax-highlighting is still sourced last inside the loader.
-_zsh_load_deferred_plugins() {
-  (( ${+_zsh_deferred_plugins_loaded} )) && return
-  typeset -g _zsh_deferred_plugins_loaded=1
-
+# These integrations must exist before ZLE draws its first editable line.
+# Registering a line-init hook from inside .zshrc is one prompt too late: the
+# hook first runs after the user submits a command, so the initial prompt has
+# neither history suggestions nor fzf completion.
+if [[ -o interactive ]]; then
   [[ -f /opt/homebrew/opt/fzf/shell/completion.zsh ]] && source /opt/homebrew/opt/fzf/shell/completion.zsh
   [[ -f /opt/homebrew/opt/fzf/shell/key-bindings.zsh ]] && source /opt/homebrew/opt/fzf/shell/key-bindings.zsh
 
+  if [[ -f /opt/homebrew/opt/fzf-tab/share/fzf-tab/fzf-tab.zsh ]]; then
+    zstyle ':completion:*' menu no
+    zstyle ':completion:*:descriptions' format '[%d]'
+    zstyle ':completion:*:git-checkout:*' sort false
+    zstyle ':fzf-tab:*' fzf-flags --height=60% \
+      --bind=ctrl-j:down,ctrl-k:up,ctrl-c:abort,tab:accept
+    zstyle ':fzf-tab:*' switch-group '<' '>'
+    zstyle ':fzf-tab:complete:*:*' fzf-preview \
+      'if [ -d "$realpath" ]; then /bin/ls -laG -- "$realpath"; elif [ -f "$realpath" ]; then bat --color=always --style=numbers --line-range=:200 -- "$realpath"; fi'
+    source /opt/homebrew/opt/fzf-tab/share/fzf-tab/fzf-tab.zsh
+  fi
+
   [[ -f /opt/homebrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh ]] && \
     source /opt/homebrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh
+  # zsh-syntax-highlighting must remain the last ZLE plugin sourced.
   [[ -f /opt/homebrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ]] && \
     source /opt/homebrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
-}
-
-if [[ -o interactive ]]; then
-  autoload -Uz add-zle-hook-widget
-  zle -N _zsh_load_deferred_plugins
-  add-zle-hook-widget line-init _zsh_load_deferred_plugins
 fi
 
 # Codex (oh-my-codex / omx) через изолированный VLESS-прокси (xray).
@@ -362,3 +220,6 @@ fi
 
 # Run OMX without the tmux HUD/status pane.
 export OMX_LAUNCH_POLICY=direct
+# Native hooks already deliver notifications. The fallback watcher polls large
+# OMX state trees and can consume a full CPU core per concurrent session.
+export OMX_NOTIFY_FALLBACK=0

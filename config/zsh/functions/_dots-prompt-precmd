@@ -1,0 +1,35 @@
+local head branch='' duration='' virtualenv='' prompt_line
+local -F 2 elapsed
+
+# Repository discovery only repeats after changing directory. HEAD itself is a
+# tiny file and is read on every prompt so checkout/switch updates immediately.
+if [[ "${_dots_prompt_pwd:-}" != "$PWD" ]]; then
+  typeset -g _dots_prompt_pwd="$PWD"
+  _dots-prompt-find-git-dir
+  typeset -g _dots_prompt_git_dir="$REPLY"
+fi
+
+if [[ -n "${_dots_prompt_git_dir:-}" && -r "$_dots_prompt_git_dir/HEAD" ]]; then
+  IFS= read -r head < "$_dots_prompt_git_dir/HEAD"
+  if [[ "$head" == 'ref: refs/heads/'* ]]; then
+    branch="${head#ref: refs/heads/}"
+  elif [[ -n "$head" ]]; then
+    branch="${head[1,7]}"
+  fi
+fi
+
+if (( ${+_dots_prompt_command_started} )); then
+  (( elapsed = EPOCHREALTIME - _dots_prompt_command_started ))
+  unset _dots_prompt_command_started
+  (( elapsed >= 1.0 )) && duration="${elapsed}s"
+fi
+
+[[ -n "${VIRTUAL_ENV:-}" ]] && virtualenv="${VIRTUAL_ENV:t}"
+branch="${branch//\%/%%}"
+virtualenv="${virtualenv//\%/%%}"
+
+prompt_line='%F{#bfbdb6}󰀵 %5~ %f'
+[[ -n "$branch" ]] && prompt_line+="%F{#f07178}${branch} %f"
+[[ -n "$virtualenv" ]] && prompt_line+="%F{#d2a6ff}${virtualenv} %f"
+[[ -n "$duration" ]] && prompt_line+="%F{#d2a6ff}${duration} %f"
+PROMPT="${prompt_line}"$'\n> '

@@ -9,8 +9,8 @@ ai_helper.py – универсальный CLI-помощник для разр
   • refactor  – исправление текста из буфера обмена
 
 Провайдеры (--provider):
-  • x5 (по умолчанию)
-    - Конфигурация: JSON-файл ~/.x5_copilot_config.json
+  • openai-compatible (по умолчанию)
+    - Конфигурация: JSON-файл ~/.config/ai-helper/openai-compatible.json
   • gemini
     - Ключ API: переменная GEMINI_API_KEY или файл ~/.gemini_key
     - Модель: переменная GEMINI_MODEL (по умолч. "gemini-1.5-flash-latest")
@@ -35,7 +35,7 @@ from typing import Any, Final
 # --- Константы ---
 
 PROVIDER_GEMINI: Final[str] = "gemini"
-PROVIDER_X5: Final[str] = "x5"
+PROVIDER_OPENAI_COMPATIBLE: Final[str] = "openai-compatible"
 
 DIFF_MAX_CHARS: Final[int] = 16000
 CODEX_PROXY_ENV_VARS: Final[frozenset[str]] = frozenset(
@@ -60,6 +60,7 @@ def _drop_codex_proxy_from_process_env() -> None:
     """Не даёт ai_helper и его дочерним процессам наследовать codex-proxy."""
     for key in CODEX_PROXY_ENV_VARS:
         os.environ.pop(key, None)
+
 
 MR_PROMPT_TEMPLATE: Final[str] = """
 # РОЛЬ: Ты — опытный AI-ассистент, специализирующийся на анализе кода и создании Merge Request.
@@ -216,18 +217,21 @@ class GeminiProvider(BaseAIProvider):
             return ""
 
 
-class X5Provider(BaseAIProvider):
-    """Провайдер для X5 Copilot API."""
+class OpenAICompatibleProvider(BaseAIProvider):
+    """Провайдер для OpenAI-compatible Chat Completions API."""
 
     def __init__(self):
-        super().__init__("X5 Copilot")
+        super().__init__("OpenAI-compatible API")
         self.api_key: str | None = None
         self.api_base: str | None = None
         self.model: str | None = None
         self._load_config()
 
     def _load_config(self):
-        config_path = Path.home() / ".x5_copilot_config.json"
+        config_home = Path(
+            os.environ.get("XDG_CONFIG_HOME", str(Path.home() / ".config"))
+        )
+        config_path = config_home / "ai-helper" / "openai-compatible.json"
         if not config_path.is_file():
             _exit_with_error(
                 f"AI Helper ({self.name})",
@@ -329,6 +333,7 @@ def notify(title: str, message: str) -> None:
                 f'display notification "{message_escaped}" with title "{title_escaped}"',
             ],
             capture_output=True,
+            check=False,
         )
     else:
         try:
@@ -512,14 +517,18 @@ def main() -> None:
     )
     parser.add_argument(
         "--provider",
-        choices=[PROVIDER_X5, PROVIDER_GEMINI],
-        default=PROVIDER_X5,
-        help=f"Используемый AI-провайдер (по умолчанию: {PROVIDER_X5})",
+        choices=[PROVIDER_OPENAI_COMPATIBLE, PROVIDER_GEMINI],
+        default=PROVIDER_OPENAI_COMPATIBLE,
+        help=(
+            f"Используемый AI-провайдер (по умолчанию: {PROVIDER_OPENAI_COMPATIBLE})"
+        ),
     )
     args = parser.parse_args()
 
     provider: BaseAIProvider = (
-        GeminiProvider() if args.provider == PROVIDER_GEMINI else X5Provider()
+        GeminiProvider()
+        if args.provider == PROVIDER_GEMINI
+        else OpenAICompatibleProvider()
     )
 
     mode_handlers = {

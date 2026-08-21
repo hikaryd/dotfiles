@@ -7,14 +7,20 @@ import (
 	"time"
 )
 
+func TestDefaultRefreshInterval(t *testing.T) {
+	if defaultRefresh != 100*time.Millisecond {
+		t.Fatalf("default refresh = %s, want 100ms", defaultRefresh)
+	}
+}
+
 func TestLabelSelectorIsStable(t *testing.T) {
 	got := labelSelector(map[string]string{
 		"track": "stable",
-		"app":   "podbor",
+		"app":   "example",
 	}, []labelSelectorRequirement{
 		{Key: "tier", Operator: "In", Values: []string{"worker", "api"}},
 	})
-	if got != "app=podbor,tier in (api,worker),track=stable" {
+	if got != "app=example,tier in (api,worker),track=stable" {
 		t.Fatalf("unexpected selector: %q", got)
 	}
 }
@@ -199,6 +205,22 @@ func TestLogColorUsesSeverity(t *testing.T) {
 		if got := logColor(line); got != want {
 			t.Errorf("logColor(%q) = %q, want %q", line, got, want)
 		}
+	}
+}
+
+func TestRenderLogTailWrapsLongLinesInsteadOfTruncatingThem(t *testing.T) {
+	var out strings.Builder
+	renderLogTail(&out, []logLine{{
+		pod:  "example-api-a",
+		text: "1234567890123456712345678901234567TAILEND",
+		at:   time.Date(2026, 8, 11, 12, 0, 0, 0, time.UTC),
+	}}, 4, 56)
+	got := out.String()
+	if !strings.Contains(got, "TAILEND") {
+		t.Fatalf("long log tail was lost: %q", got)
+	}
+	if strings.Contains(got, "…") {
+		t.Fatalf("long log line was truncated: %q", got)
 	}
 }
 

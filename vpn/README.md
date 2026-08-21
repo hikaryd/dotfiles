@@ -30,7 +30,7 @@
 
 ```bash
 ./install.sh \
-  --sub-url 'https://noctuvpn.xyz/get_subscriptions/ТОКЕН' \
+  --sub-url 'https://vpn.example/get_subscriptions/ТОКЕН' \
   --vps root@203.0.113.10 \
   --router-pass 'ПарольРоутера'
 ```

@@ -34,12 +34,45 @@ cd ~/dots
 Большинство изменений применится через симлинки; смешанные конфиги Claude/Codex
 обновляются их apply-шагами во время `./install`.
 
-## Podbor Kubernetes
+## Приватные machine-local настройки
 
-После загрузки `~/.zshrc` доступны привязанные к окружению команды:
+Git identity хранится отдельно от репозитория:
+
+```ini
+# ~/.config/git/private.inc (chmod 600)
+[user]
+    name = Your Name
+    email = you@example.test
+```
+
+Приватный OpenAI-compatible provider для `scripts/ai_helper` настраивается в
+`~/.config/ai-helper/openai-compatible.json` (также `chmod 600`) ключами
+`api_key`, `api_base` и `model`. Рабочие endpoints, identity и service paths в
+tracked-файлы добавлять не нужно.
+
+В LazyGit `Shift+C` сначала генерирует сообщение по staged diff, затем открывает
+его в `nvim`. При ошибке provider пустой commit editor не открывается: причина
+печатается в терминал и сохраняется с mode `600` в
+`~/.local/state/ai-helper/last-error.log`. `Shift+M` открывает обычный commit без
+AI.
+
+## Kubernetes
+
+Реальные kubeconfig/context/namespace не хранятся в репозитории. Один раз
+создайте machine-local файл и ограничьте доступ к нему:
 
 ```bash
-kpdev get pods             # обычный kubectl в namespace podbor-dev
+mkdir -p ~/.config/dots
+cp ~/dots/config/zsh/private.example.zsh ~/.config/dots/private.zsh
+chmod 600 ~/.config/dots/private.zsh
+$EDITOR ~/.config/dots/private.zsh
+```
+
+После заполнения файла и загрузки `~/.zshrc` доступны привязанные к окружению
+команды:
+
+```bash
+kpdev get pods             # обычный kubectl в настроенном dev namespace
 kpdev-logs                 # выбрать pod и подписаться на логи всех контейнеров
 kpdev-logs-save            # выбрать pod и сохранить все доступные логи в файл
 kpdev-logs-multi           # live-логи всех pod по glob с runtime highlight/filter
@@ -49,33 +82,74 @@ kpdev-log-search           # поиск literal-строки по логам п�
 kpdev-jobs                 # выбрать Job из истории и открыть логи всех его pod
 kpdev-jobs-save            # выбрать Job/CronJob и сохранить логи всех pod/container
 kpdev-deploy-watch         # read-only наблюдение за раскаткой workload
-kpdev-pod-analyze          # CPU/RAM, состояние, события, история и графики pod
+kpdev-scale                # ACTION: посмотреть и изменить число реплик workload
+kpdev-pod-analyze          # один или несколько pod: состояние, ресурсы и процессы
 kpdev-pod-restart          # ACTION: удалить pod, дождаться replacement и открыть логи
 ```
+
+Все команды симметричны для `dev`, `stage`, `preprod` и `prod`: например,
+`kpreprod get nodes`, `kppreprod get pods`, `kppreprod-logs api` и
+`kppreprod-deploy-watch api`.
 
 `*-deploy-watch`, `*-logs`, `*-logs-multi` и `*-jobs` выполняют только чтение
 (`get`/`logs`);
 они не вызывают `kubectl rollout`, `apply`, `patch`, `delete` или `restart`.
 
-Полная доступная из kubectl аналитика выбранного pod:
+Полная доступная из kubectl аналитика одного или нескольких выбранных pod:
 
 ```bash
 kpdev-pod-analyze worker
-kpstage-pod-analyze service-api
-kpprod-pod-analyze service-api
+kpstage-pod-analyze api
+kppreprod-pod-analyze api
+kpprod-pod-analyze api
 ```
 
+В `gum` pod’ы и реплики workload отмечаются `Tab` (`Ctrl+A` выбирает все) и
+подтверждаются `Enter`; `Space` остаётся обычным символом строки поиска. Без
+`gum` номера вводятся через запятую. Для нескольких pod dashboard группирует
+реплики по верхнему workload, показывает компактную цветную сводку по группе и
+одну строку на обычный single-container pod. Вложенные строки добавляются только
+для pod с несколькими контейнерами; повторяющиеся предупреждения
+схлопываются со счётчиком, а обычные успешные Events не засоряют экран.
 Dashboard показывает состояние и Ready каждого контейнера, рестарты и последний
 exit/OOMKilled, текущие CPU/RAM относительно requests/limits, QoS, node, последние
-Warning events, а также avg/p95/max и Unicode-графики. Он остаётся read-only и в
-prod не запрашивает подтверждение. Снимки сохраняются между запусками в
-`~/.local/state/podbor-kube/pod-metrics` и группируются по верхнему controller,
-поэтому история переживает замену pod. По умолчанию показываются 24 часа, а
-хранятся 30 дней.
+Warning events и best-effort список наиболее нагруженных процессов внутри
+контейнера. В таблице блоки разделены вертикальными линиями: `CPU NOW`,
+`CPU/REQ`, `CPU/LIM` относятся только к CPU, а `RAM NOW`, `RAM/REQ`, `RAM/LIM` —
+только к памяти. `NOW` — текущее потребление, `/REQ` — доля request, `/LIM` —
+доля limit; значения около лимита подсвечиваются отдельно от lifecycle-состояния
+pod.
 
-Настройки: `KUBE_POD_ANALYZE_REFRESH=5s`, `KUBE_POD_ANALYZE_WINDOW=24h`,
+Для процессов не нужен `ps`: фиксированный read-only shell-сборщик читает
+`/proc/stat`, `/proc/<pid>/stat`, `/proc/<pid>/status` и `/proc/<pid>/comm` через
+`kubectl exec`. CPU процесса считается по дельте двух выборок, поэтому на первом
+снимке виден `sample`, а примерно через пять секунд — процент одного CPU core
+(`200%` означает два полностью занятых core). `LIM-MEM%` показывает RSS процесса
+относительно memory limit контейнера; RSS разных процессов может учитывать общие
+страницы повторно. Для образов без `sh`/доступного procfs одна общая строка
+сообщит, что process snapshot недоступен, а повторная проверка будет отложена на
+пять минут. Остальная аналитика продолжит работать. Команда не изменяет
+Kubernetes-объекты и
+в prod не запрашивает подтверждение. Для одиночного pod также показываются
+avg/p95/max и Unicode-графики. Снимки сохраняются между запусками в
+`~/.local/state/kube-tools/pod-metrics` и группируются по верхнему controller,
+поэтому история переживает замену pod. По умолчанию показываются 24 часа, а
+хранятся 30 дней. В multi-pod режиме история не смешивает параллельные реплики и
+показывается только текущее состояние.
+
+В multi-pod таблице `STATE` отражает только текущий lifecycle (`READY`,
+`NOT READY`, `PENDING`, `FAILED`): превышение request/limit и Warning Events
+показываются отдельными секциями и не превращают Ready pod в `ERROR`. События
+старше десяти минут из текущего dashboard скрываются. Live-режим включается явно
+shell-wrapper’ом и перерисовывает экран каждые `100ms`, даже если терминал не был
+распознан как обычный TTY. Если `ISSUES`, события и process attribution вместе
+не помещаются по высоте, второстепенные строки схлопываются с пометкой
+`more rows hidden`, а верхняя pod-таблица остаётся на экране.
+
+Настройки: `KUBE_POD_ANALYZE_REFRESH=100ms`, `KUBE_POD_ANALYZE_WINDOW=24h`,
 `KUBE_POD_ANALYZE_RETENTION=720h`, `KUBE_POD_ANALYZE_CHART_POINTS=72`,
-`KUBE_POD_ANALYZE_HISTORY_DIR=<path>`. Для одного текстового снимка задайте
+`KUBE_POD_ANALYZE_HISTORY_DIR=<path>`, `KUBE_POD_ANALYZE_PROCESSES=false`,
+`KUBE_POD_ANALYZE_PROCESS_REFRESH=5s`. Для одного текстового снимка задайте
 `KUBE_POD_ANALYZE_ONCE=1`.
 
 `kubectl top`/metrics-server предоставляет только CPU и RAM в момент опроса,
@@ -90,17 +164,18 @@ live-логи перечисленных workloads. Отдельный workload 
 строку:
 
 ```text
-~/.config/podbor-kube/deploy-watch.resources
+~/.config/kube-tools/deploy-watch.resources
 ```
 
 Пустые строки и строки с `#` в начале игнорируются. Альтернативный путь задаётся
-через `KUBE_DEPLOY_WATCH_RESOURCES_FILE`.
+через `KUBE_DEPLOY_WATCH_RESOURCES_FILE`. Состояние обновляется каждые `100ms`;
+интервал можно переопределить через `KUBE_DEPLOY_WATCH_REFRESH`.
 
 Потоковые логи нескольких pod:
 
 ```bash
-kpstage-logs-multi 'service-api*'
-kpstage-logs-multi 'service-api*' 'error request-id'
+kpstage-logs-multi 'api*'
+kpstage-logs-multi 'api*' 'error request-id'
 ```
 
 Внутри TUI:
@@ -115,6 +190,11 @@ kpstage-logs-multi 'service-api*' 'error request-id'
 - `Enter` на паузе — открыть полную строку с pod/container metadata и переносами;
 - `q` — выйти.
 
+Длинные строки в `logs-multi` и в секции `LIVE LOGS` у `deploy-watch`
+переносятся на следующие экранные строки и больше не заменяются горизонтальным
+`…`. Обычные `*-logs`, `*-jobs` и сохранённые raw-файлы по-прежнему выводят
+исходную строку без преобразования.
+
 Поток собирается параллельно из всех совпавших pod и всех контейнеров. Имена pod,
 timestamps и severity раскрашиваются отдельно. В основном списке используется
 короткий уникальный суффикс pod; повторяющийся kubectl pod/container prefix
@@ -126,17 +206,36 @@ timestamps и severity раскрашиваются отдельно. В осн�
 `2xx/3xx/4xx/5xx` — green/cyan/yellow/red. Python traceback frames показываются
 приглушённо-красным, финальная строка исключения — ярко-красным.
 
-Action-команды названы явно: `*-cron-run` создаёт Job, а `*-exec` выполняет
+Action-команды названы явно: `*-cron-run` создаёт Job, `*-scale` изменяет
+desired replicas, а `*-exec` выполняет
 переданную команду внутри выбранного pod/workload. `*-pod-restart` удаляет
-выбранный pod под управлением ReplicaSet, StatefulSet, DaemonSet или
-ReplicationController, ждёт новый UID и состояние Ready, а затем подписывается
-на его логи. Голые pod и pod других типов не удаляются. Остальные команды
-остаются read-only наблюдателями.
+один или несколько выбранных pod под управлением ReplicaSet, StatefulSet,
+DaemonSet или ReplicationController. В `gum` pod’ы отмечаются `Tab`, все видимые
+выбираются через `Ctrl+A`, результат подтверждается `Enter`; `Space` вводится в
+поиск. Без `gum` номера вводятся через запятую. Перезапуски
+выполняются последовательно: команда ждёт новый UID и Ready перед переходом к
+следующему pod, а после успеха открывает объединённые логи всех replacements.
+Голые pod и pod других типов не удаляются. Остальные команды остаются read-only
+наблюдателями.
+
+Изменение числа реплик доступно для Deployment и StatefulSet. Picker сразу
+показывает desired/current/ready/available; после выбора можно ввести новое
+неотрицательное число. Число также можно передать вторым аргументом:
+
+```bash
+kpdev-scale api 3
+kpstage-scale worker 5
+kpprod-scale api 4  # потребует prod-подтверждение
+```
+
+После `kubectl scale` команда печатает точную команду `deploy-watch` для
+наблюдения за достижением нового состояния. DaemonSet намеренно не предлагается:
+число его pod определяется подходящими node, а не replicas.
 
 ```bash
 kpdev-pod-restart worker
-kpstage-pod-restart service-api
-kpprod-pod-restart service-api  # потребует prod-подтверждение
+kpstage-pod-restart api
+kpprod-pod-restart api  # потребует prod-подтверждение
 ```
 
 Ожидание replacement по умолчанию ограничено 300 секундами. Настройки:
@@ -145,16 +244,23 @@ kpprod-pod-restart service-api  # потребует prod-подтвержден
 - `KUBE_POD_RESTART_POLL_INTERVAL=2` — частота обновления lifecycle;
 - `KUBE_POD_RESTART_FOLLOW_LOGS=0` — завершиться после Ready, не открывая логи.
 
+Timeout и poll interval должны быть положительными целыми числами. Неверное
+значение завершает команду до первого вызова `kubectl`.
+
 `*-cron-run` сохраняет raw-логи всех pod’ов созданного Job в
 `~/Documents/kube-logs/<environment>-<job>.log`, одновременно показывая
 раскрашенный поток в терминале. Каталог можно переопределить через
-`KUBE_LOG_DIR`; новые файлы создаются с правами `600`.
+`KUBE_LOG_DIR`; новые файлы создаются с правами `600`. Если `kubectl logs`
+временно отвечает `ContainerCreating` или `PodInitializing`, команда повторяет
+подключение до `KUBE_JOB_WAIT` (по умолчанию `2m`) вместо преждевременного
+завершения. Интервал задаётся `KUBE_JOB_LOG_RETRY_INTERVAL`, короткий timeout
+одной попытки — `KUBE_JOB_LOG_ATTEMPT_WAIT`.
 
 Для уже завершившихся CronJob используется отдельная read-only команда:
 
 ```bash
-kpdev-jobs-save request-creation
-kpstage-jobs-save security-checker
+kpdev-jobs-save nightly-cleanup
+kpstage-jobs-save report-job
 ```
 
 Она показывает историю Job newest-first, позволяет фильтровать по имени Job или
@@ -163,12 +269,12 @@ timestamps в файл вида
 `~/Documents/kube-logs/dev-job-<job>-YYYYMMDD-HHMMSS.log`. Для одного обычного
 pod есть симметричная команда `kpdev-logs-save [filter]`. Обе команды показывают
 логи в терминале одновременно с записью raw-версии в файл; суффикс окружения
-можно заменить на `stage` или `prod`.
+можно заменить на `stage`, `preprod` или `prod`.
 
 Поиск по логам всех pod’ов, подходящих под glob имени:
 
 ```bash
-kpstage-log-search 'service-api*' 'message-id'
+kpstage-log-search 'api*' 'message-id'
 ```
 
 Без аргументов pattern и literal-строка запрашиваются интерактивно. Поиск
@@ -179,6 +285,10 @@ matching, а не regex. Настройки:
 - `KUBE_LOG_SEARCH_SINCE=24h` — ограничить временное окно;
 - `KUBE_LOG_SEARCH_PREVIOUS=0` — не читать previous container logs;
 - `KUBE_LOG_SEARCH_PARALLEL=6` — число одновременных запросов.
+
+Parallelism должен быть положительным целым числом. Ошибка любого основного
+`kubectl logs` сохраняет его ненулевой exit status; отсутствие optional previous
+logs остаётся допустимым и не отменяет результаты current container.
 
 Команда видит только логи, которые ещё хранятся на Kubernetes nodes. Для
 исторического поиска после удаления pod или ротации нужен Loki/Elasticsearch.
@@ -205,25 +315,26 @@ Python-отступы сохраняются. Для нестандартной 
 Явный target и команда по-прежнему поддерживаются:
 
 ```bash
-kpstage-exec deploy/service-api -- python -
+kpstage-exec deploy/api -- python -
 ```
 
 Можно также указать только target, а режим выбрать после:
 
 ```bash
-kpstage-exec deploy/service-api
+kpstage-exec deploy/api
 ```
 
-Суффикс окружения можно заменить на `stage` или `prod`, например
-`kpstage-deploy-watch` и `kpprod-logs`. Read-only команды в prod не требуют
-подтверждения; `yes` запрашивается только для action/mutating операций.
+Суффикс окружения можно заменить на `stage`, `preprod` или `prod`, например
+`kpstage-deploy-watch`, `kppreprod-logs` и `kpprod-logs`. Read-only команды в
+prod не требуют подтверждения; `yes` запрашивается только для action/mutating
+операций.
 Необязательный аргумент сразу заполняет фильтр: `kpdev-logs worker`.
-Например, `kpstage-jobs security-checker` показывает подходящие Job newest-first
+Например, `kpstage-jobs report-job` показывает подходящие Job newest-first
 с локальным временем запуска, статусом и родительским CronJob.
 
 Интерактивный выбор использует `gum`. Read-only deployment watcher собирается из
-`tools/podbor-rollout` без внешних Go-зависимостей и устанавливается в
-`~/.local/bin/podbor-deploy-watch` шагом `steps/terminal.yml`.
+`tools/kube-rollout` без внешних Go-зависимостей и устанавливается в
+`~/.local/bin/kube-deploy-watch` шагом `steps/terminal.yml`.
 Обычные и CronJob-логи подсвечивают pod/container, timestamp, severity,
 HTTP-методы и status codes. Стандартная переменная `NO_COLOR` отключает цвета.
 

@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+
+set -u
+
+GIT_BIN="${GIT_BIN:-git}"
+AI_HELPER_BIN="${AI_HELPER_BIN:-$HOME/dots/scripts/ai_helper}"
+AI_HELPER_PROVIDER="${AI_HELPER_PROVIDER:-openai-compatible}"
+AI_HELPER_STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/ai-helper"
+AI_HELPER_ERROR_LOG="$AI_HELPER_STATE_DIR/last-error.log"
+
+if "$GIT_BIN" diff --cached --quiet --exit-code; then
+	printf 'No staged changes to commit.\n' >&2
+	exit 1
+fi
+
+umask 077
+mkdir -p "$AI_HELPER_STATE_DIR"
+chmod 700 "$AI_HELPER_STATE_DIR" 2>/dev/null || true
+message_file=$(mktemp "${TMPDIR:-/tmp}/ai-commit-message.XXXXXX") || exit 1
+trap 'rm -f "$message_file"' EXIT
+
+if ! "$AI_HELPER_BIN" \
+	--mode commit \
+	--provider "$AI_HELPER_PROVIDER" \
+	>"$message_file" \
+	2>"$AI_HELPER_ERROR_LOG"; then
+	chmod 600 "$AI_HELPER_ERROR_LOG" 2>/dev/null || true
+	printf 'AI commit generation failed.\n' >&2
+	cat "$AI_HELPER_ERROR_LOG" >&2
+	printf 'Details: %s\n' "$AI_HELPER_ERROR_LOG" >&2
+	exit 1
+fi
+chmod 600 "$AI_HELPER_ERROR_LOG" 2>/dev/null || true
+
+if [ ! -s "$message_file" ]; then
+	printf 'AI commit generation returned an empty message.\n' >&2
+	printf 'Details: %s\n' "$AI_HELPER_ERROR_LOG" >&2
+	exit 1
+fi
+
+"$GIT_BIN" commit --file "$message_file" --edit

@@ -33,6 +33,7 @@ defaults write NSGlobalDomain AppleMetricUnits -int 1
 defaults write NSGlobalDomain AppleTemperatureUnit -string "Celsius"
 
 # Поведение клавиш повтора
+defaults write NSGlobalDomain ApplePressAndHoldEnabled -bool false
 defaults write NSGlobalDomain InitialKeyRepeat -int 15
 defaults write NSGlobalDomain KeyRepeat -int 2
 

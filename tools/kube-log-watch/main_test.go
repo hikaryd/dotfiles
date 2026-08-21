@@ -247,3 +247,23 @@ func TestRenderListUsesCompactPodAlias(t *testing.T) {
 		t.Fatalf("full pod name wastes list width: %q", got)
 	}
 }
+
+func TestRenderListWrapsLongLinesInsteadOfTruncatingThem(t *testing.T) {
+	current := viewer{
+		aliases: map[string]string{"example-api-a": "a"},
+		width:   32,
+	}
+	line := logLine{
+		pod:  "example-api-a",
+		text: "12345678901234561234567890123456TAILEND",
+	}
+	var out strings.Builder
+	current.renderList(&out, []logLine{line}, 4, nil)
+	got := out.String()
+	if !strings.Contains(got, "TAILEND") {
+		t.Fatalf("long log tail was lost: %q", got)
+	}
+	if strings.Contains(got, "…") {
+		t.Fatalf("long log line was truncated: %q", got)
+	}
+}

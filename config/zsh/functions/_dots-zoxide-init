@@ -1,0 +1,18 @@
+# Generate and source zoxide's shell integration only when z/zi is first used.
+emulate -L zsh
+
+(( $+commands[zoxide] )) || {
+  print -u2 'zoxide is not installed'
+  return 127
+}
+
+local cache_file="$HOME/.cache/zoxide-init.zsh"
+if [[ ! -s "$cache_file" || "$commands[zoxide]" -nt "$cache_file" ]]; then
+  mkdir -p "$HOME/.cache"
+  zoxide init zsh >| "$cache_file" 2>/dev/null || return
+fi
+
+# Drop the lazy placeholders before the generated integration defines the real
+# functions. The currently executing autoloaded wrapper can safely finish.
+unfunction z zi 2>/dev/null
+source "$cache_file"

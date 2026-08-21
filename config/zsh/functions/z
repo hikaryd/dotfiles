@@ -1,0 +1,2 @@
+_dots-zoxide-init || return
+z "$@"
