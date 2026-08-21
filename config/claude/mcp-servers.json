@@ -33,13 +33,6 @@
     ],
     "timeout": 15
   },
-  "kubeli": {
-    "type": "stdio",
-    "command": "/Applications/Kubeli.app/Contents/MacOS/Kubeli",
-    "args": [
-      "--mcp"
-    ]
-  },
   "token-counter": {
     "type": "stdio",
     "command": "npx",

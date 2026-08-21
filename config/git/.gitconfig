@@ -1,6 +1,5 @@
-[user]
-	name = Егор Тронин
-	email = Egor.Tronin@x5.ru
+[include]
+	path = ~/.config/git/private.inc
 
 [alias]
 	st = status
@@ -68,3 +67,8 @@
 
 [interactive]
 	diffFilter = delta --color-only
+[maintenance]
+	repo = /Users/tronin.egor/Workspace/worktrees/podbor-api-feature-3499327_autopub
+	repo = /Users/tronin.egor/Documents/dev/podbor-api
+	repo = /Users/tronin.egor/Documents/dev/podbor-api-2
+	repo = /Users/tronin.egor/Documents/dev/podbor-api-3

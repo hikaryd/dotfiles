@@ -4,6 +4,10 @@
       path: config/ghostty/config
       create: true
       force: true
+    ~/.config/ghostty/shaders:
+      path: config/ghostty/shaders
+      create: true
+      force: true
     # Attyx terminal
     ~/.config/attyx/attyx.toml:
       path: config/attyx/attyx.toml
@@ -37,6 +41,11 @@
       force: true
     # Lazygit
     ~/.config/lazygit/config.yml:
+      path: config/lazygit/config.yml
+      create: true
+      force: true
+    # LazyGit uses this native macOS config path when XDG_CONFIG_HOME is unset.
+    ~/Library/Application Support/lazygit/config.yml:
       path: config/lazygit/config.yml
       create: true
       force: true

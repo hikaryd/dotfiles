@@ -1,0 +1,23 @@
+# Open Yazi and follow the directory selected on exit.
+# Autoloaded on first use so this wrapper adds no shell startup work.
+emulate -L zsh
+
+local cwd_file next_cwd
+local -i result=0
+
+cwd_file="$(mktemp "${TMPDIR:-/tmp}/yazi-cwd.XXXXXX")" || return 1
+{
+  command yazi "$@" --cwd-file="$cwd_file"
+  result=$?
+
+  if [[ -r "$cwd_file" ]]; then
+    next_cwd="$(<"$cwd_file")"
+    if [[ -n "$next_cwd" && "$next_cwd" != "$PWD" ]]; then
+      builtin cd -- "$next_cwd" || result=$?
+    fi
+  fi
+} always {
+  command rm -f -- "$cwd_file"
+}
+
+return $result

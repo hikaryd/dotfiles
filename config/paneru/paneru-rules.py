@@ -50,40 +50,34 @@ RULES = {
     "app.zen-browser.zen": 1,
     "org.mozilla.firefox": 1,
     "com.apple.Safari": 1,
-    "kontur.talk": 1,                        # Толк
-    "com.apple.Music": 1,                    # Музыка
+    "kontur.talk": 1,  # Толк
+    "com.apple.Music": 1,  # Музыка
     # "company.thebrowser.Browser": 1,       # Arc — раскомментируй, если стоит
     # "com.brave.Browser": 1,                # Brave
     # TODO bundle_id: Ora, Comet, Helium
-
     # ── Ряд 2 (Alt+3) — Мессенджеры / почта ──────────────────────────────
-    "one.ayugram.AyuGramDesktop": 2,         # AyuGram
-    "ru.unlimitedtech.express.desktop": 2,   # X5_Rooms
+    "one.ayugram.AyuGramDesktop": 2,  # AyuGram
     # "org.telegram.desktop": 2,             # Telegram — если поставишь офиц. клиент
     # "ch.protonmail.desktop": 2,            # Proton Mail
     # TODO bundle_id: Psst
-
     # ── Ряд 3 (Alt+W) — Документы + Outlook ──────────────────────────────
     "com.microsoft.Outlook": 3,
-    "com.getupnote.desktop": 3,              # UpNote
+    "com.getupnote.desktop": 3,  # UpNote
     "com.apple.iWork.Pages": 3,
-    "com.apple.Preview": 3,                  # Просмотр
-
+    "com.apple.Preview": 3,  # Просмотр
     # ── Ряд 4 (Alt+E) — Система ──────────────────────────────────────────
-    "com.apple.systempreferences": 4,        # System Settings
+    "com.apple.systempreferences": 4,  # System Settings
     "com.apple.AppStore": 4,
-
     # ── Ряд 5 (Alt+D) — Терминал + дев/БД ────────────────────────────────
     "com.mitchellh.ghostty": 5,
     "com.github.wez.wezterm": 5,
     "org.alacritty": 5,
-    "com.electron.dockerdesktop": 5,         # Docker Desktop (GUI)
+    "com.electron.dockerdesktop": 5,  # Docker Desktop (GUI)
     "com.docker.docker": 5,
-    "org.jkiss.dbeaver.core.product": 5,     # DBeaver
-    "com.kubeli": 5,                         # Kubeli
-    "com.electron.kontena-lens": 5,          # Lens
-    "io.beekeeperstudio.desktop": 5,         # Beekeeper
-    "at.eggerapps.Postico": 5,               # Postico
+    "org.jkiss.dbeaver.core.product": 5,  # DBeaver
+    "com.electron.kontena-lens": 5,  # Lens
+    "io.beekeeperstudio.desktop": 5,  # Beekeeper
+    "at.eggerapps.Postico": 5,  # Postico
 }
 
 # True  -> переехать вместе с окном в его ряд (virtualmovenum): «я открыл — покажи».
@@ -151,6 +145,7 @@ def send_move(paneru: str, n: int) -> None:
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
             timeout=5,
+            check=False,
         )
     except Exception as e:  # noqa: BLE001
         log("send-cmd failed:", e)
@@ -171,6 +166,7 @@ def prime_seen(paneru: str) -> set[Any]:
                 capture_output=True,
                 text=True,
                 timeout=5,
+                check=False,
             )
             data = json.loads(out.stdout or "{}")
             seen = {

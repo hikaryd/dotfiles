@@ -46,6 +46,7 @@ brew "nolight132/tap/nls"
 
 # Инструменты для шелла и терминала
 brew "fzf"
+brew "fzf-tab"
 brew "tmux"
 brew "zsh"
 brew "zsh-autosuggestions"

@@ -279,7 +279,7 @@ func scanLogs(
 	stderr bool,
 ) {
 	scanner := bufio.NewScanner(reader)
-	scanner.Buffer(make([]byte, 64*1024), 1024*1024)
+	scanner.Buffer(make([]byte, 64*1024), 16*1024*1024)
 	for scanner.Scan() {
 		line := scanner.Text()
 		if stderr {
@@ -471,7 +471,7 @@ func (v *viewer) render() {
 		state = fmt.Sprintf("PAUSED · +%d buffered", max(0, len(v.lines)-len(v.pauseBuffer)))
 	}
 	header := fmt.Sprintf(
-		" PODBOR MULTI LOGS · READ ONLY  %s/%s  %d pods  %s ",
+		" KUBERNETES MULTI LOGS · READ ONLY  %s/%s  %d pods  %s ",
 		strings.ToUpper(v.cfg.environment),
 		v.cfg.namespace,
 		len(v.cfg.pods),
@@ -534,12 +534,26 @@ func (v *viewer) renderList(
 	if v.paused {
 		selected = max(0, len(visible)-1-v.cursorFromEnd)
 	}
-	start := max(0, len(visible)-rows)
+	end := len(visible)
 	if v.paused {
-		start = min(max(0, selected-rows/2), max(0, len(visible)-rows))
+		end = selected + 1
 	}
-	end := min(len(visible), start+rows)
+	bodyWidth := max(1, v.width-16)
+	start := end
+	usedRows := 0
+	for start > 0 {
+		parts := wrapText(visible[start-1].text, bodyWidth)
+		if usedRows > 0 && usedRows+len(parts) > rows {
+			break
+		}
+		usedRows += len(parts)
+		start--
+		if usedRows >= rows {
+			break
+		}
+	}
 
+	writtenRows := 0
 	for index := start; index < end; index++ {
 		line := visible[index]
 		marker := " "
@@ -547,13 +561,24 @@ func (v *viewer) renderList(
 			marker = "›"
 		}
 		alias := compact(v.aliases[line.pod], 12)
-		prefix := marker + " " + fmt.Sprintf("%-12s", alias) + " "
-		body := fit(line.text, max(1, v.width-visibleWidth(prefix)))
-		out.WriteString(
-			colorCyan + marker + colorReset + " " +
-				colorMagenta + fmt.Sprintf("%-12s", alias) + colorReset + " " +
-				highlight(body, terms, severityColor(body)) + colorReset + "\n",
-		)
+		for partIndex, body := range wrapText(line.text, bodyWidth) {
+			if writtenRows >= rows {
+				return
+			}
+			if partIndex == 0 {
+				out.WriteString(
+					colorCyan + marker + colorReset + " " +
+						colorMagenta + fmt.Sprintf("%-12s", alias) + colorReset + " " +
+						highlight(body, terms, severityColor(line.text)) + colorReset + "\n",
+				)
+			} else {
+				out.WriteString(
+					strings.Repeat(" ", 16) +
+						highlight(body, terms, severityColor(line.text)) + colorReset + "\n",
+				)
+			}
+			writtenRows++
+		}
 	}
 }
 

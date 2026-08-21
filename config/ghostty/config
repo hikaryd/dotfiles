@@ -6,7 +6,9 @@ adjust-cell-height = 45%
 
 background = 0d1017
 background-opacity = 0.95
-background-blur = true
+# Blur is handled by WindowServer and is disproportionately expensive while
+# animated shaders are active. Transparency stays enabled without the blur pass.
+background-blur = false
 
 macos-titlebar-style = hidden
 window-padding-balance = true
@@ -17,8 +19,9 @@ title =
 
 cursor-style = block
 cursor-style-blink = false
-cursor-color = cell-foreground
+cursor-color = 73d0ff
 cursor-text = cell-background
+cursor-opacity = 0
 
 mouse-hide-while-typing = true
 
@@ -39,4 +42,7 @@ keybind = ctrl+7=csi:55;5u
 keybind = ctrl+8=csi:56;5u
 keybind = ctrl+9=csi:57;5u
 
-custom-shader = shaders/ripple_cursor.glsl
+# Input effects run before the synthetic caret so the cursor stays crisp.
+custom-shader = shaders/input_motion.glsl
+custom-shader = shaders/smooth_cursor.glsl
+custom-shader-animation = true

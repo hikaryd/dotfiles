@@ -1,0 +1,1 @@
+typeset -gF _dots_prompt_command_started=$EPOCHREALTIME

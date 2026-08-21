@@ -8,6 +8,7 @@
 __pycache__/
 *.py[cod]
 .dual-graph/
+/graphify-out/
 /CLAUDE.md
 /.claude/settings.local.json
 
@@ -22,6 +23,10 @@ config/claude/.mcp-secrets
 # Codex private render values (real values live in ~/.codex/.mcp-secrets)
 config/codex/mcp-secrets.sh
 config/codex/.mcp-secrets
+
+# Machine-local identity, endpoints, and cluster coordinates.
+config/zsh/private.zsh
+config/git/private.inc
 
 # Private Kubernetes watcher inventories live under ~/.config, never in dots.
 **/deploy-watch.resources

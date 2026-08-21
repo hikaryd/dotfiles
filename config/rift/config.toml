@@ -99,8 +99,6 @@ app_rules = [
   { app_name = "AyuGram", workspace = "3" },
   { app_name = "Proton Mail", workspace = "3" },
   { app_name = "Psst", workspace = "3" },
-  { app_name = "X5_Rooms", workspace = "3" },
-
   # "4": документы/ноуты
   { app_name = "Pages", workspace = "4" },
   { app_name = "UpNote", workspace = "4" },
@@ -114,7 +112,6 @@ app_rules = [
   # "q": дев-инструменты
   { app_name = "Docker Desktop", workspace = "q" },
   { app_name = "DBeaver Community", workspace = "q" },
-  { app_name = "Kubeli", workspace = "q" },
   { app_name = "Lens", workspace = "q" },
   { app_name = "Beekeeper Studio", workspace = "q" },
   { app_name = "Postico", workspace = "q" },

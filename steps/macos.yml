@@ -31,6 +31,8 @@
       force: true
 
 - shell:
+    - description: "Prefer key repeat over the macOS press-and-hold accent menu"
+      command: defaults write NSGlobalDomain ApplePressAndHoldEnabled -bool false
     - description: "Enable separate Spaces per display (required for aerospace)"
       command: defaults write com.apple.spaces spans-displays -bool false
     - description: "Disable auto-rearrange Spaces by recent use"

@@ -22,6 +22,8 @@ import (
 )
 
 const (
+	defaultRefresh = 100 * time.Millisecond
+
 	colorReset   = "\x1b[0m"
 	colorDim     = "\x1b[2m"
 	colorRed     = "\x1b[31m"
@@ -247,7 +249,11 @@ func main() {
 	d.render()
 
 	pollTicker := time.NewTicker(cfg.refresh)
-	renderTicker := time.NewTicker(200 * time.Millisecond)
+	renderRefresh := cfg.refresh
+	if renderRefresh > 200*time.Millisecond {
+		renderRefresh = 200 * time.Millisecond
+	}
+	renderTicker := time.NewTicker(renderRefresh)
 	defer pollTicker.Stop()
 	defer renderTicker.Stop()
 
@@ -294,7 +300,7 @@ func parseConfig() (config, error) {
 	flag.StringVar(&cfg.namespace, "namespace", "", "Kubernetes namespace")
 	flag.StringVar(&cfg.environment, "environment", "", "short environment label")
 	flag.Var(&cfg.resources, "resource", "workload resource/name (repeatable)")
-	flag.DurationVar(&cfg.refresh, "refresh", 2*time.Second, "refresh interval")
+	flag.DurationVar(&cfg.refresh, "refresh", defaultRefresh, "refresh interval")
 	flag.IntVar(&cfg.tail, "tail", 20, "initial log lines per pod")
 	flag.Parse()
 
@@ -307,8 +313,8 @@ func parseConfig() (config, error) {
 		return cfg, errors.New("--namespace is required")
 	case len(cfg.resources) == 0:
 		return cfg, errors.New("at least one --resource is required")
-	case cfg.refresh < 500*time.Millisecond:
-		return cfg, errors.New("--refresh must be at least 500ms")
+	case cfg.refresh < 100*time.Millisecond:
+		return cfg, errors.New("--refresh must be at least 100ms")
 	case cfg.tail < 0:
 		return cfg, errors.New("--tail cannot be negative")
 	}
@@ -754,7 +760,7 @@ func (d *dashboard) followLogs(ctx context.Context, podName string) {
 
 func (d *dashboard) scanLogs(ctx context.Context, podName string, reader io.Reader, stderr bool) {
 	scanner := bufio.NewScanner(reader)
-	scanner.Buffer(make([]byte, 64*1024), 1024*1024)
+	scanner.Buffer(make([]byte, 64*1024), 16*1024*1024)
 	for scanner.Scan() {
 		line := scanner.Text()
 		if stderr {
@@ -786,9 +792,9 @@ func (d *dashboard) render() {
 
 	target := d.cfg.resources.String()
 	if len(d.cfg.resources) > 1 {
-		target = fmt.Sprintf("podbor suite · %d workloads", len(d.cfg.resources))
+		target = fmt.Sprintf("Kubernetes suite · %d workloads", len(d.cfg.resources))
 	}
-	header := fmt.Sprintf(" PODBOR DEPLOY WATCH · READ ONLY  %s  %s  %s ",
+	header := fmt.Sprintf(" KUBERNETES DEPLOY WATCH · READ ONLY  %s  %s  %s ",
 		strings.ToUpper(d.cfg.environment), d.cfg.namespace, target)
 	out.WriteString(colorMagenta + bold(fit(header, d.width)) + colorReset + "\n")
 
@@ -901,21 +907,65 @@ func (d *dashboard) render() {
 	if len(d.logs) == 0 {
 		out.WriteString(colorDim + "  waiting for pod logs…\n" + colorReset)
 	} else {
-		start := max(0, len(d.logs)-logRows)
-		for _, line := range d.logs[start:] {
-			timestamp := line.at.Format("15:04:05")
-			podName := fmt.Sprintf("%-28s", compactPodName(line.pod, 28))
-			bodyWidth := max(1, d.width-39)
-			body := fit(line.text, bodyWidth)
-			out.WriteString(
-				colorDim + timestamp + colorReset + " " +
-					colorMagenta + podName + colorReset + " " +
-					logColor(line.text) + body + colorReset + "\n",
-			)
-		}
+		renderLogTail(&out, d.logs, logRows, d.width)
 	}
 
 	fmt.Print(out.String())
+}
+
+func renderLogTail(out *strings.Builder, lines []logLine, rows, width int) {
+	bodyWidth := max(1, width-39)
+	start := len(lines)
+	usedRows := 0
+	for start > 0 {
+		parts := wrapText(lines[start-1].text, bodyWidth)
+		if usedRows > 0 && usedRows+len(parts) > rows {
+			break
+		}
+		usedRows += len(parts)
+		start--
+		if usedRows >= rows {
+			break
+		}
+	}
+
+	writtenRows := 0
+	for _, line := range lines[start:] {
+		timestamp := line.at.Format("15:04:05")
+		podName := fmt.Sprintf("%-28s", compactPodName(line.pod, 28))
+		for partIndex, body := range wrapText(line.text, bodyWidth) {
+			if writtenRows >= rows {
+				return
+			}
+			if partIndex == 0 {
+				out.WriteString(
+					colorDim + timestamp + colorReset + " " +
+						colorMagenta + podName + colorReset + " " +
+						logColor(line.text) + body + colorReset + "\n",
+				)
+			} else {
+				out.WriteString(strings.Repeat(" ", 39) + logColor(line.text) + body + colorReset + "\n")
+			}
+			writtenRows++
+		}
+	}
+}
+
+func wrapText(text string, width int) []string {
+	if width <= 0 {
+		return []string{""}
+	}
+	runes := []rune(text)
+	if len(runes) == 0 {
+		return []string{""}
+	}
+	lines := make([]string, 0, (len(runes)+width-1)/width)
+	for len(runes) > 0 {
+		end := min(width, len(runes))
+		lines = append(lines, string(runes[:end]))
+		runes = runes[end:]
+	}
+	return lines
 }
 
 func writeTail(out *strings.Builder, lines []string, count, width int, empty string) {

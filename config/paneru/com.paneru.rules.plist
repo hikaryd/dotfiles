@@ -3,8 +3,8 @@
 <!--
   LaunchAgent для компаньон-демона авто-привязки приложений к рядам paneru.
 
-  Путь к скрипту машинно-зависимый (личные dotfiles). Если меняется $HOME —
-  поправь путь ниже. Лог: /tmp/paneru-rules.log.
+  Скрипт запускается через login shell, чтобы путь строился от $HOME без
+  машинно-зависимого абсолютного имени пользователя.
 
   Активация (config-only по умолчанию; этим симлинком агент НЕ грузится):
     launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.paneru.rules.plist
@@ -18,8 +18,9 @@
 
     <key>ProgramArguments</key>
     <array>
-        <string>/usr/bin/python3</string>
-        <string>/Users/tronin.egor/.config/paneru/paneru-rules.py</string>
+        <string>/bin/zsh</string>
+        <string>-lc</string>
+        <string>exec /usr/bin/python3 "$HOME/.config/paneru/paneru-rules.py"</string>
     </array>
 
     <key>RunAtLoad</key>
@@ -31,7 +32,7 @@
     <key>EnvironmentVariables</key>
     <dict>
         <key>PATH</key>
-        <string>/opt/homebrew/bin:/Users/tronin.egor/.cargo/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+        <string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
     </dict>
 
     <key>StandardOutPath</key>

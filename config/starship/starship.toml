@@ -11,7 +11,7 @@ add_newline = true
 # Операционная система
 [os]
 disabled = false
-style = "bg:color_mantle fg:color_text"
+style = "fg:color_text"
 
 [os.symbols]
 Windows = "󰍲 "
@@ -41,13 +41,13 @@ show_notifications = false
 min_time_to_notify = 10000
 show_milliseconds = true
 format = "[$duration ]($style)"
-style = "fg:color_pink bg:color_mantle"
+style = "fg:color_pink"
 
 # Директория
 [directory]
 truncate_to_repo = true
 format = "[([$read_only ]($style fg:color_red))$path ]($style)"
-style = "fg:color_text bg:color_mantle"
+style = "fg:color_text"
 truncation_length = 5
 read_only = ""
 
@@ -55,7 +55,7 @@ read_only = ""
 [git_branch]
 symbol = ""
 format = "[$symbol $branch(:$remote_branch) ]($style)"
-style = "fg:color_red bg:color_mantle"
+style = "fg:color_red"
 
 [git_status]
 disabled = false
@@ -65,7 +65,7 @@ disabled = true
 only_detached = false
 tag_disabled = false
 format = "[$tag #$hash ]($style)"
-style = "fg:color_red bg:color_mantle"
+style = "fg:color_red"
 commit_hash_length = 4
 tag_symbol = ""
 
@@ -73,27 +73,27 @@ tag_symbol = ""
 [c]
 symbol = "gcc: "
 format = "[$symbol($version )]($style)"
-style = "fg:color_lavender bg:color_mantle"
+style = "fg:color_lavender"
 
 [docker_context]
 symbol = " "
 format = "[$symbol$context ]($style)"
-style = "fg:color_blue bg:color_mantle"
+style = "fg:color_blue"
 
 [golang]
 symbol = ""
 format = "[$symbol ($version )]($style)"
-style = "fg:color_lavender bg:color_mantle"
+style = "fg:color_lavender"
 
 [lua]
 symbol = ""
 format = "[$symbol ($version )]($style)"
-style = "fg:color_lavender bg:color_mantle"
+style = "fg:color_lavender"
 
 [nodejs]
 symbol = ""
 format = "[$symbol ($version )]($style)"
-style = "fg:color_lavender bg:color_mantle"
+style = "fg:color_lavender"
 
 [python]
 symbol = " "
@@ -104,16 +104,16 @@ detect_env_vars = ['VIRTUAL_ENV']
 [rust]
 symbol = ""
 format = "[$symbol ($version )]($style)"
-style = "fg:color_lavender bg:color_mantle"
+style = "fg:color_lavender"
 
 [cmake]
 format = "[$symbol($version )]($style)"
-style = "fg:color_lavender bg:color_mantle"
+style = "fg:color_lavender"
 
 [meson]
 symbol = "Meson: "
 format = "[$symbol(${project}) ]($style)"
-style = "fg:color_lavender bg:color_mantle"
+style = "fg:color_lavender"
 
 # Пользовательские
 [custom.is_folder_config]
@@ -121,7 +121,7 @@ disabled = true
 when = "echo $PWD | grep -q '/dotfiles'"
 symbol = " "
 format = "[$symbol]($style)"
-style = "fg:color_blue bg:color_mantle"
+style = "fg:color_blue"
 
 # Прочее
 [shell]
@@ -132,7 +132,7 @@ disabled = false
 
 [status]
 disabled = false
-style = "fg:color_text bg:color_base"
+style = "fg:color_text"
 format = '''
 [
 (Exit code: [$maybe_int]($style fg:color_red))

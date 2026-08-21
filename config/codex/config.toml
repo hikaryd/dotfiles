@@ -15,10 +15,6 @@ command = "npx"
 args = ["@railsblueprint/blueprint-mcp@latest"]
 startup_timeout_sec = 15.0
 
-[mcp_servers.kubeli]
-command = "/Applications/Kubeli.app/Contents/MacOS/Kubeli"
-args = ["--mcp"]
-
 [mcp_servers.token-counter]
 command = "npx"
 args = ["-y", "token-counter-mcp"]

@@ -253,10 +253,6 @@ if.app-name-regex-substring = 'Psst'
 run = 'move-node-to-workspace 3'
 
 [[on-window-detected]]
-if.app-name-regex-substring = 'X5_Rooms'
-run = 'move-node-to-workspace 3'
-
-[[on-window-detected]]
 if.app-id = 'com.spotify.client'
 run = 'move-node-to-workspace 1'
 
@@ -317,10 +313,6 @@ run = 'move-node-to-workspace q'
 
 [[on-window-detected]]
 if.app-name-regex-substring = 'DBeaver'
-run = 'move-node-to-workspace q'
-
-[[on-window-detected]]
-if.app-name-regex-substring = 'Kubeli'
 run = 'move-node-to-workspace q'
 
 [[on-window-detected]]
