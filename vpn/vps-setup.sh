@@ -277,8 +277,19 @@ systemctl restart sing-box
 systemctl enable --now awg-watchdog.timer sing-box-update.timer >/dev/null 2>&1
 
 # ключи роутеров тут не печатаем — их выдаёт peer-register.sh register
-echo "===VARS==="
-echo "SERVER_PUB=$(cat server.pub)"
-echo "AWG_PARAMS=$Jc $Jmin $Jmax $S1 $S2 $H1 $H2 $H3 $H4"
-echo "PANEL_SECRET=$(cat /etc/sing-box/secret.txt)"
-echo "===END==="
+emit_vars() {
+  echo "===VARS==="
+  echo "SERVER_PUB=$(cat server.pub)"
+  echo "AWG_PARAMS=$Jc $Jmin $Jmax $S1 $S2 $H1 $H2 $H3 $H4"
+  echo "PANEL_SECRET=$(cat /etc/sing-box/secret.txt)"
+  echo "===END==="
+}
+if [[ -n ${INSTALL_RESULT_FILE:-} ]]; then
+  # Сначала сохраняем полный результат, затем пишем в потенциально оборванный SSH.
+  umask 077
+  emit_vars > "$INSTALL_RESULT_FILE.tmp"
+  mv "$INSTALL_RESULT_FILE.tmp" "$INSTALL_RESULT_FILE"
+  cat "$INSTALL_RESULT_FILE"
+else
+  emit_vars
+fi
