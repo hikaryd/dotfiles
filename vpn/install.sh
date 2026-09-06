@@ -18,52 +18,11 @@ ok()   { printf '   %s✓%s %s\n' "$GRN" "$R" "$*"; }
 warn() { printf '   %s!%s %s\n' "$YEL" "$R" "$*"; }
 die()  { printf '\n%s✗ %s%s\n' "$RED$B" "$*" "$R" >&2; exit 1; }
 ask()  { local p=$1 d=${2:-} a; if [[ -n $d ]]; then read -rp "   $p [$d]: " a; echo "${a:-$d}"; else read -rp "   $p: " a; echo "$a"; fi; }
-
-# SSH к Entware-шеллу роутера (root, порт 222) тем же паролем, что и веб-админка.
-# Нужен один раз — записать netfilter.d-хук на флешку /opt (RCI этого не умеет).
-router_ssh() {  # $1 = удалённая команда
-  local cmd=$1
-  local o="-p $ROUTER_SSH_PORT -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=10"
-  if command -v sshpass >/dev/null 2>&1; then
-    sshpass -p "$ROUTER_PASS" ssh $o "root@$ROUTER_HOST" "$cmd"
-  elif command -v expect >/dev/null 2>&1; then
-    ROUTER_PASS="$ROUTER_PASS" expect -c "
-      set timeout 30
-      spawn ssh $o root@$ROUTER_HOST {$cmd}
-      expect {
-        -re {[Pp]assword:} { send \"\$env(ROUTER_PASS)\r\"; exp_continue }
-        -re {yes/no}       { send \"yes\r\"; exp_continue }
-        eof
-      }
-      catch wait result
-      exit [lindex \$result 3]
-    "
-  else
-    return 127
-  fi
-}
-
-# Ставит хук «весь LAN через туннель»: жёстко завернуть подсеть LAN в WG-таблицу.
-# Это kill-switch для клиентов: упал WG → клиенты без инета (без утечки на WAN).
-# Сам роутер при падении WG уходит на WAN по ping-check (для подписки/SSH).
-install_lan_hook() {  # $1 = LAN-подсеть (CIDR), $2 = адрес роутера в туннеле (WG src)
-  local lan="$1" wgsrc="$2" hook b64
-  hook=$(cat <<HOOKEOF
-#!/bin/sh
-# LAN ($lan) -> VPN (Wireguard0 / nwg0). Идемпотентно; WG-таблицу находит
-# динамически по источнику $wgsrc, переживает reboot (на каждый netfilter reload).
-[ "\$type" = "ip6tables" ] && exit 0
-LAN="$lan"
-WGSRC="$wgsrc"
-PRIO=1200
-TBL=\$(ip rule list 2>/dev/null | sed -n "s/.*from \${WGSRC} lookup \\([0-9][0-9]*\\).*/\\1/p" | head -1)
-[ -z "\$TBL" ] && exit 0
-ip rule list 2>/dev/null | grep -q "from \${LAN} lookup \${TBL}" || ip rule add from \${LAN} lookup \${TBL} priority \${PRIO}
-exit 0
-HOOKEOF
-)
-  b64=$(printf '%s\n' "$hook" | base64 | tr -d '\n')
-  router_ssh "echo $b64 | base64 -d > /opt/etc/ndm/netfilter.d/50-lan-via-wg && chmod +x /opt/etc/ndm/netfilter.d/50-lan-via-wg && type=iptables /opt/etc/ndm/netfilter.d/50-lan-via-wg && echo HOOK_OK"
+ask_secret() {
+  local a
+  read -rsp "   $1: " a || return
+  printf '\n' >&2
+  printf '%s\n' "$a"
 }
 
 banner() {
@@ -86,8 +45,7 @@ ${B}Использование:${R} ./install.sh [опции]
   --router-user USER   Логин веб-админки роутера                 (admin)
   --router-pass PASS   Пароль веб-админки роутера                 [обяз. для роутера]
   --router-name NAME   Имя роутера в реестре пиров VPS   (авто: hostname)
-  --router-ssh-port N  SSH-порт Entware (root) для хука LAN→VPN       (222)
-  --no-lan-hook        Не ставить хук «весь LAN через туннель»
+  --router-lan-interface NAME  LAN-сегмент для VPN-политики       (Home)
   --awg-port PORT      UDP-порт AmneziaWG                          (51820)
   --tunnel-net CIDR    Подсеть туннеля (.1 сервер, .2 роутер) (10.8.2.0/24)
   --mtu N              MTU интерфейса                                (1420)
@@ -109,7 +67,7 @@ EOF
 # ─── параметры ───────────────────────────────────────────────────────
 SUB_URL=""; VPS=""; ROUTER_HOST="192.168.254.1"; ROUTER_USER="admin"; ROUTER_PASS=""
 ROUTER_NAME=""; ROUTER_CURPUB=""
-ROUTER_SSH_PORT="222"; LAN_HOOK=1
+ROUTER_LAN_INTERFACE="Home"
 AWG_PORT="51820"; TUN_NET="10.8.2.0/24"; MTU="1280"; ADBLOCK="1"; DHCP_POOL="_WEBADMIN"
 SKIP_VPS=0; SKIP_ROUTER=0
 ADBLOCK_WHITELIST="tmdb.org,themoviedb.org,b-cdn.net"; TPROXY_PORT="7895"; CLASH_PORT="9090"
@@ -122,8 +80,7 @@ while [[ $# -gt 0 ]]; do
     --router-user) ROUTER_USER=$2; shift 2;;
     --router-pass) ROUTER_PASS=$2; shift 2;;
     --router-name) ROUTER_NAME=$2; shift 2;;
-    --router-ssh-port) ROUTER_SSH_PORT=$2; shift 2;;
-    --no-lan-hook) LAN_HOOK=0; shift;;
+    --router-lan-interface) ROUTER_LAN_INTERFACE=$2; shift 2;;
     --awg-port) AWG_PORT=$2; shift 2;;
     --tunnel-net) TUN_NET=$2; shift 2;;
     --mtu) MTU=$2; shift 2;;
@@ -148,7 +105,7 @@ fi
 [[ -z $VPS ]] && VPS=$(ask "SSH к VPS (root@IP)")
 [[ -z $VPS ]] && die "Нужен --vps"
 if [[ $SKIP_ROUTER -eq 0 && -z $ROUTER_PASS ]]; then
-  ROUTER_PASS=$(ask "Пароль роутера ($ROUTER_USER@$ROUTER_HOST)")
+  ROUTER_PASS=$(ask_secret "Пароль роутера ($ROUTER_USER@$ROUTER_HOST)")
 fi
 
 # производные адреса туннеля (предполагается /24): 10.8.2.0/24 -> 10.8.2
@@ -170,7 +127,7 @@ ssh -o BatchMode=yes -o ConnectTimeout=10 "$VPS" 'echo ok' >/dev/null 2>&1 \
   || die "нет SSH-доступа к $VPS (нужен ключ/доступ root)"
 ok "SSH к VPS ($SERVER_HOST) работает"
 if [[ $SKIP_ROUTER -eq 0 ]]; then
-  curl -s -m 6 -o /dev/null "http://$ROUTER_HOST/" || die "роутер $ROUTER_HOST недоступен по HTTP"
+  curl --noproxy '*' -s -m 6 -o /dev/null "http://$ROUTER_HOST/" || die "роутер $ROUTER_HOST недоступен по HTTP"
   ok "роутер $ROUTER_HOST отвечает"
   # имя роутера (для реестра пиров) + его текущий WG-ключ (для миграции/идемпотентности)
   IDENT=$(ROUTER_HOST="$ROUTER_HOST" ROUTER_USER="$ROUTER_USER" ROUTER_PASS="$ROUTER_PASS" \
@@ -197,16 +154,37 @@ if [[ $SKIP_VPS -eq 0 ]]; then
   scp -q "$SCRIPT_DIR/vps-setup.sh" "$VPS:/tmp/awg-vps-setup.sh"
   scp -q "$SCRIPT_DIR/peer-register.sh" "$VPS:/tmp/awg-peer-register.sh"
   ok "файлы загружены на VPS, запускаю установку…"
-  if ! ssh "$VPS" "env \
+  REMOTE_RESULT="/root/awgvpn/.install-result-${VARS_FILE##*/}"
+  SSH_EXIT=0
+  # nohup сохраняет процесс при потере SSH; результат привязан к этому запуску.
+  ssh "$VPS" "nohup env \
     SUB_URL='$SUB_URL' AWG_PORT='$AWG_PORT' TUN_CIDR='$TUN_CIDR' SRV_CIDR='$SRV_CIDR' \
     MTU='$MTU' ADBLOCK='$ADBLOCK' TPROXY_PORT='$TPROXY_PORT' \
     CLASH_PORT='$CLASH_PORT' ADBLOCK_WHITELIST='$ADBLOCK_WHITELIST' GEN_SRC=/tmp/awg-generate.py \
-    PEERREG_SRC=/tmp/awg-peer-register.sh \
-    bash /tmp/awg-vps-setup.sh" | tee "$VARS_FILE"; then
+    PEERREG_SRC=/tmp/awg-peer-register.sh INSTALL_RESULT_FILE='$REMOTE_RESULT' \
+    bash /tmp/awg-vps-setup.sh" | tee "$VARS_FILE" || SSH_EXIT=$?
+  if [[ $SSH_EXIT -eq 255 ]]; then
+    warn "SSH оборвался; проверяю завершение текущей установки после переподключения"
+    RECOVERED=0
+    for attempt in 1 2 3 4 5 6; do
+      sleep 3
+      if ssh -o BatchMode=yes -o ConnectTimeout=10 -o ServerAliveInterval=5 -o ServerAliveCountMax=2 \
+          "$VPS" "systemctl is-active --quiet awg-quick@awg0 && systemctl is-active --quiet awg-gateway && systemctl is-active --quiet sing-box && cat '$REMOTE_RESULT'" \
+          > "$VARS_FILE" 2>/dev/null \
+          && grep -q '^===VARS===$' "$VARS_FILE" && grep -q '^===END===$' "$VARS_FILE"; then
+        RECOVERED=1
+        ok "завершение установки подтверждено, службы активны"
+        break
+      fi
+      warn "попытка $attempt/6: результат текущего запуска пока не подтверждён"
+    done
+    [[ $RECOVERED -eq 1 ]] || die "после обрыва SSH завершение установки не подтверждено; повторная установка автоматически не запускается"
+  elif [[ $SSH_EXIT -ne 0 ]]; then
     die "установка на VPS завершилась с ошибкой (см. вывод выше)"
   fi
   grep -q '===VARS===' "$VARS_FILE" || die "установка VPS не дошла до конца (нет блока VARS)"
   PANEL_SECRET=$(get_var PANEL_SECRET)
+  ssh -o BatchMode=yes -o ConnectTimeout=10 "$VPS" "rm -f '$REMOTE_RESULT'" >/dev/null 2>&1 || true
   ok "VPS настроен"
 fi
 
@@ -214,7 +192,7 @@ fi
 # У каждого роутера свой ключ и IP: один сервер обслуживает несколько роутеров,
 # повторный запуск для того же роутера переиспользует его запись.
 if [[ $SKIP_ROUTER -eq 0 ]]; then
-  step "Регистрация роутера «$ROUTER_NAME» на VPS"
+  step "Регистрация роутера «${ROUTER_NAME}» на VPS"
   ssh "$VPS" 'test -f /root/awgvpn/server.key' 2>/dev/null \
     || die "VPS не настроен (нет /root/awgvpn) — сначала запуск без --skip-vps"
   # свежая копия реестра — работает и с сервером, развёрнутым старой версией
@@ -246,30 +224,21 @@ if [[ $SKIP_ROUTER -eq 0 ]]; then
   ROUTER_LAN_IP="$ROUTER_HOST" SERVER_HOST="$SERVER_HOST" AWG_PORT="$AWG_PORT" \
   TUN_CLI="$TUN_CLI" TUN_SRV="$TUN_SRV" TUN_MASK="$TUN_MASK" MTU="$MTU" \
   SERVER_PUB="$SERVER_PUB" ROUTER_KEY="$ROUTER_KEY" AWG_PARAMS="$AWG_PARAMS" \
-  DHCP_POOL="$DHCP_POOL" \
+  DHCP_POOL="$DHCP_POOL" ROUTER_LAN_INTERFACE="$ROUTER_LAN_INTERFACE" \
     python3 "$SCRIPT_DIR/router-setup.py" || die "настройка роутера не удалась"
   ok "роутер настроен"
-
-  # весь домашний сегмент через туннель (RCI/ip global этого для форварда не делает)
-  if [[ $LAN_HOOK -eq 1 ]]; then
-    LAN_SUBNET="${ROUTER_HOST%.*}.0/24"
-    if install_lan_hook "$LAN_SUBNET" "$TUN_CLI" 2>/dev/null | grep -q HOOK_OK; then
-      ok "хук LAN→VPN установлен ($LAN_SUBNET → туннель, переживёт reboot)"
-    else
-      warn "не удалось поставить хук LAN→VPN по SSH (root@$ROUTER_HOST:$ROUTER_SSH_PORT)"
-      warn "без него клиенты идут мимо VPN; проверь SSH к Entware или поставь вручную"
-    fi
-  fi
+  warn "индивидуальные политики клиентов имеют приоритет над политикой сегмента"
+  warn "ранее установленный Entware-хук не удаляется через HTTP; он может влиять на маршруты"
 fi
 
 # ─── проверка ────────────────────────────────────────────────────────
 step "Проверка"
-if curl -s -m 8 -o /dev/null -w '%{http_code}' "http://$SERVER_HOST:$CLASH_PORT/ui/" | grep -q 200; then
+if curl --noproxy '*' -s -m 8 -o /dev/null -w '%{http_code}' "http://$SERVER_HOST:$CLASH_PORT/ui/" | grep -q 200; then
   ok "панель доступна"
 else
   warn "панель пока не отвечает (проверь позже)"
 fi
-EXIT_IP=$(curl -s -m 10 https://api.ipify.org 2>/dev/null || true)
+EXIT_IP=$(curl --noproxy '*' -s -m 10 https://api.ipify.org 2>/dev/null || true)
 [[ -n $EXIT_IP ]] && printf '   %sтекущий выходной IP:%s %s\n' "$DIM" "$R" "$EXIT_IP"
 
 # ─── итог ────────────────────────────────────────────────────────────
@@ -282,8 +251,8 @@ cat <<EOF
    ${B}Туннель:${R}          $SERVER_HOST:$AWG_PORT  (AmneziaWG, $TUN_CIDR)
    ${B}Роутер:${R}           $([[ $SKIP_ROUTER == 0 ]] && echo "$ROUTER_NAME → $TUN_CLI (реестр пиров: peer-register.sh list на VPS)" || echo "пропущен (--skip-router)")
    ${B}Маршрутизация:${R}    РФ напрямую · остальное → VPN · adblock $([[ $ADBLOCK == 1 ]] && echo вкл || echo выкл)
-   ${B}Клиенты LAN:${R}      $([[ $LAN_HOOK == 1 ]] && echo "весь сегмент → туннель, kill-switch (хук netfilter.d)" || echo "хук отключён (--no-lan-hook); маршрут по ip global")
-   ${B}Failover:${R}         $([[ $LAN_HOOK == 1 ]] && echo "роутер → WAN по ping-check; клиенты — kill-switch (без утечки)" || echo "при падении туннеля — автопереключение на WAN")
+   ${B}Клиенты LAN:${R}      $([[ $SKIP_ROUTER == 0 ]] && echo "$ROUTER_LAN_INTERFACE → AWG_LAN → только WG (HTTP RCI)" || echo "настройка пропущена")
+   ${B}Failover:${R}         роутер → WAN; для LAN-политики AWG_LAN WAN не разрешён
 
    ${DIM}Подписка обновляется сама (таймер 6ч). На устройствах обнови
    аренду DHCP (переподключи Wi-Fi), чтобы получить чистый DNS.${R}

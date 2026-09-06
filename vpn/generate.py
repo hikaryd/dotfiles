@@ -27,6 +27,9 @@ RULESETS = {
     "geosite-ads": "https://raw.githubusercontent.com/SagerNet/sing-geosite/rule-set/geosite-category-ads-all.srs",
 }
 
+# Эти домены идут через подписку независимо от GeoIP и DNS-adblock.
+PROXY_DOMAINS = ["aquadx.hydev.org"]
+
 
 def load_conf(path: str) -> dict:
     conf = {}
@@ -145,7 +148,7 @@ def main() -> None:
     node_tags = [n["tag"] for n in nodes]
     secret = open(SECRET_FILE).read().strip()
 
-    dns_rules = []
+    dns_rules = [{"domain": PROXY_DOMAINS, "server": "proxy-dns"}]
     if ADBLOCK:
         if ADBLOCK_WHITELIST:
             dns_rules.append({"domain_suffix": ADBLOCK_WHITELIST, "server": "proxy-dns"})
@@ -186,6 +189,7 @@ def main() -> None:
             "rules": [
                 {"action": "sniff"},
                 {"protocol": "dns", "action": "hijack-dns"},
+                {"domain": PROXY_DOMAINS, "action": "route", "outbound": "select"},
                 {"ip_is_private": True, "action": "route", "outbound": "direct"},
                 {"rule_set": "geoip-ru", "action": "route", "outbound": "direct"},
             ],
