@@ -1,12 +1,4 @@
-# Alacritty configuration mirrored from config/ghostty/config.
-# Ghostty reference:
-#   theme = Ayu
-#   font-family = Iosevka (currently resolves in Ghostty to JetBrainsMono Nerd Font Mono)
-#   font-size = 14
-#   adjust-cell-height = 45%
-#   background = 0d1017
-#   background-opacity = 0.95
-#   background-blur = true
+# Оформление согласовано с Ghostty: SF Mono 15 и Quiet Ayu.
 
 [terminal]
 # Ghostty does not override shell, so use the same login shell configured for the user.
@@ -16,37 +8,32 @@ shell = { program = "/opt/homebrew/bin/zsh", args = ["-l"] }
 # Ghostty: macos-titlebar-style = hidden
 decorations = "Buttonless"
 
-# Ghostty: background-opacity = 0.95, background-blur = true
-opacity = 0.95
+# Прозрачность и размытие согласованы с Ghostty.
+opacity = 0.94
 blur = true
 
 # Ghostty: title = ""
 title = ""
 
-# Ghostty: window-padding-x/y = 6, window-padding-balance = true
-padding = { x = 6, y = 6 }
+# Единые внешние отступы.
+padding = { x = 18, y = 14 }
 dynamic_padding = true
 
 [font]
-# Ghostty config requests Iosevka, but on this machine `ghostty +show-face`
-# resolves to the installed JetBrainsMono Nerd Font Mono face. Use that CoreText
-# family name so Alacritty renders the same glyphs instead of falling back to Menlo.
-normal = { family = "JetBrainsMono Nerd Font Mono", style = "Regular" }
-bold = { family = "JetBrainsMono Nerd Font Mono", style = "Bold" }
-italic = { family = "JetBrainsMono Nerd Font Mono", style = "Italic" }
-bold_italic = { family = "JetBrainsMono Nerd Font Mono", style = "Bold Italic" }
-size = 14.0
+normal = { family = "SF Mono", style = "Regular" }
+bold = { family = "SF Mono", style = "Bold" }
+italic = { family = "SF Mono", style = "Italic" }
+bold_italic = { family = "SF Mono", style = "Bold Italic" }
+size = 15.0
 builtin_box_drawing = true
 
 [font.offset]
-# Ghostty: adjust-cell-height = 45%.
-# Alacritty has pixel offsets rather than percentages; +6 px is the closest
-# practical match for 14pt terminal text while keeping glyph proportions unchanged.
-y = 6
+# Прибавка в пикселях: близко к межстрочному интервалу Ghostty 12%.
+y = 2
 
 [cursor]
-# Ghostty: cursor-style = block, cursor-style-blink = false
-style = { shape = "Block", blinking = "Off" }
+# Спокойный курсор без мигания.
+style = { shape = "Beam", blinking = "Off" }
 unfocused_hollow = true
 
 [mouse]
@@ -66,12 +53,12 @@ foreground = "#bfbdb6"
 
 # Ghostty: selection-foreground/background from the Ayu theme.
 [colors.selection]
-text = "#0b0e14"
-background = "#409fff"
+text = "#bfbdb6"
+background = "#273747"
 
-# Do not set [colors.cursor]: Alacritty defaults to CellForeground cursor and
-# CellBackground text, matching Ghostty's `cursor-color = cell-foreground` and
-# `cursor-text = cell-background`.
+[colors.cursor]
+cursor = "#73d0ff"
+text = "CellBackground"
 
 [colors.normal]
 black = "#11151c"

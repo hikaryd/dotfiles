@@ -3,7 +3,7 @@ return {
     'akinsho/bufferline.nvim',
     enabled = false,
     event = 'VeryLazy',
-    dependencies = { 'nvim-tree/nvim-web-devicons' },
+    dependencies = { 'nvim-mini/mini.icons' },
     opts = {
       options = {
         numbers = 'ordinal',

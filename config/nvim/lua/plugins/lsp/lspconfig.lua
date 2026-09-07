@@ -2,8 +2,9 @@ return {
   {
     'neovim/nvim-lspconfig',
     event = { 'BufReadPre', 'BufNewFile' },
+    dependencies = { 'saghen/blink.cmp' },
     config = function()
-      local blink_cmp = require 'blink.cmp'
+      local blink_cmp = require('blink.cmp')
       local base_caps = blink_cmp.get_lsp_capabilities()
 
       local servers = {
@@ -16,7 +17,16 @@ return {
         jqls = {},
         nushell = {},
         nil_ls = {},
-        ty = {},
+        -- ty — единственный Python IDE-provider; Ruff отвечает за lint/format.
+        ty = {
+          settings = {
+            ty = {
+              diagnosticMode = 'openFilesOnly',
+              showSyntaxErrors = false,
+              completions = { autoImport = true },
+            },
+          },
+        },
         gopls = {
           settings = {
             gopls = {
@@ -50,7 +60,7 @@ return {
               workspace = {
                 library = {
                   vim.env.VIMRUNTIME,
-                  vim.fn.stdpath 'config' .. '/lua',
+                  vim.fn.stdpath('config') .. '/lua',
                 },
                 checkThirdParty = false,
               },
@@ -59,23 +69,13 @@ return {
           },
         },
         ruff = {
-          settings = {
-            organizeImports = true,
-            fixAll = true,
+          init_options = {
+            settings = { organizeImports = true, fixAll = true },
           },
-        },
-        pyright = {
-          settings = {
-            pyright = { autoImportCompletion = true },
-            python = {
-              analysis = {
-                autoSearchPaths = true,
-                diagnosticMode = 'openFilesOnly',
-                useLibraryCodeForTypes = true,
-                typeCheckingMode = 'off',
-              },
-            },
-          },
+          on_attach = function(client)
+            -- Hover приходит от ty, без второго пустого ответа Ruff.
+            client.server_capabilities.hoverProvider = false
+          end,
         },
       }
 
@@ -88,8 +88,7 @@ return {
         vim.lsp.enable(name)
       end
 
-      local venv = os.getenv 'VIRTUAL_ENV' or ''
-      vim.env.PYTHONPATH = venv .. '/lib/python3.12/site-packages'
+      -- Не переопределяем PYTHONPATH: ty определяет окружение проекта сам.
     end,
   },
 }

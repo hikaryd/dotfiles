@@ -1,27 +1,38 @@
 theme = Ayu
 
-font-family = Iosevka
-font-size = 14
-adjust-cell-height = 45%
+# Нейтральная рабочая типографика; иконки — отдельным fallback.
+font-family = SF Mono
+font-family = Symbols Nerd Font Mono
+font-size = 15
+adjust-cell-height = 12%
+# Операторы остаются отдельными символами, без декоративных лигатур.
+font-feature = -calt, -liga, -dlig
 
 background = 0d1017
-background-opacity = 0.95
-# Blur is handled by WindowServer and is disproportionately expensive while
-# animated shaders are active. Transparency stays enabled without the blur pass.
-background-blur = false
+foreground = bfbdb6
+# Контракт цветового пространства для macOS-шейдера курсора.
+window-colorspace = display-p3
+alpha-blending = native
+selection-background = 273747
+selection-foreground = bfbdb6
+unfocused-split-opacity = 0.94
+unfocused-split-fill = 0d1017
+background-opacity = 0.94
+# Графитовое стекло: blur убирает детали за окном, оставляя ощущение глубины.
+background-blur = 18
 
 macos-titlebar-style = hidden
 window-padding-balance = true
-window-padding-x = 6
-window-padding-y = 6
+window-padding-x = 18
+window-padding-y = 14
 
 title =
 
-cursor-style = block
+cursor-style = bar
 cursor-style-blink = false
 cursor-color = 73d0ff
 cursor-text = cell-background
-cursor-opacity = 0
+cursor-opacity = 1
 
 mouse-hide-while-typing = true
 
@@ -42,7 +53,7 @@ keybind = ctrl+7=csi:55;5u
 keybind = ctrl+8=csi:56;5u
 keybind = ctrl+9=csi:57;5u
 
-# Input effects run before the synthetic caret so the cursor stays crisp.
-custom-shader = shaders/input_motion.glsl
+# Короткий след дополняет нативный курсор, не двигая текст.
+# Для полного отключения движения уберите следующую строку custom-shader.
 custom-shader = shaders/smooth_cursor.glsl
 custom-shader-animation = true

@@ -13,7 +13,9 @@ return {
 		statuscolumn = { enabled = true },
 		words = { enabled = true },
 		styles = {
+			input = { border = "rounded" },
 			notification = {
+				border = "rounded",
 				wo = { wrap = true },
 			},
 		},

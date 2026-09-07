@@ -2,7 +2,7 @@ return {
   'lewis6991/gitsigns.nvim',
   event = 'BufReadPre',
   config = function()
-    require('gitsigns').setup {
+    require('gitsigns').setup({
       signs = {
         add = { text = '│' },
         change = { text = '│' },
@@ -33,15 +33,12 @@ return {
       status_formatter = nil,
       max_file_length = 40000,
       preview_config = {
-        border = 'single',
+        border = 'rounded',
         style = 'minimal',
         relative = 'cursor',
         row = 0,
         col = 1,
       },
-      yadm = {
-        enable = false,
-      },
-    }
+    })
   end,
 }

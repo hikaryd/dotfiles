@@ -59,6 +59,7 @@
 	colorMoved = default
 
 [delta]
+	syntax-theme = ayu-dark
 	features = decorations
 	navigate = true
 	light = false

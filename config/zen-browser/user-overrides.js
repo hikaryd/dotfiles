@@ -60,7 +60,7 @@ user_pref("distribution.iniFile.exists.value", false);
 user_pref("doh-rollout.doneFirstRun", true);
 user_pref("dom.forms.autocomplete.formautofill", true);
 user_pref("dom.security.https_only_mode_ever_enabled", true);
-user_pref("extensions.activeThemeID", "firefox-compact-light@mozilla.org");
+user_pref("extensions.activeThemeID", "firefox-compact-dark@mozilla.org");
 user_pref("identity.fxaccounts.toolbar.accessed", true);
 user_pref("layout.css.prefers-color-scheme.content-override", 1);
 user_pref("layout.spellcheckDefault", 0);

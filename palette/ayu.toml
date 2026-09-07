@@ -16,9 +16,11 @@ line    = "#161a24"
 panel   = "#141821"
 
 [dark.ui]
-fg      = "#555e73"
+fg      = "#858d9c"
 bg      = "#0d1017"
 line    = "#1b1f29"
+selection = "#273747"
+border    = "#303847"
 
 [dark.syntax]
 tag      = "#39bae6"
@@ -34,19 +36,19 @@ constant = "#d2a6ff"
 operator = "#f29668"
 
 [dark.terminal]
-black          = "#3e4451"
-red            = "#f07178"
-green          = "#aad94c"
-yellow         = "#ffb454"
-blue           = "#39bae6"
-magenta        = "#d2a6ff"
-cyan           = "#95e6cb"
-white          = "#e6e1cf"
-bright_black   = "#4d5566"
+black          = "#11151c"
+red            = "#ea6c73"
+green          = "#7fd962"
+yellow         = "#f9af4f"
+blue           = "#53bdfa"
+magenta        = "#cda1fa"
+cyan           = "#90e1c6"
+white          = "#c7c7c7"
+bright_black   = "#686868"
 bright_red     = "#f07178"
 bright_green   = "#aad94c"
 bright_yellow  = "#ffb454"
-bright_blue    = "#39bae6"
+bright_blue    = "#59c2ff"
 bright_magenta = "#d2a6ff"
 bright_cyan    = "#95e6cb"
 bright_white   = "#ffffff"
@@ -57,8 +59,9 @@ modified = "#73b8ff"
 removed  = "#f26d78"
 
 [dark.common]
-accent = "#e6b450"
-error  = "#d95757"
+accent = "#73d0ff"
+warning = "#e6b450"
+error  = "#f07178"
 
 # ─── Mirage ──────────────────────────────────────────────────────────────────
 
@@ -72,6 +75,8 @@ panel   = "#282e3b"
 fg      = "#707a8c"
 bg      = "#1f2430"
 line    = "#171b24"
+selection = "#34455a"
+border    = "#414d60"
 
 [mirage.syntax]
 tag      = "#5ccfe6"
@@ -110,5 +115,6 @@ modified = "#80bfff"
 removed  = "#f27983"
 
 [mirage.common]
-accent = "#ffcc66"
+accent = "#73d0ff"
+warning = "#ffcc66"
 error  = "#ff6666"

@@ -102,7 +102,7 @@ cd "$BASEDIR" || die "не удалось перейти в $BASEDIR"
 # ─── план ────────────────────────────────────────────────────────────
 step "План отката (репозиторий: $BASEDIR)"
 printf '   · симлинки из steps/*.yml (только указывающие в репозиторий)\n'
-printf '   · Firefox/Zen/AyuGram/Claude/Codex конфиги → бэкап\n'
+printf '   · Zen/Claude/Codex конфиги → бэкап\n'
 printf '   · TPM, yazi-плагины → бэкап\n'
 printf '   · git excludesFile, macOS defaults, шелл по умолчанию, /etc/shells\n'
 if [[ $REMOVE_PACKAGES -eq 1 ]]; then
@@ -190,17 +190,7 @@ if [[ $DRY -eq 0 ]]; then
 fi
 
 # ─── 3. скопированные конфиги → бэкап ────────────────────────────────
-step "Firefox / Zen / AyuGram"
-FF_PROFILES="$HOME/Library/Application Support/Firefox/Profiles"
-if [[ -d $FF_PROFILES ]]; then
-  for profile_dir in "$FF_PROFILES"/*/; do
-    [[ -d $profile_dir/chrome || -f $profile_dir/user.js ]] || continue
-    backup_move "${profile_dir%/}/chrome"
-    backup_move "${profile_dir%/}/user.js"
-  done
-else
-  ok "Firefox-профили не найдены"
-fi
+step "Zen"
 ZEN_PROFILES="$HOME/Library/Application Support/zen/Profiles"
 if [[ -d $ZEN_PROFILES ]]; then
   for profile_dir in "$ZEN_PROFILES"/*/; do
@@ -212,7 +202,6 @@ if [[ -d $ZEN_PROFILES ]]; then
 else
   ok "Zen-профили не найдены"
 fi
-backup_move "$HOME/Library/Application Support/AyuGram Desktop/tdata/ayu-dark.tdesktop-theme"
 
 step "Claude Code"
 backup_move "$HOME/.claude/settings.json"

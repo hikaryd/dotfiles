@@ -46,9 +46,9 @@ from typing import Any
 # ─────────────────────────────────────────────────────────────────────────
 RULES = {
     # ── Ряд 1 (Alt+1) — Браузеры + Толк + Музыка ─────────────────────────
+    "net.waterfox.waterfox": 1,
     "org.chromium.Thorium": 1,
     "app.zen-browser.zen": 1,
-    "org.mozilla.firefox": 1,
     "com.apple.Safari": 1,
     "kontur.talk": 1,  # Толк
     "com.apple.Music": 1,  # Музыка
@@ -56,7 +56,6 @@ RULES = {
     # "com.brave.Browser": 1,                # Brave
     # TODO bundle_id: Ora, Comet, Helium
     # ── Ряд 2 (Alt+3) — Мессенджеры / почта ──────────────────────────────
-    "one.ayugram.AyuGramDesktop": 2,  # AyuGram
     # "org.telegram.desktop": 2,             # Telegram — если поставишь офиц. клиент
     # "ch.protonmail.desktop": 2,            # Proton Mail
     # TODO bundle_id: Psst

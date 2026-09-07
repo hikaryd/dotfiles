@@ -11,7 +11,7 @@ add_newline = true
 # Операционная система
 [os]
 disabled = false
-style = "fg:color_text"
+style = "fg:color_subtext0"
 
 [os.symbols]
 Windows = "󰍲 "
@@ -36,12 +36,12 @@ RedHatEnterprise = "󱄛 "
 
 # Продолжительность выполнения команды
 [cmd_duration]
-min_time = 1000
+min_time = 3000
 show_notifications = false
 min_time_to_notify = 10000
-show_milliseconds = true
+show_milliseconds = false
 format = "[$duration ]($style)"
-style = "fg:color_pink"
+style = "fg:color_subtext0"
 
 # Директория
 [directory]
@@ -54,8 +54,8 @@ read_only = ""
 # Git
 [git_branch]
 symbol = ""
-format = "[$symbol $branch(:$remote_branch) ]($style)"
-style = "fg:color_red"
+format = "[$branch(:$remote_branch) ]($style)"
+style = "fg:color_subtext0"
 
 [git_status]
 disabled = false
@@ -73,7 +73,7 @@ tag_symbol = ""
 [c]
 symbol = "gcc: "
 format = "[$symbol($version )]($style)"
-style = "fg:color_lavender"
+style = "fg:color_subtext0"
 
 [docker_context]
 symbol = " "
@@ -83,37 +83,37 @@ style = "fg:color_blue"
 [golang]
 symbol = ""
 format = "[$symbol ($version )]($style)"
-style = "fg:color_lavender"
+style = "fg:color_subtext0"
 
 [lua]
 symbol = ""
 format = "[$symbol ($version )]($style)"
-style = "fg:color_lavender"
+style = "fg:color_subtext0"
 
 [nodejs]
 symbol = ""
 format = "[$symbol ($version )]($style)"
-style = "fg:color_lavender"
+style = "fg:color_subtext0"
 
 [python]
 symbol = " "
 format = "[${symbol}${version}( $virtualenv)]($style) "
-style = "fg:color_lavender"
+style = "fg:color_subtext0"
 detect_env_vars = ['VIRTUAL_ENV']
 
 [rust]
 symbol = ""
 format = "[$symbol ($version )]($style)"
-style = "fg:color_lavender"
+style = "fg:color_subtext0"
 
 [cmake]
 format = "[$symbol($version )]($style)"
-style = "fg:color_lavender"
+style = "fg:color_subtext0"
 
 [meson]
 symbol = "Meson: "
 format = "[$symbol(${project}) ]($style)"
-style = "fg:color_lavender"
+style = "fg:color_subtext0"
 
 # Пользовательские
 [custom.is_folder_config]
@@ -142,7 +142,10 @@ format = '''
 '''
 
 [character]
-format = "> "
+format = "$symbol "
+success_symbol = "[>](fg:color_blue)"
+error_symbol = "[!](fg:color_red)"
+vimcmd_symbol = "[<](fg:color_teal)"
 disabled = false
 
 # Палитра Ayu Dark
@@ -159,11 +162,11 @@ color_green = "#aad94c"
 color_teal = "#95e6cb"
 color_sky = "#39bae6"
 color_sapphire = "#59c2ff"
-color_blue = "#39bae6"
+color_blue = "#73d0ff"
 color_lavender = "#d2a6ff"
 color_text = "#bfbdb6"
 color_subtext1 = "#bfbdb6"
-color_subtext0 = "#555e73"
+color_subtext0 = "#858d9c"
 color_overlay2 = "#555e73"
 color_overlay1 = "#555e73"
 color_overlay0 = "#555e73"

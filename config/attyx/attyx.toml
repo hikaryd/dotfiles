@@ -2,19 +2,20 @@
 name = "Ayu Dark"
 
 [font]
-family = "Iosevka"
-size = 14
-cell_height = 20
+family = "SF Mono"
+size = 15
+# Высота ячейки в единицах Attyx; не процент Ghostty.
+cell_height = 22
 fallback = ["Symbols Nerd Font Mono", "Noto Color Emoji"]
 
 [background]
-opacity = 0.9
-blur = 30
+opacity = 0.94
+blur = 18
 
 [window]
 decorations = false
-padding_x = 6
-padding_y = 6
+padding_x = 18
+padding_y = 14
 
 [cursor]
 shape = "block"
