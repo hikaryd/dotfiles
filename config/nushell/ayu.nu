@@ -2,18 +2,20 @@
 # Generated from palette/ayu.toml
 
 let theme = {
-  red: "#f07178"
-  green: "#aad94c"
-  yellow: "#ffb454"
-  blue: "#39bae6"
-  magenta: "#d2a6ff"
-  cyan: "#95e6cb"
-  white: "#e6e1cf"
-  black: "#3e4451"
+  red: "#ea6c73"
+  green: "#7fd962"
+  yellow: "#f9af4f"
+  blue: "#53bdfa"
+  magenta: "#cda1fa"
+  cyan: "#90e1c6"
+  white: "#c7c7c7"
+  black: "#11151c"
   text: "#bfbdb6"
-  accent: "#e6b450"
-  dim: "#555e73"
+  accent: "#73d0ff"
+  dim: "#858d9c"
   line: "#1b1f29"
+  selection: "#273747"
+  warning: "#e6b450"
   bg: "#0d1017"
   tag: "#39bae6"
   func: "#ffb454"
@@ -26,7 +28,7 @@ let theme = {
   comment: "#546178"
   constant: "#d2a6ff"
   operator: "#f29668"
-  error: "#d95757"
+  error: "#f07178"
 }
 
 let scheme = {
@@ -49,12 +51,12 @@ $env.config.color_config = {
   record: $theme.text
   list: $theme.text
   hints: $scheme.virtual_text
-  search_result: { fg: $theme.bg bg: $theme.accent }
+  search_result: { fg: $theme.accent bg: $theme.selection }
   shape_closure: $theme.regexp
   closure: $theme.regexp
   shape_flag: { fg: $theme.markup attr: i }
   shape_matching_brackets: { attr: u }
-  shape_garbage: $theme.red
+  shape_garbage: $theme.error
   shape_keyword: $theme.keyword
   shape_match_pattern: $theme.string
   shape_signature: $theme.regexp
@@ -158,11 +160,11 @@ $env.config.highlight_resolved_externals = true
 $env.config.explore = {
     status_bar_background: { fg: $theme.text, bg: $theme.bg },
     command_bar_text: { fg: $theme.text },
-    highlight: { fg: $theme.bg, bg: $theme.accent },
+    highlight: { fg: $theme.accent, bg: $theme.selection },
     status: {
-        error: $theme.red,
-        warn: $theme.yellow,
+        error: $theme.error,
+        warn: $theme.warning,
         info: $theme.blue,
     },
-    selected_cell: { bg: $theme.entity fg: $theme.bg },
+    selected_cell: { bg: $theme.selection fg: $theme.text },
 }

@@ -11,10 +11,10 @@
 			<dict>
 				<key>background</key><string>#0d1017</string>
 				<key>foreground</key><string>#bfbdb6</string>
-				<key>caret</key><string>#e6b450</string>
+				<key>caret</key><string>#73d0ff</string>
 				<key>lineHighlight</key><string>#161a24</string>
-				<key>selection</key><string>#1b1f29</string>
-				<key>invisibles</key><string>#555e73</string>
+				<key>selection</key><string>#273747</string>
+				<key>invisibles</key><string>#858d9c</string>
 			</dict>
 		</dict>
 		<dict>
@@ -219,7 +219,7 @@
 			<key>scope</key><string>invalid, invalid.illegal</string>
 			<key>settings</key>
 			<dict>
-				<key>foreground</key><string>#d95757</string>
+				<key>foreground</key><string>#f07178</string>
 			</dict>
 		</dict>
 	</array>

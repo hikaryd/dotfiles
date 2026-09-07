@@ -17,8 +17,8 @@
     {
       "type": "title",
       "color": {
-        "user": "35",
-        "host": "36"
+        "user": "#73d0ff",
+        "host": "#858d9c"
       }
     },
     {
@@ -29,78 +29,78 @@
       "type": "os",
       "key": "╭─ ",
       "format": "{3} ({12})",
-      "keyColor": "32"
+      "keyColor": "#73d0ff"
     },
     {
       "type": "host",
       "key": "├─󰟀 ",
-      "keyColor": "32"
+      "keyColor": "#73d0ff"
     },
     {
       "type": "kernel",
       "key": "├─󰒔 ",
       "format": "{1} {2}",
-      "keyColor": "32"
+      "keyColor": "#73d0ff"
     },
     {
       "type": "shell",
       "key": "├─$ ",
       "format": "{1} {4}",
-      "keyColor": "32"
+      "keyColor": "#73d0ff"
     },
     {
       "type": "packages",
       "key": "├─ ",
-      "keyColor": "32"
+      "keyColor": "#73d0ff"
     },
     {
       "type": "uptime",
       "key": "╰─󰔚 ",
-      "keyColor": "32"
+      "keyColor": "#73d0ff"
     },
     "break",
     {
       "type": "display",
       "key": "╭─󰹑 ",
-      "keyColor": "33",
+      "keyColor": "#73d0ff",
       "compactType": "original"
     },
     {
       "type": "de",
       "key": "├─󰧨 ",
-      "keyColor": "33"
+      "keyColor": "#73d0ff"
     },
     {
       "type": "wm",
       "key": "├─ ",
-      "keyColor": "33"
+      "keyColor": "#73d0ff"
     },
     {
       "type": "theme",
       "key": "├─󰉼 ",
-      "keyColor": "33"
+      "keyColor": "#73d0ff"
     },
     {
       "type": "icons",
       "key": "├─ ",
-      "keyColor": "33"
+      "keyColor": "#73d0ff"
     },
     {
       "type": "cursor",
       "key": "├─󰳽 ",
-      "keyColor": "33"
+      "keyColor": "#73d0ff"
     },
     {
       "type": "font",
       "key": "├─ ",
       "format": "{2}",
-      "keyColor": "33"
+      "keyColor": "#73d0ff"
     },
     {
       "type": "terminal",
       "key": "╰─ ",
       "format": "{3}",
-      "keyColor": "33"
+      "keyColor": "#73d0ff"
     },
     "break",
     {

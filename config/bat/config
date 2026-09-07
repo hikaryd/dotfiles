@@ -1,1 +1,3 @@
 --pager="less -FR"
+# Общий syntect-профиль с предпросмотром Yazi.
+--theme="ayu-dark"

@@ -43,6 +43,7 @@ brew "yazi"
 brew "zathura"
 brew "zathura-pdf-poppler" # PDF-плагин; линкуется в steps/dependencies.yml
 brew "nolight132/tap/nls"
+brew "nklmilojevic/sofka/sofka"
 
 # Инструменты для шелла и терминала
 brew "fzf"
@@ -120,14 +121,14 @@ brew "rift", args: ["tap", "acsandmann/tap"]
 brew "paneru"
 brew "fastfetch"    
 brew "ffmpeg"    
-cask "raycast"    
+# Raycast устанавливается отдельно как optional cask в steps/dependencies.yml.
 cask "rustdesk"    
 
 # Дополнения для bat
 brew "bat-extras" 
 
 # Приложения
-cask "ayugram"
+cask "waterfox"
 cask "telegram-desktop"
 cask "spotify"
 brew "kcat"

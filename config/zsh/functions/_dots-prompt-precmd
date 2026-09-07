@@ -1,3 +1,4 @@
+local command_status=$?
 local head branch='' duration='' virtualenv='' prompt_line
 local -F 2 elapsed
 
@@ -21,15 +22,20 @@ fi
 if (( ${+_dots_prompt_command_started} )); then
   (( elapsed = EPOCHREALTIME - _dots_prompt_command_started ))
   unset _dots_prompt_command_started
-  (( elapsed >= 1.0 )) && duration="${elapsed}s"
+  (( elapsed >= 3.0 )) && printf -v duration '%.0fs' "$elapsed"
 fi
 
 [[ -n "${VIRTUAL_ENV:-}" ]] && virtualenv="${VIRTUAL_ENV:t}"
 branch="${branch//\%/%%}"
 virtualenv="${virtualenv//\%/%%}"
 
-prompt_line='%F{#bfbdb6}󰀵 %5~ %f'
-[[ -n "$branch" ]] && prompt_line+="%F{#f07178}${branch} %f"
-[[ -n "$virtualenv" ]] && prompt_line+="%F{#d2a6ff}${virtualenv} %f"
-[[ -n "$duration" ]] && prompt_line+="%F{#d2a6ff}${duration} %f"
-PROMPT="${prompt_line}"$'\n> '
+prompt_line='%F{#858d9c}󰀵 %f%F{#bfbdb6}%5~ %f'
+[[ -n "$branch" ]] && prompt_line+="%F{#858d9c}${branch} %f"
+[[ -n "$virtualenv" ]] && prompt_line+="%F{#95e6cb}${virtualenv} %f"
+[[ -n "$duration" ]] && prompt_line+="%F{#858d9c}${duration} %f"
+# Состояние команды различимо и символом, и цветом; без внешних процессов.
+if (( command_status )); then
+  PROMPT="${prompt_line}"$'\n''%F{#f07178}!%f '
+else
+  PROMPT="${prompt_line}"$'\n''%F{#73d0ff}>%f '
+fi

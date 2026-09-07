@@ -4,7 +4,7 @@ return {
     event = 'LspAttach',
     dependencies = {
       'nvim-treesitter/nvim-treesitter',
-      'nvim-tree/nvim-web-devicons',
+      'nvim-mini/mini.icons',
     },
     config = function()
       require('lspsaga').setup {

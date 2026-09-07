@@ -47,7 +47,7 @@ fingers_count = 4
 # недокументированные API window-server). Цвет — ayu accent.
 [decorations.active.border]
 enabled = true
-color = "#e6b450"
+color = "#73d0ff"
 width = 2.0
 radius = "auto"
 

@@ -7,6 +7,8 @@ return {
 	opts = {
 		lazy_sync = true,
 		title = "FFFiles",
+		prompt = " ",
+		hl = { normal = "NormalFloat", border = "FloatBorder", title = "FloatTitle", cursor = "PmenuSel" },
 		max_results = 100,
 		layout = {
 			height = 0.8,

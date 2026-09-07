@@ -9,6 +9,7 @@ vim.opt.signcolumn = 'yes'
 vim.opt.colorcolumn = '80'
 vim.opt.pumblend = 0
 vim.opt.winblend = 0
+vim.opt.winborder = 'rounded'
 vim.opt.clipboard = 'unnamedplus'
 vim.g.clipboard = {
   name = 'pbcopy',

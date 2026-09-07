@@ -29,7 +29,13 @@
         brew trust homebrew-zathura/zathura >/dev/null 2>&1 || true
 
         echo "Installing packages from Brewfile ..."
-        brew bundle --file Brewfile
+        if brew bundle --file Brewfile; then
+          echo "Homebrew bundle installed successfully."
+        else
+          status=$?
+          echo "Homebrew bundle failed (exit $status). See the package error above; optional Raycast is installed separately." >&2
+          exit "$status"
+        fi
       description: Install Homebrew packages via Brewfile
       stdout: true
       stderr: true

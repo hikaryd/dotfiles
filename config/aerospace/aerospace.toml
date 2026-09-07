@@ -191,6 +191,10 @@ run = ['layout floating', 'move-node-to-workspace 4']
 
 # --- "1": браузеры + Comet/Ora/Helium/Thorium ---
 [[on-window-detected]]
+if.app-id = 'net.waterfox.waterfox'
+run = 'move-node-to-workspace 1'
+
+[[on-window-detected]]
 if.app-id = 'com.apple.Safari'
 run = 'move-node-to-workspace 1'
 
@@ -230,10 +234,6 @@ run = 'move-node-to-workspace 2'
 # --- "3": мессенджер/почта/музыка/видео-комнаты ---
 [[on-window-detected]]
 if.app-id = 'ru.keepcoder.Telegram'
-run = 'move-node-to-workspace 3'
-
-[[on-window-detected]]
-if.app-id = 'one.ayugram.AyuGramDesktop'
 run = 'move-node-to-workspace 3'
 
 [[on-window-detected]]

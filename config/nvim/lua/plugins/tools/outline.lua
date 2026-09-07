@@ -1,7 +1,17 @@
 return {
   'hedyhli/outline.nvim',
-  event = 'VeryLazy',
+  cmd = {
+    'Outline',
+    'OutlineOpen',
+    'OutlineClose',
+    'OutlineFocusOutline',
+    'OutlineFocusCode',
+    'OutlineFocus',
+    'OutlineStatus',
+    'OutlineFollow',
+    'OutlineRefresh',
+  },
   config = function()
-    require('outline').setup {}
+    require('outline').setup({})
   end,
 }

@@ -2,15 +2,14 @@
 local M = {}
 
 function M.setup()
-  -- Load core modules
-  require 'core.options'
-  require 'core.mappings'
+	-- Опции уже загружены до плагинов из init.lua.
+	require("core.mappings")
 
-  -- Setup autocmds if they exist
-  local ok, _ = pcall(require, 'core.autocmds')
-  if ok then
-    require('core.autocmds').setup()
-  end
+	-- Setup autocmds if they exist
+	local ok, _ = pcall(require, "core.autocmds")
+	if ok then
+		require("core.autocmds").setup()
+	end
 end
 
 return M

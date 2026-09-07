@@ -4,8 +4,9 @@
 import argparse
 import json
 import re
-import tomllib
 from pathlib import Path
+
+import tomllib
 
 ROOT = Path(__file__).resolve().parent.parent
 CONFIG = ROOT / "config"
@@ -33,17 +34,16 @@ def gen_alacritty(p: dict, variant: str) -> None:
     path = CONFIG / "alacritty" / "alacritty.toml"
     text = path.read_text()
 
-    colors_block = f"""# Ayu {variant} color scheme
-[colors.primary]
+    colors_block = f"""[colors.primary]
 background = "{p["editor"]["bg"]}"
 foreground = "{p["editor"]["fg"]}"
 
 [colors.cursor]
 cursor = "{p["common"]["accent"]}"
-text = "{p["editor"]["bg"]}"
+text = "CellBackground"
 
 [colors.selection]
-background = "{p["ui"]["line"]}"
+background = "{p["ui"]["selection"]}"
 text = "{p["editor"]["fg"]}"
 
 [colors.normal]
@@ -68,7 +68,7 @@ white = "{p["terminal"]["bright_white"]}"
 """
 
     text = re.sub(
-        r"^#[^\n]*color scheme\n\[colors\.primary\].*?(?=\n\[keyboard\]|\Z)",
+        r"^\[colors\.primary\].*?(?=^\[(?!colors(?:\.|\]))|\Z)",
         colors_block,
         text,
         flags=re.DOTALL | re.MULTILINE,
@@ -117,6 +117,9 @@ def gen_wezterm(p: dict, variant: str) -> None:
 \tcursor_bg = "{accent}",
 \tcursor_fg = "{bg}",
 \tcursor_border = "{accent}",
+\tselection_bg = "{p["ui"]["selection"]}",
+\tselection_fg = "{fg}",
+\tsplit = "{p["ui"]["border"]}",
 \tansi = {{ "{t["black"]}", "{t["red"]}", "{t["green"]}", "{t["yellow"]}", "{t["blue"]}", "{t["magenta"]}", "{t["cyan"]}", "{t["white"]}" }},
 \tbrights = {{ "{t["bright_black"]}", "{t["bright_red"]}", "{t["bright_green"]}", "{t["bright_yellow"]}", "{t["bright_blue"]}", "{t["bright_magenta"]}", "{t["bright_cyan"]}", "{t["bright_white"]}" }},
 \ttab_bar = {{
@@ -146,6 +149,7 @@ def gen_wezterm(p: dict, variant: str) -> None:
     c_block = f'''local C = {{
 \tbg = "{bg}",
 \tactive = "{accent}",
+\tselection = "{p["ui"]["selection"]}",
 \tdim = "{dim}",
 }}'''
     text = re.sub(
@@ -177,7 +181,7 @@ def gen_starship(p: dict, variant: str) -> None:
     )
 
     # Build new palette — map catppuccin names to ayu values
-    e, s, t, u, c = p["editor"], p["syntax"], p["terminal"], p["ui"], p["common"]
+    e, s, t, u = p["editor"], p["syntax"], p["terminal"], p["ui"]
     palette = f"""# Палитра Ayu {variant.capitalize()}
 [palettes.{palette_name}]
 color_rosewater = "{s["markup"]}"
@@ -243,6 +247,8 @@ let theme = {{
   accent: "{c["accent"]}"
   dim: "{u["fg"]}"
   line: "{u["line"]}"
+  selection: "{u["selection"]}"
+  warning: "{c["warning"]}"
   bg: "{e["bg"]}"
   tag: "{s["tag"]}"
   func: "{s["func"]}"
@@ -278,12 +284,12 @@ $env.config.color_config = {{
   record: $theme.text
   list: $theme.text
   hints: $scheme.virtual_text
-  search_result: {{ fg: $theme.bg bg: $theme.accent }}
+  search_result: {{ fg: $theme.accent bg: $theme.selection }}
   shape_closure: $theme.regexp
   closure: $theme.regexp
   shape_flag: {{ fg: $theme.markup attr: i }}
   shape_matching_brackets: {{ attr: u }}
-  shape_garbage: $theme.red
+  shape_garbage: $theme.error
   shape_keyword: $theme.keyword
   shape_match_pattern: $theme.string
   shape_signature: $theme.regexp
@@ -387,13 +393,13 @@ $env.config.highlight_resolved_externals = true
 $env.config.explore = {{
     status_bar_background: {{ fg: $theme.text, bg: $theme.bg }},
     command_bar_text: {{ fg: $theme.text }},
-    highlight: {{ fg: $theme.bg, bg: $theme.accent }},
+    highlight: {{ fg: $theme.accent, bg: $theme.selection }},
     status: {{
-        error: $theme.red,
-        warn: $theme.yellow,
+        error: $theme.error,
+        warn: $theme.warning,
         info: $theme.blue,
     }},
-    selected_cell: {{ bg: $theme.entity fg: $theme.bg }},
+    selected_cell: {{ bg: $theme.selection fg: $theme.text }},
 }}
 '''
     path.write_text(content)
@@ -410,7 +416,7 @@ def gen_sketchybar(p: dict, variant: str) -> None:
     content = f"""#!/bin/bash
 # Ayu {variant} — generated from palette/ayu.toml
 
-export BAR_COLOR={hex_to_argb(e["bg"], "40")}
+export BAR_COLOR={hex_to_argb(e["bg"], "f0")}
 export BAR_BORDER_COLOR=0x00000000
 
 export WHITE=0xffffffff
@@ -418,26 +424,26 @@ export BLACK=0xff000000
 export TRANSPARENT=0x00000000
 
 # Text/icon colors
-export ICON_COLOR=$WHITE
+export ICON_COLOR={hex_to_argb(e["fg"])}
 export LABEL_COLOR={hex_to_argb(e["fg"])}
 
 # Subtle backgrounds
-export ITEM_BG_COLOR={hex_to_argb(u["line"], "44")}
+export ITEM_BG_COLOR={hex_to_argb(u["selection"], "44")}
 export ACCENT_COLOR={hex_to_argb(c["accent"])}
-export HIGHLIGHT={hex_to_argb(c["accent"], "66")}
+export HIGHLIGHT={hex_to_argb(u["selection"], "66")}
 
 # Semantic colors
-export RED={hex_to_argb(t["red"])}
+export RED={hex_to_argb(c["error"])}
 export GREEN={hex_to_argb(t["green"])}
 export BLUE={hex_to_argb(t["blue"])}
-export YELLOW={hex_to_argb(t["yellow"])}
-export ORANGE={hex_to_argb(c["accent"])}
+export YELLOW={hex_to_argb(c["warning"])}
+export ORANGE={hex_to_argb(p["syntax"]["operator"])}
 export MAGENTA={hex_to_argb(t["magenta"])}
 export CYAN={hex_to_argb(t["cyan"])}
 
 # Popup
 export POPUP_BACKGROUND_COLOR={hex_to_argb(e["bg"], "e0")}
-export POPUP_BORDER_COLOR={hex_to_argb(u["fg"], "44")}
+export POPUP_BORDER_COLOR={hex_to_argb(u["border"], "44")}
 
 export SHADOW_COLOR=$BLACK
 """
@@ -455,7 +461,7 @@ def gen_tmux(p: dict, variant: str) -> None:
 
     text = re.sub(
         r"pane-border-style 'fg=#[0-9a-fA-F]+'",
-        f"pane-border-style 'fg={p['ui']['line']}'",
+        f"pane-border-style 'fg={p['ui']['border']}'",
         text,
     )
     text = re.sub(
@@ -473,7 +479,7 @@ def gen_tmux(p: dict, variant: str) -> None:
 
 def gen_fresh(p: dict, variant: str) -> None:
     path = CONFIG / "fresh" / "themes" / f"ayu-{variant}.json"
-    e, s, u, c, t = p["editor"], p["syntax"], p["ui"], p["common"], p["terminal"]
+    e, s, u, c = p["editor"], p["syntax"], p["ui"], p["common"]
 
     theme = {
         "name": f"ayu-{variant}",
@@ -481,45 +487,45 @@ def gen_fresh(p: dict, variant: str) -> None:
             "bg": list(hex_to_rgb(e["bg"])),
             "fg": list(hex_to_rgb(e["fg"])),
             "cursor": list(hex_to_rgb(c["accent"])),
-            "selection_bg": list(hex_to_rgb(u["line"])),
+            "selection_bg": list(hex_to_rgb(u["selection"])),
             "current_line_bg": list(hex_to_rgb(e["line"])),
             "line_number_fg": list(hex_to_rgb(u["fg"])),
             "line_number_bg": list(hex_to_rgb(e["bg"])),
         },
         "ui": {
-            "tab_active_fg": list(hex_to_rgb(e["bg"])),
-            "tab_active_bg": list(hex_to_rgb(c["accent"])),
+            "tab_active_fg": list(hex_to_rgb(c["accent"])),
+            "tab_active_bg": list(hex_to_rgb(u["selection"])),
             "tab_inactive_fg": list(hex_to_rgb(u["fg"])),
-            "tab_inactive_bg": list(hex_to_rgb(u["line"])),
+            "tab_inactive_bg": list(hex_to_rgb(e["bg"])),
             "tab_separator_bg": list(hex_to_rgb(e["bg"])),
-            "status_bar_fg": list(hex_to_rgb(e["bg"])),
-            "status_bar_bg": list(hex_to_rgb(c["accent"])),
-            "prompt_fg": list(hex_to_rgb(e["bg"])),
-            "prompt_bg": list(hex_to_rgb(s["string"])),
+            "status_bar_fg": list(hex_to_rgb(e["fg"])),
+            "status_bar_bg": list(hex_to_rgb(e["bg"])),
+            "prompt_fg": list(hex_to_rgb(c["accent"])),
+            "prompt_bg": list(hex_to_rgb(e["bg"])),
             "prompt_selection_fg": list(hex_to_rgb(e["fg"])),
-            "prompt_selection_bg": list(hex_to_rgb(s["entity"])),
-            "popup_border_fg": list(hex_to_rgb(u["fg"])),
-            "popup_bg": list(hex_to_rgb(u["line"])),
-            "popup_selection_bg": list(hex_to_rgb(e["line"])),
+            "prompt_selection_bg": list(hex_to_rgb(u["selection"])),
+            "popup_border_fg": list(hex_to_rgb(u["border"])),
+            "popup_bg": list(hex_to_rgb(e["bg"])),
+            "popup_selection_bg": list(hex_to_rgb(u["selection"])),
             "popup_text_fg": list(hex_to_rgb(e["fg"])),
-            "suggestion_bg": list(hex_to_rgb(u["line"])),
-            "suggestion_selected_bg": list(hex_to_rgb(e["line"])),
+            "suggestion_bg": list(hex_to_rgb(e["bg"])),
+            "suggestion_selected_bg": list(hex_to_rgb(u["selection"])),
             "help_bg": list(hex_to_rgb(e["bg"])),
             "help_fg": list(hex_to_rgb(e["fg"])),
             "help_key_fg": list(hex_to_rgb(s["regexp"])),
-            "help_separator_fg": list(hex_to_rgb(u["fg"])),
+            "help_separator_fg": list(hex_to_rgb(u["border"])),
             "help_indicator_fg": list(hex_to_rgb(s["markup"])),
             "help_indicator_bg": list(hex_to_rgb(e["bg"])),
-            "split_separator_fg": list(hex_to_rgb(u["fg"])),
+            "split_separator_fg": list(hex_to_rgb(u["border"])),
         },
         "search": {
-            "match_bg": list(hex_to_rgb(c["accent"])),
-            "match_fg": list(hex_to_rgb(e["bg"])),
+            "match_bg": list(hex_to_rgb(u["selection"])),
+            "match_fg": list(hex_to_rgb(c["accent"])),
         },
         "diagnostic": {
             "error_fg": list(hex_to_rgb(c["error"])),
             "error_bg": list(hex_to_rgb(e["bg"])),
-            "warning_fg": list(hex_to_rgb(t["yellow"])),
+            "warning_fg": list(hex_to_rgb(c["warning"])),
             "warning_bg": list(hex_to_rgb(e["bg"])),
             "info_fg": list(hex_to_rgb(s["tag"])),
             "info_bg": list(hex_to_rgb(e["bg"])),
@@ -566,282 +572,56 @@ def gen_lazygit(p: dict, variant: str) -> None:
     path = CONFIG / "lazygit" / "config.yml"
     text = path.read_text()
 
-    e, u, c, t, s = p["editor"], p["ui"], p["common"], p["terminal"], p["syntax"]
+    e, u, c, s = p["editor"], p["ui"], p["common"], p["syntax"]
 
-    theme_block = f"""gui:
-  theme:
+    theme_block = f"""  theme:
     activeBorderColor:
       - "{c["accent"]}"
       - bold
     inactiveBorderColor:
-      - "{u["fg"]}"
+      - "{u["border"]}"
     optionsTextColor:
       - "{s["tag"]}"
     selectedLineBgColor:
-      - "{u["line"]}"
+      - "{u["selection"]}"
     selectedRangeBgColor:
-      - "{u["line"]}"
+      - "{u["selection"]}"
     cherryPickedCommitBgColor:
-      - "{c["accent"]}"
+      - "{u["selection"]}"
     cherryPickedCommitFgColor:
-      - "{e["bg"]}"
+      - "{c["accent"]}"
     unstagedChangesColor:
-      - "{t["red"]}"
+      - "{c["error"]}"
     defaultFgColor:
       - "{e["fg"]}"
     searchingActiveBorderColor:
-      - "{c["accent"]}"
+      - "{c["warning"]}"
 """
 
-    # Replace or insert gui.theme block
-    if re.search(r"^gui:\s*\n\s+theme:", text, flags=re.MULTILINE):
-        text = re.sub(
-            r"^gui:\s*\n\s+theme:.*?(?=\n\S|\Z)",
-            theme_block.rstrip(),
-            text,
-            flags=re.DOTALL | re.MULTILINE,
+    # Меняем только gui.theme: соседние настройки и команды остаются нетронутыми.
+    gui = re.search(
+        r"^gui:[ \t]*(?:#[^\n]*)?\n(?:^[ \t]+\S[^\n]*(?:\n|$)|^[ \t]*\n)*",
+        text,
+        re.MULTILINE,
+    )
+    if gui:
+        block = gui.group()
+        theme = re.search(
+            r"^  theme:[ \t]*\n(?:^[ \t]{4,}\S[^\n]*(?:\n|$)|^[ \t]*\n)*",
+            block,
+            re.MULTILINE,
         )
+        if theme:
+            block = block[: theme.start()] + theme_block + block[theme.end() :]
+        else:
+            header_end = block.index("\n") + 1
+            block = block[:header_end] + theme_block + block[header_end:]
+        text = text[: gui.start()] + block + text[gui.end() :]
     else:
-        text = theme_block + "\n" + text
+        text = "gui:\n" + theme_block + "\n" + text
 
     path.write_text(text)
     print(f"  lazygit: {path}")
-
-
-# ── Ayugram (Telegram Desktop theme) ─────────────────────────────────────────
-
-
-def gen_ayugram(p: dict, variant: str) -> None:
-    path = CONFIG / "ayugram" / f"ayu-{variant}.tdesktop-theme"
-    e, s, t, u, c = p["editor"], p["syntax"], p["terminal"], p["ui"], p["common"]
-
-    in_bg = e["line"]
-    out_bg = u["line"]
-
-    content = f"""// Ayu {variant} theme for AyuGram / Telegram Desktop
-// Generated from palette/ayu.toml
-
-// ── Palette ─────────────────────────────────────────────────────────────
-COLOR_BG: {e["bg"]};
-COLOR_BG_OVER: {e["line"]};
-COLOR_BG_RIPPLE: {u["line"]};
-COLOR_FG: {e["fg"]};
-COLOR_FG_DIM: {u["fg"]};
-COLOR_ACCENT: {c["accent"]};
-COLOR_ACCENT_ON: {e["bg"]};
-COLOR_ERROR: {c["error"]};
-COLOR_GREEN: {t["green"]};
-COLOR_RED: {t["red"]};
-COLOR_LINK: {s["entity"]};
-COLOR_MSG_IN: {in_bg};
-COLOR_MSG_OUT: {out_bg};
-COLOR_SEL: {u["line"]};
-
-// ── Window ──────────────────────────────────────────────────────────────
-windowBg: COLOR_BG;
-windowFg: COLOR_FG;
-windowBgOver: COLOR_BG_OVER;
-windowBgRipple: COLOR_BG_RIPPLE;
-windowFgOver: COLOR_FG;
-windowSubTextFg: COLOR_FG_DIM;
-windowSubTextFgOver: COLOR_FG;
-windowBoldFg: COLOR_FG;
-windowBoldFgOver: COLOR_FG;
-windowBgActive: COLOR_ACCENT;
-windowFgActive: COLOR_ACCENT_ON;
-windowActiveTextFg: COLOR_ACCENT;
-windowShadowFg: #00000080;
-windowShadowFgFallback: COLOR_BG;
-shadowFg: #00000018;
-slideFadeOutBg: {e["bg"]}c0;
-slideFadeOutShadowFg: #00000000;
-imageBg: COLOR_BG;
-imageBgTransparent: COLOR_BG;
-
-// ── Buttons ─────────────────────────────────────────────────────────────
-activeButtonBg: COLOR_ACCENT;
-activeButtonBgOver: COLOR_ACCENT;
-activeButtonBgRipple: COLOR_ACCENT;
-activeButtonFg: COLOR_ACCENT_ON;
-activeButtonFgOver: COLOR_ACCENT_ON;
-activeButtonSecondaryFg: COLOR_ACCENT_ON;
-activeButtonSecondaryFgOver: COLOR_ACCENT_ON;
-activeLineFg: COLOR_ACCENT;
-activeLineFgError: COLOR_ERROR;
-lightButtonBg: COLOR_BG;
-lightButtonBgOver: COLOR_BG_OVER;
-lightButtonBgRipple: COLOR_BG_RIPPLE;
-lightButtonFg: COLOR_ACCENT;
-lightButtonFgOver: COLOR_ACCENT;
-attentionButtonFg: COLOR_ERROR;
-attentionButtonFgOver: COLOR_ERROR;
-attentionButtonBgOver: COLOR_BG_OVER;
-attentionButtonBgRipple: COLOR_BG_RIPPLE;
-outlineButtonBg: COLOR_BG;
-outlineButtonBgOver: COLOR_BG_OVER;
-outlineButtonOutlineFg: COLOR_ACCENT;
-outlineButtonBgRipple: COLOR_BG_RIPPLE;
-
-// ── Menu / scroll / input ───────────────────────────────────────────────
-menuBg: COLOR_BG;
-menuBgOver: COLOR_BG_OVER;
-menuBgRipple: COLOR_BG_RIPPLE;
-menuIconFg: COLOR_FG_DIM;
-menuIconFgOver: COLOR_FG;
-menuSubmenuArrowFg: COLOR_FG_DIM;
-menuFgDisabled: COLOR_FG_DIM;
-menuSeparatorFg: COLOR_BG_OVER;
-scrollBarBg: {u["fg"]}80;
-scrollBarBgOver: {u["fg"]}cc;
-scrollBg: #00000015;
-scrollBgOver: #00000025;
-filterInputBorderFg: COLOR_ACCENT;
-filterInputActiveBg: COLOR_BG;
-filterInputInactiveBg: COLOR_BG_OVER;
-
-// ── Title ───────────────────────────────────────────────────────────────
-titleBg: COLOR_BG;
-titleBgActive: COLOR_BG;
-titleButtonBg: COLOR_BG;
-titleButtonFg: COLOR_FG_DIM;
-titleButtonBgOver: COLOR_BG_OVER;
-titleButtonFgOver: COLOR_FG;
-titleButtonCloseBgOver: COLOR_ERROR;
-titleButtonCloseFgOver: #ffffff;
-titleFg: COLOR_FG;
-titleFgActive: COLOR_FG;
-
-// ── Sidebar ─────────────────────────────────────────────────────────────
-sideBarBg: COLOR_BG;
-sideBarBgActive: COLOR_BG_OVER;
-sideBarBgRipple: COLOR_BG_RIPPLE;
-sideBarTextFg: COLOR_FG_DIM;
-sideBarTextFgActive: COLOR_ACCENT;
-sideBarIconFg: COLOR_FG_DIM;
-sideBarIconFgActive: COLOR_ACCENT;
-sideBarBadgeBg: COLOR_ACCENT;
-sideBarBadgeBgMuted: COLOR_FG_DIM;
-sideBarBadgeFg: COLOR_ACCENT_ON;
-
-// ── Dialog list ─────────────────────────────────────────────────────────
-dialogsBg: COLOR_BG;
-dialogsNameFg: COLOR_FG;
-dialogsChatIconFg: COLOR_FG_DIM;
-dialogsDateFg: COLOR_FG_DIM;
-dialogsTextFg: COLOR_FG_DIM;
-dialogsTextFgService: COLOR_ACCENT;
-dialogsDraftFg: COLOR_ERROR;
-dialogsVerifiedIconBg: COLOR_ACCENT;
-dialogsVerifiedIconFg: COLOR_ACCENT_ON;
-dialogsSendingIconFg: COLOR_FG_DIM;
-dialogsSentIconFg: COLOR_ACCENT;
-dialogsUnreadBg: COLOR_ACCENT;
-dialogsUnreadBgMuted: COLOR_FG_DIM;
-dialogsUnreadFg: COLOR_ACCENT_ON;
-dialogsBgOver: COLOR_BG_OVER;
-dialogsNameFgOver: COLOR_FG;
-dialogsChatIconFgOver: COLOR_FG_DIM;
-dialogsDateFgOver: COLOR_FG;
-dialogsTextFgOver: COLOR_FG;
-dialogsTextFgServiceOver: COLOR_ACCENT;
-dialogsDraftFgOver: COLOR_ERROR;
-dialogsUnreadBgOver: COLOR_ACCENT;
-dialogsUnreadFgOver: COLOR_ACCENT_ON;
-dialogsBgActive: COLOR_BG_RIPPLE;
-dialogsNameFgActive: COLOR_FG;
-dialogsDateFgActive: COLOR_FG;
-dialogsTextFgActive: COLOR_FG;
-dialogsTextFgServiceActive: COLOR_ACCENT;
-dialogsOnlineBadgeFg: COLOR_GREEN;
-
-// ── Chat history ────────────────────────────────────────────────────────
-topBarBg: COLOR_BG;
-emojiPanBg: COLOR_BG;
-emojiPanCategories: COLOR_BG;
-emojiPanHeaderFg: COLOR_FG_DIM;
-emojiPanHeaderBg: COLOR_BG;
-historyTextInFg: COLOR_FG;
-historyTextInFgSelected: COLOR_FG;
-historyTextOutFg: COLOR_FG;
-historyTextOutFgSelected: COLOR_FG;
-historyLinkInFg: COLOR_LINK;
-historyLinkInFgSelected: COLOR_LINK;
-historyLinkOutFg: COLOR_LINK;
-historyLinkOutFgSelected: COLOR_LINK;
-historyOutIconFg: COLOR_ACCENT;
-historyOutIconFgSelected: COLOR_ACCENT;
-
-historyPeer1NameFg: {t["red"]};
-historyPeer1UserpicBg: {t["red"]};
-historyPeer2NameFg: {t["green"]};
-historyPeer2UserpicBg: {t["green"]};
-historyPeer3NameFg: {t["yellow"]};
-historyPeer3UserpicBg: {t["yellow"]};
-historyPeer4NameFg: {t["blue"]};
-historyPeer4UserpicBg: {t["blue"]};
-historyPeer5NameFg: {t["magenta"]};
-historyPeer5UserpicBg: {t["magenta"]};
-historyPeer6NameFg: {t["cyan"]};
-historyPeer6UserpicBg: {t["cyan"]};
-historyPeer7NameFg: {s["keyword"]};
-historyPeer7UserpicBg: {s["keyword"]};
-historyPeer8NameFg: {s["entity"]};
-historyPeer8UserpicBg: {s["entity"]};
-historyPeerUserpicFg: COLOR_ACCENT_ON;
-
-// ── Message bubbles ─────────────────────────────────────────────────────
-msgInBg: COLOR_MSG_IN;
-msgInBgSelected: COLOR_SEL;
-msgOutBg: COLOR_MSG_OUT;
-msgOutBgSelected: COLOR_SEL;
-msgSelectOverlay: {c["accent"]}40;
-msgStickerOverlay: {c["accent"]}40;
-msgInServiceFg: COLOR_ACCENT;
-msgInServiceFgSelected: COLOR_ACCENT;
-msgOutServiceFg: COLOR_ACCENT;
-msgOutServiceFgSelected: COLOR_ACCENT;
-msgInShadow: #00000020;
-msgInShadowSelected: #00000030;
-msgOutShadow: #00000020;
-msgOutShadowSelected: #00000030;
-msgInDateFg: COLOR_FG_DIM;
-msgInDateFgSelected: COLOR_FG;
-msgOutDateFg: COLOR_FG_DIM;
-msgOutDateFgSelected: COLOR_FG;
-msgInMonoFg: {s["string"]};
-msgOutMonoFg: {s["string"]};
-msgInReplyBarColor: COLOR_ACCENT;
-msgOutReplyBarColor: COLOR_ACCENT;
-msgWaveformInActive: COLOR_ACCENT;
-msgWaveformInInactive: COLOR_FG_DIM;
-msgWaveformOutActive: COLOR_ACCENT;
-msgWaveformOutInactive: COLOR_FG_DIM;
-
-// ── Compose area ────────────────────────────────────────────────────────
-historyComposeAreaBg: COLOR_BG;
-historyComposeAreaFg: COLOR_FG;
-historyComposeAreaFgService: COLOR_FG_DIM;
-historyComposeIconFg: COLOR_FG_DIM;
-historyComposeIconFgOver: COLOR_FG;
-historySendIconFg: COLOR_ACCENT;
-historySendIconFgOver: COLOR_ACCENT;
-historyPinnedBg: COLOR_BG;
-historyReplyBg: COLOR_BG;
-historyReplyCancelFg: COLOR_FG_DIM;
-historyReplyCancelFgOver: COLOR_ERROR;
-
-// ── Misc ────────────────────────────────────────────────────────────────
-profileBg: COLOR_BG;
-profileStatusFgOver: COLOR_ACCENT;
-notificationBg: COLOR_BG;
-callBg: {e["bg"]}e0;
-callNameFg: COLOR_FG;
-callAnswerBg: COLOR_GREEN;
-callHangupBg: COLOR_ERROR;
-"""
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(content)
-    print(f"  ayugram: {path}")
 
 
 # ── Thorium / Chrome theme ───────────────────────────────────────────────────
@@ -935,7 +715,7 @@ pcall(function()
     part_separator    = { open = "", close = "" },
     inverse_separator = { open = "", close = "" },
 
-    style_a = { fg = "__BG__", bg = "__ACCENT__", bg_mode = { normal = "__ACCENT__", select = "__TAG__", un_set = "__MARKUP__" } },
+    style_a = { fg = "__ACCENT__", bg = "__BG__", bg_mode = { normal = "__BG__", select = "__BG__", un_set = "__BG__" } },
     style_b = { bg = "__UILINE__", fg = "__FG__" },
     style_c = { bg = "reset", fg = "__FG__" },
 
@@ -1038,6 +818,7 @@ def gen_yazi(p: dict, variant: str) -> None:
     bg, fg, line, panel = e["bg"], e["fg"], e["line"], e["panel"]
     accent, error = c["accent"], c["error"]
     uifg, uiline = u["fg"], u["line"]
+    selection, border, warning = u["selection"], u["border"], c["warning"]
     tag, func, entity = s["tag"], s["func"], s["entity"]
     string, regexp, markup = s["string"], s["regexp"], s["markup"]
     keyword, comment, constant, operator = (
@@ -1099,27 +880,27 @@ def gen_yazi(p: dict, variant: str) -> None:
         f"count_selected = {st(fg=bg, bg=accent)}",
         "",
         'border_symbol = "│"',
-        f"border_style  = {st(fg=uifg)}",
+        f"border_style  = {st(fg=border)}",
         "",
         'syntect_theme = ""',
         "",
         "[tabs]",
-        f"active   = {st(fg=bg, bg=accent, bold=True)}",
+        f"active   = {st(fg=accent, bg=bg, bold=True)}",
         f"inactive = {st(fg=uifg, bg=line)}",
         'sep_inner = { open = "", close = "" }',
         'sep_outer = { open = "", close = "" }',
         "",
         "[mode]",
-        f"normal_main = {st(fg=bg, bg=accent, bold=True)}",
+        f"normal_main = {st(fg=accent, bg=bg, bold=True)}",
         f"normal_alt  = {st(fg=accent, bg=line)}",
-        f"select_main = {st(fg=bg, bg=tag, bold=True)}",
+        f"select_main = {st(fg=tag, bg=bg, bold=True)}",
         f"select_alt  = {st(fg=tag, bg=line)}",
-        f"unset_main  = {st(fg=bg, bg=markup, bold=True)}",
+        f"unset_main  = {st(fg=markup, bg=bg, bold=True)}",
         f"unset_alt   = {st(fg=markup, bg=line)}",
         "",
         "[indicator]",
-        "parent  = { reversed = true }",
-        "current = { reversed = true }",
+        f"parent  = {st(fg=fg, bg=selection)}",
+        f"current = {st(fg=fg, bg=selection)}",
         "preview = { underline = true }",
         'padding = { open = "", close = "" }',
         "",
@@ -1150,7 +931,7 @@ def gen_yazi(p: dict, variant: str) -> None:
         f"title   = {st(fg=accent, bold=True)}",
         f"body    = {st(fg=fg)}",
         f"list    = {st(fg=tag)}",
-        f"btn_yes = {st(fg=bg, bg=accent, bold=True)}",
+        f"btn_yes = {st(fg=accent, bg=bg, bold=True)}",
         f"btn_no  = {st(fg=fg, bg=line)}",
         'btn_labels = [ "  [Y]es  ", "  (N)o  " ]',
         "",
@@ -1158,11 +939,11 @@ def gen_yazi(p: dict, variant: str) -> None:
         f"border   = {st(fg=accent)}",
         f"title    = {st(fg=accent, bold=True)}",
         f"tbl_col  = {st(fg=tag)}",
-        f"tbl_cell = {st(fg=accent, reverse=True)}",
+        f"tbl_cell = {st(fg=accent, bg=selection)}",
         "",
         "[notify]",
         f"title_info  = {st(fg=string)}",
-        f"title_warn  = {st(fg=accent)}",
+        f"title_warn  = {st(fg=warning)}",
         f"title_error = {st(fg=error)}",
         'icon_info  = ""',
         'icon_warn  = ""',
@@ -1177,11 +958,11 @@ def gen_yazi(p: dict, variant: str) -> None:
         f"border   = {st(fg=accent)}",
         f"title    = {st(fg=fg)}",
         f"value    = {st(fg=fg)}",
-        "selected = { reversed = true }",
+        f"selected = {st(fg=fg, bg=selection)}",
         "",
         "[cmp]",
         f"border   = {st(fg=accent)}",
-        "active   = { reversed = true }",
+        f"active   = {st(fg=fg, bg=selection)}",
         f"inactive = {st(fg=fg)}",
         'icon_file    = ""',
         'icon_folder  = ""',
@@ -1196,8 +977,8 @@ def gen_yazi(p: dict, variant: str) -> None:
         f"on      = {st(fg=regexp)}",
         f"run     = {st(fg=keyword)}",
         f"desc    = {st(fg=fg)}",
-        "hovered = { reversed = true, bold = true }",
-        f"footer  = {st(fg=bg, bg=accent)}",
+        f"hovered = {st(fg=fg, bg=selection, bold=True)}",
+        f"footer  = {st(fg=accent, bg=bg)}",
         "",
         "[filetype]",
         "rules = [",
@@ -1223,7 +1004,8 @@ def gen_yazi(p: dict, variant: str) -> None:
         'clean_sign     = ""',
         "",
     ]
-    (flavor_dir / "flavor.toml").write_text("\n".join(lines) + "\n")
+    flavor_text = "\n".join(lines) + "\n"
+    (flavor_dir / "flavor.toml").write_text(flavor_text)
 
     # tmTheme for code-preview syntax highlighting (syntect).
     scopes = [
@@ -1280,8 +1062,10 @@ def gen_yazi(p: dict, variant: str) -> None:
     ]
     tm = [
         '<?xml version="1.0" encoding="UTF-8"?>',
-        '<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" '
-        '"http://www.apple.com/DTDs/PropertyList-1.0.dtd">',
+        (
+            '<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" '
+            '"http://www.apple.com/DTDs/PropertyList-1.0.dtd">'
+        ),
         '<plist version="1.0">',
         "<dict>",
         "\t<key>name</key>",
@@ -1295,7 +1079,7 @@ def gen_yazi(p: dict, variant: str) -> None:
         f"\t\t\t\t<key>foreground</key><string>{fg}</string>",
         f"\t\t\t\t<key>caret</key><string>{accent}</string>",
         f"\t\t\t\t<key>lineHighlight</key><string>{line}</string>",
-        f"\t\t\t\t<key>selection</key><string>{uiline}</string>",
+        f"\t\t\t\t<key>selection</key><string>{selection}</string>",
         f"\t\t\t\t<key>invisibles</key><string>{uifg}</string>",
         "\t\t\t</dict>",
         "\t\t</dict>",
@@ -1310,20 +1094,17 @@ def gen_yazi(p: dict, variant: str) -> None:
     ]
     (flavor_dir / "tmtheme.xml").write_text("\n".join(tm) + "\n")
 
-    (flavor_dir / "README.md").write_text(
-        f"# Ayu {variant.capitalize()} — Yazi flavor\n\n"
-        "Generated from `palette/ayu.toml` by `palette/generate.py`.\n"
-        "Do not edit by hand — edit the palette and regenerate.\n"
-    )
     (flavor_dir / "LICENSE").write_text(_MIT)
     (flavor_dir / "LICENSE-tmtheme").write_text(_MIT)
 
     (CONFIG / "yazi" / "theme.toml").write_text(
         "#:schema https://yazi-rs.github.io/schemas/theme.json\n"
-        "# Generated from palette/ayu.toml — selects the bundled flavor.\n\n"
+        "# Generated from palette/ayu.toml.\n"
+        "# Цвета заданы и здесь: tmux может не ответить на запрос цветовой схемы.\n"
+        "# Оба режима используют выбранный вариант; меняйте его через generator.\n\n"
         "[flavor]\n"
         f'dark  = "{name}"\n'
-        f'light = "{name}"\n'
+        f'light = "{name}"\n\n' + flavor_text.rstrip() + "\n"
     )
 
     # init.lua — plugin setup + ayu-colored yatline status bar.
@@ -1360,7 +1141,6 @@ GENERATORS = {
     "fresh": gen_fresh,
     "attyx": gen_attyx,
     "lazygit": gen_lazygit,
-    "ayugram": gen_ayugram,
     "thorium": gen_thorium,
     "yazi": gen_yazi,
 }

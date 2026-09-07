@@ -54,63 +54,23 @@
       path: config/bat/config
       create: true
       force: true
+    # Общая тема Bat/Yazi — один источник, без дублирования цветов.
+    ~/.config/bat/themes/ayu-dark.tmTheme:
+      path: config/yazi/flavors/ayu-dark.yazi/tmtheme.xml
+      create: true
+      force: true
     # Thorium browser theme
     ~/.config/thorium/ayu-dark:
       path: config/thorium/ayu-dark
       create: true
       force: true
 - shell:
-    - command: |
-        # Install Firefox-Mod-Blur userChrome/userContent theme
-        FIREFOX_APP="/Applications/Firefox.app/Contents/MacOS/firefox"
-        FIREFOX_BASE="$HOME/Library/Application Support/Firefox"
-        FIREFOX_PROFILES="$FIREFOX_BASE/Profiles"
-        FIREFOX_MOD_BLUR_CHROME_DIR="$HOME/dots/config/firefox/chrome"
-
-        if [[ ! -x "$FIREFOX_APP" ]]; then
-          echo "Firefox.app not found, skipping Firefox-Mod-Blur install."
-          exit 0
-        fi
-
-        if [[ ! -d "$FIREFOX_MOD_BLUR_CHROME_DIR" ]]; then
-          echo "Firefox-Mod-Blur chrome directory not found, skipping."
-          exit 0
-        fi
-
-        mkdir -p "$FIREFOX_PROFILES"
-
-        shopt -s nullglob
-        profiles=("$FIREFOX_PROFILES"/*/)
-        if [[ ${#profiles[@]} -eq 0 ]]; then
-          echo "Creating Firefox default profile..."
-          "$FIREFOX_APP" -CreateProfile "default-release $FIREFOX_PROFILES/default-release" >/dev/null 2>&1 || true
-          profiles=("$FIREFOX_PROFILES"/*/)
-        fi
-
-        INSTALLED=0
-        for profile_dir in "${profiles[@]}"; do
-          profile_name="$(basename "$profile_dir")"
-          case "$profile_name" in
-            *default*|*release*|*.default|*.default-release|default-release) ;;
-            *)
-              if [[ ! -f "$profile_dir/prefs.js" ]]; then
-                continue
-              fi
-              ;;
-          esac
-
-          echo "Firefox profile: $profile_name"
-          mkdir -p "$profile_dir/chrome"
-          rsync -a --delete "$FIREFOX_MOD_BLUR_CHROME_DIR/" "$profile_dir/chrome/"
-          cp "$HOME/dots/config/firefox/user.js" "$profile_dir/user.js"
-          echo "  Installed Firefox-Mod-Blur chrome + Firefox user.js"
-          INSTALLED=1
-        done
-
-        if [[ "$INSTALLED" -eq 0 ]]; then
-          echo "No Firefox profiles found, skipping Firefox-Mod-Blur install."
-        fi
-      description: Install Firefox-Mod-Blur theme
+    - command: python3 scripts/waterfox-apply.py
+      description: Применить настройки Waterfox к существующим профилям
+      stdout: true
+      stderr: true
+    - command: bat cache --build
+      description: Build shared Ayu theme cache for Bat
       stdout: true
       stderr: true
     - command: |
@@ -136,18 +96,6 @@
           echo "No active Zen profiles found, skipping."
         fi
       description: Install Zen Browser settings
-      stdout: true
-      stderr: true
-    - command: |
-        # Apply AyuGram theme — copy to tdata for auto-load
-        AYUGRAM_DIR="$HOME/Library/Application Support/AyuGram Desktop/tdata"
-        if [[ -d "$AYUGRAM_DIR" ]]; then
-          cp "$HOME/dots/config/ayugram/ayu-dark.tdesktop-theme" "$AYUGRAM_DIR/" 2>/dev/null
-          echo "AyuGram theme copied. Open the file in AyuGram to apply."
-        else
-          echo "AyuGram not found, skipping theme install"
-        fi
-      description: Copy AyuGram theme to tdata
       stdout: true
       stderr: true
     - command: |

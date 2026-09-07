@@ -130,37 +130,36 @@ alias share_port='npx tunnelmole 8000'
 alias create_mr='~/dots/scripts/ai_helper --mode mr'
 alias nvim-bench='hyperfine "nvim --startuptime /tmp/startup.log +qall" --warmup 3 --runs 10'
 
-# --- Catppuccin Mocha — FZF ---
+# --- Quiet Ayu — поиск и подсветка ввода ---
 export FZF_DEFAULT_OPTS=" \
-  --color=bg+:#313244,bg:#1e1e2e,spinner:#f5e0dc,hl:#f38ba8 \
-  --color=fg:#cdd6f4,header:#f38ba8,info:#cba6f7,pointer:#f5e0dc \
-  --color=marker:#b4befe,fg+:#cdd6f4,prompt:#cba6f7,hl+:#f38ba8 \
-  --color=selected-bg:#45475a \
+  --color=bg+:#273747,bg:#0d1017,spinner:#73d0ff,hl:#73d0ff \
+  --color=fg:#bfbdb6,header:#858d9c,info:#858d9c,pointer:#73d0ff \
+  --color=marker:#95e6cb,fg+:#bfbdb6,prompt:#73d0ff,hl+:#73d0ff \
+  --color=selected-bg:#273747,border:#303847 \
   --border='rounded' --preview-window='border-rounded' \
-  --prompt='> ' --marker='>' --pointer='◆' --separator='─' --scrollbar='│'"
+  --prompt='> ' --marker='>' --pointer='›' --separator='─' --scrollbar='│'"
 
-# --- Catppuccin Mocha — syntax highlighting ---
 typeset -A ZSH_HIGHLIGHT_STYLES
 ZSH_HIGHLIGHT_MAXLENGTH=512
-ZSH_HIGHLIGHT_STYLES[command]='fg=#89b4fa'
-ZSH_HIGHLIGHT_STYLES[builtin]='fg=#89b4fa'
-ZSH_HIGHLIGHT_STYLES[alias]='fg=#89b4fa'
-ZSH_HIGHLIGHT_STYLES[function]='fg=#89b4fa'
-ZSH_HIGHLIGHT_STYLES[unknown-token]='fg=#f38ba8'
-ZSH_HIGHLIGHT_STYLES[path]='fg=#f9e2af,underline'
-ZSH_HIGHLIGHT_STYLES[single-quoted-argument]='fg=#a6e3a1'
-ZSH_HIGHLIGHT_STYLES[double-quoted-argument]='fg=#a6e3a1'
-ZSH_HIGHLIGHT_STYLES[dollar-quoted-argument]='fg=#a6e3a1'
-ZSH_HIGHLIGHT_STYLES[commandseparator]='fg=#89dceb'
-ZSH_HIGHLIGHT_STYLES[redirection]='fg=#89dceb'
-ZSH_HIGHLIGHT_STYLES[globbing]='fg=#f9e2af'
-ZSH_HIGHLIGHT_STYLES[assign]='fg=#f2cdcd'
-ZSH_HIGHLIGHT_STYLES[reserved-word]='fg=#cba6f7'
-ZSH_HIGHLIGHT_STYLES[comment]='fg=#6c7086'
-ZSH_HIGHLIGHT_STYLES[arg0]='fg=#89b4fa'
+ZSH_HIGHLIGHT_STYLES[command]='fg=#73d0ff'
+ZSH_HIGHLIGHT_STYLES[builtin]='fg=#73d0ff'
+ZSH_HIGHLIGHT_STYLES[alias]='fg=#73d0ff'
+ZSH_HIGHLIGHT_STYLES[function]='fg=#73d0ff'
+ZSH_HIGHLIGHT_STYLES[unknown-token]='fg=#f07178'
+ZSH_HIGHLIGHT_STYLES[path]='fg=#bfbdb6,underline'
+ZSH_HIGHLIGHT_STYLES[single-quoted-argument]='fg=#95e6cb'
+ZSH_HIGHLIGHT_STYLES[double-quoted-argument]='fg=#95e6cb'
+ZSH_HIGHLIGHT_STYLES[dollar-quoted-argument]='fg=#95e6cb'
+ZSH_HIGHLIGHT_STYLES[commandseparator]='fg=#858d9c'
+ZSH_HIGHLIGHT_STYLES[redirection]='fg=#858d9c'
+ZSH_HIGHLIGHT_STYLES[globbing]='fg=#e6b450'
+ZSH_HIGHLIGHT_STYLES[assign]='fg=#bfbdb6'
+ZSH_HIGHLIGHT_STYLES[reserved-word]='fg=#73d0ff'
+ZSH_HIGHLIGHT_STYLES[comment]='fg=#858d9c'
+ZSH_HIGHLIGHT_STYLES[arg0]='fg=#73d0ff'
 
-# --- Catppuccin Mocha — autosuggestions ---
-ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=#585b70'
+# Подсказка слабее ввода, но остаётся читаемой.
+ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=#858d9c'
 # Completion-based suggestions spawn a nested completion PTY for novel input.
 # History-only suggestions stay asynchronous and avoid input/Ctrl+C stalls.
 ZSH_AUTOSUGGEST_STRATEGY=(history)
@@ -184,7 +183,7 @@ else
   autoload -Uz add-zsh-hook _dots-prompt-find-git-dir _dots-prompt-precmd _dots-prompt-preexec
   add-zsh-hook preexec _dots-prompt-preexec
   add-zsh-hook precmd _dots-prompt-precmd
-  PROMPT='%F{#bfbdb6}󰀵 %5~ %f'$'\n> '
+  PROMPT='%F{#858d9c}󰀵 %f%F{#bfbdb6}%5~ %f'$'\n''%F{#73d0ff}>%f '
 fi
 
 # These integrations must exist before ZLE draws its first editable line.

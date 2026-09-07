@@ -31,40 +31,43 @@ local switch_workspace_action = act.ShowLauncherArgs({ flags = "FUZZY|WORKSPACES
 -- =============================================================================
 -- Appearance (from Ghostty config)
 -- =============================================================================
--- colors from palette/ayu.toml (dark)
+-- ANSI-цвета Ayu из Ghostty; акцент и выделение — Quiet Ayu.
 config.colors = {
 	background = "#0d1017",
 	foreground = "#bfbdb6",
-	cursor_bg = "#e6b450",
+	cursor_bg = "#73d0ff",
 	cursor_fg = "#0d1017",
-	cursor_border = "#e6b450",
-	ansi = { "#3e4451", "#f07178", "#aad94c", "#ffb454", "#39bae6", "#d2a6ff", "#95e6cb", "#e6e1cf" },
-	brights = { "#4d5566", "#f07178", "#aad94c", "#ffb454", "#39bae6", "#d2a6ff", "#95e6cb", "#ffffff" },
+	cursor_border = "#73d0ff",
+	selection_bg = "#273747",
+	selection_fg = "#bfbdb6",
+	split = "#303847",
+	ansi = { "#11151c", "#ea6c73", "#7fd962", "#f9af4f", "#53bdfa", "#cda1fa", "#90e1c6", "#c7c7c7" },
+	brights = { "#686868", "#f07178", "#aad94c", "#ffb454", "#59c2ff", "#d2a6ff", "#95e6cb", "#ffffff" },
 	tab_bar = {
 		background = "#0d1017",
-		new_tab = { bg_color = "#0d1017", fg_color = "#555e73" },
-		new_tab_hover = { bg_color = "#0d1017", fg_color = "#e6b450" },
+		new_tab = { bg_color = "#0d1017", fg_color = "#858d9c" },
+		new_tab_hover = { bg_color = "#0d1017", fg_color = "#73d0ff" },
 	},
 }
-config.font = wezterm.font("Iosevka")
-config.font_size = 14
-config.line_height = 1.45
+config.font = wezterm.font_with_fallback({ "SF Mono", "Symbols Nerd Font Mono" })
+config.harfbuzz_features = { "calt=0", "liga=0", "dlig=0" }
+config.font_size = 15
+config.line_height = 1.12
 
-config.default_cursor_style = "SteadyBlock"
+config.default_cursor_style = "SteadyBar"
 config.cursor_blink_rate = 0
 config.hide_mouse_cursor_when_typing = true
 
 config.window_close_confirmation = "NeverPrompt"
 config.window_decorations = "RESIZE"
--- config.window_background_opacity = 0.95
-config.window_background_opacity = 1
-config.macos_window_background_blur = 10
-config.window_padding = { left = 6, right = 6, top = 6, bottom = 6 }
+config.window_background_opacity = 0.94
+config.macos_window_background_blur = 18
+config.window_padding = { left = 18, right = 18, top = 14, bottom = 14 }
 
--- Dim inactive panes
+-- Неактивные панели без цветной дымки и потери контраста.
 config.inactive_pane_hsb = {
-	saturation = 0.8,
-	brightness = 0.4,
+	saturation = 1.0,
+	brightness = 1.0,
 }
 
 config.scrollback_lines = 1000000
@@ -84,8 +87,9 @@ config.status_update_interval = 500
 
 local C = {
 	bg = "#0d1017",
-	active = "#e6b450",
-	dim = "#555e73",
+	active = "#73d0ff",
+	selection = "#273747",
+	dim = "#858d9c",
 }
 
 -- =============================================================================
@@ -189,9 +193,10 @@ wezterm.on("format-tab-title", function(tab)
 	local idx = tab.tab_index + 1
 	local title = get_tab_title(tab)
 	local fg = tab.is_active and C.active or C.dim
+	local bg = tab.is_active and C.selection or C.bg
 
 	return wezterm.format({
-		{ Background = { Color = C.bg } },
+		{ Background = { Color = bg } },
 		{ Foreground = { Color = fg } },
 		{ Attribute = { Intensity = tab.is_active and "Bold" or "Normal" } },
 		{ Text = string.format(" %d: %s ", idx, title) },
