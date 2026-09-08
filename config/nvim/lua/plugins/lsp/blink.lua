@@ -65,11 +65,14 @@ return {
           min_keyword_length = 4,
           score_offset = 30,
           opts = {
-            dictionary_directories = { vim.fn.expand '~/github/dotfiles-latest/dictionaries' },
-            dictionary_files = {
-              vim.fn.expand '~/github/dotfiles-latest/neovim/neobean/spell/en.utf-8.add',
-              vim.fn.expand '~/github/dotfiles-latest/neovim/neobean/spell/es.utf-8.add',
-            },
+            dictionary_files = function()
+              -- Системный словарь и существующие пользовательские словари Neovim.
+              local files = vim.fn.globpath(vim.fn.stdpath('config') .. '/spell', '*.add', false, true)
+              table.insert(files, '/usr/share/dict/words')
+              return vim.tbl_filter(function(path)
+                return vim.fn.filereadable(path) == 1
+              end, files)
+            end,
           },
         },
       },
