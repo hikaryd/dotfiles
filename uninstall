@@ -319,7 +319,6 @@ if [[ $REMOVE_PACKAGES -eq 1 ]]; then
     FORMULAE=$(brew bundle list --file="$BASEDIR/Brewfile" --formula 2>/dev/null || true)
     CASKS=$(brew bundle list --file="$BASEDIR/Brewfile" --cask 2>/dev/null || true)
     TAPS=$(brew bundle list --file="$BASEDIR/Brewfile" --tap 2>/dev/null || true)
-    CASKS=$(printf '%s\nraycast\n' "$CASKS")  # raycast ставится отдельным шагом install
     printf '   к удалению: %s formulae, %s casks\n' \
       "$(grep -c . <<<"$FORMULAE" || true)" "$(grep -c . <<<"$CASKS" || true)"
     if confirm "Удалить ВСЕ эти пакеты?"; then
@@ -365,7 +364,7 @@ fi
 cat <<EOF
 
    ${B}Оставлено как есть${R} (удалять по желанию, вручную):
-   ${DIM}· rustup/cargo:   rustup self uninstall   (~/.rustup, ~/.cargo)
+   ${DIM}· rustup/cargo:   cargo uninstall xtop; rustup self uninstall   (~/.rustup, ~/.cargo)
    · rtk:            бинарник + ~/.rtk (см. установщик rtk)
    · PyYAML:         pip3 uninstall pyyaml --break-system-packages
    · Homebrew сам:   /opt/homebrew (см. официальный uninstall-скрипт brew)

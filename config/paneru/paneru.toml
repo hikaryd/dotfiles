@@ -162,9 +162,9 @@ title = ".*"
 bundle_id = "com.spotify.client"
 floating = true
 
-[windows.raycast]
+[windows.tinycast]
 title = ".*"
-bundle_id = "com.raycast.macos"
+bundle_id = "com.tinycast.app"
 floating = true
 
 [windows.finder]

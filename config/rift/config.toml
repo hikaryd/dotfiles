@@ -80,7 +80,7 @@ app_rules = [
   { app_id = "com.apple.finder", floating = true },
   { app_name = "Cisco Secure Client", floating = true },
   { app_name = "v2RayTun", floating = true },
-  { app_name = "Raycast", floating = true },
+  { app_name = "Tinycast", floating = true },
   { app_name = "Пункт управления", floating = true },
   { app_name = "Control Center", floating = true },
   { app_name = "AlDente", floating = true },

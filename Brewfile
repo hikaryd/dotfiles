@@ -4,6 +4,7 @@ tap "acsandmann/tap"
 tap "asmvik/formulae"
 tap "nikitabobko/tap"
 tap "duongductrong/snapzy", "https://github.com/duongductrong/Snapzy"
+tap "abue-ammar/tinycast"
 tap "homebrew-zathura/zathura"
 tap "ajrosen/tap"
 tap "kunkka19xx/tap"
@@ -121,7 +122,6 @@ brew "rift", args: ["tap", "acsandmann/tap"]
 brew "paneru"
 brew "fastfetch"    
 brew "ffmpeg"    
-# Raycast устанавливается отдельно как optional cask в steps/dependencies.yml.
 cask "rustdesk"    
 
 # Дополнения для bat
@@ -138,6 +138,7 @@ cask "ghostty"
 cask "mos"       
 cask "karabiner-elements"
 cask "duongductrong/snapzy/snapzy"
+cask "tinycast"
 cask "caffeine"
 cask "logi-options+"
 cask "logitech-options"

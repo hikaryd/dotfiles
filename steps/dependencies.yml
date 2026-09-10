@@ -33,7 +33,7 @@
           echo "Homebrew bundle installed successfully."
         else
           status=$?
-          echo "Homebrew bundle failed (exit $status). See the package error above; optional Raycast is installed separately." >&2
+          echo "Homebrew bundle failed (exit $status). See the package error above." >&2
           exit "$status"
         fi
       description: Install Homebrew packages via Brewfile
@@ -56,22 +56,6 @@
       stdout: true
       stderr: true
     - command: |
-        if ! command -v brew >/dev/null 2>&1; then
-          echo "Homebrew is not installed. Skipping Raycast."
-          exit 0
-        fi
-        if brew list --cask raycast >/dev/null 2>&1 || [[ -d /Applications/Raycast.app ]]; then
-          echo "Raycast already installed"
-          exit 0
-        fi
-        echo "Installing Raycast (optional cask) ..."
-        if ! brew install --cask raycast; then
-          echo "Raycast cask download failed; skipping optional Raycast install."
-        fi
-      description: Install Raycast (optional)
-      stdout: true
-      stderr: true
-    - command: |
         if ! command -v rustup >/dev/null 2>&1; then
           echo "Installing Rust with nightly toolchain..."
           curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain nightly --profile default
@@ -81,6 +65,18 @@
           rustup default nightly
         fi
       description: Install Rust with nightly toolchain
+      stdout: true
+      stderr: true
+    - command: |
+        if ! command -v cargo >/dev/null 2>&1 && [[ -f "$HOME/.cargo/env" ]]; then
+          source "$HOME/.cargo/env"
+        fi
+        if ! command -v cargo >/dev/null 2>&1; then
+          echo "Cargo is not available after Rust setup; cannot install xtop." >&2
+          exit 1
+        fi
+        cargo install --git https://github.com/xtop-cli/xtop --all-features
+      description: Install xtop from Git with all features
       stdout: true
       stderr: true
     - command: |
