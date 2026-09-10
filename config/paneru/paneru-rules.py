@@ -39,7 +39,7 @@ from typing import Any
 # Карта: bundle_id -> номер ряда (virtual workspace).
 # Номера рядов = window_virtualnum_N в paneru.toml
 # (ряд 1=Alt+1, 2=Alt+3, 3=Alt+W, 4=Alt+E, 5=Alt+D).
-# Floating-приложения (1Password, Spotify, Raycast, Finder, ...) сюда НЕ
+# Floating-приложения (1Password, Spotify, Tinycast, Finder, ...) сюда НЕ
 # вносим — они не тайлятся и ряда не имеют.
 # bundle_id установленного приложения:
 #   /usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "/Applications/<App>.app/Contents/Info.plist"
