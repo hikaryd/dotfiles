@@ -1,4 +1,12 @@
 - link:
+    ~/.local/bin/dots:
+      path: scripts/dots
+      create: true
+      force: true
+    ~/.config/atuin/config.toml:
+      path: config/atuin/config.toml
+      create: true
+      force: false
     # Zsh
     ~/.zshrc:
       path: config/zsh/.zshrc

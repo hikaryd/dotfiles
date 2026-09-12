@@ -8,6 +8,7 @@ tap "abue-ammar/tinycast"
 tap "homebrew-zathura/zathura"
 tap "ajrosen/tap"
 tap "kunkka19xx/tap"
+tap "LargeModGames/spotatui"
 
 # Основные системные пакеты
 brew "coreutils"
@@ -22,6 +23,8 @@ brew "gh"
 # CLI утилиты
 brew "htop"
 brew "tree"
+brew "eza"      # Уже используется directory preview в Yazi
+brew "hyperfine" # Уже используется nvim-bench в zsh/Nushell
 brew "zoxide"
 brew "rsync"
 brew "p7zip"
@@ -45,9 +48,11 @@ brew "zathura"
 brew "zathura-pdf-poppler" # PDF-плагин; линкуется в steps/dependencies.yml
 brew "nolight132/tap/nls"
 brew "nklmilojevic/sofka/sofka"
+brew "spotatui"
 
 # Инструменты для шелла и терминала
 brew "fzf"
+brew "atuin" # Локальная история; без аккаунта, sync и daemon
 brew "fzf-tab"
 brew "tmux"
 brew "zsh"
@@ -119,7 +124,6 @@ brew "jq-lsp"
 brew "sesh"    
 brew "gum"    
 brew "rift", args: ["tap", "acsandmann/tap"]
-brew "paneru"
 brew "fastfetch"    
 brew "ffmpeg"    
 cask "rustdesk"    
@@ -134,6 +138,7 @@ cask "spotify"
 brew "kcat"
 cask "1password"
 cask "1password-cli"
+cask "nikitabobko/tap/aerospace"
 cask "ghostty"
 cask "mos"       
 cask "karabiner-elements"

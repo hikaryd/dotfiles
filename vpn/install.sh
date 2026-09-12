@@ -41,7 +41,7 @@ ${B}Использование:${R} ./install.sh [опции]
 
   --sub-url URL        Ссылка на подписку (vless://… список)        [обяз.]
   --vps TARGET         SSH к VPS, напр. root@203.0.113.10           [обяз.]
-  --router-host IP     Адрес роутера Keenetic            (192.168.254.1)
+  --router-host IP     Адрес роутера Keenetic            [обяз. для роутера]
   --router-user USER   Логин веб-админки роутера                 (admin)
   --router-pass PASS   Пароль веб-админки роутера                 [обяз. для роутера]
   --router-name NAME   Имя роутера в реестре пиров VPS   (авто: hostname)
@@ -57,15 +57,15 @@ ${B}Использование:${R} ./install.sh [опции]
 
 Примеры:
   ./install.sh --sub-url 'https://host/sub/TOKEN' --vps root@203.0.113.10 \\
-               --router-pass 'СекретРоутера'
+               --router-host 192.0.2.1 --router-pass 'СекретРоутера'
 
   # второй роутер на тот же сервер (запускать из сети второго роутера):
-  ./install.sh --vps root@203.0.113.10 --router-pass 'Секрет' --skip-vps
+  ./install.sh --vps root@203.0.113.10 --router-host 192.0.2.1 --router-pass 'Секрет' --skip-vps
 EOF
 }
 
 # ─── параметры ───────────────────────────────────────────────────────
-SUB_URL=""; VPS=""; ROUTER_HOST="192.168.254.1"; ROUTER_USER="admin"; ROUTER_PASS=""
+SUB_URL=""; VPS=""; ROUTER_HOST=""; ROUTER_USER="admin"; ROUTER_PASS=""
 ROUTER_NAME=""; ROUTER_CURPUB=""
 ROUTER_LAN_INTERFACE="Home"
 AWG_PORT="51820"; TUN_NET="10.8.2.0/24"; MTU="1280"; ADBLOCK="1"; DHCP_POOL="_WEBADMIN"
@@ -104,6 +104,10 @@ if [[ $SKIP_VPS -eq 0 ]]; then
 fi
 [[ -z $VPS ]] && VPS=$(ask "SSH к VPS (root@IP)")
 [[ -z $VPS ]] && die "Нужен --vps"
+if [[ $SKIP_ROUTER -eq 0 ]]; then
+  [[ -z $ROUTER_HOST ]] && ROUTER_HOST=$(ask "Адрес роутера")
+  [[ -n $ROUTER_HOST ]] || die "Нужен --router-host"
+fi
 if [[ $SKIP_ROUTER -eq 0 && -z $ROUTER_PASS ]]; then
   ROUTER_PASS=$(ask_secret "Пароль роутера ($ROUTER_USER@$ROUTER_HOST)")
 fi

@@ -57,3 +57,6 @@ keybind = ctrl+9=csi:57;5u
 # Для полного отключения движения уберите следующую строку custom-shader.
 custom-shader = shaders/smooth_cursor.glsl
 custom-shader-animation = true
+
+# Локальные профили dots style, относительно XDG-конфига Ghostty.
+config-file = ?../dots/ghostty-style.conf

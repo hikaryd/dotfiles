@@ -1,6 +1,7 @@
 local M = {}
 
 function M.setup()
+  require('core.dots_style').setup()
   local api, fn = vim.api, vim.fn
 
   vim.o.updatetime = 100

@@ -24,7 +24,6 @@ alias "..." = cd ../../..
 alias l = ls
 alias fg = froggit
 alias bu = brew upgrade --cask --greedy
-alias deploy-dev = ~/dots/scripts/deploy-dev.sh
 
 # alias cd = z
 

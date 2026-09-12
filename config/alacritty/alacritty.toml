@@ -51,14 +51,13 @@ save_to_clipboard = true
 background = "#0d1017"
 foreground = "#bfbdb6"
 
-# Ghostty: selection-foreground/background from the Ayu theme.
-[colors.selection]
-text = "#bfbdb6"
-background = "#273747"
-
 [colors.cursor]
 cursor = "#73d0ff"
 text = "CellBackground"
+
+[colors.selection]
+background = "#273747"
+text = "#bfbdb6"
 
 [colors.normal]
 black = "#11151c"
@@ -79,7 +78,6 @@ blue = "#59c2ff"
 magenta = "#d2a6ff"
 cyan = "#95e6cb"
 white = "#ffffff"
-
 [keyboard]
 bindings = [
   # Native macOS Cmd+C/Cmd+V bindings are provided by Alacritty defaults.

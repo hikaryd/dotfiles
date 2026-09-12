@@ -1,0 +1,6 @@
+{
+  "lan_ip": "192.0.2.116",
+  "origin": "https://192.0.2.116:8443",
+  "serial": "REPLACE_DEVICE_SERIAL",
+  "token": "__CONTROL_TOKEN__"
+}

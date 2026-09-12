@@ -122,7 +122,6 @@ alias ...='cd ../..'
 alias ....='cd ../../..'
 
 alias bu='brew upgrade --cask --greedy'
-alias deploy-dev='~/dots/scripts/deploy-dev.sh'
 alias speedtest='networkquality'
 alias codex='codex -a untrusted -c model_reasoning_effort="high"'
 alias vs='source .venv/bin/activate'
@@ -167,6 +166,14 @@ ZSH_AUTOSUGGEST_BUFFER_MAX_SIZE=256
 typeset -g ZSH_AUTOSUGGEST_MANUAL_REBIND=1
 
 # --- Integrations ---
+# Уведомления независимы от prompt provider, не сохраняют текст команд.
+if [[ -o interactive ]]; then
+  zmodload zsh/datetime
+  autoload -Uz add-zsh-hook _dots-notify-preexec _dots-notify-precmd
+  add-zsh-hook preexec _dots-notify-preexec
+  add-zsh-hook precmd _dots-notify-precmd
+fi
+
 # Native prompt avoids a Starship process on every redraw. Set
 # DOTS_USE_STARSHIP=1 before starting zsh to restore the full Starship prompt.
 if [[ "${DOTS_USE_STARSHIP:-0}" == 1 ]]; then
@@ -190,7 +197,9 @@ fi
 # Registering a line-init hook from inside .zshrc is one prompt too late: the
 # hook first runs after the user submits a command, so the initial prompt has
 # neither history suggestions nor fzf completion.
-if [[ -o interactive ]]; then
+# Non-TTY `zsh -ic` has no editable line: fzf's option restore otherwise emits
+# "can't change option: zle". Реальные интерактивные панели сохраняют все plugins.
+if [[ -o interactive && -t 0 && -t 1 ]]; then
   [[ -f /opt/homebrew/opt/fzf/shell/completion.zsh ]] && source /opt/homebrew/opt/fzf/shell/completion.zsh
   [[ -f /opt/homebrew/opt/fzf/shell/key-bindings.zsh ]] && source /opt/homebrew/opt/fzf/shell/key-bindings.zsh
 
@@ -208,6 +217,27 @@ if [[ -o interactive ]]; then
 
   [[ -f /opt/homebrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh ]] && \
     source /opt/homebrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh
+  # Только Ctrl-R; Up, fzf Alt-C/Ctrl-T и быстрые history autosuggestions прежние.
+  # Cache исполняется из private user dir; invalidation по binary/config версии.
+  if [[ -t 0 && -t 1 ]] && (( $+commands[atuin] )); then
+    _atuin_cache_dir="${XDG_CACHE_HOME:-$HOME/.cache}/dots"
+    _atuin_cache="$_atuin_cache_dir/atuin-init.zsh"
+    if [[ ! -s "$_atuin_cache" || "$commands[atuin]" -nt "$_atuin_cache" || "$HOME/.zshrc" -nt "$_atuin_cache" ]]; then
+      (umask 077; mkdir -p "$_atuin_cache_dir"; atuin init zsh --disable-up-arrow --disable-ai > "$_atuin_cache.$$.tmp" && mv -f "$_atuin_cache.$$.tmp" "$_atuin_cache")
+    fi
+    [[ -r "$_atuin_cache" ]] && source "$_atuin_cache"
+    ZSH_AUTOSUGGEST_STRATEGY=(history)
+    unset _atuin_cache _atuin_cache_dir
+  fi
+
+  _dots-menu-widget() {
+    zle -I
+    command dots menu
+    zle reset-prompt
+  }
+  zle -N _dots-menu-widget
+  bindkey '^O' _dots-menu-widget
+
   # zsh-syntax-highlighting must remain the last ZLE plugin sourced.
   [[ -f /opt/homebrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ]] && \
     source /opt/homebrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh

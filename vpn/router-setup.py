@@ -20,10 +20,10 @@ import urllib.error
 import urllib.request
 
 H = os.environ
-BASE = f"http://{H.get('ROUTER_HOST', '192.168.254.1')}"
+BASE = f"http://{H['ROUTER_HOST']}"
 LOGIN = H.get("ROUTER_USER", "admin")
 PASS = H["ROUTER_PASS"]
-LAN_IP = H.get("ROUTER_LAN_IP", H.get("ROUTER_HOST", "192.168.254.1"))
+LAN_IP = H.get("ROUTER_LAN_IP", H["ROUTER_HOST"])
 LAN_IFACE = H.get("ROUTER_LAN_INTERFACE", "Home")
 IFACE = H.get("WG_IFACE", "Wireguard0")
 DHCP_POOL = H.get("DHCP_POOL", "_WEBADMIN")

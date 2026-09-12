@@ -1,3 +1,5 @@
+Include ~/dots/config/ssh/pixel-owner.conf
+
 Host *
     ForwardAgent yes
     AddKeysToAgent yes
