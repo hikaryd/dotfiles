@@ -61,15 +61,28 @@ if [[ -n $SELECTED_CONFIG ]]; then
 	exit 0
 fi
 
-run_dotbot 'steps/dependencies.yml' || true
+# Keep processing independent steps, but never hide a failed installation.
+FAILED_STEPS=0
+STEP_SUMMARY=()
+run_step() {
+	local name="$1" status
+	shift
+	if "$@"; then
+		STEP_SUMMARY+=("OK   $name")
+	else
+		status=$?
+		STEP_SUMMARY+=("FAIL $name (exit $status)")
+		FAILED_STEPS=$((FAILED_STEPS + 1))
+	fi
+}
 
-# Generate color configs from palette
-echo "Generating color configs from palette/ayu.toml..."
-python3 "$BASEDIR/palette/generate.py" || true
+run_step 'steps/dependencies.yml' run_dotbot 'steps/dependencies.yml'
+run_step 'palette/generate.py' python3 "$BASEDIR/palette/generate.py"
+for config in terminal editors tools claude codex macos; do
+	run_step "steps/$config.yml" run_dotbot "steps/$config.yml"
+done
 
-run_dotbot 'steps/terminal.yml' || true
-run_dotbot 'steps/editors.yml' || true
-run_dotbot 'steps/tools.yml' || true
-run_dotbot 'steps/claude.yml' || true
-run_dotbot 'steps/codex.yml'
-run_dotbot 'steps/macos.yml' || true
+printf '\nInstallation summary:\n'
+printf '%s\n' "${STEP_SUMMARY[@]}"
+printf 'Failed steps: %s\n' "$FAILED_STEPS"
+[[ $FAILED_STEPS -eq 0 ]]

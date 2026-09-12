@@ -33,6 +33,14 @@ prompt_line='%F{#858d9c}󰀵 %f%F{#bfbdb6}%5~ %f'
 [[ -n "$branch" ]] && prompt_line+="%F{#858d9c}${branch} %f"
 [[ -n "$virtualenv" ]] && prompt_line+="%F{#95e6cb}${virtualenv} %f"
 [[ -n "$duration" ]] && prompt_line+="%F{#858d9c}${duration} %f"
+# Только builtin read: профиль меняется на следующем prompt без перезапуска.
+local dots_style='glass'
+local style_file="${XDG_CONFIG_HOME:-$HOME/.config}/dots/style"
+[[ -r "$style_file" ]] && IFS= read -r dots_style < "$style_file"
+if [[ "$dots_style" == presentation ]]; then
+  prompt_line='%F{#bfbdb6}PRESENTATION%f '
+  [[ -n "$duration" ]] && prompt_line+="%F{#858d9c}${duration} %f"
+fi
 # Состояние команды различимо и символом, и цветом; без внешних процессов.
 if (( command_status )); then
   PROMPT="${prompt_line}"$'\n''%F{#f07178}!%f '

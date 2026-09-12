@@ -1,0 +1,19 @@
+# Только локальная история. Аккаунт, sync, daemon и AI не используются.
+auto_sync = false
+update_check = false
+filter_mode = "directory"
+filter_mode_shell_up_key_binding = "session"
+search_mode = "fuzzy"
+style = "compact"
+inline_height = 15
+show_preview = true
+show_help = true
+enter_accept = false
+secrets_filter = true
+history_filter = ["^ "]
+
+[daemon]
+enabled = false
+
+[sync]
+records = false

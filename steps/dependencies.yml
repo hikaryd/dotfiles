@@ -25,6 +25,15 @@
           fi
         fi
 
+        # Recover a missing Snapzy.app before bundle tries to upgrade it.
+        # No --zap: keep user preferences and application data.
+        if grep -Eq '^cask "(duongductrong/snapzy/)?snapzy"' Brewfile \
+          && brew list --cask snapzy >/dev/null 2>&1 \
+          && [[ ! -d /Applications/Snapzy.app ]]; then
+          echo "Homebrew records Snapzy but its app is missing; clearing stale state..."
+          brew uninstall --cask duongductrong/snapzy/snapzy --force || exit $?
+        fi
+
         # Новый Homebrew отказывается ставить формулы из недоверенных сторонних tap'ов
         brew trust homebrew-zathura/zathura >/dev/null 2>&1 || true
 

@@ -10,6 +10,43 @@ fi
 # Kubernetes environments are configured in $DOTS_PRIVATE_ZSH.
 # Wrappers always pin both kubeconfig and context, so commands cannot accidentally
 # fall through to another environment from the merged default KUBECONFIG.
+# Reject target overrides before --; after exec's -- they belong to the container.
+_kube_validate_target_args() {
+  local namespace="$1" arg
+  shift
+  for arg in "$@"; do
+    [[ "$arg" = "--" ]] && break
+    # Short-option meaning depends on the command: logs -f/-p are booleans,
+    # while apply -f takes a filename. Do not guess a boolean bundle grammar.
+    # Only -it/-ti and attached values for unambiguous value flags are accepted;
+    # other short flags must be separate (or use -f=value / --long=value).
+    case "$arg" in
+      --*|-?|-[[:alnum:]]=*|-it|-ti|-o?*|-l?*|-c?*|-v?*) ;;
+      -*)
+        print -u2 -- "Pinned Kubernetes target: ambiguous short-option bundle is not allowed; pass short flags separately."
+        return 2
+        ;;
+    esac
+    case "$arg" in
+      --context|--context=*|--kubeconfig|--kubeconfig=*|--namespace|--namespace=*|-n*|\
+      --server|--server=*|-s*|--cluster|--cluster=*|--user|--user=*|\
+      --as|--as=*|--as-group|--as-group=*|--as-uid|--as-uid=*|\
+      --token|--token=*|--username|--username=*|--password|--password=*|--client-certificate*|--client-key*|--certificate-authority*|\
+      --insecure-skip-tls-verify*|--tls-server-name*|--proxy-url*|--raw|--raw=*)
+        print -u2 -r -- "Pinned Kubernetes target: '${arg%%=*}' is not allowed. Use the matching environment wrapper or explicit kubectl."
+        return 2
+        ;;
+      -A*|--all-namespaces|--all-namespaces=*)
+        if [[ -n "$namespace" ]]; then
+          print -u2 -r -- "Namespace-pinned wrapper: '$arg' is not allowed; use k<environment> for cluster-wide queries."
+          return 2
+        fi
+        ;;
+    esac
+  done
+  return 0
+}
+
 _kube_kubectl() {
   local kubeconfig="$1"
   local context="$2"
@@ -28,6 +65,8 @@ _kube_kubectl() {
     return 1
   fi
 
+  _kube_validate_target_args "$namespace" "$@" || return
+
   local -a namespace_arg=()
   [[ -n "$namespace" ]] && namespace_arg=(--namespace="$namespace")
 
@@ -36,13 +75,19 @@ _kube_kubectl() {
 }
 
 _kube_prod_confirm() {
+  # Deliberate existing opt-in for pre-confirmed scripts/shells; never set automatically.
   [[ "${KPROD_CONFIRMED:-}" = "1" ]] && return 0
-
-  printf "⚠️  PROD MUTATING COMMAND — type 'yes' to proceed: "
-  local answer
-  read -r answer
+  local context="$1" namespace="$2" action="$3" answer
+  printf '[PROD] MUTATING action=%s context=%s namespace=%s\n' \
+    "$action" "$context" "$namespace" >&2
+  if [[ ! -t 0 ]]; then
+    print -u2 -- "Aborted: interactive confirmation required (or deliberate KPROD_CONFIRMED=1)."
+    return 1
+  fi
+  printf "Type 'yes' to proceed: " >&2
+  read -r answer || return 1
   [[ "$answer" = "yes" ]] || {
-    echo "Aborted."
+    print -u2 -- "Aborted."
     return 1
   }
 }
@@ -69,50 +114,47 @@ _kube_kubectl_is_read_only() {
   esac
 }
 
-_kube_prod_confirm_if_mutating() {
-  _kube_kubectl_is_read_only "$@" && return 0
-  _kube_prod_confirm
+# One banner at the public boundary, not for each dashboard/logging subcall.
+_kube_run() {
+  local environment="$1" scope="$2"
+  shift 2
+  local -a kube
+  local namespace="pinned" display="" arg all_namespaces_flag=0
+  [[ "$scope" = cluster ]] && namespace=""
+  _kube_validate_target_args "$namespace" "$@" || return
+  if [[ "$scope" = cluster ]]; then
+    for arg in "$@"; do
+      [[ "$arg" = -- ]] && break
+      case "$arg" in
+        -A|--all-namespaces|-A=true|--all-namespaces=true|-A=True|--all-namespaces=True|-A=TRUE|--all-namespaces=TRUE|-A=1|--all-namespaces=1)
+          display="all namespaces"; all_namespaces_flag=1 ;;
+        -A=false|--all-namespaces=false|-A=False|--all-namespaces=False|-A=FALSE|--all-namespaces=FALSE|-A=0|--all-namespaces=0)
+          display=""; all_namespaces_flag=1 ;;
+      esac
+    done
+  fi
+  _kube_env "$environment" read "$scope" "$display" || return
+  kube=("${reply[@]}")
+  if [[ "$environment" = prod ]] && ! _kube_kubectl_is_read_only "$@"; then
+    _kube_prod_confirm "${kube[2]}" "${display:-${kube[3]}}" "${1:-unknown}" || return
+  fi
+  # Cluster wrappers retain -A support; namespace defaults are pinned explicitly otherwise.
+  if (( all_namespaces_flag )); then
+    _kube_kubectl "${kube[1]}" "${kube[2]}" "" "$@"
+  else
+    _kube_kubectl "${kube[1]}" "${kube[2]}" "${kube[3]}" "$@"
+  fi
 }
 
-# Cluster-wide kubectl wrappers.
-kdev() {
-  _kube_kubectl "${KUBE_DEV_KUBECONFIG:-}" "${KUBE_DEV_CONTEXT:-}" "" "$@"
-}
-
-kstage() {
-  _kube_kubectl "${KUBE_STAGE_KUBECONFIG:-}" "${KUBE_STAGE_CONTEXT:-}" "" "$@"
-}
-
-kpreprod() {
-  _kube_kubectl "${KUBE_PREPROD_KUBECONFIG:-}" "${KUBE_PREPROD_CONTEXT:-}" "" "$@"
-}
-
-kprod() {
-  _kube_prod_confirm_if_mutating "$@" || return
-  _kube_kubectl "${KUBE_PROD_KUBECONFIG:-}" "${KUBE_PROD_CONTEXT:-}" "" "$@"
-}
-
-# Namespace-pinned kubectl wrappers.
-kpdev() {
-  _kube_kubectl \
-    "${KUBE_DEV_KUBECONFIG:-}" "${KUBE_DEV_CONTEXT:-}" "${KUBE_DEV_NAMESPACE:-}" "$@"
-}
-
-kpstage() {
-  _kube_kubectl \
-    "${KUBE_STAGE_KUBECONFIG:-}" "${KUBE_STAGE_CONTEXT:-}" "${KUBE_STAGE_NAMESPACE:-}" "$@"
-}
-
-kppreprod() {
-  _kube_kubectl \
-    "${KUBE_PREPROD_KUBECONFIG:-}" "${KUBE_PREPROD_CONTEXT:-}" "${KUBE_PREPROD_NAMESPACE:-}" "$@"
-}
-
-kpprod() {
-  _kube_prod_confirm_if_mutating "$@" || return
-  _kube_kubectl \
-    "${KUBE_PROD_KUBECONFIG:-}" "${KUBE_PROD_CONTEXT:-}" "${KUBE_PROD_NAMESPACE:-}" "$@"
-}
+# Cluster-wide and namespace-pinned kubectl wrappers.
+kdev() { _kube_run dev cluster "$@"; }
+kstage() { _kube_run stage cluster "$@"; }
+kpreprod() { _kube_run preprod cluster "$@"; }
+kprod() { _kube_run prod cluster "$@"; }
+kpdev() { _kube_run dev namespace "$@"; }
+kpstage() { _kube_run stage namespace "$@"; }
+kppreprod() { _kube_run preprod namespace "$@"; }
+kpprod() { _kube_run prod namespace "$@"; }
 
 # Explicit connection checks; no network request is made until one is called.
 kdev-connect() {
@@ -180,6 +222,11 @@ Examples:
   kpstage-pod-analyze api
   kpstage-pod-restart api
 
+Target/auth overrides are rejected before --; exec arguments after -- are preserved.
+Short flags must be separate (except -it/-ti and attached -o/-l/-c/-v values).
+Namespace wrappers reject -A; use the cluster-wide wrapper for all namespaces.
+Cluster wrappers use their pinned context's namespace (or default), not current-context.
+Noninteractive prod mutations fail closed unless explicitly pre-confirmed.
 Set KPROD_CONFIRMED=1 only for a deliberately pre-confirmed prod shell.
 EOF
 }
@@ -221,9 +268,6 @@ _kube_env() {
       )
       ;;
     prod)
-      if [[ "$access_mode" = "action" ]]; then
-        _kube_prod_confirm || return
-      fi
       reply=(
         "${KUBE_PROD_KUBECONFIG:-}"
         "${KUBE_PROD_CONTEXT:-}"
@@ -236,6 +280,23 @@ _kube_env() {
       return 2
       ;;
   esac
+
+  local kubeconfig="${reply[1]}" context="${reply[2]}" namespace="${reply[3]}"
+  [[ "${3:-namespace}" = cluster ]] && namespace=""
+  if [[ -z "$kubeconfig" || -z "$context" || ! -r "$kubeconfig" ]]; then
+    print -u2 -- "Kubernetes $environment target is missing or its kubeconfig is not readable. Check DOTS_PRIVATE_ZSH."
+    return 1
+  fi
+  if [[ -z "$namespace" ]]; then
+    # Local config inspection only: does not use current-context or contact the API.
+    namespace="$(KUBECONFIG="$kubeconfig" kubectl --context="$context" config view --minify -o 'jsonpath={.contexts[0].context.namespace}')" || return
+    namespace="${namespace:-default}"
+  fi
+  reply=("$kubeconfig" "$context" "$namespace" "$environment")
+  printf '[%s] context=%s namespace=%s\n' "${(U)environment}" "$context" "${4:-$namespace}" >&2
+  if [[ "$environment" = prod && "$access_mode" = action ]]; then
+    _kube_prod_confirm "$context" "$namespace" "${funcstack[2]#_kube_}" || return
+  fi
 }
 
 _kube_choose() {

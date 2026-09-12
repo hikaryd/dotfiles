@@ -12,8 +12,6 @@ __pycache__/
 /CLAUDE.md
 /.claude/settings.local.json
 
-# paneru rules daemon bytecode
-config/paneru/__pycache__/
 /.playwright-mcp
 
 # Claude Code MCP secrets (real keys live in ~/.claude/.mcp-secrets, never here)
@@ -30,3 +28,6 @@ config/git/private.inc
 
 # Private Kubernetes watcher inventories live under ~/.config, never in dots.
 **/deploy-watch.resources
+
+# Private Pixel owner endpoints; optional local SSH include, never publish.
+/config/ssh/pixel-owner.conf

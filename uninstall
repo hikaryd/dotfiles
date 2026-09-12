@@ -7,7 +7,7 @@
 #   · скопированные конфиги и артефакты переносит в бэкап-каталог; смешанный
 #     Codex config сначала копирует, затем удаляет только управляемые ключи;
 #   · откатывает системные твики: git excludesFile, macOS defaults, шелл по
-#     умолчанию, запись в /etc/shells, LaunchAgent paneru;
+#     умолчанию, запись в /etc/shells;
 #   · по флагу --packages дополнительно удаляет пакеты из Brewfile.
 #
 # Бэкап: ~/dots-uninstall-backup-<дата>/ + MANIFEST.txt со списком действий.
@@ -112,17 +112,6 @@ else
 fi
 [[ $DRY -eq 1 ]] && printf '   %s(режим --dry-run: изменений не будет)%s\n' "$DIM" "$R"
 confirm "Продолжить?" || die "отменено"
-
-# ─── 1. LaunchAgent paneru (выгрузить до снятия симлинка) ────────────
-step "LaunchAgent paneru-rules"
-if launchctl print "gui/$(id -u)/com.paneru.rules" >/dev/null 2>&1; then
-  if [[ $DRY -eq 1 ]]; then dry "launchctl bootout gui/$(id -u)/com.paneru.rules"; else
-    launchctl bootout "gui/$(id -u)/com.paneru.rules" 2>/dev/null \
-      && ok "агент выгружен" || warn "не удалось выгрузить агент"
-  fi
-else
-  ok "агент не загружен"
-fi
 
 # ─── 2. симлинки из steps/*.yml ──────────────────────────────────────
 step "Симлинки"
