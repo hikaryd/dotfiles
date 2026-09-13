@@ -13,6 +13,16 @@ ROOT = Path(__file__).parent
 
 
 class PortabilityTests(unittest.TestCase):
+    def test_pixel_scope_has_no_retired_vm_instructions(self):
+        pixel = ROOT / "pixel-server"
+        self.assertFalse((pixel / "DOCKER-STATUS.md").exists())
+        self.assertFalse((pixel / "avf-probe").exists())
+        for path in [ROOT / "PIXEL-BROWSER.md", *pixel.rglob("*.md")]:
+            self.assertIsNone(
+                re.search(r"docker|докер|avf-probe", path.read_text(), re.IGNORECASE),
+                str(path),
+            )
+
     def test_owner_ssh_inventory_cannot_be_added_by_git_add_all(self):
         repository = ROOT.parent
         if not (repository / ".git").exists():
