@@ -99,36 +99,89 @@ class Tests(unittest.TestCase):
                 )
             self.assertTrue(any(m == "Target.closeTarget" for m, _ in f.calls))
 
-    def test_two_readers_exclude_writer_and_third(self):
+    def test_four_readers_and_waiting_fifth(self):
         with tempfile.TemporaryDirectory() as root:
             ctx = mp.get_context("fork")
             release = ctx.Event()
-            events = [ctx.Event() for _ in range(3)]
+            events = [ctx.Event() for _ in range(5)]
             procs = [
                 ctx.Process(
                     target=hold, args=(root, str(i), "read", events[i], release)
                 )
-                for i in range(3)
+                for i in range(5)
             ]
             try:
-                for p in procs[:2]:
+                for p, event in zip(procs[:4], events[:4]):
                     p.start()
-                self.assertTrue(events[0].wait(2))
-                self.assertTrue(events[1].wait(2))
-                procs[2].start()
-                self.assertFalse(events[2].wait(0.15))
-                with (
-                    self.assertRaises(TimeoutError),
-                    r.admission(Path(root), "writer", "legacy", 0.1),
-                ):
-                    pass
+                    self.assertTrue(event.wait(2))
+                procs[4].start()
+                self.assertFalse(events[4].wait(0.15))
                 release.set()
-                self.assertTrue(events[2].wait(2))
+                self.assertTrue(events[4].wait(2))
             finally:
                 release.set()
                 for p in procs:
                     if p.pid:
                         p.join(4)
+                        self.assertEqual(p.exitcode, 0)
+
+    def test_writer_waits_for_all_four_readers(self):
+        with tempfile.TemporaryDirectory() as root:
+            ctx = mp.get_context("fork")
+            releases = [ctx.Event() for _ in range(4)]
+            events = [ctx.Event() for _ in range(4)]
+            procs = [
+                ctx.Process(
+                    target=hold, args=(root, str(i), "read", events[i], releases[i])
+                )
+                for i in range(4)
+            ]
+            try:
+                for p, event in zip(procs, events):
+                    p.start()
+                    self.assertTrue(event.wait(2))
+                for i in range(4):
+                    with (
+                        self.assertRaises(TimeoutError),
+                        r.admission(Path(root), "writer", "legacy", 0.1),
+                    ):
+                        pass
+                    releases[i].set()
+                    procs[i].join(2)
+                with r.admission(Path(root), "writer", "legacy", 0.2):
+                    pass
+            finally:
+                for release in releases:
+                    release.set()
+                for p in procs:
+                    if p.pid:
+                        p.join(4)
+                        self.assertEqual(p.exitcode, 0)
+
+    def test_new_reader_waits_for_previous_generation_reader(self):
+        # The old protocol holds one exclusive outer slot. New reads drain old
+        # reads rather than adding four new readers on top of the old capacity.
+        with tempfile.TemporaryDirectory() as root:
+            for slot in range(2):
+                with open(Path(root) / f"slot-{slot}.lock", "a+") as old:
+                    r.acquire(old, time.monotonic() + 1)
+                    with (
+                        self.assertRaises(TimeoutError),
+                        r.admission(Path(root), "new-reader", "read", 0.1),
+                    ):
+                        pass
+
+    def test_previous_generation_writer_excluded_by_new_reader(self):
+        with (
+            tempfile.TemporaryDirectory() as root,
+            r.admission(Path(root), "reader", "read", 0.2),
+        ):
+            for slot in range(2):
+                with (
+                    open(Path(root) / f"slot-{slot}.lock", "a+") as old,
+                    self.assertRaises(TimeoutError),
+                ):
+                    r.acquire(old, time.monotonic() + 0.1)
 
     def test_dead_worker_reaped_live_preserved(self):
         with tempfile.TemporaryDirectory() as root:

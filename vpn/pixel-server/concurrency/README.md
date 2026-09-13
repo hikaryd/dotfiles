@@ -7,7 +7,7 @@ Chrome cookies/profile remain shared. Never describe jobs as isolated profiles.
 ## Contract
 
 Use `browser_exec(session="pixel_read_1", code=...)` for an atomic read job.
-Reuse two reserved worker names, `pixel_read_1` and `pixel_read_2`; concurrent
+Reuse four reserved worker names, `pixel_read_1` through `pixel_read_4`; concurrent
 jobs must use different names. Structured reads use a direct CDP connection in
 the CLI process, without creating harness daemons or extra idle tabs. Legacy
 named sessions still create upstream daemons; avoid unlimited legacy names. The entire code must be:
@@ -19,12 +19,13 @@ named sessions still create upstream daemons; avoid unlimited legacy names. The 
 
 Only HTTP(S) navigation plus fixed title/URL/body-text extraction is allowed;
 caller JavaScript, input, focus, screenshots, and arbitrary CDP are not accepted
-in this mode. Two read calls can run simultaneously. Each creates a background
+in this mode. Four read calls can run simultaneously; a fifth waits. Each creates a background
 tab and closes its own tab in `finally`. Output is JSON, capped to `max_chars`
 characters of text (1–100000; default 20000). Readiness is not a guarantee that an
 SPA finished loading. Pages themselves can execute scripts or change cookies.
 
-Other Python remains legacy mode and acquires both slots exclusively. A named
+Other Python remains legacy mode and acquires both outer gates exclusively,
+excluding all four read slots. A named
 legacy session attaches to its recorded own tab, which persists across calls.
 Call the following **with the same session** when the task finishes:
 
@@ -109,9 +110,20 @@ The direct transport follows [websockets 15.0.1 sync client API](https://websock
    unchanged. Check both BU_CDP_URL and BU_CDP_WS routing against the installed
    harness; only configured exact endpoint strings activate scheduling. Set only
    one CDP environment variable for Pixel: conflicting URL/WS values fail closed.
-6. Update the Hermes operational runbook: atomic read directive, two reusable worker sessions,
+6. Update the Hermes operational runbook: atomic read directive, four reusable worker sessions,
    explicit legacy finish, owner priority, shared cookie caveat, and RF services
    never using extra proxies. Existing active contexts need an explicit reminder.
+
+Capacity is fixed at four for every invocation; do not vary it per process.
+The existing `slot-0.lock` and `slot-1.lock` files remain outer gates. New readers
+hold both shared plus one of four `read-capacity-*.lock` files; writers hold both
+outer gates exclusively. During an atomic runtime replacement, old two-slot
+readers drain before new readers enter, and either-generation writers exclude
+all readers. Keep the same state directory and lock files across deployment and
+rollback; never unlink active lock files. Rollback to the two-slot version is
+safe but temporarily waits for existing four-slot readers. Same-session calls
+remain serialized. More slots increase peak phone load, not guaranteed speed;
+validate four real reads and phone resource headroom before claiming improvement.
 
 Rollback: atomically restore the previous managed CLI (or remove only the shim
 if none existed). Do not kill the gateway or close unrecorded personal tabs.

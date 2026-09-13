@@ -13,6 +13,7 @@ from urllib.parse import urlsplit, urlunsplit
 
 READ = "# pixel:read-v1"
 FINISH = "# pixel:finish-v1"
+READ_CAPACITY = 4
 # No caller-supplied JavaScript is accepted by the parallel read path.
 EXTRACT = """JSON.stringify({ready:document.readyState,title:document.title.slice(0,2048),
 url:location.href.slice(0,8192),text:(document.body ? document.body.innerText : '').slice(0,__MAX_CHARS__)})"""
@@ -50,10 +51,10 @@ def key(name):
     return hashlib.sha256(name.encode()).hexdigest()
 
 
-def acquire(fd, deadline):
+def acquire(fd, deadline, operation=fcntl.LOCK_EX):
     while True:
         try:
-            fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            fcntl.flock(fd, operation | fcntl.LOCK_NB)
             return
         except BlockingIOError:
             if time.monotonic() >= deadline:
@@ -70,9 +71,9 @@ def admission(root, name, mode, timeout, session_fd=None):
     deadline = time.monotonic() + timeout
     with contextlib.ExitStack() as stack:
 
-        def lock(filename):
+        def lock(filename, operation=fcntl.LOCK_EX):
             fd = stack.enter_context(open(root / filename, "a+"))
-            acquire(fd, deadline)
+            acquire(fd, deadline, operation)
             return fd
 
         if session_fd is None:
@@ -88,9 +89,14 @@ def admission(root, name, mode, timeout, session_fd=None):
             lock("slot-0.lock")
             lock("slot-1.lock")
         else:
+            # Keep the old two-slot protocol as outer read/write gates. Shared
+            # acquisition of BOTH gates drains old exclusive readers first and
+            # makes old and new writers exclude every new capacity slot.
+            lock("slot-0.lock", fcntl.LOCK_SH)
+            lock("slot-1.lock", fcntl.LOCK_SH)
             slots = [
-                stack.enter_context(open(root / (f"slot-{i}.lock"), "a+"))
-                for i in range(2)
+                stack.enter_context(open(root / f"read-capacity-{i}.lock", "a+"))
+                for i in range(READ_CAPACITY)
             ]
             while True:
                 found = False

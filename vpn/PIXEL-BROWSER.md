@@ -84,8 +84,8 @@ fingerprint; cookies Pixel в него автоматически не пере�
 [pixel-server/README.md](pixel-server/README.md). Для remote pointer нужно
 временно включить owner-режим: физическая панель ON, браузерный туннель Hermes
 приостановлен; stop/expiry возвращает Chrome и OFF. Сам Hermes не перезапускается.
-Пароли owner noVNC не выдаются агенту. Это не Docker или доступ ко всей домашней
-сети: [Docker status](pixel-server/DOCKER-STATUS.md).
+Пароли owner noVNC не выдаются агенту. Доступ к браузеру не даёт агенту
+доступ ко всей домашней сети или shell телефона.
 
 Дополнительно: [SSH владельца](pixel-server/ssh-owner/README.md),
 [постоянный LAN-адрес](pixel-server/DHCP.md) и
