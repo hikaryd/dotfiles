@@ -57,6 +57,11 @@ _codex_proxy_ensure() {
   CODEX_PROXY_URL="$proxy"
 }
 
+# Access the persistent player from any directory; no proxy/startup work on reuse.
+music() {
+  "$HOME/dots/config/tmux/scripts/spotatui-popup.sh" "$@"
+}
+
 spotatui() {
   _codex_proxy_ensure || return
   local proxy="$CODEX_PROXY_URL"
@@ -90,10 +95,12 @@ omx() {
     omx_root="$HOME/.omx/instances/$instance_id"
   fi
 
+  # Child-only policy also covers bash and inherited owner=1 from old sessions.
+  # No HUD or fallback poller; native workflow/notification hooks remain enabled.
   # Запустить настоящий oh-my-codex (omx) с proxy-env только для этого процесса.
   HTTP_PROXY="$proxy" HTTPS_PROXY="$proxy" ALL_PROXY="$proxy" \
   http_proxy="$proxy" https_proxy="$proxy" all_proxy="$proxy" \
   NO_PROXY="127.0.0.1,localhost,::1,*.local" no_proxy="127.0.0.1,localhost,::1,*.local" \
-  OMX_ROOT="$omx_root" \
+  OMX_ROOT="$omx_root" OMX_LAUNCH_POLICY=direct OMX_TMUX_HUD_OWNER=0 OMX_NOTIFY_FALLBACK=0 \
   command omx "$@"
 }

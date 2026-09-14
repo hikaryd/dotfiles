@@ -31,3 +31,12 @@ config/git/private.inc
 
 # Private Pixel owner endpoints; optional local SSH include, never publish.
 /config/ssh/pixel-owner.conf
+
+# Локальные отчёты, состояние агентов и кэши.
+/.omx/
+/.omc/
+/.venv/
+/.mypy_cache/
+/.pytest_cache/
+/.ruff_cache/
+/docs/private/

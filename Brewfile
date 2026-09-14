@@ -132,6 +132,7 @@ cask "rustdesk"
 brew "bat-extras" 
 
 # Приложения
+cask "codexbar" # Лимиты подписки Codex в строке меню macOS
 cask "waterfox"
 cask "telegram-desktop"
 cask "spotify"

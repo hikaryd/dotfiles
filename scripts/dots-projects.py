@@ -45,6 +45,66 @@ def git_root(path):
     )
 
 
+def git_metadata(path):
+    """Return (worktree root, common git dir) without spawning Git."""
+    if not allowed(path):
+        return None
+    current = Path(path).expanduser().resolve()
+    for candidate in (current, *current.parents):
+        marker = candidate / ".git"
+        if not marker.is_dir() and not marker.is_file():
+            continue
+        if not allowed(candidate):
+            return None
+        git_dir = marker
+        if marker.is_file():
+            try:
+                line = marker.read_text().splitlines()[0]
+            except (IndexError, OSError, UnicodeError):
+                return None
+            prefix = "gitdir: "
+            if not line.startswith(prefix):
+                return None
+            git_dir = Path(line.removeprefix(prefix))
+            if not git_dir.is_absolute():
+                git_dir = marker.parent / git_dir
+        git_dir = git_dir.resolve()
+        if not git_dir.is_dir():
+            return None
+        common_dir = git_dir
+        try:
+            common_value = (git_dir / "commondir").read_text().strip()
+        except (OSError, UnicodeError):
+            pass
+        else:
+            if common_value:
+                common_dir = (git_dir / common_value).resolve()
+        if not (git_dir / "HEAD").is_file() or not (common_dir / "objects").is_dir():
+            continue
+        if current == git_dir or git_dir in current.parents:
+            return None
+        return str(candidate.resolve()), str(common_dir)
+    return None
+
+
+def registered_worktree_paths(common_dir):
+    """Read Git's worktree registry, then let metadata checks reject stale paths."""
+    common = Path(common_dir)
+    if common.name == ".git":
+        yield str(common.parent)
+    try:
+        entries = list((common / "worktrees").iterdir())
+    except FileNotFoundError:
+        return
+    for entry in entries:
+        try:
+            marker = (entry / "gitdir").read_text().strip()
+        except (OSError, UnicodeError):
+            continue
+        if marker and Path(marker).is_absolute():
+            yield str(Path(marker).parent)
+
+
 def project_id(path):
     return hashlib.sha256(path.encode()).hexdigest()[:12]
 
@@ -114,14 +174,20 @@ def saved_paths():
     return [item["path"] for item in data["projects"]]
 
 
-def inventory():
+def inventory(include_worktrees=False):
     roots = {}
     cache = {}
+    repositories = {}
 
     def root_for(path):
         if path not in cache:
-            cache[path] = git_root(path)
-        return cache[path]
+            cache[path] = git_metadata(path)
+        metadata = cache[path]
+        if metadata:
+            root, common_dir = metadata
+            repositories.setdefault(common_dir, root)
+            return root
+        return None
 
     for pane in live_panes():
         root = root_for(pane["cwd"])
@@ -131,28 +197,26 @@ def inventory():
         root = root_for(path)
         if root:
             roots.setdefault(root, [])
-    for root in list(roots):
-        result = run("git", "-C", root, "worktree", "list", "--porcelain", "-z")
-        for field in result.stdout.split("\0"):
-            if field.startswith("worktree "):
-                path = field[9:]
-                worktree = root_for(path)
-                if worktree:
-                    roots.setdefault(worktree, [])
+    for common_dir in list(repositories):
+        for path in registered_worktree_paths(common_dir):
+            metadata = git_metadata(path)
+            if metadata and metadata[1] == common_dir:
+                roots.setdefault(metadata[0], [])
+    if include_worktrees:
+        # Linked worktrees share one common Git directory. Asking every worktree
+        # for the same list made project switching spawn dozens of duplicates.
+        for root in list(repositories.values()):
+            result = run("git", "-C", root, "worktree", "list", "--porcelain", "-z")
+            for field in result.stdout.split("\0"):
+                if field.startswith("worktree "):
+                    path = field[9:]
+                    worktree = root_for(path)
+                    if worktree:
+                        roots.setdefault(worktree, [])
     projects = []
     for path, panes in sorted(roots.items()):
         # Attached sessions first; canonical project session beats old orchestration.
-        panes.sort(
-            key=lambda p: (
-                not p["attached"],
-                p["name"] != Path(path).name,
-                Path(p["command"]).name.lstrip("-")
-                in {"", "zsh", "bash", "fish", "sh", "dash", "ksh", "tcsh", "csh"},
-                not p["active"],
-                p["session"],
-                p["pane"],
-            )
-        )
+        sort_panes(path, panes)
         projects.append(
             {
                 "id": project_id(path),
@@ -162,6 +226,34 @@ def inventory():
             }
         )
     return projects
+
+
+def sort_panes(path, panes):
+    panes.sort(
+        key=lambda p: (
+            not p["attached"],
+            p["name"] != Path(path).name,
+            Path(p["command"]).name.lstrip("-")
+            in {"", "zsh", "bash", "fish", "sh", "dash", "ksh", "tcsh", "csh"},
+            not p["active"],
+            p["session"],
+            p["pane"],
+        )
+    )
+    return panes
+
+
+def live_project_panes(path):
+    roots = {}
+    panes = []
+    for pane in live_panes():
+        cwd = pane["cwd"]
+        if cwd not in roots:
+            metadata = git_metadata(cwd)
+            roots[cwd] = metadata[0] if metadata else None
+        if roots[cwd] == path:
+            panes.append(pane)
+    return sort_panes(path, panes)
 
 
 def save(projects):
@@ -246,8 +338,12 @@ def open_project(target=None):
         )
     if selected is None:
         return
-    # Always re-read live panes, never trust pane IDs persisted on disk.
-    current = next((p for p in inventory() if p["path"] == selected["path"]), selected)
+    # Discovery is cheap, but Git remains authoritative before any tmux mutation.
+    if git_root(selected["path"]) != selected["path"]:
+        raise ValueError("Выбранный Git-проект изменился; откройте список заново.")
+    # Always re-read live panes, never trust pane IDs persisted on disk. Rebuilding
+    # every repository/worktree here doubled the delay after the user picked one.
+    current = {**selected, "panes": live_project_panes(selected["path"])}
     if current["panes"]:
         focus(current["panes"][0])
         return
@@ -298,7 +394,7 @@ def main(argv=None):
         if args.command == "open":
             open_project(args.target)
         else:
-            projects = inventory()
+            projects = inventory(include_worktrees=args.command == "refresh")
             if args.command == "refresh":
                 save(projects)
                 print(f"{len(projects)} проектов: {registry_path()}")

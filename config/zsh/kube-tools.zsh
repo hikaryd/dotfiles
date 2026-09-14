@@ -234,9 +234,11 @@ EOF
 # Удаляем имена из старых source-версий, чтобы action/watch границы оставались явными.
 unfunction \
   kpdev-rollout kpstage-rollout kppreprod-rollout kpprod-rollout \
-  kpdev-cron kpstage-cron kppreprod-cron kpprod-cron podbor-kube-help \
+  kpdev-cron kpstage-cron kppreprod-cron kpprod-cron \
   2>/dev/null || true
-unfunction -m '_podbor_*' 2>/dev/null || true
+if (( $+functions[_dots_kube_private_cleanup] )); then
+  _dots_kube_private_cleanup
+fi
 
 _kube_env() {
   local environment="$1"

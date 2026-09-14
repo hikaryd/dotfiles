@@ -21,6 +21,13 @@ gui:
       - "#bfbdb6"
     searchingActiveBorderColor:
       - "#e6b450"
+git:
+  # Keep remote updates explicit instead of fetching on every startup.
+  autoFetch: false
+refresher:
+  # Preserve automatic refresh with fewer background Git/filesystem probes.
+  refreshInterval: 30
+  externalChangeCheckInterval: 5
 customCommands:
   - key: "C"
     command: "~/dots/scripts/ai_commit"

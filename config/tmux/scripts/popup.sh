@@ -42,9 +42,15 @@ trap 'cleanup' EXIT
 trap 'exit 130' INT
 trap 'exit 143' TERM
 trap 'exit 129' HUP
-original=$(tmux show-options -qv -t "$session" status-position)
-if [ "$(tmux show-options -Aqv -t "$session" status-position)" = top ]; then
-    changed=1
-    tmux set-option -t "$session" status-position bottom
-fi
+# -A marks inherited options with '*': one probe gives both value and scope.
+position=$(tmux show-options -Aq -t "$session" status-position)
+case "$position" in
+    'status-position top'|'status-position* top')
+        if [ "$position" = 'status-position top' ]; then
+            original=top
+        fi
+        changed=1
+        tmux set-option -t "$session" status-position bottom
+        ;;
+esac
 show_popup "$@"

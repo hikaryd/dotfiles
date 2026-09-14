@@ -1,7 +1,7 @@
-# Copy this file to ~/.config/dots/private.zsh, fill in machine-local values,
-# and keep the resulting file out of Git (`chmod 600`).
+# Личные настройки: ~/.config/dots/private.zsh; заполните свои значения.
+# Храните вне Git, права файла — 600.
 
-# Optional private API gateway.
+# Необязательный личный шлюз API.
 # export OPENAI_BASE_URL="https://gateway.example/v1/account/gateway/openai"
 
 export KUBE_DEV_KUBECONFIG="$HOME/.kube/configs/dev.yaml"

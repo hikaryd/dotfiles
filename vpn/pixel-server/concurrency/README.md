@@ -1,139 +1,36 @@
-# Optional Pixel browser-use scheduler
+# Очередь браузера Pixel
 
-This component is independent of VPN installation. It is a cooperative scheduler,
-not a sandbox: arbitrary Python, raw CDP, other clients, and root can bypass it.
-Chrome cookies/profile remain shared. Never describe jobs as isolated profiles.
+Необязательный кооперативный планировщик; не песочница и не изолированные профили.
+Правила маршрутов и доступа: [HERMES-ACCESS.md](../HERMES-ACCESS.md).
 
-## Contract
+## Использование
 
-Use `browser_exec(session="pixel_read_1", code=...)` for an atomic read job.
-Reuse four reserved worker names, `pixel_read_1` through `pixel_read_4`; concurrent
-jobs must use different names. Structured reads use a direct CDP connection in
-the CLI process, without creating harness daemons or extra idle tabs. Legacy
-named sessions still create upstream daemons; avoid unlimited legacy names. The entire code must be:
+Четыре атомарных чтения через `browser_exec` используют разные сессии `pixel_read_1`–`pixel_read_4`; пятое ждёт.
+Код целиком: строка `# pixel:read-v1`, затем JSON `{"url":"https://example.org/","max_chars":20000}`.
+Разрешено только HTTP(S)-чтение заголовка, URL и текста; свои JavaScript, ввод и снимки экрана здесь недоступны.
+Каждое чтение создаёт фоновую вкладку и закрывает её в конце. Готовность страницы не доказывает завершение загрузки приложения.
+Другой Python выполняется эксклюзивно; именованная интерактивная сессия сохраняет свою вкладку между вызовами.
+Завершение: отдельный вызов `# pixel:finish-v1` с тем же `session`; старые неуправляемые вкладки автоматически не закрываются.
+Подтверждение запроса остановки процесса не доказывает завершение его очистки.
 
-```text
-# pixel:read-v1
-{"url":"https://example.org/","max_chars":20000}
-```
+## Настройка
 
-Only HTTP(S) navigation plus fixed title/URL/body-text extraction is allowed;
-caller JavaScript, input, focus, screenshots, and arbitrary CDP are not accepted
-in this mode. Four read calls can run simultaneously; a fifth waits. Each creates a background
-tab and closes its own tab in `finally`. Output is JSON, capped to `max_chars`
-characters of text (1–100000; default 20000). Readiness is not a guarantee that an
-SPA finished loading. Pages themselves can execute scripts or change cookies.
+Устанавливается отдельно от VPN, без автоматического перезапуска Hermes.
+Скопируйте `runtime.py` и `shim.py` в отдельный приватный каталог. Конфигурация: `~/.config/pixel-browser/scheduler.json` (`600`), каталог `700`.
+Поля: `upstream_argv` (исходные Python и browser-use), `read_python`, `runtime_file`, `preamble_file`, `state_dir`, `pixel_cdp_urls`, `wait_seconds`, `preexisting_sessions`.
+Все пути абсолютные; `upstream_argv` не должен указывать обратно на shim или запускатель пакетов.
+`read_python` должен предоставлять websockets 15.0.1; установка пакетов здесь не выполняется.
+Из текущего Hermes извлеките точный `tools.browser_use_cli._OWN_TAB_PREAMBLE` в приватный `preamble_file`; несовпадение префикса закрывает доступ, его нельзя угадывать.
+Укажите только проверенные CDP endpoints; конфликт `BU_CDP_URL` и `BU_CDP_WS` отклоняется.
+Перед заменой сохраните старый `$HERMES_HOME/bin/browser-use` и имена живых сессий в `preexisting_sessions`.
+Убедитесь, что установленный Hermes заново находит CLI при каждом вызове; затем атомарно поставьте исполняемый shim.
+`PIXEL_SCHEDULER_CONFIG` переопределяет путь конфигурации.
 
-Other Python remains legacy mode and acquires both outer gates exclusively,
-excluding all four read slots. A named
-legacy session attaches to its recorded own tab, which persists across calls.
-Call the following **with the same session** when the task finishes:
+## Проверка и откат
 
-```text
-# pixel:finish-v1
-```
-
-Finish first verifies the recorded target is absent, then requests shutdown of
-the current named harness daemon through its existing local IPC. Its upstream
-dedicated idle blank is removed by the daemon finalizer; the response reports
-shutdown requested, not proof the finalizer completed. Until explicit finish,
-legacy daemons and their idle blank tabs may remain.
-
-The default unnamed legacy session preserves current-tab compatibility, still
-exclusive. There is no reliable automatic whole-conversation completion signal.
-Existing legacy tabs are not adopted or automatically closed. The scheduler
-only closes target IDs it created and recorded. It does not intercept arbitrary
-legacy code that intentionally switches to other tabs.
-
-Owner VNC retains the existing priority mechanism: it disconnects the Pixel CDP
-tunnel. Calls may fail while owner mode is active; retry only after owner stop.
-The bridge observes the owner lease by polling, not an atomic handoff: a short
-job can finish during the transition before the tunnel drops. Do not claim
-instant owner/agent mutual exclusion or retry an interrupted UI action blindly.
-No browser fallback is introduced. A failed cleanup retains its record; the next
-scheduled call reaps dead read workers using Linux PID + process start ticks.
-No janitor runs while idle, and cleanup cannot succeed while CDP is unavailable.
-The tiny create-target/record-write crash window is not transactionally covered.
-
-## Optional installation (no gateway restart)
-
-1. Run the tests and compile checks below. Copy `runtime.py` and `shim.py` into a
-   private dedicated directory. Use absolute paths in the private JSON config.
-2. In the installed Hermes Python environment, extract **the exact current**
-   `tools.browser_use_cli._OWN_TAB_PREAMBLE` into a private text file. Do not copy
-   a guessed version. It is stripped only on exact prefix match, before our
-   strict pinning. Every named Pixel invocation must include this exact prefix;
-   absent/changed prefixes fail closed, including direct CLI tests. If upstream
-   changes the preamble, update this file first.
-3. Write `~/.config/pixel-browser/scheduler.json` (directory 0700, file 0600):
-
-```json
-{
-  "upstream_argv": ["/ABSOLUTE/INSTALLED/python", "/ABSOLUTE/ORIGINAL/browser-use"],
-  "read_python": "/ABSOLUTE/INSTALLED/python",
-  "runtime_file": "/ABSOLUTE/PRIVATE/runtime.py",
-  "preamble_file": "/ABSOLUTE/PRIVATE/upstream-preamble.txt",
-  "state_dir": "/ABSOLUTE/PRIVATE/state",
-  "pixel_cdp_urls": ["http://127.0.0.1:19222", "ws://127.0.0.1:19222/devtools/browser"],
-  "wait_seconds": 60,
-  "preexisting_sessions": []
-}
-```
-
-`PIXEL_SCHEDULER_CONFIG` overrides the config path. Pin the existing installed
-Python and browser-use wrapper, not a package runner which could spawn a child
-and break timeout ownership. `read_python` must already provide websockets
-15.0.1; no package installation is performed. Never point upstream_argv back to
-the shim. Direct reads accept a configured HTTP(S) CDP origin or an exact allowlisted
-WS(S) browser endpoint. Explicit WS endpoints must use `/devtools/browser` or
-`/devtools/browser/<safe-id>` without credentials, query, or fragment. HTTP discovery uses `/json/version` without redirects or environment
-proxies. Its advertised WS path is bound to that same configured origin.
-
-The direct transport follows [websockets 15.0.1 sync client API](https://websockets.readthedocs.io/en/15.0.1/reference/sync/client.html):
-`proxy=None`, bounded open/close/receive timeouts and message size.
-
-4. Before activation, capture verified existing daemon session names into the
-   private `preexisting_sessions` list. Their legacy calls remain exclusive but
-   keep their current tab when no managed manifest exists. Finish reports
-   `preserved_unmanaged` and does not close or shut down those old sessions.
-   Existing managed manifests take precedence. Old sessions are not automatically
-   cleaned. Use new `pixel_ui_<task>` names for managed interactive tasks.
-   Back up any existing `$HERMES_HOME/bin/browser-use`. Atomically install an
-   executable copy of `shim.py` there. The loaded Hermes `_find_cli()` must be
-   verified to rediscover this location on each call. No service restart needed.
-   Non-Pixel legacy code and CLI option invocations delegate unchanged. Pixel
-   directives on unconfigured endpoints fail closed rather than being passed
-   to the upstream CLI as ordinary Python.
-5. Verify real overlapping reads, exclusive legacy work, exact tab cleanup,
-   owner-mode interruption/recovery, and killed-worker cleanup. Cleanup requires
-   a validated target list proving absence, not just a close acknowledgement. Check gateway PID
-   unchanged. Check both BU_CDP_URL and BU_CDP_WS routing against the installed
-   harness; only configured exact endpoint strings activate scheduling. Set only
-   one CDP environment variable for Pixel: conflicting URL/WS values fail closed.
-6. Update the Hermes operational runbook: atomic read directive, four reusable worker sessions,
-   explicit legacy finish, owner priority, shared cookie caveat, and RF services
-   never using extra proxies. Existing active contexts need an explicit reminder.
-
-Capacity is fixed at four for every invocation; do not vary it per process.
-The existing `slot-0.lock` and `slot-1.lock` files remain outer gates. New readers
-hold both shared plus one of four `read-capacity-*.lock` files; writers hold both
-outer gates exclusively. During an atomic runtime replacement, old two-slot
-readers drain before new readers enter, and either-generation writers exclude
-all readers. Keep the same state directory and lock files across deployment and
-rollback; never unlink active lock files. Rollback to the two-slot version is
-safe but temporarily waits for existing four-slot readers. Same-session calls
-remain serialized. More slots increase peak phone load, not guaranteed speed;
-validate four real reads and phone resource headroom before claiming improvement.
-
-Rollback: atomically restore the previous managed CLI (or remove only the shim
-if none existed). Do not kill the gateway or close unrecorded personal tabs.
-
-## Local verification
-
-```sh
-python3 -m unittest discover -s vpn/pixel-server/concurrency -p 'test_*.py'
-python3 -m py_compile vpn/pixel-server/concurrency/runtime.py vpn/pixel-server/concurrency/shim.py
-```
-
-Tests use fake CDP and real cross-process POSIX locks. They do not prove actual
-browser/owner tunnel behavior; deployment needs the live checks above.
+На целевой установке проверьте четыре пересекающихся чтения, ожидание пятого, эксклюзивный ввод, очистку своих вкладок, прерывание владельцем и восстановление.
+Cookies общие; прямой CDP и другие клиенты обходят очередь. Не смешивайте их с запланированными задачами.
+Владелец прерывает туннель с задержкой опроса; не повторяйте прерванную отправку формы вслепую.
+Очистка требует доступного CDP и подтверждения отсутствия target; окно аварии между созданием вкладки и записью ID не транзакционно защищено.
+При обновлении/откате сохраняйте один `state_dir` и файлы блокировок: активные lock-файлы не удалять.
+Откат — атомарно вернуть прежний CLI, не убивать gateway и не закрывать чужие вкладки.

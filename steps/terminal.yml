@@ -1,4 +1,8 @@
 - link:
+    ~/.local/bin/codexbar-app:
+      path: scripts/codexbar-launch.sh
+      create: true
+      force: false
     ~/.local/bin/dots:
       path: scripts/dots
       create: true
