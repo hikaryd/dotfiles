@@ -1,7 +1,9 @@
-# Stable personal Codex settings managed by ~/dots.
-# Runtime/project/plugin state is intentionally preserved only in ~/.codex/config.toml.
+# Переносимые настройки Codex; история и локальные настройки хранятся отдельно.
 model = "gpt-5.6-sol"
 model_provider = "openai"
+# YOLO: без запросов подтверждения и без sandbox Codex.
+approval_policy = "never"
+sandbox_mode = "danger-full-access"
 personality = "pragmatic"
 suppress_unstable_features_warning = true
 service_tier = "default"

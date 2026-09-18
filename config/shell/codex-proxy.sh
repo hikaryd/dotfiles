@@ -1,22 +1,7 @@
-# =============================================================================
-# Codex (oh-my-codex / omx) через изолированный VLESS-прокси (xray)
-# -----------------------------------------------------------------------------
-# Единый источник для bash и zsh. Симлинкуется в ~/.config/shell/codex-proxy.sh
-# и подключается из ~/.zshrc и ~/.bashrc.
-#
-# Функции omx и spotatui НЕ заменяют бинарники, а оборачивают их:
-#   1) поднимает локальный HTTP-прокси xray на 127.0.0.1:10810 (если не поднят);
-#   2) запускают настоящий бинарник через `command` с proxy env;
-#   3) для omx выбирается стабильный OMX_ROOT текущего terminal/tmux-pane.
-#
-# Proxy-переменные задаются ТОЛЬКО процессам omx/spotatui — системный трафик,
-# корпоративный VPN и другие приложения не затрагиваются.
-# OMX_ROOT тоже задаётся только дочернему процессу. Поэтому параллельные
-# разговоры в одном checkout автоматически изолированы, но shell не загрязняется.
-#
-# Управление прокси: codex-proxy --status | --stop | --update | --list
-# Настройка серверов:  codex-proxy --set-sub   (URL подписки)
-# =============================================================================
+# Codex через локальный VLESS-прокси. Общий модуль bash/zsh.
+# Прокси задаётся только дочернему Codex; системные настройки не меняются.
+# YOLO по умолчанию задаётся в ~/.codex/config.toml, не принудительными флагами.
+# Управление: codex-proxy --status | --stop | --update | --list
 
 alias codex-proxy='python3 "$HOME/.config/xray-codex/codex-proxy.py"'
 
@@ -30,15 +15,15 @@ _codex_proxy_ensure() {
   # Поднять xray, если локальный HTTP-прокси ещё не слушает порт.
   if ! lsof -nP -iTCP:"$port" -sTCP:LISTEN >/dev/null 2>&1; then
     if [ ! -f "$cfg" ]; then
-      echo "omx: нет $cfg — сначала настрой прокси: codex-proxy" >&2
+      echo "codex: нет $cfg — сначала настрой прокси: codex-proxy" >&2
       return 1
     fi
     local xray_bin
     xray_bin="$(command -v xray)" || {
-      echo "omx: xray не найден (brew install xray)" >&2
+      echo "codex: xray не найден (brew install xray)" >&2
       return 1
     }
-    echo "omx: поднимаю VLESS-прокси на $proxy ..." >&2
+    echo "codex: поднимаю VLESS-прокси на $proxy ..." >&2
     nohup "$xray_bin" run -c "$cfg" >/dev/null 2>&1 &
     printf '%s\n' "$!" > "$pidf"
     disown 2>/dev/null || true
@@ -49,7 +34,7 @@ _codex_proxy_ensure() {
       i=$((i + 1))
     done
     if ! lsof -nP -iTCP:"$port" -sTCP:LISTEN >/dev/null 2>&1; then
-      echo "omx: не удалось поднять xray на :$port (диагностика: codex-proxy --status)" >&2
+      echo "codex: не удалось поднять xray на :$port (диагностика: codex-proxy --status)" >&2
       return 1
     fi
   fi
@@ -57,50 +42,13 @@ _codex_proxy_ensure() {
   CODEX_PROXY_URL="$proxy"
 }
 
-# Access the persistent player from any directory; no proxy/startup work on reuse.
-music() {
-  "$HOME/dots/config/tmux/scripts/spotatui-popup.sh" "$@"
-}
-
-spotatui() {
+# Удаляем прежний alias с устаревшим -a untrusted при повторном source.
+unalias codex 2>/dev/null || true
+codex() {
   _codex_proxy_ensure || return
   local proxy="$CODEX_PROXY_URL"
-
   HTTP_PROXY="$proxy" HTTPS_PROXY="$proxy" ALL_PROXY="$proxy" \
   http_proxy="$proxy" https_proxy="$proxy" all_proxy="$proxy" \
   NO_PROXY="127.0.0.1,localhost,::1,*.local" no_proxy="127.0.0.1,localhost,::1,*.local" \
-  command spotatui "$@"
-}
-
-omx() {
-  _codex_proxy_ensure || return
-  local proxy="$CODEX_PROXY_URL"
-  local omx_root="${OMX_ROOT:-}"
-
-  # OMX хранит canonical session pointer внутри OMX_ROOT и запрещает двум
-  # одновременным разговорам делить один pointer. Автоматически даём каждому
-  # tmux-pane (или terminal shell вне tmux) стабильный отдельный root.
-  # Явно заданный OMX_ROOT всегда имеет приоритет.
-  if [ -z "$omx_root" ]; then
-    local instance_id
-    if [ -n "${TMUX_PANE:-}" ]; then
-      local tmux_server="${TMUX:-}"
-      tmux_server="${tmux_server#*,}"
-      tmux_server="${tmux_server%%,*}"
-      [ -n "$tmux_server" ] || tmux_server="unknown"
-      instance_id="tmux-${tmux_server}-${TMUX_PANE#%}"
-    else
-      instance_id="shell-$$"
-    fi
-    omx_root="$HOME/.omx/instances/$instance_id"
-  fi
-
-  # Child-only policy also covers bash and inherited owner=1 from old sessions.
-  # No HUD or fallback poller; native workflow/notification hooks remain enabled.
-  # Запустить настоящий oh-my-codex (omx) с proxy-env только для этого процесса.
-  HTTP_PROXY="$proxy" HTTPS_PROXY="$proxy" ALL_PROXY="$proxy" \
-  http_proxy="$proxy" https_proxy="$proxy" all_proxy="$proxy" \
-  NO_PROXY="127.0.0.1,localhost,::1,*.local" no_proxy="127.0.0.1,localhost,::1,*.local" \
-  OMX_ROOT="$omx_root" OMX_LAUNCH_POLICY=direct OMX_TMUX_HUD_OWNER=0 OMX_NOTIFY_FALLBACK=0 \
-  command omx "$@"
+  command codex "$@"
 }

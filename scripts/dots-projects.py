@@ -182,6 +182,8 @@ def inventory(include_worktrees=False):
     def root_for(path):
         if path not in cache:
             cache[path] = git_metadata(path)
+            if cache[path]:
+                cache.setdefault(cache[path][0], cache[path])
         metadata = cache[path]
         if metadata:
             root, common_dir = metadata
@@ -199,7 +201,8 @@ def inventory(include_worktrees=False):
             roots.setdefault(root, [])
     for common_dir in list(repositories):
         for path in registered_worktree_paths(common_dir):
-            metadata = git_metadata(path)
+            root_for(path)
+            metadata = cache[path]
             if metadata and metadata[1] == common_dir:
                 roots.setdefault(metadata[0], [])
     if include_worktrees:
@@ -316,10 +319,24 @@ def pick(projects):
 
 
 def focus(pane):
-    run("tmux", "select-window", "-t", pane["window"], check=True)
-    run("tmux", "select-pane", "-t", pane["pane"], check=True)
     command = "switch-client" if os.environ.get("TMUX") else "attach-session"
-    subprocess.run(["tmux", command, "-t", pane["session"]], check=True)
+    subprocess.run(
+        [
+            "tmux",
+            "select-window",
+            "-t",
+            pane["window"],
+            ";",
+            "select-pane",
+            "-t",
+            pane["pane"],
+            ";",
+            command,
+            "-t",
+            pane["session"],
+        ],
+        check=True,
+    )
 
 
 def open_project(target=None):

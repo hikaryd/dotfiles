@@ -2,52 +2,7 @@
 # ZSH Configuration — migrated from nushell, optimized for performance
 # =============================================================================
 
-# --- Environment ---
-export EDITOR="nvim"
-export VISUAL="nvim"
-export BUN_INSTALL="$HOME/.bun"
-
-# Secrets, identities, service endpoints, and cluster coordinates stay outside
-# this repository. See config/zsh/private.example.zsh for the supported keys.
-typeset -g DOTS_PRIVATE_ZSH="${DOTS_PRIVATE_ZSH:-${XDG_CONFIG_HOME:-$HOME/.config}/dots/private.zsh}"
-[[ -r "$DOTS_PRIVATE_ZSH" ]] && source "$DOTS_PRIVATE_ZSH"
-
-# Все Kubernetes-команды и guards живут в одном модуле. Его source не делает
-# сетевых запросов; подключение к кластеру начинается только при вызове команды.
-[[ -r "$HOME/dots/config/zsh/kube-tools.zsh" ]] &&
-  source "$HOME/dots/config/zsh/kube-tools.zsh"
-
-# PATH / function and module paths (typeset -U removes duplicates)
-typeset -U path fpath module_path
-path=(
-  "$BUN_INSTALL/bin"
-  "$HOME/.cargo/bin"
-  "$HOME/.local/bin"
-  /opt/homebrew/bin
-  /opt/homebrew/sbin
-  /usr/local/bin
-  $path
-  /Applications
-  "$HOME/.dual-graph"
-)
-
-# Completion/function search path must be ready before compinit.
-# Стабильные (версионно-независимые) пути Homebrew добавлены ЯВНО: встроенный
-# $fpath ниже указывает на Cellar/zsh/<версия>/…, который brew удаляет при
-# `brew upgrade zsh` — тогда уже запущенные сессии ломаются с
-# «_main_complete: function definition file not found». share-пути brew
-# переносит на новую версию, поэтому они переживают апгрейд.
-fpath=(
-  "$HOME/.bun"
-  "$HOME/.config/zsh/functions"
-  /opt/homebrew/share/zsh/site-functions
-  /opt/homebrew/share/zsh/functions
-  $fpath
-)
-
-# Homebrew embeds its current Cellar version in zsh's default module_path.
-# Prefer the stable opt symlink so complist/computil keep loading after upgrades.
-[[ -d /opt/homebrew/lib/zsh ]] && module_path=(/opt/homebrew/lib $module_path)
+source "${DOTS_ROOT:-${${(%):-%x}:A:h:h:h}}/config/zsh/commands.zsh"
 
 # --- History ---
 HISTFILE="$HOME/.zsh_history"
@@ -95,9 +50,6 @@ zstyle ':completion:*' list-colors "${(s.:.)LS_COLORS}"
 zstyle ':completion:*' use-cache on
 zstyle ':completion:*' cache-path "$HOME/.zcompcache"
 
-# --- Autoloaded functions (lazy — loaded only on first call) ---
-autoload -Uz _dots-zoxide-init extract graphify-merge-fix kafka-consume kafka-produce tp y z zi
-
 # --- Key bindings ---
 bindkey -e
 bindkey '^A' beginning-of-line
@@ -108,36 +60,7 @@ autoload -Uz edit-command-line
 zle -N edit-command-line
 bindkey '^[e' edit-command-line
 
-# --- Aliases ---
-alias v='nvim'
-alias cat='bat --style=plain'
-alias l='nls'
-alias c='clear'
-alias lg='lazygit'
-alias gaa='git add -A'
-alias gmf='graphify-merge-fix'
-
-alias ..='cd ..'
-alias ...='cd ../..'
-alias ....='cd ../../..'
-
-alias bu='brew upgrade --cask --greedy'
-alias speedtest='networkquality'
-alias codex='codex -a untrusted -c model_reasoning_effort="high"'
-alias vs='source .venv/bin/activate'
-alias share_port='npx tunnelmole 8000'
-alias create_mr='~/dots/scripts/ai_helper --mode mr'
-alias nvim-bench='hyperfine "nvim --startuptime /tmp/startup.log +qall" --warmup 3 --runs 10'
-
 # --- Quiet Ayu — поиск и подсветка ввода ---
-export FZF_DEFAULT_OPTS=" \
-  --color=bg+:#273747,bg:#0d1017,spinner:#73d0ff,hl:#73d0ff \
-  --color=fg:#bfbdb6,header:#858d9c,info:#858d9c,pointer:#73d0ff \
-  --color=marker:#95e6cb,fg+:#bfbdb6,prompt:#73d0ff,hl+:#73d0ff \
-  --color=selected-bg:#273747,border:#303847 \
-  --border='rounded' --preview-window='border-rounded' \
-  --prompt='> ' --marker='>' --pointer='›' --separator='─' --scrollbar='│'"
-
 typeset -A ZSH_HIGHLIGHT_STYLES
 ZSH_HIGHLIGHT_MAXLENGTH=512
 ZSH_HIGHLIGHT_STYLES[command]='fg=#73d0ff'
@@ -176,6 +99,12 @@ fi
 
 # Native prompt avoids a Starship process on every redraw. Set
 # DOTS_USE_STARSHIP=1 before starting zsh to restore the full Starship prompt.
+# При повторном source оставляем только выбранный prompt provider.
+autoload -Uz add-zsh-hook
+add-zsh-hook -d precmd prompt_starship_precmd
+add-zsh-hook -d preexec prompt_starship_preexec
+add-zsh-hook -d precmd _dots-prompt-precmd
+add-zsh-hook -d preexec _dots-prompt-preexec
 if [[ "${DOTS_USE_STARSHIP:-0}" == 1 ]]; then
   _starship_cache="$HOME/.cache/starship-init.zsh"
   if [[ ! -s "$_starship_cache" || "$(command -v starship)" -nt "$_starship_cache" ]]; then
@@ -185,6 +114,7 @@ if [[ "${DOTS_USE_STARSHIP:-0}" == 1 ]]; then
   [[ -s "$_starship_cache" ]] && source "$_starship_cache"
   unset _starship_cache
 else
+  [[ "${RPROMPT-}" == '$('*starship*' prompt --right '*')' ]] && RPROMPT=
   setopt PROMPT_SUBST
   zmodload zsh/datetime
   autoload -Uz add-zsh-hook _dots-prompt-find-git-dir _dots-prompt-precmd _dots-prompt-preexec
@@ -242,13 +172,3 @@ if [[ -o interactive && -t 0 && -t 1 ]]; then
   [[ -f /opt/homebrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ]] && \
     source /opt/homebrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
 fi
-
-# Codex (oh-my-codex / omx) через изолированный VLESS-прокси (xray).
-# Источник (общий для bash и zsh): ~/.config/shell/codex-proxy.sh
-[[ -f ~/.config/shell/codex-proxy.sh ]] && source ~/.config/shell/codex-proxy.sh
-
-# Run OMX without the tmux HUD/status pane.
-export OMX_LAUNCH_POLICY=direct
-# Native hooks already deliver notifications. The fallback watcher polls large
-# OMX state trees and can consume a full CPU core per concurrent session.
-export OMX_NOTIFY_FALLBACK=0

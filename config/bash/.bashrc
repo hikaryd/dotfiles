@@ -6,7 +6,7 @@ export SHELL=/bin/bash
 # exec /opt/homebrew/bin/nu
 # fi
 
-# Codex (oh-my-codex / omx) через изолированный VLESS-прокси.
+# Codex через изолированный VLESS-прокси.
 # Общий источник для bash и zsh: ~/.config/shell/codex-proxy.sh
 [ -f "$HOME/.config/shell/codex-proxy.sh" ] && . "$HOME/.config/shell/codex-proxy.sh"
 . "$HOME/.cargo/env"

@@ -231,8 +231,8 @@ def gen_nushell(p: dict, variant: str) -> None:
     path = CONFIG / "nushell" / "ayu.nu"
     e, s, t, u, c = p["editor"], p["syntax"], p["terminal"], p["ui"], p["common"]
 
-    content = f'''# Ayu {variant} theme for Nushell
-# Generated from palette/ayu.toml
+    content = f'''# Quiet Ayu {variant} для Nushell
+# Сгенерировано из palette/ayu.toml; цвета ввода согласованы с zsh.
 
 let theme = {{
   red: "{t["red"]}"
@@ -265,19 +265,19 @@ let theme = {{
 }}
 
 let scheme = {{
-  recognized_command: $theme.entity
+  recognized_command: $theme.accent
   unrecognized_command: $theme.text
-  constant: $theme.constant
+  constant: $theme.text
   punctuation: $theme.dim
-  operator: $theme.operator
-  string: $theme.string
-  virtual_text: $theme.comment
-  variable: {{ fg: $theme.special attr: i }}
-  filepath: $theme.func
+  operator: $theme.dim
+  string: $theme.regexp
+  virtual_text: $theme.dim
+  variable: $theme.text
+  filepath: $theme.text
 }}
 
 $env.config.color_config = {{
-  separator: {{ fg: $theme.dim attr: b }}
+  separator: $theme.dim
   leading_trailing_space_bg: {{ fg: $theme.accent attr: u }}
   header: {{ fg: $theme.text attr: b }}
   row_index: $scheme.virtual_text
@@ -285,14 +285,14 @@ $env.config.color_config = {{
   list: $theme.text
   hints: $scheme.virtual_text
   search_result: {{ fg: $theme.accent bg: $theme.selection }}
-  shape_closure: $theme.regexp
-  closure: $theme.regexp
-  shape_flag: {{ fg: $theme.markup attr: i }}
+  shape_closure: $theme.dim
+  closure: $theme.dim
+  shape_flag: $theme.dim
   shape_matching_brackets: {{ attr: u }}
   shape_garbage: $theme.error
-  shape_keyword: $theme.keyword
-  shape_match_pattern: $theme.string
-  shape_signature: $theme.regexp
+  shape_keyword: $theme.accent
+  shape_match_pattern: $scheme.string
+  shape_signature: $theme.dim
   shape_table: $scheme.punctuation
   cell-path: $scheme.punctuation
   shape_list: $scheme.punctuation
@@ -300,64 +300,17 @@ $env.config.color_config = {{
   shape_vardecl: $scheme.variable
   shape_variable: $scheme.variable
   empty: {{ attr: n }}
-  filesize: {{||
-    if $in < 1kb {{
-      $theme.cyan
-    }} else if $in < 10kb {{
-      $theme.green
-    }} else if $in < 100kb {{
-      $theme.yellow
-    }} else if $in < 10mb {{
-      $theme.func
-    }} else if $in < 100mb {{
-      $theme.markup
-    }} else if $in < 1gb {{
-      $theme.red
-    }} else {{
-      $theme.keyword
-    }}
-  }}
-  duration: {{||
-    if $in < 1day {{
-      $theme.cyan
-    }} else if $in < 1wk {{
-      $theme.green
-    }} else if $in < 4wk {{
-      $theme.yellow
-    }} else if $in < 12wk {{
-      $theme.func
-    }} else if $in < 24wk {{
-      $theme.markup
-    }} else if $in < 52wk {{
-      $theme.red
-    }} else {{
-      $theme.keyword
-    }}
-  }}
-  date: {{|| (date now) - $in |
-    if $in < 1day {{
-      $theme.cyan
-    }} else if $in < 1wk {{
-      $theme.green
-    }} else if $in < 4wk {{
-      $theme.yellow
-    }} else if $in < 12wk {{
-      $theme.func
-    }} else if $in < 24wk {{
-      $theme.markup
-    }} else if $in < 52wk {{
-      $theme.red
-    }} else {{
-      $theme.keyword
-    }}
-  }}
+  # Статичные цвета: без радуги и вычислений для каждой ячейки.
+  filesize: $theme.text
+  duration: $theme.dim
+  date: $theme.dim
   shape_external: $scheme.unrecognized_command
   shape_internalcall: $scheme.recognized_command
   shape_external_resolved: $scheme.recognized_command
   shape_block: $scheme.recognized_command
   block: $scheme.recognized_command
-  shape_custom: $theme.tag
-  custom: $theme.tag
+  shape_custom: $theme.text
+  custom: $theme.text
   background: $theme.bg
   foreground: $theme.text
   cursor: {{ bg: $theme.accent fg: $theme.bg }}
@@ -383,11 +336,11 @@ $env.config.color_config = {{
   shape_binary: $scheme.constant
   shape_datetime: $scheme.constant
   shape_literal: $scheme.constant
-  string: $scheme.string
+  string: $theme.text
   shape_string: $scheme.string
-  shape_string_interpolation: $theme.operator
+  shape_string_interpolation: $scheme.string
   shape_raw_string: $scheme.string
-  shape_externalarg: $scheme.string
+  shape_externalarg: $theme.text
 }}
 $env.config.highlight_resolved_externals = true
 $env.config.explore = {{

@@ -1,0 +1,54 @@
+#!/bin/zsh -f
+# Запуск существующих команд zsh без интерактивных расширений.
+typeset -g DOTS_ROOT="${DOTS_ROOT:-${0:A:h:h}}"
+typeset _dots_bridge_name="${0:t}" _dots_bridge_cwd=''
+typeset -a _dots_bridge_args
+
+# Иначе alias вроде codex вызовет свою же ссылку из Nushell.
+if [[ -n ${DOTS_ZSH_BIN-} ]]; then
+  path=("${(@)path:#${DOTS_ZSH_BIN}}")
+fi
+source "$DOTS_ROOT/config/zsh/commands.zsh" || exit
+if [[ -n ${DOTS_ZSH_BIN-} ]]; then
+  path=("${(@)path:#${DOTS_ZSH_BIN}}")
+fi
+
+if [[ $_dots_bridge_name == dots-zsh ]]; then
+  if [[ ${1-} == --list ]]; then
+    for _dots_bridge_name in ${(ok)aliases} ${(ok)functions}; do
+      [[ $_dots_bridge_name != _* && $_dots_bridge_name != .* &&
+         $_dots_bridge_name != dots-zsh && $_dots_bridge_name != dots-nu &&
+         $_dots_bridge_name != vs &&
+         $_dots_bridge_name != *[^a-zA-Z0-9_.-]* ]] && print -r -- "$_dots_bridge_name"
+    done
+    exit 0
+  fi
+  if [[ ${1-} == --cwd-file && -n ${2-} ]]; then
+    _dots_bridge_cwd=$2
+    shift 2
+  fi
+  if [[ ${1-} != --run || -z ${2-} ]]; then
+    print -u2 -- 'Использование: dots-zsh [--cwd-file FILE] --run NAME [ARGS...] | --list'
+    exit 2
+  fi
+  _dots_bridge_name=$2
+  shift 2
+fi
+
+if [[ $_dots_bridge_name == _* || $_dots_bridge_name == *[^a-zA-Z0-9_.-]* ]] ||
+   (( ! $+aliases[$_dots_bridge_name] && ! $+functions[$_dots_bridge_name] )); then
+  print -u2 -- 'Неизвестная команда zsh'
+  exit 127
+fi
+_dots_bridge_args=("$@")
+if (( $+aliases[$_dots_bridge_name] )); then
+  # Только доверенное определение alias; аргументы остаются отдельными словами.
+  eval "${(q)_dots_bridge_name} ${(j: :)${(@q)_dots_bridge_args}}"
+else
+  "$_dots_bridge_name" "${_dots_bridge_args[@]}"
+fi
+typeset -i _dots_bridge_result=$?
+if [[ -n $_dots_bridge_cwd ]]; then
+  print -rn -- "$PWD" > "$_dots_bridge_cwd" || exit 1
+fi
+exit $_dots_bridge_result

@@ -8,7 +8,6 @@ tap "abue-ammar/tinycast"
 tap "homebrew-zathura/zathura"
 tap "ajrosen/tap"
 tap "kunkka19xx/tap"
-tap "LargeModGames/spotatui"
 
 # Основные системные пакеты
 brew "coreutils"
@@ -48,7 +47,6 @@ brew "zathura"
 brew "zathura-pdf-poppler" # PDF-плагин; линкуется в steps/dependencies.yml
 brew "nolight132/tap/nls"
 brew "nklmilojevic/sofka/sofka"
-brew "spotatui"
 
 # Инструменты для шелла и терминала
 brew "fzf"

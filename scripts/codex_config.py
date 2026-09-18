@@ -3,7 +3,7 @@
 
 Codex stores durable preferences and runtime state in the same TOML file.  This
 helper deliberately owns only the stable personal settings listed below and
-preserves project trust, hook trust, plugin/OMX state, and UI state in place.
+preserves project trust, hook trust, plugin state, and UI state in place.
 """
 
 from __future__ import annotations
@@ -24,6 +24,8 @@ from urllib.parse import parse_qsl, unquote, urlsplit
 
 
 ROOT_KEYS = (
+    "approval_policy",
+    "sandbox_mode",
     "model",
     "model_provider",
     "personality",

@@ -1,3 +1,7 @@
+# Новые терминалы — Nushell; login shell системы не меняется.
+command = shell:"$HOME/.local/bin/dots-nu"
+shell-integration = nushell
+
 theme = Ayu
 
 # Нейтральная рабочая типографика; иконки — отдельным fallback.
@@ -53,10 +57,9 @@ keybind = ctrl+7=csi:55;5u
 keybind = ctrl+8=csi:56;5u
 keybind = ctrl+9=csi:57;5u
 
-# Короткий след дополняет нативный курсор, не двигая текст.
-# Для полного отключения движения уберите следующую строку custom-shader.
-custom-shader = shaders/smooth_cursor.glsl
-custom-shader-animation = true
+# Без декоративного следа и постоянной перерисовки в покое.
+custom-shader =
+custom-shader-animation = false
 
 # Локальные профили dots style, относительно XDG-конфига Ghostty.
 config-file = ?../dots/ghostty-style.conf

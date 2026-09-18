@@ -12,9 +12,3 @@ prefix_rule(
     decision = "allow",
     justification = "Read the installed Tauri CLI version.",
 )
-
-prefix_rule(
-    pattern = ["omx", "team", "api"],
-    decision = "allow",
-    justification = "Use the local OMX team runtime API.",
-)
