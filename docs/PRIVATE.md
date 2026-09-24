@@ -24,7 +24,7 @@ dots private check   # проверить права и незаполненны
 | `~/.kube/` | Выданные kubeconfig; пути к ним задаются в `private.zsh` |
 | `~/.ssh/` | Клиентские настройки и проверенные `known_hosts`; ключи предпочтительно через менеджер паролей/SSH-агент |
 | `~/.config/xray-codex/` | Приватная подписка и конфигурация прокси, если он используется |
-| `~/.config/pixel-private/` | Адреса, инвентарь и публичные ключи Pixel; [схема](../vpn/pixel-server/PRIVATE-CONFIG.md) |
+| `~/.config/agent-phone/` | Адреса, инвентарь и публичные ключи телефона; шаблоны в `~/Documents/dev/agent-phone/` |
 
 Пути учитывают `DOTS_PRIVATE_ZSH`/`XDG_CONFIG_HOME`, `CLAUDE_CONFIG_DIR`, `CODEX_CONFIG_DIR`/`CODEX_HOME`; Git include фиксирован: `~/.config/git/private.inc`.
 

@@ -39,5 +39,5 @@ YOLO включён в `~/.codex/config.toml`: команды выполняют
 Для более ограниченного запуска: `codex -a on-request -s workspace-write`.
 Авторизация и секреты остаются вне Git; системные защиты не меняются.
 
-[VPN](vpn/README.md) и [Pixel](vpn/PIXEL-BROWSER.md) настраиваются отдельно.
+Исходники и инструкция телефона: `~/Documents/dev/agent-phone/README.md`.
 [CodexBar](config/codexbar/README.md) запускается через `codexbar-app`.
