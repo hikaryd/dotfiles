@@ -89,15 +89,6 @@
       stdout: true
       stderr: true
     - command: |
-        if python3 -c "import yaml" 2>/dev/null; then
-          echo "PyYAML already installed"
-        else
-          pip3 install pyyaml --break-system-packages
-        fi
-      description: Install PyYAML for Python
-      stdout: true
-      stderr: true
-    - command: |
         if command -v rtk >/dev/null 2>&1; then
           echo "rtk already installed"
         else

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Install personal Pi settings, theme, footer and model overrides without touching auth."""
+"""Install personal Pi settings, theme, extensions and model overrides without touching auth."""
 
 import json
 import os
@@ -79,6 +79,7 @@ def apply(agent_dir: Path) -> None:
     resources = [
         (agent_dir / "themes/ayu.json", ROOT / "config/pi/themes/ayu.json"),
         (agent_dir / "extensions/dots-ayu-bar", ROOT / "config/pi/extensions/ayu-bar"),
+        (agent_dir / "extensions/dots-task-titles", ROOT / "config/pi/extensions/task-titles"),
     ]
     for _, source in resources:
         if not source.exists():
@@ -87,7 +88,7 @@ def apply(agent_dir: Path) -> None:
         link_resource(target, source, agent_dir / "backups")
     write_json(settings_path, settings)
     write_json(models_path, models)
-    print(f"Pi: personal settings, Ayu theme, quota bar and model overrides installed in {agent_dir}")
+    print(f"Pi: personal settings, Ayu theme, quota bar, Herdr titles and model overrides installed in {agent_dir}")
 
 
 if __name__ == "__main__":

@@ -1,8 +1,8 @@
 id = "dots.task-titles"
-name = "Codex task titles"
-version = "0.1.0"
+name = "Agent task titles"
+version = "0.2.0"
 min_herdr_version = "0.9.1"
-description = "Show native Codex task names on pane borders and automatic tabs"
+description = "Show Codex task names and Pi session names on pane borders and automatic tabs"
 platforms = ["macos", "linux"]
 
 [[startup]]
@@ -42,6 +42,6 @@ command = ["python3", "titles.py", "sync"]
 
 [[actions]]
 id = "sync"
-title = "Refresh Codex task titles"
+title = "Refresh agent task titles"
 contexts = ["workspace"]
 command = ["python3", "titles.py", "sync"]

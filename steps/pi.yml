@@ -4,6 +4,6 @@
       stdout: true
       stderr: true
     - command: python3 scripts/pi-apply.py
-      description: Apply personal Pi settings, Ayu theme, quota bar and model overrides
+      description: Apply personal Pi settings, Ayu theme, quota bar, Herdr titles and model overrides
       stdout: true
       stderr: true

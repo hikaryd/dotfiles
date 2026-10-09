@@ -173,11 +173,11 @@
       stdout: true
       stderr: true
     - command: herdr plugin link "$HOME/dots/config/herdr/plugins/task-titles" --enabled
-      description: Linking automatic Codex task titles in Herdr
+      description: Linking automatic Codex and Pi task titles in Herdr
       stdout: true
       stderr: true
     - command: herdr plugin action invoke dots.task-titles.sync
-      description: Naming existing Codex panes and tabs
+      description: Naming existing Codex and Pi panes and tabs
       stdout: true
       stderr: true
     - command: |

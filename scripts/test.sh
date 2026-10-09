@@ -2,8 +2,8 @@
 # Run owned suites only; never recurse into Dotbot, caches or private configs.
 set -uo pipefail
 
-root=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
-cd "$root"
+root=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd) || exit 1
+cd "$root" || exit 1
 
 usage() {
   printf '%s\n' \
@@ -32,7 +32,7 @@ esac
 umask 077
 logs=$(mktemp -d "${TMPDIR:-/tmp}/dots-tests.XXXXXX") || exit 1
 trap 'rm -rf "$logs"' EXIT
-mkdir -p "$logs/home" "$logs/config" "$logs/state" "$logs/data"
+mkdir -p "$logs/home" "$logs/config" "$logs/state" "$logs/data" || exit 1
 failures=0
 summary=()
 
@@ -96,8 +96,13 @@ if [[ $group == all || $group == go ]]; then
   else
     for manifest in "${modules[@]}"; do
       module=${manifest%/go.mod}
+      if [[ -n $(find "$module" -name '*_test.go' -print -quit) ]]; then
+        label="$module / race"
+      else
+        label="$module / compile (no tests)"
+      fi
       # Use the installed toolchain; testing must not auto-download another Go.
-      run_suite "$module / race" env GOTOOLCHAIN=local \
+      run_suite "$label" env GOTOOLCHAIN=local \
         "${GO_BIN:-go}" -C "$module" test -race -count=1 ./...
       run_suite "$module / vet" env GOTOOLCHAIN=local \
         "${GO_BIN:-go}" -C "$module" vet ./...

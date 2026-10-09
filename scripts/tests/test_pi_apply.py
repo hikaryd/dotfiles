@@ -60,6 +60,7 @@ class PiApplyTests(unittest.TestCase):
         self.assertEqual(other.read_text(), "keep me")
         self.assertTrue((self.agent / "themes/ayu.json").is_symlink())
         self.assertTrue((self.agent / "extensions/dots-ayu-bar").is_symlink())
+        self.assertEqual((self.agent / "extensions/dots-task-titles").resolve(), ROOT / "config/pi/extensions/task-titles")
         backup = next(self.agent.glob("settings.json.bak-*"))
         self.assertEqual(json.loads(backup.read_text())["theme"], "dark")
 
@@ -103,7 +104,7 @@ class PiApplyTests(unittest.TestCase):
         pi_apply.apply(self.agent)
         backup = next((self.agent / "backups").glob("dots-ayu-bar.bak-*"))
         self.assertEqual((backup / "index.ts").read_text(), "old extension")
-        self.assertEqual(list(old.parent.iterdir()), [old])
+        self.assertEqual(set(old.parent.iterdir()), {old, self.agent / "extensions/dots-task-titles"})
 
     def test_existing_settings_symlink_is_preserved(self):
         target = Path(self.temporary.name) / "personal-settings.json"

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Show agent-authored task names with native Codex OSC titles as a fallback.
+"""Show Codex task names and Pi session names, with native OSC titles as a fallback.
 
 Herdr 0.9.1 does not allow pane.updated in plugin manifests. Refresh on agent
 state/focus events; an idle OSC-only rename is picked up on the next focus.
@@ -21,7 +21,8 @@ from pathlib import Path
 
 
 SOURCE = "dots:task-titles"
-AUTOMATIC_LABELS = {"zsh", "nu", "bash", "fish", "codex"}
+AGENTS = {"codex", "pi"}
+AUTOMATIC_LABELS = {"zsh", "nu", "bash", "fish", *AGENTS}
 ANSI = re.compile(r"\x1b(?:\][^\x07\x1b]*(?:\x07|\x1b\\)|\[[0-?]*[ -/]*[@-~])")
 
 
@@ -34,15 +35,41 @@ def shorten(text, limit):
     return prefix.rstrip() + "…"
 
 
-def task_title(value, limit=32):
+def clean_text(value):
     if not isinstance(value, str):
         return ""
     text = ANSI.sub("", value)
     text = "".join(c for c in text if not unicodedata.category(c).startswith("C"))
-    text = " ".join(text.split())
-    # Codex appends the working directory after a spaced vertical bar.
-    text = text.rsplit(" | ", 1)[0].strip()
+    return " ".join(text.split())
+
+
+def task_title(value, limit=32, agent="codex"):
+    text = clean_text(value)
+    if agent == "codex":
+        # Codex appends the working directory after a spaced vertical bar.
+        text = text.rsplit(" | ", 1)[0].strip()
     return shorten(text, limit)
+
+
+def native_title(pane):
+    agent = pane.get("agent")
+    text = clean_text(pane.get("terminal_title_stripped"))
+    if agent == "pi":
+        # Pi emits 'π - <name> - <cwd>' or 'π - <cwd>' for an unnamed session.
+        if not text.startswith("π - "):
+            return ""
+        text = text.removeprefix("π - ")
+        cwd = pane.get("cwd") or pane.get("foreground_cwd")
+        if cwd:
+            suffix = " - " + Path(cwd).name
+            if not text.endswith(suffix):
+                return ""
+            text = text[:-len(suffix)]
+        elif " - " in text:
+            text = text.rsplit(" - ", 1)[0]
+        else:
+            return ""
+    return task_title(text, agent=agent)
 
 
 def run_herdr(*args):
@@ -117,26 +144,27 @@ def write_state(path, state):
 
 def session_identity(pane):
     session = pane.get("agent_session") or {}
-    return session.get("value") if session.get("agent") == "codex" else None
+    return session.get("value") if session.get("agent") == pane.get("agent") else None
 
 
-def set_title(snapshot, state, pane_id, title, session_id=None):
+def set_title(snapshot, state, pane_id, title, session_id=None, agent="codex"):
     """Store a task name from the working agent, bound to its terminal/session."""
     pane = next((p for p in snapshot["panes"] if p["pane_id"] == pane_id), None)
-    if pane is None or pane.get("agent") != "codex":
-        raise ValueError("the explicit pane must contain a live Codex agent")
+    if agent not in AGENTS or pane is None or pane.get("agent") != agent:
+        raise ValueError(f"the explicit pane must contain a live {agent} agent")
     terminal_id = pane.get("terminal_id")
     if not terminal_id:
         raise ValueError("pane has no terminal identity")
     observed_session = session_identity(pane)
     if session_id and observed_session and session_id != observed_session:
-        raise ValueError("Codex session does not match the target pane")
-    title = task_title(title)
-    if not title:
+        raise ValueError(f"{agent} session does not match the target pane")
+    empty_pi_name = agent == "pi" and title == ""
+    title = task_title(title, agent=agent)
+    if not title and not empty_pi_name:
         raise ValueError("task title must not be empty")
     state.setdefault("semantic", {})[pane_id] = {
         "title": title, "terminal_id": terminal_id,
-        "session_id": session_id or observed_session,
+        "session_id": session_id or observed_session, "agent": agent,
     }
 
 
@@ -145,7 +173,7 @@ def semantic_titles(panes, state):
     semantic = state.setdefault("semantic", {})
     for pane_id, record in list(semantic.items()):
         pane = panes.get(pane_id)
-        if (pane is None or pane.get("agent") != "codex"
+        if (pane is None or pane.get("agent") != record.get("agent", "codex")
                 or pane.get("terminal_id") != record["terminal_id"]):
             del semantic[pane_id]
             continue
@@ -155,8 +183,9 @@ def semantic_titles(panes, state):
         elif observed_session and not record.get("session_id"):
             record["session_id"] = observed_session
     return {
-        pane_id: task_title(semantic[pane_id]["title"] if pane_id in semantic else pane.get("terminal_title_stripped"))
-        for pane_id, pane in panes.items() if pane.get("agent") == "codex"
+        # An explicit empty Pi name masks the previous OSC title during a switch/quit.
+        pane_id: task_title(semantic[pane_id]["title"], agent=pane["agent"]) if pane_id in semantic else native_title(pane)
+        for pane_id, pane in panes.items() if pane.get("agent") in AGENTS
     }
 
 
@@ -181,7 +210,7 @@ def synchronize(snapshot, state, command, save=lambda: None):
                 save()
             continue
         if pane.get("title") != title:
-            command("pane", "report-metadata", pane_id, "--source", SOURCE, "--seq", str(time.time_ns()), "--agent", "codex", "--title", title)
+            command("pane", "report-metadata", pane_id, "--source", SOURCE, "--seq", str(time.time_ns()), "--agent", pane["agent"], "--title", title)
             state["panes"][pane_id] = title
             save()
 
@@ -195,7 +224,7 @@ def synchronize(snapshot, state, command, save=lambda: None):
             continue
         if record is None and label not in AUTOMATIC_LABELS and not label.isdecimal():
             continue
-        candidates = [p for p in panes.values() if p["tab_id"] == tab_id and p.get("agent") == "codex"]
+        candidates = [p for p in panes.values() if p["tab_id"] == tab_id and p.get("agent") in AGENTS]
         named = [p for p in candidates if desired_titles.get(p["pane_id"])]
         if not named:
             if record and label != record["original"]:
@@ -228,13 +257,14 @@ def main():
     setter.add_argument("--pane", required=True)
     setter.add_argument("--title", required=True)
     setter.add_argument("--session-id")
+    setter.add_argument("--agent", choices=sorted(AGENTS), default="codex")
     args = parser.parse_args()
     path = state_file()
     with locked(path):
         state = read_state(path)
         snapshot = run_herdr("api", "snapshot")["snapshot"]
         if args.action == "set":
-            set_title(snapshot, state, args.pane, args.title, args.session_id)
+            set_title(snapshot, state, args.pane, args.title, args.session_id, args.agent)
             write_state(path, state)
         synchronize(snapshot, state, run_herdr, lambda: write_state(path, state))
 

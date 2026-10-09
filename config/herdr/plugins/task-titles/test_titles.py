@@ -168,6 +168,102 @@ class TitlesTest(unittest.TestCase):
         self.assertEqual(self.snapshot["panes"][0]["title"], "3742879 · Создание вакансии")
         self.assertEqual(self.state["panes"]["w1:p1"], "3742879 · Создание вакансии")
 
+    def test_pi_native_name_maps_to_pane_and_automatic_pi_tab(self):
+        pane = self.snapshot["panes"][0]
+        pane.update(agent="pi", cwd="/projects/my - repo", terminal_title_stripped="π - Поиск - API | UI - my - repo")
+        self.snapshot["tabs"][0]["label"] = "pi"
+        self.sync()
+        self.assertEqual(pane["title"], "Поиск - API | UI")
+        self.assertEqual(self.snapshot["tabs"][0]["label"], "Поиск - API | UI")
+        metadata = self.calls[0]
+        self.assertEqual(metadata[metadata.index("--agent") + 1], "pi")
+        self.calls.clear()
+        self.sync()
+        self.assertEqual(self.calls, [])
+
+    def test_unnamed_pi_session_does_not_use_directory_as_task(self):
+        pane = self.snapshot["panes"][0]
+        pane.update(agent="pi", cwd="/projects/my - repo", terminal_title_stripped="π - my - repo")
+        self.sync()
+        self.assertEqual(self.calls, [])
+        pane.pop("cwd")
+        pane["terminal_title_stripped"] = "π - repo"
+        self.sync()
+        self.assertEqual(self.calls, [])
+
+    def test_pi_semantic_name_and_empty_name_override_stale_native_title(self):
+        pane = self.snapshot["panes"][0]
+        pane.update(agent="pi", terminal_title_stripped="π - Старое имя - repo")
+        titles.set_title(self.snapshot, self.state, "w1:p1", "Название сессии | API", "pi-session", "pi")
+        self.sync()
+        self.assertEqual(pane["title"], "Название сессии | API")
+        self.assertEqual(self.snapshot["tabs"][0]["label"], "Название сессии | API")
+        titles.set_title(self.snapshot, self.state, "w1:p1", "", "new-pi-session", "pi")
+        self.sync()
+        self.assertNotIn("title", pane)
+        self.assertEqual(self.snapshot["tabs"][0]["label"], "nu")
+        self.calls.clear()
+        self.sync()
+        self.assertEqual(self.calls, [])
+
+    def test_semantic_name_expires_when_agent_changes_with_same_terminal(self):
+        titles.set_title(self.snapshot, self.state, "w1:p1", "Codex задача", "same-id")
+        self.sync()
+        pane = self.snapshot["panes"][0]
+        pane.update(agent="pi", terminal_title_stripped="π - Pi задача - repo")
+        self.sync()
+        self.assertEqual(self.state["semantic"], {})
+        self.assertEqual(pane["title"], "Pi задача")
+        titles.set_title(self.snapshot, self.state, "w1:p1", "Pi имя", "pi-id", "pi")
+        pane.update(agent="codex", terminal_title_stripped="Codex снова | repo")
+        self.sync()
+        self.assertEqual(self.state["semantic"], {})
+        self.assertEqual(pane["title"], "Codex снова")
+
+    def test_pi_session_identity_terminal_replacement_and_exit(self):
+        pane = self.snapshot["panes"][0]
+        pane.update(agent="pi", terminal_title_stripped="π - repo")
+        pane["agent_session"] = {"agent": "pi", "value": "pi-one"}
+        with self.assertRaises(ValueError):
+            titles.set_title(self.snapshot, self.state, "w1:p1", "Title", "pi-two", "pi")
+        with self.assertRaises(ValueError):
+            titles.set_title(self.snapshot, self.state, "w1:p1", "Title", "pi-one")
+        titles.set_title(self.snapshot, self.state, "w1:p1", "Pi имя", "pi-one", "pi")
+        self.sync()
+        pane["agent_session"]["value"] = "pi-two"
+        self.sync()
+        self.assertEqual(self.state["semantic"], {})
+        self.assertNotIn("title", pane)
+        titles.set_title(self.snapshot, self.state, "w1:p1", "Pi имя", "pi-two", "pi")
+        pane["terminal_id"] = "new-terminal"
+        self.sync()
+        self.assertEqual(self.state["semantic"], {})
+        titles.set_title(self.snapshot, self.state, "w1:p1", "Pi имя", "pi-two", "pi")
+        self.sync()
+        pane.pop("agent")
+        self.sync()
+        self.assertEqual(self.state["semantic"], {})
+        self.assertEqual(self.snapshot["tabs"][0]["label"], "nu")
+
+    def test_legacy_codex_semantic_state_is_preserved(self):
+        self.state["semantic"] = {"w1:p1": {"title": "Старое имя", "terminal_id": "terminal-one", "session_id": "session-one"}}
+        self.sync()
+        self.assertEqual(self.snapshot["panes"][0]["title"], "Старое имя")
+
+    def test_mixed_codex_pi_tab_follows_focus_and_preserves_manual_names(self):
+        self.snapshot["panes"].append({"pane_id": "w1:p2", "terminal_id": "terminal-two", "tab_id": "w1:t1", "agent": "pi", "terminal_title_stripped": "π - Проверить API - repo"})
+        self.sync()
+        self.assertEqual(self.snapshot["tabs"][0]["label"], "Исправить поиск статуса · 2")
+        self.snapshot["layouts"][0]["focused_pane_id"] = "w1:p2"
+        self.sync()
+        self.assertEqual(self.snapshot["tabs"][0]["label"], "Проверить API · 2")
+        self.snapshot["panes"][1]["label"] = "Моя панель"
+        self.snapshot["tabs"][0]["label"] = "Моя вкладка"
+        titles.set_title(self.snapshot, self.state, "w1:p2", "Другая задача", "pi-id", "pi")
+        self.sync()
+        self.assertNotIn("title", self.snapshot["panes"][1])
+        self.assertEqual(self.snapshot["tabs"][0]["label"], "Моя вкладка")
+
     def test_only_metadata_accepts_empty_success_output(self):
         with patch.object(titles.subprocess, "run", return_value=subprocess.CompletedProcess([], 0, "", "")):
             with self.assertRaises(json.JSONDecodeError):

@@ -37,3 +37,13 @@ Dotfiles для macOS. Общий стиль — **Ayu Dark**, палитра в
 ```
 
 Секреты и личные адреса не хранятся в Git. [Приватные настройки и перенос](docs/PRIVATE.md).
+
+## Проверки
+
+```sh
+make test       # все собственные тесты: Go, Python, Node и test runner
+make test-list  # состав наборов без запуска
+```
+
+[Правила и отдельные наборы](tests/README.md).
+[Аудит скриптов и порядок переноса на Go](docs/SCRIPT-AUDIT.md).

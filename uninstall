@@ -122,6 +122,8 @@ base = sys.argv[1]
 files = sorted(glob.glob(os.path.join(base, "steps", "*.yml")))
 targets = []
 try:
+    # Dotbot already vendors PyYAML; do not require a global pip installation.
+    sys.path.insert(0, os.path.join(base, "dotbot", "lib", "pyyaml", "lib"))
     import yaml
     for f in files:
         with open(f) as fh:
@@ -131,7 +133,7 @@ try:
                 targets.extend(item["link"].keys())
 except Exception:
     # fallback без PyYAML: цели — строки вида "    ~/path:" внутри блока "- link:"
-    pat = re.compile(r"^\s+(~/[^\s:]+):\s*$")
+    pat = re.compile(r"^\s+(~/[^\n]+):\s*$")
     for f in files:
         in_link = False
         for line in open(f):
@@ -143,7 +145,7 @@ except Exception:
                 continue
             m = pat.match(line)
             if in_link and m:
-                targets.append(m.group(1))
+                targets.append(m.group(1).rstrip())
 print("\n".join(targets))
 PY
 )
