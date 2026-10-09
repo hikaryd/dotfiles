@@ -1,0 +1,5 @@
+palette = "ayu_mirage" # keep
+[directory]
+style="color_blue"
+[palettes.old]
+color_blue="#ffffff"

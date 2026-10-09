@@ -49,3 +49,6 @@ config/git/private.inc
 /.ruff_cache/
 /docs/private/
 /.abide
+
+# Compiled native runtime aliases and cross-builds.
+/build/

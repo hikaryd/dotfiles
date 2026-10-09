@@ -1,0 +1,40 @@
+# User preferences
+"model" = 'old'
+custom_text = """
+[mcp_servers.literal]
+# >>> dots Codex managed root >>>
+# <<< dots Codex managed root <<<
+"""
+local_inline = { zebra = 1, alpha = 2 }
+local_array = [
+  { description = '[not.a.table]', value = 1 },
+  { value = 2, description = '# <<< dots Codex managed root <<<' },
+]
+
+[projects."/fixture/project.with.dots"] # user table
+trust_level = 'trusted' # keep trailing comment
+
+[[user_records]]
+label = "one"
+[[user_records]]
+label = "two"
+
+["tui"] # local UI options
+"status_line" = [
+  'old-model',
+]
+# User-owned display choice
+notifications = false
+custom_message = '''
+# >>> dots Codex managed keys >>>
+# <<< dots Codex managed keys <<<
+[mcp_servers.fake]
+'''
+
+[mcp_servers."keep.secret"]
+command = 'old-command'
+[mcp_servers."keep.secret".env]
+TOKEN = 'fake-existing-secret'
+
+[mcp_servers.obsolete]
+command = 'old-obsolete'

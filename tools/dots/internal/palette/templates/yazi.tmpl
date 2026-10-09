@@ -1,0 +1,146 @@
+#:schema https://yazi-rs.github.io/schemas/theme.json
+# Ayu [[.title]] flavor for Yazi — generated from palette/ayu.toml.
+# Edit the palette and run `dots-tools palette`, not this file.
+
+[mgr]
+cwd = [[style .common.accent ""]]
+
+find_keyword  = [[style .common.accent "" "bold" "italic" "underline"]]
+find_position = [[style .syntax.constant "" "bold" "italic"]]
+
+symlink_target = [[style .ui.fg "" "italic"]]
+
+marker_copied   = [[style .syntax.string .syntax.string]]
+marker_cut      = [[style .common.error .common.error]]
+marker_marked   = [[style .syntax.tag .syntax.tag]]
+marker_selected = [[style .common.accent .common.accent]]
+marker_symbol   = "▏"
+
+count_copied   = [[style .editor.bg .syntax.string]]
+count_cut      = [[style .editor.bg .common.error]]
+count_selected = [[style .editor.bg .common.accent]]
+
+border_symbol = "│"
+border_style  = [[style .ui.border ""]]
+
+syntect_theme = ""
+
+[tabs]
+active   = [[style .common.accent .editor.bg "bold"]]
+inactive = [[style .ui.fg .editor.line]]
+sep_inner = { open = "", close = "" }
+sep_outer = { open = "", close = "" }
+
+[mode]
+normal_main = [[style .common.accent .editor.bg "bold"]]
+normal_alt  = [[style .common.accent .editor.line]]
+select_main = [[style .syntax.tag .editor.bg "bold"]]
+select_alt  = [[style .syntax.tag .editor.line]]
+unset_main  = [[style .syntax.markup .editor.bg "bold"]]
+unset_alt   = [[style .syntax.markup .editor.line]]
+
+[indicator]
+parent  = [[style .editor.fg .ui.selection]]
+current = [[style .editor.fg .ui.selection]]
+preview = { underline = true }
+padding = { open = "", close = "" }
+
+[status]
+overall   = {}
+sep_left  = { open = "", close = "" }
+sep_right = { open = "", close = "" }
+perm_sep   = [[style .ui.fg ""]]
+perm_type  = [[style .syntax.string ""]]
+perm_read  = [[style .common.accent ""]]
+perm_write = [[style .syntax.markup ""]]
+perm_exec  = [[style .syntax.regexp ""]]
+progress_label  = [[style .editor.fg "" "bold"]]
+progress_normal = [[style .common.accent .editor.line]]
+progress_error  = [[style .editor.bg .common.error]]
+
+[which]
+cols            = 3
+mask            = [[style "" .editor.panel]]
+cand            = [[style .syntax.regexp ""]]
+rest            = [[style .ui.fg ""]]
+desc            = [[style .editor.fg ""]]
+separator       = "  "
+separator_style = [[style .ui.fg ""]]
+
+[confirm]
+border  = [[style .common.accent ""]]
+title   = [[style .common.accent "" "bold"]]
+body    = [[style .editor.fg ""]]
+list    = [[style .syntax.tag ""]]
+btn_yes = [[style .common.accent .editor.bg "bold"]]
+btn_no  = [[style .editor.fg .editor.line]]
+btn_labels = [ "  [Y]es  ", "  (N)o  " ]
+
+[spot]
+border   = [[style .common.accent ""]]
+title    = [[style .common.accent "" "bold"]]
+tbl_col  = [[style .syntax.tag ""]]
+tbl_cell = [[style .common.accent .ui.selection]]
+
+[notify]
+title_info  = [[style .syntax.string ""]]
+title_warn  = [[style .common.warning ""]]
+title_error = [[style .common.error ""]]
+icon_info  = ""
+icon_warn  = ""
+icon_error = ""
+
+[pick]
+border   = [[style .common.accent ""]]
+active   = [[style .common.accent "" "bold"]]
+inactive = [[style .editor.fg ""]]
+
+[input]
+border   = [[style .common.accent ""]]
+title    = [[style .editor.fg ""]]
+value    = [[style .editor.fg ""]]
+selected = [[style .editor.fg .ui.selection]]
+
+[cmp]
+border   = [[style .common.accent ""]]
+active   = [[style .editor.fg .ui.selection]]
+inactive = [[style .editor.fg ""]]
+icon_file    = ""
+icon_folder  = ""
+icon_command = ""
+
+[tasks]
+border  = [[style .common.accent ""]]
+title   = [[style .common.accent "" "bold"]]
+hovered = [[style .syntax.tag "" "underline"]]
+
+[help]
+on      = [[style .syntax.regexp ""]]
+run     = [[style .syntax.keyword ""]]
+desc    = [[style .editor.fg ""]]
+hovered = [[style .editor.fg .ui.selection "bold"]]
+footer  = [[style .common.accent .editor.bg]]
+
+[filetype]
+rules = [
+[[.rules]]
+]
+
+[git]
+modified  = [[style .vcs.modified ""]]
+added     = [[style .vcs.added ""]]
+untracked = [[style .ui.fg ""]]
+ignored   = [[style .ui.fg ""]]
+deleted   = [[style .vcs.removed ""]]
+updated   = [[style .common.accent ""]]
+unknown   = [[style .ui.fg ""]]
+clean     = [[style .syntax.string ""]]
+modified_sign  = "•"
+added_sign     = "✚"
+untracked_sign = "?"
+ignored_sign   = ""
+deleted_sign   = "✗"
+updated_sign   = "↑"
+unknown_sign   = ""
+clean_sign     = ""
+

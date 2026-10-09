@@ -1,0 +1,22 @@
+# Comments and neighboring keys must survive.
+gui:
+  showIcons: true
+  theme:
+    activeBorderColor:
+      - old
+    # inside theme
+
+    defaultFgColor:
+      - old
+
+  showRandomTip: false
+  authorColors:
+    "*": blue
+
+git:
+  paging:
+    colorArg: always
+customCommands:
+  - key: "x"
+    description: "Не менять"
+    command: 'printf "${USER}"'

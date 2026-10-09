@@ -31,7 +31,7 @@ function fixture({ mode = "tui", environment, exec } = {}) {
   };
   const titles = installTitleSync(
     pi,
-    "/dots/titles.py",
+    "/dots/build/bin/dots-task-titles",
     environment ?? {
       HERDR_PANE_ID: "w1:p1",
       HERDR_SOCKET_PATH: "/herdr/session.sock",
@@ -62,9 +62,8 @@ test("startup/resume publishes the real session name to the explicit pane", asyn
   await f.emit("session_start");
   assert.deepEqual(f.calls, [
     [
-      "python3",
+      "/dots/build/bin/dots-task-titles",
       [
-        "/dots/titles.py",
         "set",
         "--agent",
         "pi",

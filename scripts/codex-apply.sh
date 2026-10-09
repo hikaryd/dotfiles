@@ -96,7 +96,7 @@ else
   echo "  warning: portable rules link was not installed"
 fi
 
-if ! python3 "$REPO_DIR/scripts/codex_config.py" "${APPLY_ARGS[@]}"; then
+if ! "$REPO_DIR/build/bin/dots-tools" codexconfig "${APPLY_ARGS[@]}"; then
   echo "codex-apply: failed; live config was not replaced" >&2
   exit 1
 fi
@@ -105,6 +105,6 @@ if [[ -n ${CODEX_BIN:-} ]]; then
   install_rules_link
 fi
 
-python3 "$REPO_DIR/scripts/codex-instructions-apply.py"
+"$REPO_DIR/build/bin/dots-tools" setup codex-instructions-apply
 
 echo "codex-apply: done"

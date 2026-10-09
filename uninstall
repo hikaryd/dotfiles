@@ -14,6 +14,7 @@
 set -uo pipefail
 
 BASEDIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+NATIVE="$BASEDIR/build/bin/dots-tools"
 TS=$(date +%Y%m%d-%H%M%S)
 BACKUP_DIR="$HOME/dots-uninstall-backup-$TS"
 DRY=0; ASSUME_YES=0; REMOVE_PACKAGES=0
@@ -54,6 +55,7 @@ while [[ $# -gt 0 ]]; do
     *) die "Неизвестная опция: $1";;
   esac
 done
+[[ -x $NATIVE ]] || die "сначала соберите native runtime: ./scripts/build-go-tools.sh"
 
 confirm() {
   [[ $ASSUME_YES -eq 1 || $DRY -eq 1 ]] && return 0
@@ -115,40 +117,7 @@ confirm "Продолжить?" || die "отменено"
 
 # ─── 2. симлинки из steps/*.yml ──────────────────────────────────────
 step "Симлинки"
-LINK_TARGETS=$(python3 - "$BASEDIR" <<'PY'
-import glob, os, re, sys
-
-base = sys.argv[1]
-files = sorted(glob.glob(os.path.join(base, "steps", "*.yml")))
-targets = []
-try:
-    # Dotbot already vendors PyYAML; do not require a global pip installation.
-    sys.path.insert(0, os.path.join(base, "dotbot", "lib", "pyyaml", "lib"))
-    import yaml
-    for f in files:
-        with open(f) as fh:
-            docs = yaml.safe_load(fh) or []
-        for item in docs:
-            if isinstance(item, dict) and "link" in item:
-                targets.extend(item["link"].keys())
-except Exception:
-    # fallback без PyYAML: цели — строки вида "    ~/path:" внутри блока "- link:"
-    pat = re.compile(r"^\s+(~/[^\n]+):\s*$")
-    for f in files:
-        in_link = False
-        for line in open(f):
-            if re.match(r"^- link:", line):
-                in_link = True
-                continue
-            if re.match(r"^- \w+:", line):
-                in_link = False
-                continue
-            m = pat.match(line)
-            if in_link and m:
-                targets.append(m.group(1).rstrip())
-print("\n".join(targets))
-PY
-)
+LINK_TARGETS=$("$NATIVE" setup managed-links "$BASEDIR")
 [[ -n $LINK_TARGETS ]] || die "не удалось получить список симлинков из steps/*.yml"
 
 REMOVED_DIRS=()
@@ -156,7 +125,7 @@ while IFS= read -r t; do
   p=${t/#\~/$HOME}
   if [[ -L $p ]]; then
     dest=$(readlink "$p")
-    if [[ $dest == "$BASEDIR"* ]]; then
+    if [[ $dest == "$BASEDIR/"* ]]; then
       if [[ $DRY -eq 1 ]]; then dry "rm симлинк: $p → $dest"; else
         rm "$p" && ok "снят: ${p/#$HOME/~}" || warn "не удалось снять $p"
         manifest "UNLINKED: $p -> $dest"
@@ -204,8 +173,7 @@ if [[ -f $BASEDIR/config/claude/mcp-servers.json ]] && command -v claude >/dev/n
       claude mcp remove "$name" -s user >/dev/null 2>&1 \
         && ok "MCP снят: $name" || warn "MCP не снят (не был зарегистрирован?): $name"
     fi
-  done < <(python3 -c 'import json,sys; print("\n".join(json.load(open(sys.argv[1]))))' \
-           "$BASEDIR/config/claude/mcp-servers.json")
+  done < <("$NATIVE" setup json-keys "$BASEDIR/config/claude/mcp-servers.json")
 else
   warn "claude CLI или mcp-servers.json не найдены — MCP-регистрации не трогаю"
 fi
@@ -239,7 +207,7 @@ if [[ -f $CODEX_CONFIG ]]; then
   if [[ $DRY -eq 1 ]]; then
     backup_copy "$CODEX_CONFIG"
     dry "удалить из config.toml только настройки из config/codex/config.toml"
-  elif backup_copy "$CODEX_CONFIG" && python3 "$BASEDIR/scripts/codex_config.py" remove \
+  elif backup_copy "$CODEX_CONFIG" && "$NATIVE" codexconfig remove \
       --template "$BASEDIR/config/codex/config.toml" \
       --target "$CODEX_CONFIG"; then
     ok "управляемые Codex-настройки сняты; локальный runtime сохранён"

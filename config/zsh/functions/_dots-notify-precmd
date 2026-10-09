@@ -5,8 +5,8 @@ if (( ${+_dots_notify_started} )); then
   unset _dots_notify_started
   if (( elapsed >= 30 )) && [[ "${DOTS_NOTIFY:-1}" == 1 ]]; then
     # Только длинные команды порождают helper, короткий prompt без новых fork.
-    local helper="${DOTS_ROOT:-$HOME/dots}/scripts/dots-notify.py"
-    [[ -f "$helper" ]] && python3 "$helper" --status "$command_status" \
+    local helper="${DOTS_ROOT:-$HOME/dots}/build/bin/dots"
+    [[ -x "$helper" ]] && "$helper" notify --status "$command_status" \
       --seconds "$elapsed" --pane "${TMUX_PANE:-}" >/dev/null 2>&1 &!
   fi
 fi

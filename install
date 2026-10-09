@@ -57,6 +57,10 @@ run_dotbot() {
 }
 
 if [[ -n $SELECTED_CONFIG ]]; then
+	case "$SELECTED_CONFIG" in
+		steps/terminal.yml|steps/tools.yml|steps/claude.yml|steps/codex.yml|steps/pi.yml|steps/abide.yml|steps/macos.yml)
+			"$BASEDIR/scripts/build-go-tools.sh" ;;
+	esac
 	run_dotbot "$SELECTED_CONFIG"
 	exit 0
 fi
@@ -77,7 +81,8 @@ run_step() {
 }
 
 run_step 'steps/dependencies.yml' run_dotbot 'steps/dependencies.yml'
-run_step 'palette/generate.py' python3 "$BASEDIR/palette/generate.py"
+run_step 'native helpers' "$BASEDIR/scripts/build-go-tools.sh"
+run_step 'palette' "$BASEDIR/build/bin/dots-tools" palette
 for config in terminal editors tools claude codex pi abide macos; do
 	run_step "steps/$config.yml" run_dotbot "steps/$config.yml"
 done

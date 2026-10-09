@@ -16,7 +16,7 @@ fi
 mkdir -p "$(dirname "$TARGET")"
 
 echo "codex-sync: exporting stable settings from $SOURCE"
-python3 "$REPO_DIR/scripts/codex_config.py" sync \
+"$REPO_DIR/build/bin/dots-tools" codexconfig sync \
   --source "$SOURCE" \
   --target "$TARGET"
 

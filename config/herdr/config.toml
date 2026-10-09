@@ -78,7 +78,7 @@ pane_scrollbars = false
 tab_bar_position = "top"
 hide_tab_bar_when_single_tab = false
 tab_bar_right = [
-  { type = "command", command = "python3 $HOME/dots/scripts/dots-herdr-status.py", interval_seconds = 5, timeout_seconds = 2 },
+  { type = "command", command = "$HOME/dots/build/bin/dots herdr-status", interval_seconds = 5, timeout_seconds = 2 },
   { type = "zoom" },
   { type = "datetime", format = "%H:%M" },
 ]

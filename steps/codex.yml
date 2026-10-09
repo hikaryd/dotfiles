@@ -7,7 +7,7 @@
       description: Merge personal Codex config and install portable rules
       stdout: true
       stderr: true
-    - command: python3 scripts/codex-task-title-apply.py
+    - command: build/bin/dots-tools setup codex-task-title-apply
       description: Install semantic Herdr task title hook
       stdout: true
       stderr: true

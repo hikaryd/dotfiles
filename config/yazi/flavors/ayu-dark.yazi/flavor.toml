@@ -1,6 +1,6 @@
 #:schema https://yazi-rs.github.io/schemas/theme.json
 # Ayu Dark flavor for Yazi — generated from palette/ayu.toml.
-# Edit the palette and run `python3 palette/generate.py`, not this file.
+# Edit the palette and run `dots-tools palette`, not this file.
 
 [mgr]
 cwd = { fg = "#73d0ff" }

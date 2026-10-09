@@ -1,0 +1,9 @@
+palette = "old"
+palette = "second" # changed too
+# Палитра Old
+[palettes.old]
+color_blue = "#ffffff"
+
+# Палитра Second
+[palettes.second]
+color_blue = "#000000"

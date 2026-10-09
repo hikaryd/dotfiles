@@ -15,7 +15,7 @@ export function cleanTitle(value) {
   return prefix.trimEnd() + "…";
 }
 
-export function installTitleSync(pi, script, environment = process.env) {
+export function installTitleSync(pi, helper, environment = process.env) {
   const pane = environment.HERDR_PANE_ID;
   const socket = environment.HERDR_SOCKET_PATH;
   let pending = Promise.resolve(true);
@@ -29,7 +29,6 @@ export function installTitleSync(pi, script, environment = process.env) {
     const title = name ?? "";
     const key = JSON.stringify([session, title]);
     const args = [
-      script,
       "set",
       "--agent",
       "pi",
@@ -43,7 +42,7 @@ export function installTitleSync(pi, script, environment = process.env) {
     pending = pending.then(async () => {
       if (last === key) return true;
       try {
-        const result = await pi.exec("python3", args, { timeout: 20000 });
+        const result = await pi.exec(helper, args, { timeout: 20000 });
         if (result.code !== 0 || result.killed)
           throw new Error("Title sync failed");
         last = key;

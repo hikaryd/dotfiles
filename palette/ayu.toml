@@ -1,7 +1,7 @@
 # Ayu Theme — единый источник цветов для всех конфигов
 # https://github.com/ayu-theme
 #
-# Запуск: python3 palette/generate.py [--variant dark|mirage]
+# Запуск: dots-tools palette [--variant dark|mirage]
 
 [meta]
 name = "ayu"

@@ -1,0 +1,7 @@
+# Preserve CRLF semantics
+theme=old
+background = #OLD
+foreground = untouched
+ theme = untouched
+theme = second
+background=another

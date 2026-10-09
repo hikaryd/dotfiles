@@ -13,7 +13,7 @@ if [[ ${1:-} == --hook ]]; then
 fi
 
 export PATH="/opt/homebrew/bin:/usr/local/bin:$HOME/.local/bin:$PATH"
-REPO_DIR="$(cd "$(dirname "$(python3 -c 'import os,sys; print(os.path.realpath(sys.argv[1]))' "$0")")/.." && pwd)"
+REPO_DIR="$(cd "$(dirname "$(realpath "$0")")/.." && pwd)"
 VERSION="$(cat "$REPO_DIR/config/abide/version")"
 PACKAGE_DIR="$HOME/.local/share/dots/abide/$VERSION/node_modules/@coldtea/abide"
 
@@ -21,7 +21,7 @@ if [[ $HOOK_MODE == 1 ]]; then
   SCRIPT="$PACKAGE_DIR/dist/abide-hook.js"
   # Ошибка запуска хука должна оставить агенту диагностическое сообщение.
   if [[ ! -f $SCRIPT ]]; then
-    printf '%s\n' '{"systemMessage":"Abide: hook executable is missing; run scripts/abide-apply.py. This check was skipped."}'
+    printf '%s\n' '{"systemMessage":"Abide: hook executable is missing; run dots-tools setup abide-apply. This check was skipped."}'
     exit 0
   fi
 else

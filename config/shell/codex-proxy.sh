@@ -3,7 +3,7 @@
 # YOLO по умолчанию задаётся в ~/.codex/config.toml, не принудительными флагами.
 # Управление: codex-proxy --status | --stop | --update | --list
 
-alias codex-proxy='python3 "$HOME/.config/xray-codex/codex-proxy.py"'
+alias codex-proxy='dots-tools proxy codex'
 
 _codex_proxy_ensure() {
   local client="${1:-codex}"

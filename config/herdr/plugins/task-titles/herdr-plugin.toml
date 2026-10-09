@@ -1,47 +1,47 @@
 id = "dots.task-titles"
 name = "Agent task titles"
-version = "0.2.0"
+version = "0.3.0"
 min_herdr_version = "0.9.1"
-description = "Show Codex task names and Pi session names on pane borders and automatic tabs"
+description = "Native Codex/Pi task titles on pane borders and automatic tabs"
 platforms = ["macos", "linux"]
 
 [[startup]]
-command = ["python3", "titles.py", "sync"]
+command = ["dots-task-titles", "sync"]
 
 [[events]]
 on = "pane.agent_status_changed"
-command = ["python3", "titles.py", "sync"]
+command = ["dots-task-titles", "sync"]
 
 [[events]]
 on = "pane.focused"
-command = ["python3", "titles.py", "sync"]
+command = ["dots-task-titles", "sync"]
 
 [[events]]
 on = "pane.agent_detected"
-command = ["python3", "titles.py", "sync"]
+command = ["dots-task-titles", "sync"]
 
 [[events]]
 on = "pane.closed"
-command = ["python3", "titles.py", "sync"]
+command = ["dots-task-titles", "sync"]
 
 [[events]]
 on = "pane.exited"
-command = ["python3", "titles.py", "sync"]
+command = ["dots-task-titles", "sync"]
 
 [[events]]
 on = "pane.moved"
-command = ["python3", "titles.py", "sync"]
+command = ["dots-task-titles", "sync"]
 
 [[events]]
 on = "tab.focused"
-command = ["python3", "titles.py", "sync"]
+command = ["dots-task-titles", "sync"]
 
 [[events]]
 on = "tab.renamed"
-command = ["python3", "titles.py", "sync"]
+command = ["dots-task-titles", "sync"]
 
 [[actions]]
 id = "sync"
 title = "Refresh agent task titles"
 contexts = ["workspace"]
-command = ["python3", "titles.py", "sync"]
+command = ["dots-task-titles", "sync"]

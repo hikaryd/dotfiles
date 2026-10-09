@@ -17,7 +17,7 @@ proxy="$CODEX_PROXY_URL"
 port="${CODEX_PROXY_PORT:-10810}"
 
 config_status=0
-python3 "$script_dir/spotify-proxy.py" --port "$port" --check || config_status=$?
+"$script_dir/../build/bin/dots-tools" proxy spotify --port "$port" --check || config_status=$?
 if [[ "$config_status" != 0 && "$config_status" != 1 ]]; then
   exit "$config_status"
 fi
@@ -42,7 +42,7 @@ if [[ "$config_status" == 1 ]]; then
       exit 1
     fi
   fi
-  python3 "$script_dir/spotify-proxy.py" --port "$port"
+  "$script_dir/../build/bin/dots-tools" proxy spotify --port "$port"
 fi
 
 if pgrep -x Spotify >/dev/null; then

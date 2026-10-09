@@ -7,11 +7,11 @@ import { installTitleSync } from "./sync.mjs";
 
 export default function (pi: ExtensionAPI) {
   if (!process.env.HERDR_PANE_ID || !process.env.HERDR_SOCKET_PATH) return;
-  const script = resolve(
+  const helper = process.env.DOTS_TASK_TITLES_BIN || resolve(
     dirname(realpathSync(fileURLToPath(import.meta.url))),
-    "../../../herdr/plugins/task-titles/titles.py",
+    "../../../../build/bin/dots-task-titles",
   );
-  const titles = installTitleSync(pi, script);
+  const titles = installTitleSync(pi, helper);
 
   // Print/JSON/RPC runs (including subagents) must not rename their parent pane.
   pi.on("session_start", (_event, ctx) => {

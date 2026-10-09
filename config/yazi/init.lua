@@ -1,4 +1,4 @@
--- Yazi init — generated from palette/ayu.toml by palette/generate.py.
+-- Yazi init — generated from palette/ayu.toml by dots-tools palette.
 -- Do not edit by hand. Plugins are installed via `ya pkg` / dotbot (steps/tools.yml).
 
 -- Starship prompt as the file-list header (matches the shell prompt).

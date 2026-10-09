@@ -1,49 +1,39 @@
 # Рабочее окружение
 
-Dotfiles для macOS. Общий стиль — **Ayu Dark**, палитра в [`palette/ayu.toml`](palette/ayu.toml).
-
-## Программы
-
-| Задача | Программы |
-|---|---|
-| Терминал | Ghostty |
-| Оболочка | Nushell, zsh, Starship, Atuin |
-| Мультиплексоры | Herdr, tmux, sesh |
-| Окна | AeroSpace, Rift |
-| Редакторы | Neovim |
-| Файлы и поиск | Yazi, nls, eza, bat, ripgrep, fd, fzf, zoxide |
-| Git | Git, LazyGit, GitHub CLI |
-| AI | Codex, Claude Code, [Pi Agent](config/pi/README.md), CodexBar |
-| Разработка | Node.js, Python, Go, Rust; языковые серверы, линтеры и форматтеры |
-| Браузер | Waterfox |
-| Приложения | Telegram, Spotify, 1Password, RustDesk |
-| macOS-утилиты | Vorssaint, Karabiner-Elements, Mos, Snapzy, TinyCast, Caffeine, Look |
-| Прокси | Xray |
-
-Полный список пакетов — в [`Brewfile`](Brewfile), настройки — в [`config/`](config/).
+Dotfiles для macOS, стиль **Ayu Dark**. Ghostty, Nushell/zsh, Herdr/tmux,
+AeroSpace/Rift, Neovim, Yazi, LazyGit, Codex/Claude/pi.
+Пакеты — [`Brewfile`](Brewfile), настройки — [`config/`](config/).
 
 ## Установка
 
-Нужны Xcode Command Line Tools и Homebrew. Репозиторий располагается в `~/dots`:
+Нужны Xcode Command Line Tools, Homebrew и Go 1.26+. Репозиторий — `~/dots`:
 
 ```sh
 ./install
+./scripts/build-go-tools.sh   # пересобрать собственные утилиты после изменений
 ```
 
-Только Pi Agent с личными настройками, темой Ayu и статус-баром:
+Собственные утилиты — Go-модуль `tools/dots`, общий бинарник `dots-tools`.
+Алиасы: `dots`, `dots-nu`, `ai_helper`, `dots-vpn`, `dots-task-titles`.
+`build/bin/` содержит локальные ссылки и не попадает в Git.
+Shell-файлы связывают установку и приложения; Python нужен стороннему Dotbot,
+не runtime собственных команд.
+
+## Команды и проверки
 
 ```sh
-./install -c steps/pi.yml
+dots                         # меню с поиском и цветами Ayu
+dots help
+dots menu --preview --plain   # посмотреть меню без запуска действий
+dots private init
+dots private check
+dots-tools palette --help
+dots-vpn --help
+make test                    # Go race/vet, Node, проверки запуска тестов
 ```
 
-Секреты и личные адреса не хранятся в Git. [Приватные настройки и перенос](docs/PRIVATE.md).
-
-## Проверки
-
-```sh
-make test       # все собственные тесты: Go, Python, Node и test runner
-make test-list  # состав наборов без запуска
-```
-
-[Правила и отдельные наборы](tests/README.md).
-[Аудит скриптов и порядок переноса на Go](docs/SCRIPT-AUDIT.md).
+В меню: ↑/↓ — выбор, Enter — открыть, Esc — отмена. Справка сгруппирована;
+`NO_COLOR` отключает цвета, `--json` остаётся чистым выводом для скриптов.
+Отдельно: `make test-go`, `make test-node`, `make test-runner`.
+Секреты, пользовательские настройки и рабочие проекты остаются вне Git:
+[приватные файлы](docs/PRIVATE.md). [VPN](vpn/README.md) настраивается отдельно.

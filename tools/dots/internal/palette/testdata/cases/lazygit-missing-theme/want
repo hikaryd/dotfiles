@@ -1,0 +1,30 @@
+gui: # trailing comment
+  theme:
+    activeBorderColor:
+      - "#73d0ff"
+      - bold
+    inactiveBorderColor:
+      - "#414d60"
+    optionsTextColor:
+      - "#5ccfe6"
+    selectedLineBgColor:
+      - "#34455a"
+    selectedRangeBgColor:
+      - "#34455a"
+    cherryPickedCommitBgColor:
+      - "#34455a"
+    cherryPickedCommitFgColor:
+      - "#73d0ff"
+    unstagedChangesColor:
+      - "#ff6666"
+    defaultFgColor:
+      - "#cccac2"
+    searchingActiveBorderColor:
+      - "#ffcc66"
+  showIcons: true
+
+  nerdFontsVersion: "3"
+# Outside gui
+customCommands:
+  - key: "a"
+    command: 'echo "keep me"'

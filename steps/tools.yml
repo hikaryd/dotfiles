@@ -60,7 +60,7 @@
       create: true
       force: true
 - shell:
-    - command: python3 scripts/waterfox-apply.py
+    - command: build/bin/dots-tools setup waterfox-apply
       description: Применить настройки Waterfox к существующим профилям
       stdout: true
       stderr: true

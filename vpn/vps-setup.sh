@@ -15,14 +15,22 @@ ADBLOCK=${ADBLOCK:-1}
 TPROXY_PORT=${TPROXY_PORT:-7895}
 CLASH_PORT=${CLASH_PORT:-9090}
 ADBLOCK_WHITELIST=${ADBLOCK_WHITELIST:-tmdb.org,themoviedb.org,b-cdn.net}
-GEN_SRC=${GEN_SRC:-/tmp/awg-generate.py}
+VPN_SRC=${VPN_SRC:-/tmp/awg-dots-vpn}
 HEALTH_SRC=${HEALTH_SRC:-/tmp/awg-health-check.sh}
 PEERREG_SRC=${PEERREG_SRC:-/tmp/awg-peer-register.sh}
-TCP_TUNING_SRC=${TCP_TUNING_SRC:-/tmp/awg-tcp-tuning.py}
 WORK=/root/awgvpn
 
 say() { printf '   \033[36m·\033[0m %s\n' "$*"; }
 export DEBIAN_FRONTEND=noninteractive
+
+# Validate the uploaded executable and retained settings before any installation.
+[[ -f $VPN_SRC && -x $VPN_SRC ]] || { echo "native VPN executable is unavailable" >&2; exit 1; }
+VPN_ARGS=(vpn)
+[[ ${VPN_SRC##*/} != dots-vpn ]] || VPN_ARGS=()
+"$VPN_SRC" "${VPN_ARGS[@]}" --help >/dev/null || { echo "native VPN executable cannot run" >&2; exit 1; }
+# Retain explicit pool tuning, including empty filters, on reinstall.
+TUNING=$("$VPN_SRC" "${VPN_ARGS[@]}" tuning-env)
+HEALTH_PORT=$(printf '%s\n' "$TUNING" | sed -n 's/^HEALTH_PORT=//p')
 
 say "apt: пакеты"
 apt-get update -qq
@@ -32,20 +40,7 @@ mkdir -p "$WORK"; cd "$WORK"; umask 077
 say "ключи + AWG-параметры"
 [ -f server.key ] || { wg genkey >server.key; wg pubkey <server.key >server.pub; }
 # ключи роутеров живут в реестре peers/ (peer-register.sh), по одному на роутер
-if [ ! -f awg_params.env ]; then
-  python3 - <<'PY'
-import random
-H=set()
-while len(H)<4: H.add(random.randint(5, 2147483647))
-H=list(H)
-S1=random.randint(15,150); S2=random.randint(15,150)
-while S1+56==S2: S2=random.randint(15,150)
-Jc=random.randint(3,8); Jmin=random.randint(8,60); Jmax=random.randint(Jmin+10,120)
-open("awg_params.env","w").write(
-    f"Jc={Jc}\nJmin={Jmin}\nJmax={Jmax}\nS1={S1}\nS2={S2}\n"
-    f"H1={H[0]}\nH2={H[1]}\nH3={H[2]}\nH4={H[3]}\n")
-PY
-fi
+"$VPN_SRC" "${VPN_ARGS[@]}" awg-params "$WORK/awg_params.env"
 # shellcheck disable=SC1091
 . ./awg_params.env
 
@@ -101,21 +96,6 @@ command -v sing-box >/dev/null || curl -fsSL https://sing-box.app/install.sh | s
 say "конфиг sing-box + панель"
 mkdir -p /etc/sing-box/ui /var/lib/sing-box
 [ -f /etc/sing-box/secret.txt ] || { head -c 24 /dev/urandom | base64 | tr -d '/+=' >/etc/sing-box/secret.txt; }
-# Retain explicit pool tuning, including empty filters, on reinstall.
-TUNING=$(python3 - "$GEN_SRC" <<'PYTUNING'
-import runpy
-import sys
-conf = runpy.run_path(sys.argv[1])["CONF"]
-port = int(conf.get("HEALTH_PORT", "7896"))
-if not 1 <= port <= 65535:
-    raise ValueError("HEALTH_PORT must be in 1..65535")
-print(f"HEALTH_PORT={port}")
-for key in ("AUTO_INCLUDE", "AUTO_EXCLUDE", "AUTO_MAX", "AUTO_PREFER"):
-    if key in conf:
-        print(f"{key}={conf[key]}")
-PYTUNING
-)
-HEALTH_PORT=$(printf '%s\n' "$TUNING" | sed -n 's/^HEALTH_PORT=//p')
 cat >/etc/sing-box/vpn.env <<EOF
 SUB_URL=$SUB_URL
 ADBLOCK=$ADBLOCK
@@ -124,7 +104,7 @@ CLASH_PORT=$CLASH_PORT
 ADBLOCK_WHITELIST=$ADBLOCK_WHITELIST
 $TUNING
 EOF
-install -m 0755 "$GEN_SRC" /etc/sing-box/generate.py
+install -m 0755 "$VPN_SRC" /etc/sing-box/dots-vpn
 if [ ! -f /etc/sing-box/ui/index.html ]; then
   curl -fsSL -o /tmp/zash.zip https://github.com/Zephyruso/zashboard/releases/latest/download/dist.zip
   rm -rf /tmp/zashx && mkdir -p /tmp/zashx && unzip -q /tmp/zash.zip -d /tmp/zashx
@@ -295,7 +275,7 @@ After=network-online.target
 Wants=network-online.target
 [Service]
 Type=oneshot
-ExecStart=/usr/bin/python3 /etc/sing-box/generate.py
+ExecStart=/etc/sing-box/dots-vpn generate
 ExecStartPost=/bin/systemctl reload-or-restart sing-box
 EOF
 cat >/etc/systemd/system/sing-box-update.timer <<EOF
@@ -311,7 +291,7 @@ EOF
 
 say "генерация конфига + запуск служб"
 systemctl daemon-reload
-python3 /etc/sing-box/generate.py
+/etc/sing-box/dots-vpn generate
 ip rule add fwmark 1 lookup 100 2>/dev/null || true
 ip route replace local 0.0.0.0/0 dev lo table 100
 systemctl enable awg-quick@awg0 awg-gateway sing-box >/dev/null 2>&1
@@ -321,7 +301,7 @@ systemctl restart awg-gateway
 systemctl restart sing-box
 systemctl enable --now awg-watchdog.timer sing-box-update.timer vpn-health.timer >/dev/null 2>&1
 say "TCP для отдельных пиров (по умолчанию выключен; существующий выбор сохраняется)"
-python3 "$TCP_TUNING_SRC" install
+/etc/sing-box/dots-vpn tcp-tuning install
 
 # ключи роутеров тут не печатаем — их выдаёт peer-register.sh register
 emit_vars() {

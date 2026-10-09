@@ -1,0 +1,101 @@
+{
+  "manifest_version": 3,
+  "version": "1.0",
+  "name": "Ayu Mirage",
+  "description": "Ayu mirage theme \u2014 generated from palette/ayu.toml",
+  "theme": {
+    "colors": {
+      "frame": [
+        31,
+        36,
+        48
+      ],
+      "frame_inactive": [
+        31,
+        36,
+        48
+      ],
+      "frame_incognito": [
+        31,
+        36,
+        48
+      ],
+      "frame_incognito_inactive": [
+        31,
+        36,
+        48
+      ],
+      "toolbar": [
+        26,
+        31,
+        41
+      ],
+      "tab_text": [
+        204,
+        202,
+        194
+      ],
+      "tab_background_text": [
+        112,
+        122,
+        140
+      ],
+      "tab_background_text_inactive": [
+        112,
+        122,
+        140
+      ],
+      "bookmark_text": [
+        204,
+        202,
+        194
+      ],
+      "ntp_background": [
+        31,
+        36,
+        48
+      ],
+      "ntp_text": [
+        204,
+        202,
+        194
+      ],
+      "ntp_link": [
+        115,
+        208,
+        255
+      ],
+      "ntp_header": [
+        23,
+        27,
+        36
+      ],
+      "button_background": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "omnibox_background": [
+        31,
+        36,
+        48
+      ],
+      "omnibox_text": [
+        204,
+        202,
+        194
+      ]
+    },
+    "tints": {
+      "frame_inactive": [
+        -1,
+        -1,
+        0.7
+      ]
+    },
+    "properties": {
+      "ntp_background_alignment": "center"
+    }
+  }
+}

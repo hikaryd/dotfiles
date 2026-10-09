@@ -95,6 +95,8 @@ done
 
 banner
 SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+REPO_ROOT=$(cd "$SCRIPT_DIR/.." && pwd)
+VPN_LOCAL="$REPO_ROOT/build/bin/dots-tools"
 
 # ─── интерактивный доспрос ───────────────────────────────────────────
 [[ $SKIP_VPS -eq 1 && $SKIP_ROUTER -eq 1 ]] && die "нечего делать: --skip-vps и --skip-router одновременно"
@@ -120,22 +122,42 @@ SERVER_HOST=${VPS##*@}   # IP без user@
 
 # ─── preflight ───────────────────────────────────────────────────────
 step "Проверки окружения"
-for b in ssh scp python3 curl; do command -v "$b" >/dev/null || die "нет утилиты: $b"; done
+for b in ssh scp curl; do command -v "$b" >/dev/null || die "нет утилиты: $b"; done
 ok "локальные утилиты на месте"
-for f in vps-setup.sh generate.py router-setup.py peer-register.sh health-check.sh tcp-tuning.py; do
+for f in vps-setup.sh peer-register.sh health-check.sh; do
   [[ -f "$SCRIPT_DIR/$f" ]] || die "не найден $SCRIPT_DIR/$f"
 done
 ok "файлы установщика на месте"
+if [[ $SKIP_ROUTER -eq 0 ]]; then
+  [[ -f $VPN_LOCAL && -x $VPN_LOCAL ]] || die "нет исполняемого build/bin/dots-tools; сначала собери native tools"
+  "$VPN_LOCAL" vpn --help >/dev/null || die "локальный native VPN не запускается"
+fi
+if [[ $SKIP_VPS -eq 0 ]]; then
+  command -v go >/dev/null || die "нет утилиты: go"
+  [[ -x $REPO_ROOT/scripts/build-go-tools.sh ]] || die "нет исполняемого scripts/build-go-tools.sh"
+fi
 # SSH к VPS нужен всегда: и для установки, и для регистрации пира роутера
-ssh -o BatchMode=yes -o ConnectTimeout=10 "$VPS" 'echo ok' >/dev/null 2>&1 \
+REMOTE_ARCH=$(ssh -o BatchMode=yes -o ConnectTimeout=10 "$VPS" 'uname -m' 2>/dev/null) \
   || die "нет SSH-доступа к $VPS (нужен ключ/доступ root)"
 ok "SSH к VPS ($SERVER_HOST) работает"
+if [[ $SKIP_VPS -eq 0 ]]; then
+  case "$REMOTE_ARCH" in
+    x86_64|amd64) REMOTE_GOARCH=amd64;;
+    aarch64|arm64) REMOTE_GOARCH=arm64;;
+    *) die "архитектура VPS не поддерживается (нужна amd64 или arm64)";;
+  esac
+  VPN_GOARCH=${VPN_GOARCH:-$REMOTE_GOARCH}
+  [[ $VPN_GOARCH == "$REMOTE_GOARCH" ]] || die "VPN_GOARCH не совпадает с архитектурой VPS"
+  VPN_GOARCH="$VPN_GOARCH" "$REPO_ROOT/scripts/build-go-tools.sh" --vpn-linux
+  VPN_LINUX="$REPO_ROOT/build/bin/dots-vpn-linux-$VPN_GOARCH"
+  [[ -f $VPN_LINUX && -x $VPN_LINUX ]] || die "Linux native VPN не собран"
+fi
 if [[ $SKIP_ROUTER -eq 0 ]]; then
   curl --noproxy '*' -s -m 6 -o /dev/null "http://$ROUTER_HOST/" || die "роутер $ROUTER_HOST недоступен по HTTP"
   ok "роутер $ROUTER_HOST отвечает"
   # имя роутера (для реестра пиров) + его текущий WG-ключ (для миграции/идемпотентности)
   IDENT=$(ROUTER_HOST="$ROUTER_HOST" ROUTER_USER="$ROUTER_USER" ROUTER_PASS="$ROUTER_PASS" \
-          ACTION=identify python3 "$SCRIPT_DIR/router-setup.py") \
+          ACTION=identify "$VPN_LOCAL" vpn router-setup) \
     || die "не удалось опросить роутер (проверь пароль веб-админки)"
   [[ -z $ROUTER_NAME ]] && ROUTER_NAME=$(sed -n 's/^NAME=//p' <<<"$IDENT" | head -1)
   ROUTER_CURPUB=$(sed -n 's/^CURPUB=//p' <<<"$IDENT" | head -1)
@@ -155,10 +177,9 @@ PANEL_SECRET=""
 if [[ $SKIP_VPS -eq 0 ]]; then
   step "Настройка VPS ($SERVER_HOST)"
   scp -q "$SCRIPT_DIR/health-check.sh" "$VPS:/tmp/awg-health-check.sh"
-  scp -q "$SCRIPT_DIR/generate.py" "$VPS:/tmp/awg-generate.py"
+  scp -q "$VPN_LINUX" "$VPS:/tmp/awg-dots-vpn"
   scp -q "$SCRIPT_DIR/vps-setup.sh" "$VPS:/tmp/awg-vps-setup.sh"
   scp -q "$SCRIPT_DIR/peer-register.sh" "$VPS:/tmp/awg-peer-register.sh"
-  scp -q "$SCRIPT_DIR/tcp-tuning.py" "$VPS:/tmp/awg-tcp-tuning.py"
   ok "файлы загружены на VPS, запускаю установку…"
   REMOTE_RESULT="/root/awgvpn/.install-result-${VARS_FILE##*/}"
   SSH_EXIT=0
@@ -168,8 +189,8 @@ if [[ $SKIP_VPS -eq 0 ]]; then
   ssh "$VPS" "nohup env \
     SUB_URL='$SUB_URL' AWG_PORT='$AWG_PORT' TUN_CIDR='$TUN_CIDR' SRV_CIDR='$SRV_CIDR' \
     MTU='$MTU' ADBLOCK='$ADBLOCK' TPROXY_PORT='$TPROXY_PORT' \
-    CLASH_PORT='$CLASH_PORT' ADBLOCK_WHITELIST='$ADBLOCK_WHITELIST' GEN_SRC=/tmp/awg-generate.py \
-    PEERREG_SRC=/tmp/awg-peer-register.sh TCP_TUNING_SRC=/tmp/awg-tcp-tuning.py INSTALL_RESULT_FILE='$REMOTE_RESULT' \
+    CLASH_PORT='$CLASH_PORT' ADBLOCK_WHITELIST='$ADBLOCK_WHITELIST' VPN_SRC=/tmp/awg-dots-vpn \
+    PEERREG_SRC=/tmp/awg-peer-register.sh INSTALL_RESULT_FILE='$REMOTE_RESULT' \
     bash /tmp/awg-vps-setup.sh" | tee "$VARS_FILE" || SSH_EXIT=$?
   if [[ $SSH_EXIT -eq 255 ]]; then
     warn "SSH оборвался; проверяю завершение текущей установки после переподключения"
@@ -229,13 +250,13 @@ rm -f "$VARS_FILE"
 # ─── роутер ──────────────────────────────────────────────────────────
 if [[ $SKIP_ROUTER -eq 0 ]]; then
   step "Настройка роутера Keenetic ($ROUTER_HOST)"
-  # shellcheck disable=SC2097,SC2098  # одноимённый проброс env в python — значения из родителя
+  # shellcheck disable=SC2097,SC2098  # одноимённый проброс env — значения из родителя
   ROUTER_HOST="$ROUTER_HOST" ROUTER_USER="$ROUTER_USER" ROUTER_PASS="$ROUTER_PASS" \
   ROUTER_LAN_IP="$ROUTER_HOST" SERVER_HOST="$SERVER_HOST" AWG_PORT="$AWG_PORT" \
   TUN_CLI="$TUN_CLI" TUN_SRV="$TUN_SRV" TUN_MASK="$TUN_MASK" MTU="$MTU" \
   SERVER_PUB="$SERVER_PUB" ROUTER_KEY="$ROUTER_KEY" AWG_PARAMS="$AWG_PARAMS" \
   DHCP_POOL="$DHCP_POOL" ROUTER_LAN_INTERFACE="$ROUTER_LAN_INTERFACE" \
-    python3 "$SCRIPT_DIR/router-setup.py" || die "настройка роутера не удалась"
+    "$VPN_LOCAL" vpn router-setup || die "настройка роутера не удалась"
   ok "роутер настроен"
   warn "индивидуальные политики клиентов имеют приоритет над политикой сегмента"
   warn "ранее установленный Entware-хук не удаляется через HTTP; он может влиять на маршруты"
