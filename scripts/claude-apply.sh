@@ -132,4 +132,8 @@ for name, why in skipped:
     print(f"  MCP пропущен: {name} (нет {', '.join(why)})")
 PY
 
+if [[ -f "$HOME/.local/share/dots/abide/$(cat "$REPO_DIR/config/abide/version")/node_modules/@coldtea/abide/package.json" ]]; then
+  python3 "$REPO_DIR/scripts/abide-apply.py"
+fi
+
 echo "claude-apply: готово"

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Выбор ссылок из панели tmux; захват остаётся только в памяти."""
+"""Выбор ссылок из панели tmux/Herdr; захват остаётся только в памяти."""
 
 import argparse
 import json
@@ -145,8 +145,10 @@ def read_command(command, *, limit, timeout=5):
 
 
 def capture(pane, lines):
+    if re.fullmatch(r"w[0-9]+:p[0-9]+", pane or ""):
+        return capture_herdr(pane, lines)
     if not re.fullmatch(r"%[0-9]+", pane or "") or not 1 <= lines <= 5000:
-        raise ValueError("Нужна исходная tmux pane %id и lines в диапазоне 1..5000.")
+        raise ValueError("Нужна tmux pane %id или Herdr pane wN:pN; lines 1..5000.")
     cwd = read_command(
         ["tmux", "display-message", "-p", "-t", pane, "#{pane_current_path}"],
         limit=16384,
@@ -155,6 +157,35 @@ def capture(pane, lines):
         raise ValueError("Не удалось определить каталог панели.")
     text = read_command(
         ["tmux", "capture-pane", "-p", "-J", "-S", f"-{lines}", "-t", pane],
+        limit=MAX_BYTES,
+    )
+    return text, Path(cwd)
+
+
+def capture_herdr(pane, lines):
+    if not 1 <= lines <= 5000:
+        raise ValueError("lines должен быть в диапазоне 1..5000.")
+    raw = read_command(["herdr", "pane", "get", pane], limit=65536)
+    data = json.loads(raw)
+    item = data.get("result", {}).get("pane", {})
+    cwd = item.get("foreground_cwd") or item.get("cwd")
+    if (
+        not isinstance(cwd, str)
+        or not cwd
+        or any(unicodedata.category(c).startswith("C") for c in cwd)
+    ):
+        raise ValueError("Не удалось определить каталог панели Herdr.")
+    text = read_command(
+        [
+            "herdr",
+            "pane",
+            "read",
+            pane,
+            "--source",
+            "recent-unwrapped",
+            "--lines",
+            str(lines),
+        ],
         limit=MAX_BYTES,
     )
     return text, Path(cwd)
@@ -227,7 +258,10 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--pane",
-        default=os.environ.get("DOTS_SOURCE_PANE") or os.environ.get("TMUX_PANE"),
+        default=os.environ.get("DOTS_SOURCE_PANE")
+        or os.environ.get("HERDR_ACTIVE_PANE_ID")
+        or os.environ.get("HERDR_PANE_ID")
+        or os.environ.get("TMUX_PANE"),
     )
     parser.add_argument("--lines", type=int, default=200)
     parser.add_argument(

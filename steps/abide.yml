@@ -1,0 +1,5 @@
+- shell:
+    - command: python3 scripts/abide-apply.py
+      description: Install pinned Abide, global hooks and compile skill
+      stdout: true
+      stderr: true

@@ -53,6 +53,8 @@ brew "fzf"
 brew "atuin" # Локальная история; без аккаунта, sync и daemon
 brew "fzf-tab"
 brew "tmux"
+brew "herdr" # Ghostty-backed multiplexer
+brew "zig" # Сборка локального оформления Herdr
 brew "zsh"
 brew "zsh-autosuggestions"
 brew "zsh-syntax-highlighting"
@@ -131,6 +133,7 @@ brew "bat-extras"
 
 # Приложения
 cask "codexbar" # Лимиты подписки Codex в строке меню macOS
+cask "vorssaint" # Батарея, системный монитор и управление звуком в одном menu bar app
 cask "waterfox"
 cask "telegram-desktop"
 cask "spotify"
@@ -146,6 +149,7 @@ cask "tinycast"
 cask "caffeine"
 cask "logi-options+"
 cask "logitech-options"
+cask "look"
 
 # Шрифты
 cask "font-symbols-only-nerd-font"

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Локальные проекты из живых tmux panes и зарегистрированных Git worktrees."""
+"""Локальные проекты из Herdr/tmux и зарегистрированных Git worktrees."""
 
 import argparse
 import hashlib
@@ -15,6 +15,29 @@ from pathlib import Path
 
 def run(*args, check=False):
     return subprocess.run(args, text=True, capture_output=True, check=check)
+
+
+def in_herdr():
+    return bool(os.environ.get("HERDR_ENV") or os.environ.get("HERDR_SOCKET_PATH"))
+
+
+def herdr(*args):
+    result = run("herdr", *args, check=True)
+    data = json.loads(result.stdout)
+    if not isinstance(data, dict) or not isinstance(data.get("result"), dict):
+        raise TypeError(f"Некорректный ответ Herdr для {' '.join(args)}")
+    return data["result"]
+
+
+def herdr_snapshot():
+    snapshot = herdr("api", "snapshot").get("snapshot")
+    if (
+        not isinstance(snapshot, dict)
+        or not isinstance(snapshot.get("workspaces"), list)
+        or not isinstance(snapshot.get("panes"), list)
+    ):
+        raise TypeError("Некорректный снимок рабочих пространств Herdr")
+    return snapshot
 
 
 def registry_path():
@@ -115,6 +138,35 @@ def session_name(path):
 
 
 def live_panes():
+    if in_herdr():
+        snapshot = herdr_snapshot()
+        workspaces = {
+            item["workspace_id"]: item
+            for item in snapshot["workspaces"]
+            if isinstance(item, dict) and isinstance(item.get("workspace_id"), str)
+        }
+        panes = []
+        for item in snapshot["panes"]:
+            if not isinstance(item, dict):
+                continue
+            workspace_id = item.get("workspace_id")
+            workspace = workspaces.get(workspace_id)
+            cwd = item.get("cwd")
+            if not workspace or not isinstance(cwd, str):
+                continue
+            panes.append(
+                {
+                    "session": workspace_id,
+                    "name": workspace.get("label", ""),
+                    "window": item.get("tab_id", ""),
+                    "pane": item.get("pane_id", ""),
+                    "attached": True,
+                    "cwd": cwd,
+                    "command": "herdr",
+                    "active": bool(item.get("focused")),
+                }
+            )
+        return panes
     result = run(
         "tmux",
         "list-panes",
@@ -319,6 +371,9 @@ def pick(projects):
 
 
 def focus(pane):
+    if in_herdr():
+        herdr("workspace", "focus", pane["session"])
+        return
     command = "switch-client" if os.environ.get("TMUX") else "attach-session"
     subprocess.run(
         [
@@ -365,6 +420,37 @@ def open_project(target=None):
         focus(current["panes"][0])
         return
     path = current["path"]
+    if in_herdr():
+        created = herdr(
+            "workspace",
+            "create",
+            "--cwd",
+            path,
+            "--label",
+            Path(path).name,
+            "--no-focus",
+        )
+        workspace = created["workspace"]["workspace_id"]
+        editor_tab = created["tab"]["tab_id"]
+        editor_pane = created["root_pane"]["pane_id"]
+        herdr("tab", "rename", editor_tab, "editor")
+        for label in ("shell", "logs"):
+            herdr(
+                "tab",
+                "create",
+                "--workspace",
+                workspace,
+                "--cwd",
+                path,
+                "--label",
+                label,
+                "--no-focus",
+            )
+        if shutil.which("nvim"):
+            run("herdr", "pane", "run", editor_pane, "nvim", check=True)
+        herdr("workspace", "focus", workspace)
+        herdr("tab", "focus", editor_tab)
+        return
     name = session_name(path)
     # new-session refuses an existing name. Do not take over an unrelated session.
     created = run(
@@ -421,7 +507,7 @@ def main(argv=None):
                 for p in projects:
                     print(f"{p['id']}  {'●' if p['panes'] else '○'} {p['path']}")
         return 0
-    except (OSError, ValueError, subprocess.CalledProcessError) as error:
+    except (OSError, TypeError, ValueError, subprocess.CalledProcessError) as error:
         print(f"dots projects: {error}", file=sys.stderr)
         return 1
     except KeyboardInterrupt:

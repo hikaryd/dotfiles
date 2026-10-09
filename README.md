@@ -1,43 +1,39 @@
-# Настройки рабочего окружения
+# Рабочее окружение
 
-Конфигурация macOS, терминала и инструментов разработки. Секреты и личные адреса хранятся отдельно.
+Dotfiles для macOS. Общий стиль — **Ayu Dark**, палитра в [`palette/ayu.toml`](palette/ayu.toml).
 
-## Установка и перенос
+## Программы
 
-Нужны Xcode Command Line Tools (`xcode-select --install`) и Homebrew.
-Разместите репозиторий в `~/dots`, затем:
+| Задача | Программы |
+|---|---|
+| Терминал | Ghostty |
+| Оболочка | Nushell, zsh, Starship, Atuin |
+| Мультиплексоры | Herdr, tmux, sesh |
+| Окна | AeroSpace, Rift |
+| Редакторы | Neovim |
+| Файлы и поиск | Yazi, nls, eza, bat, ripgrep, fd, fzf, zoxide |
+| Git | Git, LazyGit, GitHub CLI |
+| AI | Codex, Claude Code, [Pi Agent](config/pi/README.md), CodexBar |
+| Разработка | Node.js, Python, Go, Rust; языковые серверы, линтеры и форматтеры |
+| Браузер | Waterfox |
+| Приложения | Telegram, Spotify, 1Password, RustDesk |
+| macOS-утилиты | Vorssaint, Karabiner-Elements, Mos, Snapzy, TinyCast, Caffeine, Look |
+| Прокси | Xray |
+
+Полный список пакетов — в [`Brewfile`](Brewfile), настройки — в [`config/`](config/).
+
+## Установка
+
+Нужны Xcode Command Line Tools и Homebrew. Репозиторий располагается в `~/dots`:
 
 ```sh
 ./install
-dots private init
-dots private check
 ```
 
-`./install` применяет настройки и устанавливает пакеты; это не диагностическая команда.
-[Приватные настройки и перенос](docs/PRIVATE.md) — где хранить ключи, аккаунты и адреса.
+Только Pi Agent с личными настройками, темой Ayu и статус-баром:
 
-## Быстрые действия
+```sh
+./install -c steps/pi.yml
+```
 
-- `dots` или `Ctrl+O` в Nushell/zsh — меню; в tmux — `Ctrl+a`, затем `Shift+O`.
-- `dots projects open` или `Ctrl+a`, затем `Shift+P` — проекты с переиспользованием живых панелей.
-- `dots projects refresh` — обновить приватный список проектов; он не переносится через Git.
-- `dots doctor` — диагностика без изменений; `dots style focus` — оформление без анимаций.
-- LazyGit не выполняет автоматический fetch: обновляйте удалённые ветки явно.
-
-## Оболочка
-
-Новые окна Ghostty и tmux запускают Nushell; старые панели не перезапускаются.
-Команды и приватные алиасы zsh доступны через мост без переписывания; `z`, `zi`, `y`, `tp` меняют каталог, `vs` активирует Nu-окружение Python.
-`zs ИМЯ аргументы` — явный вызов zsh-команды; при совпадении с встроенной Nu-командой используйте `^ИМЯ`.
-Изменения переменных в дочернем zsh не меняют среду Nu; для такой работы откройте `zsh`.
-Мост обновляется при запуске `dots-nu`; приватные имена хранятся только в `~/.cache/dots/zsh-bridge/bin`, секреты — в `private.zsh`.
-
-## Дополнительно
-
-`codex` запускается напрямую через локальный прокси, без OMX.
-YOLO включён в `~/.codex/config.toml`: команды выполняются без подтверждения и sandbox Codex.
-Для более ограниченного запуска: `codex -a on-request -s workspace-write`.
-Авторизация и секреты остаются вне Git; системные защиты не меняются.
-
-Исходники и инструкция телефона: `~/Documents/dev/agent-phone/README.md`.
-[CodexBar](config/codexbar/README.md) запускается через `codexbar-app`.
+Секреты и личные адреса не хранятся в Git. [Приватные настройки и перенос](docs/PRIVATE.md).

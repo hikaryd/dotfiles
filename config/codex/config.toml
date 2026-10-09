@@ -13,8 +13,7 @@ model_reasoning_effort = "low"
 inherit = "core"
 
 [mcp_servers.browser]
-command = "npx"
-args = ["@railsblueprint/blueprint-mcp@latest"]
+command = "/opt/homebrew/bin/blueprint-mcp"
 startup_timeout_sec = 15.0
 
 [mcp_servers.token-counter]
@@ -23,8 +22,7 @@ args = ["-y", "token-counter-mcp"]
 startup_timeout_sec = 15.0
 
 [mcp_servers.zai-mcp-server]
-command = "npx"
-args = ["-y", "@z_ai/mcp-server"]
+command = "/opt/homebrew/bin/zai-mcp-server"
 startup_timeout_sec = 15.0
 
 [mcp_servers.zai-mcp-server.env]
@@ -48,3 +46,8 @@ wire_api = "responses"
 
 [tui]
 status_line = ["model-with-reasoning", "git-branch", "context-remaining", "total-input-tokens", "total-output-tokens", "five-hour-limit", "weekly-limit"]
+
+# JevGrep discovers the authorized repository from the Codex working directory.
+[mcp_servers.jevgrep]
+command = "/bin/zsh"
+args = ["-f", "-c", "export PATH=\"/opt/homebrew/bin:/usr/local/bin:$PATH\"; source \"$HOME/.config/shell/codex-proxy.sh\"; jevgrep mcp"]

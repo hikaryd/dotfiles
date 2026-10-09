@@ -1,0 +1,6 @@
+# JevGrep already respects .gitignore.
+#
+# The following are also excluded automatically for security:
+# credentials, dependencies, build outputs, binaries, and oversized files.
+#
+# Add versioned content that is not useful for search below.

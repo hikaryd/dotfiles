@@ -8,11 +8,6 @@
       path: config/ghostty/shaders
       create: true
       force: true
-    # Attyx terminal
-    ~/.config/attyx/attyx.toml:
-      path: config/attyx/attyx.toml
-      create: true
-      force: true
     # Yazi file manager
     ~/.config/yazi/yazi.toml:
       path: config/yazi/yazi.toml

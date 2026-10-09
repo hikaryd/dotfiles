@@ -1,5 +1,13 @@
 - shell:
+    - command: scripts/codex-mcp-install.sh
+      description: Install pinned Codex MCP executables
+      stdout: true
+      stderr: true
     - command: scripts/codex-apply.sh
       description: Merge personal Codex config and install portable rules
+      stdout: true
+      stderr: true
+    - command: python3 scripts/codex-task-title-apply.py
+      description: Install semantic Herdr task title hook
       stdout: true
       stderr: true

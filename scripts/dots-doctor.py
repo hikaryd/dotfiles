@@ -21,6 +21,7 @@ CRITICAL = {
     "~/.zshenv",
     "~/.config/zsh/functions",
     "~/.config/tmux/tmux.conf",
+    "~/.config/herdr/config.toml",
     "~/.config/ghostty/config",
     "~/.config/nvim",
 }
@@ -85,6 +86,7 @@ def diagnose(root, home):
         "git",
         "python3",
         "tmux",
+        "herdr",
         "sesh",
         "nvim",
         "fzf",
@@ -103,7 +105,11 @@ def diagnose(root, home):
         add(
             "OK"
             if found
-            else ("FAIL" if command in ("zsh", "git", "python3", "tmux") else "WARN"),
+            else (
+                "FAIL"
+                if command in ("zsh", "git", "python3", "tmux", "herdr")
+                else "WARN"
+            ),
             f"command:{command}",
             "Available" if found else "Not on PATH",
         )
@@ -156,7 +162,11 @@ def diagnose(root, home):
                 )
 
     # TOML parsers do not execute config and do not disclose values in diagnostics.
-    config_files = [root / "config/sesh/sesh.toml", home / ".config/atuin/config.toml"]
+    config_files = [
+        root / "config/sesh/sesh.toml",
+        root / "config/herdr/config.toml",
+        home / ".config/atuin/config.toml",
+    ]
     for file in config_files:
         name = f"syntax:{file.parent.name}/{file.name}"
         if not file.is_file():

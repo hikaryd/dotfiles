@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Снимок открытых проектов: Git, tmux-процессы и локальные TCP listeners."""
+"""Снимок открытых проектов: Git, терминальные процессы и local TCP listeners."""
 
 import argparse
 import json
@@ -220,14 +220,35 @@ def local_ports(projects):
             warnings.append("Process cwd unavailable; ancestry attribution only")
     pane_ids = {pane["pane"]: p["id"] for p in projects for pane in p["panes"]}
     pane_projects = {}
-    try:
-        result = command(["tmux", "list-panes", "-a", "-F", "#{pane_id}\t#{pane_pid}"])
-        for line in result.stdout.decode().splitlines():
-            parts = line.split("\t")
-            if len(parts) == 2 and parts[1].isdigit() and parts[0] in pane_ids:
-                pane_projects[int(parts[1])] = pane_ids[parts[0]]
-    except (OSError, UnicodeError, subprocess.TimeoutExpired):
-        warnings.append("Pane process attribution unavailable")
+    if os.environ.get("HERDR_ENV") or os.environ.get("HERDR_SOCKET_PATH"):
+
+        def herdr_process(item):
+            pane_id, project_id = item
+            result = command(["herdr", "pane", "process-info", "--pane", pane_id])
+            if result.returncode:
+                return None
+            info = json.loads(result.stdout)["result"]["process_info"]
+            pid = info.get("shell_pid")
+            return (pid, project_id) if isinstance(pid, int) and pid > 0 else None
+
+        try:
+            with ThreadPoolExecutor(max_workers=4) as pool:
+                for pair in pool.map(herdr_process, pane_ids.items()):
+                    if pair:
+                        pane_projects[pair[0]] = pair[1]
+        except (OSError, ValueError, KeyError, subprocess.TimeoutExpired):
+            warnings.append("Herdr pane process attribution unavailable")
+    else:
+        try:
+            result = command(
+                ["tmux", "list-panes", "-a", "-F", "#{pane_id}\t#{pane_pid}"]
+            )
+            for line in result.stdout.decode().splitlines():
+                parts = line.split("\t")
+                if len(parts) == 2 and parts[1].isdigit() and parts[0] in pane_ids:
+                    pane_projects[int(parts[1])] = pane_ids[parts[0]]
+        except (OSError, UnicodeError, subprocess.TimeoutExpired):
+            warnings.append("Pane process attribution unavailable")
     attributed, unassigned = {}, []
     for pid, info in listeners.items():
         paths = cwd.get(pid, {}).get("names", [])

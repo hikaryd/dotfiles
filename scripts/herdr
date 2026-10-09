@@ -1,0 +1,16 @@
+#!/bin/sh
+set -eu
+
+# A matching patched client changes only the tab bar. Homebrew stays the
+# fallback after an update or when HERDR_DOTS_NO_PATCH=1 is set.
+if [ -x /opt/homebrew/bin/herdr ]; then
+  base=/opt/homebrew/bin/herdr
+else
+  base=/usr/local/bin/herdr
+fi
+patched="${XDG_DATA_HOME:-$HOME/.local/share}/dots/herdr/0.9.1/herdr"
+if [ "${HERDR_DOTS_NO_PATCH:-}" != 1 ] && [ -x "$patched" ] && \
+   [ "$("$base" --version)" = "$("$patched" --version)" ]; then
+  exec "$patched" "$@"
+fi
+exec "$base" "$@"

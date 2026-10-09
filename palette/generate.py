@@ -27,56 +27,6 @@ def hex_to_argb(h: str, alpha: str = "ff") -> str:
     return f"0x{alpha}{h.lstrip('#')}"
 
 
-# ── Alacritty ────────────────────────────────────────────────────────────────
-
-
-def gen_alacritty(p: dict, variant: str) -> None:
-    path = CONFIG / "alacritty" / "alacritty.toml"
-    text = path.read_text()
-
-    colors_block = f"""[colors.primary]
-background = "{p["editor"]["bg"]}"
-foreground = "{p["editor"]["fg"]}"
-
-[colors.cursor]
-cursor = "{p["common"]["accent"]}"
-text = "CellBackground"
-
-[colors.selection]
-background = "{p["ui"]["selection"]}"
-text = "{p["editor"]["fg"]}"
-
-[colors.normal]
-black = "{p["terminal"]["black"]}"
-red = "{p["terminal"]["red"]}"
-green = "{p["terminal"]["green"]}"
-yellow = "{p["terminal"]["yellow"]}"
-blue = "{p["terminal"]["blue"]}"
-magenta = "{p["terminal"]["magenta"]}"
-cyan = "{p["terminal"]["cyan"]}"
-white = "{p["terminal"]["white"]}"
-
-[colors.bright]
-black = "{p["terminal"]["bright_black"]}"
-red = "{p["terminal"]["bright_red"]}"
-green = "{p["terminal"]["bright_green"]}"
-yellow = "{p["terminal"]["bright_yellow"]}"
-blue = "{p["terminal"]["bright_blue"]}"
-magenta = "{p["terminal"]["bright_magenta"]}"
-cyan = "{p["terminal"]["bright_cyan"]}"
-white = "{p["terminal"]["bright_white"]}"
-"""
-
-    text = re.sub(
-        r"^\[colors\.primary\].*?(?=^\[(?!colors(?:\.|\]))|\Z)",
-        colors_block,
-        text,
-        flags=re.DOTALL | re.MULTILINE,
-    )
-    path.write_text(text)
-    print(f"  alacritty: {path}")
-
-
 # ── Ghostty ──────────────────────────────────────────────────────────────────
 
 
@@ -96,71 +46,6 @@ def gen_ghostty(p: dict, variant: str) -> None:
 
     path.write_text(text)
     print(f"  ghostty: {path}")
-
-
-# ── Wezterm ──────────────────────────────────────────────────────────────────
-
-
-def gen_wezterm(p: dict, variant: str) -> None:
-    path = CONFIG / "wezterm" / "wezterm.lua"
-    text = path.read_text()
-
-    bg = p["editor"]["bg"]
-    fg = p["editor"]["fg"]
-    accent = p["common"]["accent"]
-    dim = p["ui"]["fg"]
-    t = p["terminal"]
-
-    colors_block = f'''config.colors = {{
-\tbackground = "{bg}",
-\tforeground = "{fg}",
-\tcursor_bg = "{accent}",
-\tcursor_fg = "{bg}",
-\tcursor_border = "{accent}",
-\tselection_bg = "{p["ui"]["selection"]}",
-\tselection_fg = "{fg}",
-\tsplit = "{p["ui"]["border"]}",
-\tansi = {{ "{t["black"]}", "{t["red"]}", "{t["green"]}", "{t["yellow"]}", "{t["blue"]}", "{t["magenta"]}", "{t["cyan"]}", "{t["white"]}" }},
-\tbrights = {{ "{t["bright_black"]}", "{t["bright_red"]}", "{t["bright_green"]}", "{t["bright_yellow"]}", "{t["bright_blue"]}", "{t["bright_magenta"]}", "{t["bright_cyan"]}", "{t["bright_white"]}" }},
-\ttab_bar = {{
-\t\tbackground = "{bg}",
-\t\tnew_tab = {{ bg_color = "{bg}", fg_color = "{dim}" }},
-\t\tnew_tab_hover = {{ bg_color = "{bg}", fg_color = "{accent}" }},
-\t}},
-}}'''
-
-    # Replace color_scheme line
-    text = re.sub(
-        r'^config\.color_scheme\s*=\s*".*"',
-        f"-- colors from palette/ayu.toml ({variant})",
-        text,
-        flags=re.MULTILINE,
-    )
-
-    # Replace config.colors block
-    text = re.sub(
-        r"config\.colors\s*=\s*\{.*?\n\}",
-        colors_block,
-        text,
-        flags=re.DOTALL,
-    )
-
-    # Replace local C block
-    c_block = f'''local C = {{
-\tbg = "{bg}",
-\tactive = "{accent}",
-\tselection = "{p["ui"]["selection"]}",
-\tdim = "{dim}",
-}}'''
-    text = re.sub(
-        r"local C\s*=\s*\{.*?\n\}",
-        c_block,
-        text,
-        flags=re.DOTALL,
-    )
-
-    path.write_text(text)
-    print(f"  wezterm: {path}")
 
 
 # ── Starship ─────────────────────────────────────────────────────────────────
@@ -500,22 +385,6 @@ def gen_fresh(p: dict, variant: str) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(theme, indent=2) + "\n")
     print(f"  fresh: {path}")
-
-
-# ── Attyx ────────────────────────────────────────────────────────────────────
-
-
-def gen_attyx(p: dict, variant: str) -> None:
-    path = CONFIG / "attyx" / "attyx.toml"
-    text = path.read_text()
-
-    theme_name = "Ayu Mirage" if variant == "mirage" else "Ayu Dark"
-    text = re.sub(
-        r'^name\s*=\s*".*"', f'name = "{theme_name}"', text, flags=re.MULTILINE
-    )
-
-    path.write_text(text)
-    print(f"  attyx: {path}")
 
 
 # ── Lazygit ──────────────────────────────────────────────────────────────────
@@ -1081,21 +950,108 @@ def gen_yazi(p: dict, variant: str) -> None:
     print(f"  yazi: {flavor_dir}/flavor.toml (+ tmtheme.xml, theme.toml, init.lua)")
 
 
+# ── Pi ───────────────────────────────────────────────────────────────────────
+
+
+def gen_pi(p: dict, variant: str) -> None:
+    e, s, u, c, vc = p["editor"], p["syntax"], p["ui"], p["common"], p["vcs"]
+    theme = {
+        "$schema": "https://raw.githubusercontent.com/earendil-works/pi/main/packages/coding-agent/src/modes/interactive/theme/theme-schema.json",
+        "name": "ayu",
+        "appearance": "dark",
+        "vars": {
+            "bg": e["bg"],
+            "panel": e["panel"],
+            "line": e["line"],
+            "text": e["fg"],
+            "muted": u["fg"],
+            "dim": s["comment"],
+            "border": u["border"],
+            "selection": u["selection"],
+            "accent": c["accent"],
+            "warning": c["warning"],
+            "error": c["error"],
+            **s,
+        },
+        "colors": {
+            "accent": "accent",
+            "border": "border",
+            "borderAccent": "accent",
+            "borderMuted": "border",
+            "success": "string",
+            "error": "error",
+            "warning": "warning",
+            "muted": "muted",
+            "dim": "dim",
+            "text": "text",
+            "thinkingText": "muted",
+            "selectedBg": "selection",
+            "scrollbarTrack": "border",
+            "scrollbarThumb": "muted",
+            "searchMatchBg": "selection",
+            "searchMatchText": "accent",
+            "userMessageBg": "line",
+            "userMessageText": "text",
+            "customMessageBg": "panel",
+            "customMessageText": "text",
+            "customMessageLabel": "accent",
+            "toolPendingBg": "panel",
+            "toolSuccessBg": "panel",
+            "toolErrorBg": "line",
+            "toolTitle": "accent",
+            "toolOutput": "text",
+            "mdHeading": "accent",
+            "mdLink": "tag",
+            "mdLinkUrl": "muted",
+            "mdCode": "regexp",
+            "mdCodeBlock": "text",
+            "mdCodeBlockBorder": "border",
+            "mdQuote": "muted",
+            "mdQuoteBorder": "border",
+            "mdHr": "border",
+            "mdListBullet": "accent",
+            "toolDiffAdded": vc["added"],
+            "toolDiffRemoved": vc["removed"],
+            "toolDiffContext": "muted",
+            "syntaxComment": "comment",
+            "syntaxKeyword": "keyword",
+            "syntaxFunction": "func",
+            "syntaxVariable": "text",
+            "syntaxString": "string",
+            "syntaxNumber": "constant",
+            "syntaxType": "entity",
+            "syntaxOperator": "operator",
+            "syntaxPunctuation": "muted",
+            "thinkingOff": "border",
+            "thinkingMinimal": "muted",
+            "thinkingLow": "tag",
+            "thinkingMedium": "accent",
+            "thinkingHigh": "constant",
+            "thinkingXhigh": "markup",
+            "thinkingMax": "keyword",
+            "bashMode": "regexp",
+        },
+        "export": {"pageBg": "bg", "cardBg": "panel", "infoBg": "line"},
+    }
+    path = CONFIG / "pi" / "themes" / "ayu.json"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(theme, indent=2) + "\n")
+    print(f"  pi: {path} (Ayu {variant})")
+
+
 # ── Main ─────────────────────────────────────────────────────────────────────
 
 GENERATORS = {
-    "alacritty": gen_alacritty,
     "ghostty": gen_ghostty,
-    "wezterm": gen_wezterm,
     "starship": gen_starship,
     "nushell": gen_nushell,
     "sketchybar": gen_sketchybar,
     "tmux": gen_tmux,
     "fresh": gen_fresh,
-    "attyx": gen_attyx,
     "lazygit": gen_lazygit,
     "thorium": gen_thorium,
     "yazi": gen_yazi,
+    "pi": gen_pi,
 }
 
 

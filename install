@@ -78,7 +78,7 @@ run_step() {
 
 run_step 'steps/dependencies.yml' run_dotbot 'steps/dependencies.yml'
 run_step 'palette/generate.py' python3 "$BASEDIR/palette/generate.py"
-for config in terminal editors tools claude codex macos; do
+for config in terminal editors tools claude codex pi abide macos; do
 	run_step "steps/$config.yml" run_dotbot "steps/$config.yml"
 done
 

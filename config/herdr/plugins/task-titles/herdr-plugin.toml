@@ -1,0 +1,47 @@
+id = "dots.task-titles"
+name = "Codex task titles"
+version = "0.1.0"
+min_herdr_version = "0.9.1"
+description = "Show native Codex task names on pane borders and automatic tabs"
+platforms = ["macos", "linux"]
+
+[[startup]]
+command = ["python3", "titles.py", "sync"]
+
+[[events]]
+on = "pane.agent_status_changed"
+command = ["python3", "titles.py", "sync"]
+
+[[events]]
+on = "pane.focused"
+command = ["python3", "titles.py", "sync"]
+
+[[events]]
+on = "pane.agent_detected"
+command = ["python3", "titles.py", "sync"]
+
+[[events]]
+on = "pane.closed"
+command = ["python3", "titles.py", "sync"]
+
+[[events]]
+on = "pane.exited"
+command = ["python3", "titles.py", "sync"]
+
+[[events]]
+on = "pane.moved"
+command = ["python3", "titles.py", "sync"]
+
+[[events]]
+on = "tab.focused"
+command = ["python3", "titles.py", "sync"]
+
+[[events]]
+on = "tab.renamed"
+command = ["python3", "titles.py", "sync"]
+
+[[actions]]
+id = "sync"
+title = "Refresh Codex task titles"
+contexts = ["workspace"]
+command = ["python3", "titles.py", "sync"]

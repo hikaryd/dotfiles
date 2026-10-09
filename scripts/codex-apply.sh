@@ -105,4 +105,6 @@ if [[ -n ${CODEX_BIN:-} ]]; then
   install_rules_link
 fi
 
+python3 "$REPO_DIR/scripts/codex-instructions-apply.py"
+
 echo "codex-apply: done"

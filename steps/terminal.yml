@@ -3,8 +3,24 @@
       path: scripts/codexbar-launch.sh
       create: true
       force: false
+    ~/.local/bin/spotify-app:
+      path: scripts/spotify-launch.sh
+      create: true
+      force: false
+    ~/.local/bin/spotify-aerospace-follow:
+      path: scripts/spotify-aerospace-follow.sh
+      create: true
+      force: false
+    ~/.local/bin/spotify-toggle:
+      path: scripts/spotify-toggle.sh
+      create: true
+      force: false
     ~/.local/bin/dots:
       path: scripts/dots
+      create: true
+      force: true
+    ~/.local/bin/herdr:
+      path: scripts/herdr
       create: true
       force: true
     ~/.config/atuin/config.toml:
@@ -51,14 +67,14 @@
       path: config/xray-codex/codex-proxy.py
       create: true
       force: true
-    # Alacritty
-    ~/.config/alacritty/alacritty.toml:
-      path: config/alacritty/alacritty.toml
-      create: true
-      force: true
     # Tmux
     ~/.config/tmux/tmux.conf:
       path: config/tmux/tmux.conf
+      create: true
+      force: true
+    # Herdr
+    ~/.config/herdr/config.toml:
+      path: config/herdr/config.toml
       create: true
       force: true
     # Git
@@ -147,12 +163,23 @@
       path: config/sesh/sesh.toml
       create: true
       force: true
-    # WezTerm
-    ~/.config/wezterm/wezterm.lua:
-      path: config/wezterm/wezterm.lua
-      create: true
-      force: true
 - shell:
+    - command: |
+        set -e
+        "$HOME/dots/scripts/build-herdr-last-workspace.sh"
+        herdr plugin link "$HOME/dots/config/herdr/plugins/last-workspace" --enabled
+        dots-last-workspace prime
+      description: Building and linking the native Herdr workspace toggle
+      stdout: true
+      stderr: true
+    - command: herdr plugin link "$HOME/dots/config/herdr/plugins/task-titles" --enabled
+      description: Linking automatic Codex task titles in Herdr
+      stdout: true
+      stderr: true
+    - command: herdr plugin action invoke dots.task-titles.sync
+      description: Naming existing Codex panes and tabs
+      stdout: true
+      stderr: true
     - command: |
         mkdir -p "$HOME/.local/bin"
         cd "$HOME/dots/tools/kube-rollout"

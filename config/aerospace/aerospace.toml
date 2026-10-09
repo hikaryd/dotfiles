@@ -4,6 +4,7 @@
 start-at-login = false
 enable-normalization-flatten-containers = true
 enable-normalization-opposite-orientation-for-nested-containers = true
+exec-on-workspace-change = ['/bin/bash', '-c', 'exec "$HOME/.local/bin/spotify-aerospace-follow"']
 
 # Rift: focus_follows_mouse=true, mouse_follows_focus=false.
 # AeroSpace не поддерживает focus-follows-mouse, поэтому курсор при смене
@@ -80,6 +81,7 @@ alt-shift-minus = 'resize smart -50'
 alt-space = 'layout floating tiling'   # Alt+Space
 cmd-shift-f = 'layout floating tiling' # Meta+Shift+F
 alt-f = 'fullscreen'                   # Alt+F
+alt-shift-space = 'exec-and-forget exec "$HOME/.local/bin/spotify-toggle"'
 
 # Rift-команды serialize/save_and_exit не имеют прямых аналогов в AeroSpace.
 
@@ -139,10 +141,6 @@ run = 'layout floating'
 
 [[on-window-detected]]
 if.app-name-regex-substring = 'Пункт управления'
-run = 'layout floating'
-
-[[on-window-detected]]
-if.app-id = 'com.apphousekitchen.aldente-pro'
 run = 'layout floating'
 
 # Typora: диалог "Открыть" — floating + ws=4
@@ -322,16 +320,4 @@ run = 'move-node-to-workspace w'
 # --- "d": терминал ---
 [[on-window-detected]]
 if.app-id = 'com.mitchellh.ghostty'
-run = 'move-node-to-workspace d'
-
-[[on-window-detected]]
-if.app-id = 'org.alacritty'
-run = 'move-node-to-workspace d'
-
-[[on-window-detected]]
-if.app-id = 'com.github.wez.wezterm'
-run = 'move-node-to-workspace d'
-
-[[on-window-detected]]
-if.app-name-regex-substring = 'WezTerm'
 run = 'move-node-to-workspace d'

@@ -22,6 +22,14 @@ config/claude/.mcp-secrets
 config/codex/mcp-secrets.sh
 config/codex/.mcp-secrets
 
+# Pi credentials and machine-local runtime must never enter the portable config.
+config/pi/auth.json
+config/pi/models-store.json
+config/pi/sessions/
+config/pi/install/
+config/pi/backups/
+config/pi/*.bak-*
+
 # Machine-local identity, endpoints, and cluster coordinates.
 config/zsh/private.zsh
 config/git/private.inc
@@ -29,8 +37,8 @@ config/git/private.inc
 # Private Kubernetes watcher inventories live under ~/.config, never in dots.
 **/deploy-watch.resources
 
-# Private Pixel owner endpoints; optional local SSH include, never publish.
-/config/ssh/pixel-owner.conf
+# Private phone owner endpoints; optional local SSH include, never publish.
+/config/ssh/*owner*.conf
 
 # Локальные отчёты, состояние агентов и кэши.
 /.omx/
@@ -40,3 +48,4 @@ config/git/private.inc
 /.pytest_cache/
 /.ruff_cache/
 /docs/private/
+/.abide

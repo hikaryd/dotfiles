@@ -1,0 +1,161 @@
+# Herdr alongside tmux: one persistent server, one workspace per project.
+# Keep terminal colors and native link handling from Ghostty.
+onboarding = false
+
+[theme]
+name = "terminal"
+
+[theme.custom]
+panel_bg = "reset"
+surface0 = "#151a23"
+surface1 = "#273747"
+surface_dim = "#0d1017"
+# Herdr also uses overlay0 for inactive pane task labels.
+overlay0 = "#65758b"
+overlay1 = "#858d9c"
+text = "#bfbdb6"
+subtext0 = "#858d9c"
+accent = "#73d0ff"
+teal = "#95e6cb"
+yellow = "#e6b450"
+red = "#f07178"
+
+[terminal]
+default_shell = "dots-nu"
+shell_mode = "non_login"
+new_cwd = "follow"
+kitty_graphics = true
+
+[keys]
+prefix = "ctrl+a"
+detach = "prefix+d"
+reload_config = "prefix+r"
+resize_mode = "prefix+shift+r"
+workspace_picker = "prefix+u"
+goto = ""
+previous_workspace = "prefix+["
+next_workspace = "prefix+]"
+new_workspace = "prefix+shift+n"
+rename_workspace = "prefix+shift+w"
+close_workspace = "prefix+shift+d"
+new_tab = "prefix+c"
+rename_tab = "prefix+comma"
+rename_pane = "prefix+shift+comma"
+previous_tab = "prefix+b"
+next_tab = "prefix+n"
+move_tab_previous = "ctrl+shift+left"
+move_tab_next = "ctrl+shift+right"
+switch_tab = ["prefix+1..9", "ctrl+1..9"]
+close_tab = "prefix+w"
+last_pane = ["prefix+space", "prefix+enter"]
+swap_pane_left = "prefix+shift+h"
+swap_pane_right = "prefix+:"
+focus_pane_left = ["ctrl+h", "prefix+left"]
+focus_pane_down = ["ctrl+j", "prefix+down"]
+focus_pane_up = ["ctrl+k", "prefix+up"]
+focus_pane_right = ["ctrl+l", "prefix+right"]
+resize_pane_left = ["prefix+h", "ctrl+shift+h"]
+resize_pane_down = ["prefix+j", "ctrl+shift+j"]
+resize_pane_up = ["prefix+k", "ctrl+shift+k"]
+resize_pane_right = ["prefix+l", "ctrl+shift+l"]
+split_vertical = "prefix+|"
+split_horizontal = ["prefix+_", "prefix+minus"]
+close_pane = "ctrl+w"
+zoom = ["prefix+m", "prefix+f"]
+copy_mode = "prefix+v"
+toggle_sidebar = "prefix+shift+b"
+
+[ui]
+sidebar_start_collapsed = true
+sidebar_collapsed_mode = "hidden"
+mouse_capture = false
+copy_on_select = false
+pane_borders = "auto"
+# The top border carries the task title, including the top row of split panes.
+pane_outer_borders = true
+pane_gaps = false
+pane_scrollbars = false
+tab_bar_position = "top"
+hide_tab_bar_when_single_tab = false
+tab_bar_right = [
+  { type = "command", command = "python3 $HOME/dots/scripts/dots-herdr-status.py", interval_seconds = 5, timeout_seconds = 2 },
+  { type = "zoom" },
+  { type = "datetime", format = "%H:%M" },
+]
+tab_bar_right_separator = " "
+accent = "#73d0ff"
+window_title = "{workspace} · {tab}"
+prompt_new_tab_name = false
+
+[ui.sidebar.agents]
+row_gap = 1
+rows = [["state_icon", "workspace", "tab"], ["pane"]]
+
+[session]
+resume_agents_on_restore = true
+
+[experimental]
+pane_history = false
+switch_ascii_input_source_in_prefix = true
+
+[[keys.command]]
+key = "prefix+shift+l"
+type = "plugin_action"
+command = "dots.last-workspace.toggle"
+description = "return to last workspace"
+
+[[keys.command]]
+key = "prefix+shift+t"
+type = "popup"
+command = "dots sessions open"
+description = "sessions: Herdr, tmux templates, directories"
+width = "75%"
+height = "70%"
+
+[[keys.command]]
+key = "prefix+g"
+type = "popup"
+command = "lazygit --use-config-file ~/.config/lazygit/config.yml"
+description = "lazygit"
+width = "90%"
+height = "90%"
+
+[[keys.command]]
+key = "prefix+shift+p"
+type = "popup"
+command = "dots projects open"
+description = "projects and worktrees"
+width = "75%"
+height = "70%"
+
+[[keys.command]]
+key = "prefix+shift+o"
+type = "popup"
+command = "dots menu"
+description = "dots menu"
+width = "85%"
+height = "80%"
+
+[[keys.command]]
+key = "prefix+shift+f"
+type = "popup"
+command = "dots refs --pane \"$HERDR_ACTIVE_PANE_ID\""
+description = "references"
+width = "85%"
+height = "75%"
+
+[[keys.command]]
+key = "prefix+shift+y"
+type = "popup"
+command = "dots clip"
+description = "clipboard"
+width = "80%"
+height = "75%"
+
+[[keys.command]]
+key = "prefix+shift+v"
+type = "popup"
+command = "dots status --interactive"
+description = "project status"
+width = "95%"
+height = "90%"

@@ -21,12 +21,15 @@ dots private check   # проверить права и незаполненны
 | `~/.config/git/private.inc` | Имя/email Git и личные `maintenance.repo`; подключён общим конфигом Git |
 | `~/.claude/.mcp-secrets` | `Z_AI_API_KEY`, `MAGIC_API_KEY`, `KUBECONFIG_PATH`, необязательный `ANTHROPIC_BASE_URL` |
 | `~/.codex/.mcp-secrets` | `Z_AI_API_KEY`, необязательный `CF_OPENAI_BASE_URL` |
+| `~/.pi/agent/auth.json` | API-ключи и OAuth Pi; не хранить в Git, на новом компьютере выполнить `/login` |
+| `~/.pi/agent/sessions/` | Локальная история Pi; может содержать приватные запросы и результаты инструментов |
+| `~/.abide/.env` | `OPENROUTER_API_KEY` для Abide/Jev через OpenRouter; `TYPESAFE_AI_API_KEY` или `AI_GATEWAY_API_KEY` через `abide login`; права `600` |
 | `~/.kube/` | Выданные kubeconfig; пути к ним задаются в `private.zsh` |
 | `~/.ssh/` | Клиентские настройки и проверенные `known_hosts`; ключи предпочтительно через менеджер паролей/SSH-агент |
 | `~/.config/xray-codex/` | Приватная подписка и конфигурация прокси, если он используется |
 | `~/.config/agent-phone/` | Адреса, инвентарь и публичные ключи телефона; шаблоны в `~/Documents/dev/agent-phone/` |
 
-Пути учитывают `DOTS_PRIVATE_ZSH`/`XDG_CONFIG_HOME`, `CLAUDE_CONFIG_DIR`, `CODEX_CONFIG_DIR`/`CODEX_HOME`; Git include фиксирован: `~/.config/git/private.inc`.
+Пути учитывают `DOTS_PRIVATE_ZSH`/`XDG_CONFIG_HOME`, `CLAUDE_CONFIG_DIR`, `CODEX_CONFIG_DIR`/`CODEX_HOME`, `PI_CODING_AGENT_DIR`; Git include фиксирован: `~/.config/git/private.inc`.
 
 Для файлов с секретами нужны права `600`, для приватных каталогов — `700`.
 Необязательные интеграции можно не заполнять; предупреждение о шаблоне не означает, что нужен новый аккаунт.

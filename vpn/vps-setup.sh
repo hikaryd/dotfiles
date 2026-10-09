@@ -16,7 +16,9 @@ TPROXY_PORT=${TPROXY_PORT:-7895}
 CLASH_PORT=${CLASH_PORT:-9090}
 ADBLOCK_WHITELIST=${ADBLOCK_WHITELIST:-tmdb.org,themoviedb.org,b-cdn.net}
 GEN_SRC=${GEN_SRC:-/tmp/awg-generate.py}
+HEALTH_SRC=${HEALTH_SRC:-/tmp/awg-health-check.sh}
 PEERREG_SRC=${PEERREG_SRC:-/tmp/awg-peer-register.sh}
+TCP_TUNING_SRC=${TCP_TUNING_SRC:-/tmp/awg-tcp-tuning.py}
 WORK=/root/awgvpn
 
 say() { printf '   \033[36m·\033[0m %s\n' "$*"; }
@@ -99,12 +101,28 @@ command -v sing-box >/dev/null || curl -fsSL https://sing-box.app/install.sh | s
 say "конфиг sing-box + панель"
 mkdir -p /etc/sing-box/ui /var/lib/sing-box
 [ -f /etc/sing-box/secret.txt ] || { head -c 24 /dev/urandom | base64 | tr -d '/+=' >/etc/sing-box/secret.txt; }
+# Retain explicit pool tuning, including empty filters, on reinstall.
+TUNING=$(python3 - "$GEN_SRC" <<'PYTUNING'
+import runpy
+import sys
+conf = runpy.run_path(sys.argv[1])["CONF"]
+port = int(conf.get("HEALTH_PORT", "7896"))
+if not 1 <= port <= 65535:
+    raise ValueError("HEALTH_PORT must be in 1..65535")
+print(f"HEALTH_PORT={port}")
+for key in ("AUTO_INCLUDE", "AUTO_EXCLUDE", "AUTO_MAX", "AUTO_PREFER"):
+    if key in conf:
+        print(f"{key}={conf[key]}")
+PYTUNING
+)
+HEALTH_PORT=$(printf '%s\n' "$TUNING" | sed -n 's/^HEALTH_PORT=//p')
 cat >/etc/sing-box/vpn.env <<EOF
 SUB_URL=$SUB_URL
 ADBLOCK=$ADBLOCK
 TPROXY_PORT=$TPROXY_PORT
 CLASH_PORT=$CLASH_PORT
 ADBLOCK_WHITELIST=$ADBLOCK_WHITELIST
+$TUNING
 EOF
 install -m 0755 "$GEN_SRC" /etc/sing-box/generate.py
 if [ ! -f /etc/sing-box/ui/index.html ]; then
@@ -146,7 +164,9 @@ table inet sbgw {
     chain input {
         type filter hook input priority filter; policy accept;
         iifname "lo" accept
+        tcp dport $HEALTH_PORT drop
         iifname "awg0" accept
+        tcp dport $CLASH_PORT drop
         tcp dport $TPROXY_PORT drop
         udp dport $TPROXY_PORT drop
     }
@@ -243,6 +263,31 @@ OnUnitActiveSec=60
 [Install]
 WantedBy=timers.target
 EOF
+install -m 0755 "$HEALTH_SRC" /usr/local/bin/vpn-health-check
+cat >/etc/systemd/system/vpn-health.service <<EOF
+[Unit]
+Description=Observe VPN proxy HTTPS health (no automatic restarts)
+After=sing-box.service
+[Service]
+Type=oneshot
+Environment=HEALTH_PORT=$HEALTH_PORT
+StateDirectory=vpn-health
+ExecStart=/usr/local/bin/vpn-health-check
+TimeoutStartSec=30
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+EOF
+cat >/etc/systemd/system/vpn-health.timer <<EOF
+[Unit]
+Description=Observe VPN proxy health every 2 minutes
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=2min
+[Install]
+WantedBy=timers.target
+EOF
 cat >/etc/systemd/system/sing-box-update.service <<EOF
 [Unit]
 Description=Update sing-box config from subscription
@@ -274,7 +319,9 @@ awg-quick down awg0 2>/dev/null || true
 systemctl restart awg-quick@awg0
 systemctl restart awg-gateway
 systemctl restart sing-box
-systemctl enable --now awg-watchdog.timer sing-box-update.timer >/dev/null 2>&1
+systemctl enable --now awg-watchdog.timer sing-box-update.timer vpn-health.timer >/dev/null 2>&1
+say "TCP для отдельных пиров (по умолчанию выключен; существующий выбор сохраняется)"
+python3 "$TCP_TUNING_SRC" install
 
 # ключи роутеров тут не печатаем — их выдаёт peer-register.sh register
 emit_vars() {

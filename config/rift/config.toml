@@ -75,7 +75,8 @@ app_rules = [
 
   # Floating: системные
   { app_name = "1Password", floating = true },
-  { app_name = "Spotify", floating = true },
+  # Unmanaged windows stay visible across Rift's virtual workspaces.
+  { app_id = "com.spotify.client", manage = false },
   { app_name = "Typora", title_substring = "Открыть", floating = true, workspace = "4" },
   { app_id = "com.apple.finder", floating = true },
   { app_name = "Cisco Secure Client", floating = true },
@@ -83,7 +84,6 @@ app_rules = [
   { app_name = "Tinycast", floating = true },
   { app_name = "Пункт управления", floating = true },
   { app_name = "Control Center", floating = true },
-  { app_name = "AlDente", floating = true },
 
   # "1": браузеры и Comet
   { app_id = "net.waterfox.waterfox", workspace = "1" },
@@ -129,8 +129,6 @@ app_rules = [
 
   # "d": терминал
   { app_name = "Ghostty", workspace = "d" },
-  { app_name = "Wezterm", workspace = "d" },
-  { app_name = "Alacritty", workspace = "d" },
 ]
 
 [modifier_combinations]
@@ -187,6 +185,7 @@ comb1 = "Alt + Shift"
 "Alt + Space" = "toggle_window_floating"
 "Meta + Shift + F" = "toggle_window_floating" # cmd+shift+f
 "Alt + F" = "toggle_fullscreen"
+"Alt + Shift + Space" = { exec = ["/bin/bash", "-c", "exec \"$HOME/.local/bin/spotify-toggle\""] }
 
 "Alt + Ctrl + S" = "serialize"
 "Meta + Shift + Q" = "save_and_exit" # cmd+shift+q

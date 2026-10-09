@@ -100,6 +100,7 @@ def menu():
     choice = pick(
         "dots · текущий проект",
         {
+            "sessions": "Сессии Herdr, шаблоны tmux и каталоги",
             "projects": "Рабочие пространства",
             "status": "Состояние проектов · Git / процессы / порты",
             "refs": "Ссылки, request-id и file:line из текущей панели",
@@ -115,6 +116,8 @@ def menu():
     )
     if not choice:
         return 0
+    if choice == "sessions":
+        return main(["sessions", "open"])
     if choice == "projects":
         return main(["projects", "open"])
     if choice == "status":
@@ -139,6 +142,7 @@ def menu():
         configs = {
             "zsh": "config/zsh/.zshrc",
             "tmux": "config/tmux/tmux.conf",
+            "herdr": "config/herdr/config.toml",
             "ghostty": "config/ghostty/config",
             "nvim": "config/nvim/init.lua",
             "sesh": "config/sesh/sesh.toml",
@@ -154,6 +158,7 @@ def main(args=None):
     command = args.pop(0) if args else "menu"
     if command in {
         "projects",
+        "sessions",
         "style",
         "doctor",
         "notify",
@@ -164,6 +169,7 @@ def main(args=None):
     }:
         extra = {
             "projects": ["open"],
+            "sessions": ["open"],
             "style": ["status"],
             "doctor": [],
             "notify": ["--help"],
@@ -187,8 +193,9 @@ def main(args=None):
     if command == "kube":
         return kube()
     if command in {"help", "--help", "-h"}:
-        print("""dots menu                  меню действий (zsh Ctrl+O; tmux prefix O)
-dots projects open         выбрать проект (tmux prefix P)
+        print("""dots menu                  меню действий (zsh Ctrl+O; tmux/Herdr prefix O)
+dots projects open         выбрать проект (tmux/Herdr prefix P)
+dots sessions open         Herdr: пространства, tmux-шаблоны и каталоги (prefix T)
 dots projects list         обнаруженные проекты; --json для скриптов
 dots projects refresh      обновить приватный inventory из живых сессий/worktree
 dots status [--all] [--json] Git / процессы / local listeners; --interactive для r/o/q
@@ -204,7 +211,7 @@ dots kube                 Kubernetes: только read-only меню
 dots notify --test        тест доставки уведомления
 
 Ctrl+R — локальная история Atuin; Up и остальные fzf-клавиши сохранены.
-tmux: prefix = Ctrl+A; T — sesh; P — проекты; O — меню; F — refs; Y — clipboard; V — status.
+tmux/Herdr: prefix = Ctrl+A; T — сессии; P — проекты; O — меню; F — refs; Y — clipboard; V — status.
 Presentation скрывает prompt/status identifiers, НЕ содержимое буфера/scrollback.
 Существующие проекты/сессии не перезапускаются. Логи новых workspace — пустой shell.
 """)

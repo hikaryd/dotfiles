@@ -1,5 +1,6 @@
 return {
   'aserowy/tmux.nvim',
+  cond = function() return vim.env.HERDR_ENV ~= '1' end,
   config = function()
     -- Чтение регистров синхронное, как в upstream, но без отдельного shell
     -- на каждый буфер. Не кэшируем содержимое и не отключаем clipboard sync.

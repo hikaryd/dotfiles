@@ -48,7 +48,7 @@ ${B}Использование:${R} ./install.sh [опции]
   --router-lan-interface NAME  LAN-сегмент для VPN-политики       (Home)
   --awg-port PORT      UDP-порт AmneziaWG                          (51820)
   --tunnel-net CIDR    Подсеть туннеля (.1 сервер, .2 роутер) (10.8.2.0/24)
-  --mtu N              MTU интерфейса                                (1420)
+  --mtu N              MTU интерфейса                                (1280)
   --no-adblock         Не включать блокировку рекламы
   --dhcp-pool NAME     Имя DHCP-пула роутера                    (_WEBADMIN)
   --skip-vps           Пропустить настройку VPS (только роутер)
@@ -122,7 +122,7 @@ SERVER_HOST=${VPS##*@}   # IP без user@
 step "Проверки окружения"
 for b in ssh scp python3 curl; do command -v "$b" >/dev/null || die "нет утилиты: $b"; done
 ok "локальные утилиты на месте"
-for f in vps-setup.sh generate.py router-setup.py peer-register.sh; do
+for f in vps-setup.sh generate.py router-setup.py peer-register.sh health-check.sh tcp-tuning.py; do
   [[ -f "$SCRIPT_DIR/$f" ]] || die "не найден $SCRIPT_DIR/$f"
 done
 ok "файлы установщика на месте"
@@ -154,18 +154,22 @@ get_var() { sed -n "s/^$1=//p" "$VARS_FILE" | head -1; }
 PANEL_SECRET=""
 if [[ $SKIP_VPS -eq 0 ]]; then
   step "Настройка VPS ($SERVER_HOST)"
+  scp -q "$SCRIPT_DIR/health-check.sh" "$VPS:/tmp/awg-health-check.sh"
   scp -q "$SCRIPT_DIR/generate.py" "$VPS:/tmp/awg-generate.py"
   scp -q "$SCRIPT_DIR/vps-setup.sh" "$VPS:/tmp/awg-vps-setup.sh"
   scp -q "$SCRIPT_DIR/peer-register.sh" "$VPS:/tmp/awg-peer-register.sh"
+  scp -q "$SCRIPT_DIR/tcp-tuning.py" "$VPS:/tmp/awg-tcp-tuning.py"
   ok "файлы загружены на VPS, запускаю установку…"
   REMOTE_RESULT="/root/awgvpn/.install-result-${VARS_FILE##*/}"
   SSH_EXIT=0
   # nohup сохраняет процесс при потере SSH; результат привязан к этому запуску.
+  # Values are intentionally expanded locally before being sent to the VPS.
+  # shellcheck disable=SC2029
   ssh "$VPS" "nohup env \
     SUB_URL='$SUB_URL' AWG_PORT='$AWG_PORT' TUN_CIDR='$TUN_CIDR' SRV_CIDR='$SRV_CIDR' \
     MTU='$MTU' ADBLOCK='$ADBLOCK' TPROXY_PORT='$TPROXY_PORT' \
     CLASH_PORT='$CLASH_PORT' ADBLOCK_WHITELIST='$ADBLOCK_WHITELIST' GEN_SRC=/tmp/awg-generate.py \
-    PEERREG_SRC=/tmp/awg-peer-register.sh INSTALL_RESULT_FILE='$REMOTE_RESULT' \
+    PEERREG_SRC=/tmp/awg-peer-register.sh TCP_TUNING_SRC=/tmp/awg-tcp-tuning.py INSTALL_RESULT_FILE='$REMOTE_RESULT' \
     bash /tmp/awg-vps-setup.sh" | tee "$VARS_FILE" || SSH_EXIT=$?
   if [[ $SSH_EXIT -eq 255 ]]; then
     warn "SSH оборвался; проверяю завершение текущей установки после переподключения"
@@ -201,6 +205,8 @@ if [[ $SKIP_ROUTER -eq 0 ]]; then
     || die "VPS не настроен (нет /root/awgvpn) — сначала запуск без --skip-vps"
   # свежая копия реестра — работает и с сервером, развёрнутым старой версией
   scp -q "$SCRIPT_DIR/peer-register.sh" "$VPS:/root/awgvpn/peer-register.sh"
+  # The router name and public key come from this local installation.
+  # shellcheck disable=SC2029
   ssh "$VPS" "bash /root/awgvpn/peer-register.sh register '$ROUTER_NAME' '$ROUTER_CURPUB'" > "$VARS_FILE" \
     || die "регистрация пира на VPS не удалась"
   grep -q '===VARS===' "$VARS_FILE" || die "реестр пиров не вернул параметры (нет блока VARS)"
@@ -237,8 +243,9 @@ fi
 
 # ─── проверка ────────────────────────────────────────────────────────
 step "Проверка"
-if curl --noproxy '*' -s -m 8 -o /dev/null -w '%{http_code}' "http://$SERVER_HOST:$CLASH_PORT/ui/" | grep -q 200; then
-  ok "панель доступна"
+if ssh -o BatchMode=yes -o ConnectTimeout=10 "$VPS" \
+    "curl --noproxy '*' -fsS -m 8 -o /dev/null http://127.0.0.1:$CLASH_PORT/ui/"; then
+  ok "панель доступна на VPS (из LAN: http://$TUN_SRV:$CLASH_PORT/ui/)"
 else
   warn "панель пока не отвечает (проверь позже)"
 fi
@@ -250,7 +257,7 @@ step "Готово"
 cat <<EOF
    ${GRN}${B}Стек развёрнут.${R}
 
-   ${B}Панель sing-box:${R}  http://$SERVER_HOST:$CLASH_PORT/ui/
+   ${B}Панель sing-box:${R}  http://$TUN_SRV:$CLASH_PORT/ui/
    ${B}Пароль панели:${R}    $PANEL_SECRET
    ${B}Туннель:${R}          $SERVER_HOST:$AWG_PORT  (AmneziaWG, $TUN_CIDR)
    ${B}Роутер:${R}           $([[ $SKIP_ROUTER == 0 ]] && echo "$ROUTER_NAME → $TUN_CLI (реестр пиров: peer-register.sh list на VPS)" || echo "пропущен (--skip-router)")

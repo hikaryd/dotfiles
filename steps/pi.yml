@@ -1,0 +1,9 @@
+- shell:
+    - command: sh scripts/pi-install.sh
+      description: Install Pi Coding Agent CLI if missing
+      stdout: true
+      stderr: true
+    - command: python3 scripts/pi-apply.py
+      description: Apply personal Pi settings, Ayu theme, quota bar and model overrides
+      stdout: true
+      stderr: true

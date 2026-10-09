@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+# Launch BMAD with its own configuration, skills, history and process.
+set -euo pipefail
+
+script_dir="$(dirname "$(realpath "${BASH_SOURCE[0]}")")"
+export PATH="/opt/homebrew/bin:/usr/local/bin:$HOME/.local/bin:$PATH"
+export CODEX_HOME="${CODEX_BMAD_HOME:-$HOME/.codex-bmad}"
+
+if [[ ! -f "$CODEX_HOME/config.toml" || ! -f "$CODEX_HOME/skills/bmad/SKILL.md" ]]; then
+  echo "codex-bmad: installation missing; run python3 '$script_dir/codex-bmad-apply.py'" >&2
+  exit 1
+fi
+CODEX_HOME="$(cd "$CODEX_HOME" && pwd -P)"
+
+# shellcheck source=../config/shell/codex-proxy.sh
+source "$script_dir/../config/shell/codex-proxy.sh"
+_codex_proxy_ensure
+export HTTP_PROXY="$CODEX_PROXY_URL" HTTPS_PROXY="$CODEX_PROXY_URL" ALL_PROXY="$CODEX_PROXY_URL"
+export http_proxy="$CODEX_PROXY_URL" https_proxy="$CODEX_PROXY_URL" all_proxy="$CODEX_PROXY_URL"
+export NO_PROXY="127.0.0.1,localhost,::1,*.local" no_proxy="127.0.0.1,localhost,::1,*.local"
+export NODE_USE_ENV_PROXY=1
+
+if [[ ${1:-} == init ]]; then
+  shift
+  if [[ $# -gt 1 ]]; then
+    echo "usage: codex-bmad init [project-directory]" >&2
+    exit 2
+  fi
+  exec python3 "$script_dir/codex-bmad-apply.py" --init-project "${1:-$PWD}"
+fi
+
+exec codex --no-daemon "$@"
