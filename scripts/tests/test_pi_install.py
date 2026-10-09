@@ -28,7 +28,7 @@ class PiInstallTests(unittest.TestCase):
     def run_install(self):
         return subprocess.run(
             ["/bin/sh", str(ROOT / "scripts/pi-install.sh")],
-            env=self.env, text=True, capture_output=True,
+            env=self.env, text=True, capture_output=True, check=False,
         )
 
     def test_existing_cli_is_reused_without_npm(self):

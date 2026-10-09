@@ -18,7 +18,7 @@ def read_json(path: Path) -> dict:
         return {}
     data = json.loads(path.read_text())
     if not isinstance(data, dict):
-        raise ValueError(f"Expected a JSON object in {path}")
+        raise ValueError(f"Expected a JSON object in {path}")  # noqa: TRY004 - invalid config value
     return data
 
 
@@ -33,7 +33,7 @@ def merge(current: dict, overrides: dict) -> dict:
 
 
 def backup_path(path: Path) -> Path:
-    stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+    stamp = datetime.now().astimezone().strftime("%Y%m%d-%H%M%S")
     return path.with_name(f"{path.name}.bak-{stamp}-{uuid.uuid4().hex[:8]}")
 
 
