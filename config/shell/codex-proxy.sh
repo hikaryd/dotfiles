@@ -50,7 +50,7 @@ codex() {
   local proxy="$CODEX_PROXY_URL"
   HTTP_PROXY="$proxy" HTTPS_PROXY="$proxy" ALL_PROXY="$proxy" \
   http_proxy="$proxy" https_proxy="$proxy" all_proxy="$proxy" \
-  NO_PROXY="127.0.0.1,localhost,::1,*.local" no_proxy="127.0.0.1,localhost,::1,*.local" \
+  NO_PROXY="127.0.0.1,localhost,::1,*.local,nebula-staging.x5.ru" no_proxy="127.0.0.1,localhost,::1,*.local,nebula-staging.x5.ru" \
   command codex "$@"
 }
 
@@ -62,7 +62,7 @@ pi() {
   HTTP_PROXY="$proxy" HTTPS_PROXY="$proxy" ALL_PROXY="$proxy" \
   http_proxy="$proxy" https_proxy="$proxy" all_proxy="$proxy" \
   WS_PROXY="$proxy" WSS_PROXY="$proxy" ws_proxy="$proxy" wss_proxy="$proxy" \
-  NO_PROXY="127.0.0.1,localhost,::1,*.local" no_proxy="127.0.0.1,localhost,::1,*.local" \
+  NO_PROXY="127.0.0.1,localhost,::1,*.local,nebula-staging.x5.ru" no_proxy="127.0.0.1,localhost,::1,*.local,nebula-staging.x5.ru" \
   command pi "$@"
 }
 

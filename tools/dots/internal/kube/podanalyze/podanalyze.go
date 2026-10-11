@@ -1,4 +1,4 @@
-package main
+package podanalyze
 
 import (
 	"context"
@@ -19,19 +19,21 @@ import (
 	"sync"
 	"syscall"
 	"time"
+
+	"dots/native/internal/kube/tui"
 )
 
 const (
-	defaultRefresh = 100 * time.Millisecond
+	defaultRefresh = 2 * time.Second
 
-	colorReset   = "\x1b[0m"
-	colorDim     = "\x1b[2m"
-	colorRed     = "\x1b[31m"
-	colorGreen   = "\x1b[32m"
-	colorYellow  = "\x1b[33m"
-	colorMagenta = "\x1b[35m"
-	colorCyan    = "\x1b[36m"
-	colorBold    = "\x1b[1m"
+	colorReset   = tui.Reset
+	colorDim     = tui.Dim
+	colorRed     = tui.Red
+	colorGreen   = tui.Green
+	colorYellow  = tui.Yellow
+	colorMagenta = tui.Purple
+	colorCyan    = tui.Accent
+	colorBold    = tui.Bold
 )
 
 const procSnapshotCommand = `
@@ -285,16 +287,23 @@ type refreshResult struct {
 	err      error
 }
 
-func main() {
-	cfg, err := parseConfig()
+// Run starts the dashboard with an isolated flag set.
+func Run(args []string) int {
+	cfg, err := parseConfig(args)
 	if err != nil {
+		if errors.Is(err, flag.ErrHelp) {
+			return 0
+		}
 		fmt.Fprintln(os.Stderr, err)
-		os.Exit(2)
+		return 2
 	}
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
 	live := shouldRunLive(cfg, isTerminal(os.Stdout))
+	painter := tui.NewPainter(os.Stdout)
 
 	analyzers := make([]*analyzer, 0, len(cfg.pods))
 	for _, podName := range cfg.pods {
@@ -304,7 +313,7 @@ func main() {
 		a, buildErr := newAnalyzer(ctx, podConfig)
 		if buildErr != nil {
 			fmt.Fprintf(os.Stderr, "cannot initialize pod/%s: %v\n", podName, buildErr)
-			os.Exit(1)
+			return 1
 		}
 		analyzers = append(analyzers, a)
 	}
@@ -322,40 +331,52 @@ func main() {
 		}
 		group.Wait()
 
-		if live {
-			fmt.Print("\x1b[2J\x1b[H")
-		}
 		if len(analyzers) > 1 {
 			for _, result := range results {
 				if result.err != nil {
 					allHealthy = false
 				}
 			}
-			fmt.Print(renderMulti(cfg, analyzers, results))
+			present(cfg, renderMulti(cfg, analyzers, results), live, painter)
 			return allHealthy
 		}
 		for index, a := range analyzers {
 			snap, refreshErr := results[index].snapshot, results[index].err
 			if refreshErr != nil {
 				allHealthy = false
-				fmt.Printf("Kubernetes %s · %s · pod/%s · READ ONLY\n\n", a.cfg.environment, a.cfg.namespace, a.cfg.pod)
-				fmt.Printf("ERROR: cannot refresh pod: %v\n", refreshErr)
+				present(cfg, "\nERROR: cannot refresh pod: "+refreshErr.Error(), live, painter)
 				continue
 			}
-			fmt.Print(render(a.cfg, a.series, a.historyPath, a.history, snap))
+			present(cfg, render(a.cfg, a.series, a.historyPath, a.history, snap), live, painter)
 		}
 		return allHealthy
 	}
 
 	if !live {
 		if !refreshAll() {
-			os.Exit(1)
+			return 1
 		}
-		return
+		return 0
 	}
 
-	fmt.Print("\x1b[?1049h\x1b[?25l")
-	defer fmt.Print("\x1b[?25h\x1b[?1049l")
+	restore, err := tui.Raw(os.Stdin)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return 1
+	}
+	defer restore()
+	endScreen := tui.Screen(os.Stdout)
+	defer endScreen()
+	input := tui.Keys(ctx, os.Stdin)
+	go func() {
+		for key := range input {
+			if key.Name == "esc" || key.Name == "ctrl-c" || key.Name == "ctrl-d" || key.Text == "q" {
+				cancel()
+				return
+			}
+		}
+		cancel()
+	}()
 
 	ticker := time.NewTicker(cfg.refresh)
 	defer ticker.Stop()
@@ -364,14 +385,28 @@ func main() {
 		select {
 		case <-ctx.Done():
 			fmt.Println()
-			return
+			return 0
 		case <-ticker.C:
 		}
 	}
 }
 
+func present(cfg config, body string, live bool, painter *tui.Painter) {
+	width, height := tui.Size(os.Stdout)
+	if index := strings.IndexByte(body, '\n'); index >= 0 {
+		body = body[index+1:]
+	}
+	frame := tui.Frame{Title: "Pod analytics", Environment: cfg.environment, Context: cfg.context, Namespace: cfg.namespace, Mode: "READ ONLY", Width: width, Color: tui.ColorEnabled(os.Stdout), Body: body, Footer: "Updates every " + cfg.refresh.String() + " · Esc / q back · Ctrl+C cancel"}
+	if live {
+		frame.Height = height
+		painter.Draw(frame)
+	} else {
+		fmt.Print(frame.Render())
+	}
+}
+
 func shouldRunLive(cfg config, terminal bool) bool {
-	return !cfg.once && (cfg.live || terminal)
+	return !cfg.once && terminal && tui.IsTerminal(os.Stdin)
 }
 
 func newAnalyzer(ctx context.Context, cfg config) (*analyzer, error) {
@@ -399,32 +434,34 @@ func newAnalyzer(ctx context.Context, cfg config) (*analyzer, error) {
 	}, nil
 }
 
-func parseConfig() (config, error) {
+func parseConfig(args []string) (config, error) {
+	flags := flag.NewFlagSet("kube-pod-analyze", flag.ContinueOnError)
 	home, _ := os.UserHomeDir()
 	cfg := config{}
-	flag.StringVar(&cfg.kubectl, "kubectl", "kubectl", "kubectl executable")
-	flag.StringVar(&cfg.kubeconfig, "kubeconfig", "", "pinned kubeconfig")
-	flag.StringVar(&cfg.context, "context", "", "pinned context")
-	flag.StringVar(&cfg.namespace, "namespace", "", "namespace")
-	flag.StringVar(&cfg.environment, "environment", "", "environment label")
-	flag.Var(&cfg.pods, "pod", "pod name; repeat for a combined multi-pod view")
-	flag.StringVar(&cfg.historyDir, "history-dir", filepath.Join(home, ".local", "state", "kube-tools", "pod-metrics"), "local metric history directory")
-	flag.DurationVar(&cfg.refresh, "refresh", defaultRefresh, "live refresh interval")
-	flag.DurationVar(&cfg.historyWindow, "history-window", 24*time.Hour, "history shown in charts")
-	flag.DurationVar(&cfg.retention, "retention", 30*24*time.Hour, "local history retention")
-	flag.IntVar(&cfg.chartPoints, "chart-points", 72, "maximum terminal chart points")
-	flag.BoolVar(&cfg.processes, "processes", true, "show best-effort process CPU/RAM snapshots through read-only kubectl exec /proc sampling")
-	flag.DurationVar(&cfg.processRefresh, "process-refresh", 5*time.Second, "process snapshot refresh interval")
-	flag.IntVar(&cfg.terminalLines, "terminal-lines", detectTerminalLines(), "terminal height used to keep the live dashboard on one screen")
-	flag.BoolVar(&cfg.once, "once", false, "render one snapshot and exit")
-	flag.BoolVar(&cfg.live, "live", false, "force live dashboard mode when stdout TTY detection is unavailable")
-	flag.Parse()
+	flags.StringVar(&cfg.kubectl, "kubectl", "kubectl", "kubectl executable")
+	flags.StringVar(&cfg.kubeconfig, "kubeconfig", "", "pinned kubeconfig")
+	flags.StringVar(&cfg.context, "context", "", "pinned context")
+	flags.StringVar(&cfg.namespace, "namespace", "", "namespace")
+	flags.StringVar(&cfg.environment, "environment", "", "environment label")
+	flags.Var(&cfg.pods, "pod", "pod name; repeat for a combined multi-pod view")
+	flags.StringVar(&cfg.historyDir, "history-dir", filepath.Join(home, ".local", "state", "kube-tools", "pod-metrics"), "local metric history directory")
+	flags.DurationVar(&cfg.refresh, "refresh", defaultRefresh, "live refresh interval")
+	flags.DurationVar(&cfg.historyWindow, "history-window", 24*time.Hour, "history shown in charts")
+	flags.DurationVar(&cfg.retention, "retention", 30*24*time.Hour, "local history retention")
+	flags.IntVar(&cfg.chartPoints, "chart-points", 72, "maximum terminal chart points")
+	flags.BoolVar(&cfg.processes, "processes", true, "show best-effort process CPU/RAM snapshots through read-only kubectl exec /proc sampling")
+	flags.DurationVar(&cfg.processRefresh, "process-refresh", 5*time.Second, "process snapshot refresh interval")
+	flags.IntVar(&cfg.terminalLines, "terminal-lines", detectTerminalLines(), "terminal height used to keep the live dashboard on one screen")
+	flags.BoolVar(&cfg.once, "once", false, "render one snapshot and exit")
+	flags.BoolVar(&cfg.live, "live", false, "force live dashboard mode when stdout TTY detection is unavailable")
+	if err := flags.Parse(args); err != nil {
+		return cfg, err
+	}
 	terminal := isTerminal(os.Stdout)
 	cfg.color = os.Getenv("NO_COLOR") == "" && (terminal || cfg.live && !cfg.once)
 
 	var missing []string
 	for name, value := range map[string]string{
-		"--kubeconfig":  cfg.kubeconfig,
 		"--context":     cfg.context,
 		"--namespace":   cfg.namespace,
 		"--environment": cfg.environment,
@@ -505,8 +542,13 @@ func (a *analyzer) collect(ctx context.Context) (snapshot, error) {
 }
 
 func kubectlOutput(ctx context.Context, cfg config, args ...string) ([]byte, error) {
-	base := []string{"--kubeconfig", cfg.kubeconfig, "--context", cfg.context, "--namespace", cfg.namespace}
-	command := exec.CommandContext(ctx, cfg.kubectl, append(base, args...)...)
+	base := []string{"--context", cfg.context, "--namespace", cfg.namespace}
+	if cfg.kubeconfig != "" {
+		base = append([]string{"--kubeconfig", cfg.kubeconfig}, base...)
+	}
+	requestCtx, cancel := context.WithTimeout(ctx, 15*time.Second)
+	defer cancel()
+	command := exec.CommandContext(requestCtx, cfg.kubectl, append(base, args...)...)
 	output, err := command.CombinedOutput()
 	if err != nil {
 		message := strings.TrimSpace(string(output))
@@ -2039,31 +2081,15 @@ func color(cfg config, code string) string {
 	return code
 }
 
-func isTerminal(file *os.File) bool {
-	info, err := file.Stat()
-	return err == nil && info.Mode()&os.ModeCharDevice != 0
-}
+func isTerminal(file *os.File) bool { return tui.IsTerminal(file) }
 
 func detectTerminalLines() int {
 	if value, err := strconv.Atoi(os.Getenv("LINES")); err == nil && value > 0 {
 		return value
 	}
-	if !isTerminal(os.Stdout) {
+	if !tui.IsTerminal(os.Stdout) {
 		return 0
 	}
-	command := exec.Command("stty", "size")
-	command.Stdin = os.Stdin
-	output, err := command.Output()
-	if err != nil {
-		return 0
-	}
-	fields := strings.Fields(string(output))
-	if len(fields) != 2 {
-		return 0
-	}
-	lines, err := strconv.Atoi(fields[0])
-	if err != nil || lines <= 0 {
-		return 0
-	}
-	return lines
+	_, height := tui.Size(os.Stdout)
+	return height
 }

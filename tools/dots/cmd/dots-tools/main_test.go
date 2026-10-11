@@ -34,7 +34,7 @@ func captureDispatch(t *testing.T, root, name string, args []string) (int, strin
 func TestNativeAliasesAndSetupHelpDoNotApply(t *testing.T) {
 	home, root := t.TempDir(), t.TempDir()
 	t.Setenv("HOME", home)
-	for _, command := range []string{"pi-install", "pi-apply", "abide-apply", "codex-instructions-apply", "codex-task-title-apply", "waterfox-apply", "look-hotkey", "claude-apply-json", "claude-sync-json", "codexbar-config", "managed-links", "json-keys"} {
+	for _, command := range []string{"pi-install", "pi-apply", "abide-apply", "codex-instructions-apply", "codex-task-title-apply", "waterfox-apply", "tinycast-hotkey", "claude-apply-json", "claude-sync-json", "codexbar-config", "managed-links", "json-keys"} {
 		code, out, err := captureDispatch(t, root, "dots-tools", []string{"setup", command, "--help"})
 		if code != 0 || out == "" || err != "" {
 			t.Fatalf("help %s: %d %q %q", command, code, out, err)
@@ -76,6 +76,24 @@ func TestVPNInstallerHelpersDispatchThroughBothEntrypoints(t *testing.T) {
 		if code != 0 || out != "HEALTH_PORT=7896\nAUTO_INCLUDE=\nAUTO_PREFER=Hysteria\n" || diagnostic != "" {
 			t.Fatalf("tuning dispatch: %d %q %q", code, out, diagnostic)
 		}
+	}
+}
+
+func TestKubernetesAliasesAndGroupDispatchWithoutLoadingConfiguration(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
+	for _, name := range []string{"kpdev", "kpstage", "kppreprod", "kpprod", "kstage", "kprod-connect", "kpdev-logs", "kpstage-logs-save", "kppreprod-jobs", "kpprod-jobs-save", "kpdev-cron-run", "kpstage-exec", "kpprod-log-search", "kpdev-logs-multi", "kpstage-scale", "kppreprod-pod-restart", "kpprod-pod-analyze", "kpstage-deploy-watch", "kube-tools-help", "kube-log-watch", "kube-deploy-watch", "kube-pod-analyze"} {
+		code, out, diagnostic := captureDispatch(t, "", name, []string{"--help"})
+		if code != 0 || out+diagnostic == "" {
+			t.Fatalf("alias %s: %d %q %q", name, code, out, diagnostic)
+		}
+	}
+	code, out, diagnostic := captureDispatch(t, "", "dots-tools", []string{"kube", "kpstage", "--help"})
+	if code != 0 || !strings.Contains(out, "namespace") || diagnostic != "" {
+		t.Fatalf("group %d %q %q", code, out, diagnostic)
+	}
+	code, out, diagnostic = captureDispatch(t, "", "dots-tools", []string{"kube", "commands"})
+	if code != 0 || !strings.Contains(out, "kpstage\n") || !strings.Contains(out, "kpprod-pod-restart\n") || diagnostic != "" {
+		t.Fatalf("commands %d %q %q", code, out, diagnostic)
 	}
 }
 

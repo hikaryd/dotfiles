@@ -54,6 +54,27 @@ func TestGhosttyGolden(t *testing.T) {
 	}
 }
 
+func TestGhosttyWordDeleteBindingSurvivesPaletteGeneration(t *testing.T) {
+	for _, variant := range []string{"dark", "mirage"} {
+		t.Run(variant, func(t *testing.T) {
+			root := fixture(t)
+			var out, stderr bytes.Buffer
+			for pass := 0; pass < 2; pass++ {
+				if code := run(root, []string{"--variant", variant, "--tool", "ghostty"}, &out, &stderr); code != 0 {
+					t.Fatalf("exit %d: %s", code, &stderr)
+				}
+				config := string(mustRead(t, filepath.Join(root, "config/ghostty/config")))
+				if !strings.Contains(config, `keybind = alt+backspace=text:\x1b\x7f`) {
+					t.Fatal("Option+Delete must retain its explicit Alt+Backspace encoding")
+				}
+				if !strings.Contains(config, "macos-option-as-alt = false") {
+					t.Fatal("word deletion must not change other Option combinations")
+				}
+			}
+		})
+	}
+}
+
 func nativeHeaders(s string) string {
 	s = strings.ReplaceAll(s, "python3 palette/generate.py", "dots-tools palette")
 	return strings.ReplaceAll(s, "palette/generate.py", "dots-tools palette")

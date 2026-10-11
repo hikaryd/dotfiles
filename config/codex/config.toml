@@ -34,6 +34,11 @@ command = "npx"
 args = ["-y", "@mobilenext/mobile-mcp@latest"]
 startup_timeout_sec = 15.0
 
+# Personal endpoint and credentials are rendered from ~/.codex/.mcp-secrets.
+[mcp_servers.Kaiten]
+url = "${KAITEN_MCP_URL}"
+http_headers = { Authorization = "${KAITEN_MCP_AUTHORIZATION}" }
+
 [agents]
 max_threads = 6
 max_depth = 2

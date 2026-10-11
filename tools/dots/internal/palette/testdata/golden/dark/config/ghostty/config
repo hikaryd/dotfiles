@@ -45,6 +45,9 @@ shell-integration-features = no-cursor
 confirm-close-surface = false
 
 macos-option-as-alt = false
+# Option+Delete удаляет слово в Nu и агентах, в том числе через Herdr.
+# Явный Alt+Backspace не затрагивает остальные Option-сочетания и не посылает Ctrl+W.
+keybind = alt+backspace=text:\x1b\x7f
 
 # Ctrl-команды по физическим клавишам: одинаковые коды в латинской и русской раскладках.
 # Herdr после Ctrl+A сам временно включает ASCII для второй клавиши префикса.

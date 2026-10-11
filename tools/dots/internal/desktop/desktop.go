@@ -140,14 +140,7 @@ func kube(root string) int {
 		return 0
 	}
 	suffix := map[string]string{"pods": "", "logs": "-logs", "watch": "-deploy-watch", "analyze": "-pod-analyze"}[action]
-	script := `
-DOTS_PRIVATE_ZSH="${DOTS_PRIVATE_ZSH:-${XDG_CONFIG_HOME:-$HOME/.config}/dots/private.zsh}"
-[[ -r "$DOTS_PRIVATE_ZSH" ]] && source "$DOTS_PRIVATE_ZSH"
-source "$1/config/zsh/kube-tools.zsh"
-shift
-"$@"
-`
-	argv := []string{"zsh", "-f", "-c", script, "dots-kube", root, "kp" + environment + suffix}
+	argv := []string{"dots-tools", "kube", "kp" + environment + suffix}
 	if action == "pods" {
 		argv = append(argv, "get", "pods")
 	}

@@ -10,6 +10,7 @@ import (
 	"dots/native/internal/bootstrap"
 	"dots/native/internal/codexconfig"
 	"dots/native/internal/desktop"
+	"dots/native/internal/kube"
 	"dots/native/internal/palette"
 	"dots/native/internal/proxy"
 	"dots/native/internal/setup"
@@ -34,11 +35,17 @@ func repositoryRoot() string {
 }
 
 func dispatch(root, name string, args []string) int {
-	switch filepath.Base(name) {
+	name = filepath.Base(name)
+	if kube.IsCommand(name) {
+		return kube.Run(append([]string{name}, args...))
+	}
+	switch name {
 	case "dots":
 		return desktop.Run(root, args)
 	case "dots-nu":
 		return desktop.Run(root, append([]string{"nu"}, args...))
+ case "dots-kube":
+  return kube.Run(args)
 	case "ai_helper":
 		return agents.Run(root, append([]string{"ai"}, args...))
 	case "dots-vpn":
@@ -49,7 +56,7 @@ func dispatch(root, name string, args []string) int {
 		return agents.Run(root, append([]string{"task-titles"}, args...))
 	}
 	if len(args) == 0 || args[0] == "-h" || args[0] == "--help" || args[0] == "help" {
-		fmt.Println("Usage: dots-tools desktop|setup|codexconfig|agents|proxy|palette|vpn <command> [args]")
+		fmt.Println("Usage: dots-tools desktop|setup|codexconfig|agents|proxy|palette|vpn|kube <command> [args]")
 		fmt.Println("Aliases: dots, dots-nu, ai_helper, dots-vpn, dots-task-titles")
 		return 0
 	}
@@ -71,6 +78,8 @@ func dispatch(root, name string, args []string) int {
 		return palette.Run(root, args[1:])
 	case "vpn":
 		return runVPN(root, args[1:])
+	case "kube":
+		return kube.Run(args[1:])
 	default:
 		fmt.Fprintf(os.Stderr, "dots-tools: unknown group %q\n", args[0])
 		return 2

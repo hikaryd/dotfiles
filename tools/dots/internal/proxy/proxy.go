@@ -13,7 +13,8 @@ import (
 	"unicode/utf8"
 )
 
-const noProxy = "127.0.0.1,localhost,::1,*.local"
+// Nebula's internal MCP endpoint must use the corporate network, not VLESS.
+const noProxy = "127.0.0.1,localhost,::1,*.local,nebula-staging.x5.ru"
 
 var proxyKeys = []string{"HTTP_PROXY", "HTTPS_PROXY", "ALL_PROXY", "http_proxy", "https_proxy", "all_proxy", "WS_PROXY", "WSS_PROXY", "ws_proxy", "wss_proxy", "NO_PROXY", "no_proxy"}
 

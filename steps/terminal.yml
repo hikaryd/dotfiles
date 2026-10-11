@@ -67,6 +67,10 @@
       path: build/bin/dots-tools
       create: true
       force: false
+    ~/.local/bin/dots-kube:
+      path: build/bin/dots-kube
+      create: true
+      force: false
     ~/.local/bin/dots-vpn:
       path: build/bin/dots-vpn
       create: true
@@ -186,17 +190,6 @@
       stderr: true
     - command: herdr plugin action invoke dots.task-titles.sync
       description: Naming existing Codex and Pi panes and tabs
-      stdout: true
-      stderr: true
-    - command: |
-        mkdir -p "$HOME/.local/bin"
-        cd "$HOME/dots/tools/kube-rollout"
-        go build -o "$HOME/.local/bin/kube-deploy-watch" .
-        cd "$HOME/dots/tools/kube-log-watch"
-        go build -o "$HOME/.local/bin/kube-log-watch" .
-        cd "$HOME/dots/tools/kube-pod-analyze"
-        go build -o "$HOME/.local/bin/kube-pod-analyze" .
-      description: Building read-only Kubernetes watchers
       stdout: true
       stderr: true
     - command: chmod +x ~/.config/git/hooks/prepare-commit-msg

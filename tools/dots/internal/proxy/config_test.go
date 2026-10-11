@@ -47,6 +47,24 @@ func TestVLESSAndConfig(t *testing.T) {
 		t.Fatalf("user %#v", user)
 	}
 }
+func TestNebulaRoutesThroughCorporateNetwork(t *testing.T) {
+	c := testController(t)
+	cfg, err := c.config(object{"uuid": "fixture-id", "address": "example.test", "port": 443})
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := object{"rules": []any{object{
+		"type": "field", "domain": []string{"full:nebula-staging.x5.ru"}, "outboundTag": "direct",
+	}}}
+	if !reflect.DeepEqual(cfg["routing"], want) {
+		t.Fatalf("Nebula must bypass VLESS even when a client inherits stale NO_PROXY: routing = %#v", cfg["routing"])
+	}
+	outbounds := cfg["outbounds"].([]any)
+	if outbounds[0].(object)["tag"] != "proxy" || outbounds[1].(object)["protocol"] != "freedom" || outbounds[1].(object)["tag"] != "direct" {
+		t.Fatal("other traffic must retain the VLESS default and Nebula must use a direct outbound")
+	}
+}
+
 func TestAllStreamVariants(t *testing.T) {
 	tests := []struct {
 		name string
@@ -137,6 +155,12 @@ func TestManagedEnvPreservesContent(t *testing.T) {
 	}
 	if strings.Count(string(second), "# >>> codex-proxy managed block >>>") != 1 {
 		t.Fatal(string(second))
+	}
+	for _, key := range []string{"NO_PROXY", "no_proxy"} {
+		want := key + "=\"127.0.0.1,localhost,::1,*.local,nebula-staging.x5.ru\"\n"
+		if !strings.Contains(string(second), want) {
+			t.Fatalf("managed env must bypass the proxy for Nebula: missing %s", key)
+		}
 	}
 	st, _ := os.Stat(c.envPath())
 	if st.Mode().Perm() != 0600 {

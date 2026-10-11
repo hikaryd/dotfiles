@@ -241,14 +241,14 @@ func TestClipboardConfirmationWithoutTerminalCancels(t *testing.T) {
 func TestKubeWhitelistArgv(t *testing.T) {
 	f := newFixture(t)
 	f.fake("gum", fakeRule{Args: []string{}, Prefix: true, Outputs: []string{"prod · PROD · только чтение\n", "pods · Список pod\n"}})
-	f.fake("zsh", allRule("", 0))
+	f.fake("dots-tools", allRule("", 0))
 	_, err, code := f.run("", "kube")
 	if code != 0 {
 		t.Fatal(err)
 	}
 	calls := f.calls()
 	last := calls[len(calls)-1]
-	if last.Name != "zsh" || !reflect.DeepEqual(last.Args[len(last.Args)-4:], []string{f.root, "kpprod", "get", "pods"}) || last.Args[0] != "-f" || last.Args[1] != "-c" || !strings.Contains(last.Args[2], `"$@"`) {
+	if last.Name != "dots-tools" || !reflect.DeepEqual(last.Args, []string{"kube", "kpprod", "get", "pods"}) {
 		t.Fatalf("kube argv %+v", last)
 	}
 }

@@ -21,7 +21,7 @@ func TestPrintEnv(t *testing.T) {
 		want += "export " + k + "=\"http://127.0.0.1:11810\"\n"
 	}
 	for _, k := range []string{"NO_PROXY", "no_proxy"} {
-		want += "export " + k + "=\"127.0.0.1,localhost,::1,*.local\"\n"
+		want += "export " + k + "=\"127.0.0.1,localhost,::1,*.local,nebula-staging.x5.ru\"\n"
 	}
 	if out.String() != want {
 		t.Fatalf("output: %q", out.String())

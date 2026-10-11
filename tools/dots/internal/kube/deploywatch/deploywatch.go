@@ -1,4 +1,4 @@
-package main
+package deploywatch
 
 import (
 	"bufio"
@@ -18,20 +18,22 @@ import (
 	"sync"
 	"syscall"
 	"time"
+
+	"dots/native/internal/kube/tui"
 	"unicode/utf8"
 )
 
 const (
-	defaultRefresh = 100 * time.Millisecond
+	defaultRefresh = 2 * time.Second
 
-	colorReset   = "\x1b[0m"
-	colorDim     = "\x1b[2m"
-	colorRed     = "\x1b[31m"
-	colorGreen   = "\x1b[32m"
-	colorYellow  = "\x1b[33m"
-	colorBlue    = "\x1b[34m"
-	colorMagenta = "\x1b[35m"
-	colorCyan    = "\x1b[36m"
+	colorReset   = tui.Reset
+	colorDim     = tui.Dim
+	colorRed     = tui.Red
+	colorGreen   = tui.Green
+	colorYellow  = tui.Yellow
+	colorBlue    = tui.Accent
+	colorMagenta = tui.Purple
+	colorCyan    = tui.Accent
 )
 
 type config struct {
@@ -43,6 +45,7 @@ type config struct {
 	resources   stringList
 	refresh     time.Duration
 	tail        int
+	once        bool
 }
 
 type stringList []string
@@ -213,61 +216,77 @@ type dashboard struct {
 	streamDone   chan string
 	width        int
 	height       int
+	painter      *tui.Painter
 }
 
-func main() {
-	cfg, err := parseConfig()
+// Run starts the dashboard with an isolated flag set.
+func Run(args []string) int {
+	cfg, err := parseConfig(args)
 	if err != nil {
+		if errors.Is(err, flag.ErrHelp) {
+			return 0
+		}
 		fmt.Fprintln(os.Stderr, err)
-		os.Exit(2)
+		return 2
 	}
-
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
-
-	d := &dashboard{
-		cfg:          cfg,
-		previousPods: make(map[string]string),
-		streams:      make(map[string]logStream),
-		logLines:     make(chan logLine, 256),
-		streamDone:   make(chan string, 32),
-		width:        120,
-		height:       36,
-	}
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+	live := !cfg.once && tui.IsTerminal(os.Stdout) && tui.IsTerminal(os.Stdin)
+	cfg.once = !live
+	d := &dashboard{cfg: cfg, previousPods: map[string]string{}, streams: map[string]logStream{}, logLines: make(chan logLine, 256), streamDone: make(chan string, 32)}
 	d.width, d.height = terminalSize()
-
+	if !live {
+		err := d.poll(ctx)
+		if err != nil {
+			d.lastError = err.Error()
+		}
+		d.render()
+		if err != nil {
+			return 1
+		}
+		return 0
+	}
+	restore, err := tui.Raw(os.Stdin)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return 1
+	}
+	defer restore()
+	endScreen := tui.Screen(os.Stdout)
+	defer endScreen()
+	input := tui.Keys(ctx, os.Stdin)
+	go func() {
+		for key := range input {
+			if key.Name == "esc" || key.Name == "ctrl-c" || key.Name == "ctrl-d" || key.Text == "q" {
+				cancel()
+				return
+			}
+		}
+		cancel()
+	}()
 	resize := make(chan os.Signal, 1)
 	signal.Notify(resize, syscall.SIGWINCH)
 	defer signal.Stop(resize)
-
-	fmt.Print("\x1b[?1049h\x1b[?25l")
-	defer fmt.Print("\x1b[?25h\x1b[?1049l")
-
 	if err := d.poll(ctx); err != nil {
 		d.lastError = err.Error()
 	}
 	d.render()
-
 	pollTicker := time.NewTicker(cfg.refresh)
-	renderRefresh := cfg.refresh
-	if renderRefresh > 200*time.Millisecond {
-		renderRefresh = 200 * time.Millisecond
-	}
-	renderTicker := time.NewTicker(renderRefresh)
+	renderTicker := time.NewTicker(100 * time.Millisecond)
 	defer pollTicker.Stop()
 	defer renderTicker.Stop()
-
 	dirty := false
+	defer d.stopStreams()
 	for {
 		select {
 		case <-ctx.Done():
-			d.stopStreams()
-			return
+			return 0
 		case <-pollTicker.C:
 			err := d.poll(ctx)
 			if ctx.Err() != nil {
-				d.stopStreams()
-				return
+				return 0
 			}
 			if err != nil {
 				d.lastError = err.Error()
@@ -292,21 +311,23 @@ func main() {
 	}
 }
 
-func parseConfig() (config, error) {
+func parseConfig(args []string) (config, error) {
+	flags := flag.NewFlagSet("kube-deploy-watch", flag.ContinueOnError)
 	var cfg config
-	flag.StringVar(&cfg.kubectl, "kubectl", "kubectl", "path to kubectl")
-	flag.StringVar(&cfg.kubeconfig, "kubeconfig", "", "kubeconfig path")
-	flag.StringVar(&cfg.context, "context", "", "Kubernetes context")
-	flag.StringVar(&cfg.namespace, "namespace", "", "Kubernetes namespace")
-	flag.StringVar(&cfg.environment, "environment", "", "short environment label")
-	flag.Var(&cfg.resources, "resource", "workload resource/name (repeatable)")
-	flag.DurationVar(&cfg.refresh, "refresh", defaultRefresh, "refresh interval")
-	flag.IntVar(&cfg.tail, "tail", 20, "initial log lines per pod")
-	flag.Parse()
+	flags.StringVar(&cfg.kubectl, "kubectl", "kubectl", "path to kubectl")
+	flags.StringVar(&cfg.kubeconfig, "kubeconfig", "", "kubeconfig path")
+	flags.StringVar(&cfg.context, "context", "", "Kubernetes context")
+	flags.StringVar(&cfg.namespace, "namespace", "", "Kubernetes namespace")
+	flags.StringVar(&cfg.environment, "environment", "", "short environment label")
+	flags.Var(&cfg.resources, "resource", "workload resource/name (repeatable)")
+	flags.DurationVar(&cfg.refresh, "refresh", defaultRefresh, "refresh interval")
+	flags.IntVar(&cfg.tail, "tail", 20, "initial log lines per pod")
+	flags.BoolVar(&cfg.once, "once", false, "render one read-only snapshot and exit")
+	if err := flags.Parse(args); err != nil {
+		return cfg, err
+	}
 
 	switch {
-	case cfg.kubeconfig == "":
-		return cfg, errors.New("--kubeconfig is required")
 	case cfg.context == "":
 		return cfg, errors.New("--context is required")
 	case cfg.namespace == "":
@@ -323,9 +344,11 @@ func parseConfig() (config, error) {
 
 func (d *dashboard) kubectlArgs(args ...string) []string {
 	base := []string{
-		"--kubeconfig", d.cfg.kubeconfig,
 		"--context", d.cfg.context,
 		"--namespace", d.cfg.namespace,
+	}
+	if d.cfg.kubeconfig != "" {
+		base = append([]string{"--kubeconfig", d.cfg.kubeconfig}, base...)
 	}
 	return append(base, args...)
 }
@@ -409,7 +432,9 @@ func (d *dashboard) poll(ctx context.Context) error {
 	d.summary = aggregateSummaries(views)
 	d.lastRefresh = time.Now()
 	d.recordLifecycle(pods)
-	d.syncLogStreams(ctx, pods)
+	if !d.cfg.once {
+		d.syncLogStreams(ctx, pods)
+	}
 	return nil
 }
 
@@ -788,15 +813,6 @@ func (d *dashboard) stopStreams() {
 
 func (d *dashboard) render() {
 	var out strings.Builder
-	out.WriteString("\x1b[H\x1b[2J")
-
-	target := d.cfg.resources.String()
-	if len(d.cfg.resources) > 1 {
-		target = fmt.Sprintf("Kubernetes suite · %d workloads", len(d.cfg.resources))
-	}
-	header := fmt.Sprintf(" KUBERNETES DEPLOY WATCH · READ ONLY  %s  %s  %s ",
-		strings.ToUpper(d.cfg.environment), d.cfg.namespace, target)
-	out.WriteString(colorMagenta + bold(fit(header, d.width)) + colorReset + "\n")
 
 	stateColor := colorYellow
 	switch d.summary.State {
@@ -910,7 +926,15 @@ func (d *dashboard) render() {
 		renderLogTail(&out, d.logs, logRows, d.width)
 	}
 
-	fmt.Print(out.String())
+	frame := tui.Frame{Title: "Deployment watch", Environment: d.cfg.environment, Context: d.cfg.context, Namespace: d.cfg.namespace, Mode: "READ ONLY", Width: d.width, Height: d.height, Color: tui.ColorEnabled(os.Stdout), Body: out.String(), Footer: "Updates every " + d.cfg.refresh.String() + " · Esc / q back · Ctrl+C cancel"}
+	if d.cfg.once {
+		fmt.Print(frame.Render())
+	} else {
+		if d.painter == nil {
+			d.painter = tui.NewPainter(os.Stdout)
+		}
+		d.painter.Draw(frame)
+	}
 }
 
 func renderLogTail(out *strings.Builder, lines []logLine, rows, width int) {
@@ -988,24 +1012,7 @@ func writeTail(out *strings.Builder, lines []string, count, width int, empty str
 	}
 }
 
-func terminalSize() (int, int) {
-	width, height := 120, 36
-	cmd := exec.Command("stty", "size")
-	cmd.Stdin = os.Stdin
-	output, err := cmd.Output()
-	if err == nil {
-		fields := strings.Fields(string(output))
-		if len(fields) == 2 {
-			if value, parseErr := strconv.Atoi(fields[0]); parseErr == nil && value > 0 {
-				height = value
-			}
-			if value, parseErr := strconv.Atoi(fields[1]); parseErr == nil && value > 0 {
-				width = value
-			}
-		}
-	}
-	return width, height
-}
+func terminalSize() (int, int) { return tui.Size(os.Stdout) }
 
 func shortAge(created time.Time) string {
 	if created.IsZero() {

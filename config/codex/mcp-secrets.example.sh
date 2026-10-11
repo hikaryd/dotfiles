@@ -5,3 +5,7 @@
 
 export Z_AI_API_KEY=''
 export CF_OPENAI_BASE_URL=''
+
+# Kaiten via Nebula: personal /mcp URL and the full "Bearer <token>" header.
+export KAITEN_MCP_URL=''
+export KAITEN_MCP_AUTHORIZATION=''

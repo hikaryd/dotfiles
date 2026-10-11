@@ -17,6 +17,8 @@ func TestMain(m *testing.M) {
 		os.Exit(fakeCodex())
 	case "claude":
 		os.Exit(fakeClaude())
+	case "defaults":
+		os.Exit(fakeDefaults())
 	case "npm":
 		fmt.Fprintln(os.Stderr, "fixture-secret-install-error")
 		os.Exit(17)

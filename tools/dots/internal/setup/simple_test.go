@@ -1,6 +1,8 @@
 package setup
 
 import (
+	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -141,24 +143,56 @@ func TestCodexbarMalformedAndSymlink(t *testing.T) {
 		t.Fatal("expected atomic symlink replacement")
 	}
 }
-func TestLookHotkey(t *testing.T) {
+func fakeDefaults() int {
+	if os.Getenv("FIXTURE_DEFAULTS_FAIL") == "1" {
+		fmt.Fprintln(os.Stderr, "fixture-secret-defaults-error")
+		return 17
+	}
+	b, e := json.Marshal(os.Args[1:])
+	if e != nil || os.WriteFile(filepath.Join(home(), "defaults-argv.json"), b, 0600) != nil {
+		return 99
+	}
+	return 0
+}
+
+func TestTinycastHotkey(t *testing.T) {
 	h := fixtureHome(t)
-	p := filepath.Join(h, ".look/config")
-	put(t, p, "other=keep\r\n launcher_hotkey =old\nlauncher_hotkey=x\nlast=value")
-	if Run("", []string{"look-hotkey"}) != 0 {
-		t.Fatal("apply")
+	fakeCommand(t, "defaults")
+	want := []string{"write", "com.tinycast.app", "hotkey.togglePalette", "-string",
+		`{"combo":{"_0":{"carbonModifiers":2048,"carbonKeyCode":0}}}`}
+	for range 2 {
+		code, out, diagnostic := runCaptured(t, "", "tinycast-hotkey")
+		if code != 0 || diagnostic != "" || !strings.Contains(out, "Option+A") {
+			t.Fatal(code, out, diagnostic)
+		}
+		var args []string
+		if e := json.Unmarshal([]byte(get(t, filepath.Join(h, "defaults-argv.json"))), &args); e != nil {
+			t.Fatal(e)
+		}
+		if !reflect.DeepEqual(args, want) {
+			t.Fatalf("defaults arguments: %q", args)
+		}
 	}
-	want := "other=keep\r\nlauncher_hotkey=alt+a\nlast=value"
-	if get(t, p) != want {
-		t.Fatal(get(t, p))
+	if _, e := os.Stat(filepath.Join(h, ".look")); !os.IsNotExist(e) {
+		t.Fatal("created obsolete Look configuration")
 	}
-	if Run("", []string{"look-hotkey"}) != 0 || get(t, p) != want {
-		t.Fatal("idempotence")
-	}
-	put(t, p, "last=value")
-	Run("", []string{"look-hotkey"})
-	if get(t, p) != "last=value\nlauncher_hotkey=alt+a\n" {
-		t.Fatal(get(t, p))
+}
+
+func TestTinycastHotkeyDefaultsFailure(t *testing.T) {
+	for _, mode := range []string{"missing", "failed"} {
+		t.Run(mode, func(t *testing.T) {
+			fixtureHome(t)
+			if mode == "failed" {
+				fakeCommand(t, "defaults")
+				t.Setenv("FIXTURE_DEFAULTS_FAIL", "1")
+			} else {
+				t.Setenv("PATH", t.TempDir())
+			}
+			code, out, diagnostic := runCaptured(t, "", "tinycast-hotkey")
+			if code != 1 || out != "" || !strings.Contains(diagnostic, "external command failed") || strings.Contains(diagnostic, "fixture-secret") {
+				t.Fatal(code, out, diagnostic)
+			}
+		})
 	}
 }
 func TestInstructionsPreserveAndBackup(t *testing.T) {

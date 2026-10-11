@@ -7,7 +7,6 @@ tap "duongductrong/snapzy", "https://github.com/duongductrong/Snapzy"
 tap "abue-ammar/tinycast"
 tap "homebrew-zathura/zathura"
 tap "ajrosen/tap"
-tap "kunkka19xx/tap"
 
 # Основные системные пакеты
 brew "coreutils"
@@ -145,11 +144,10 @@ cask "ghostty"
 cask "mos"       
 cask "karabiner-elements"
 cask "duongductrong/snapzy/snapzy"
-cask "tinycast"
+cask "abue-ammar/tinycast/tinycast" # Native launcher; Option+A
 cask "caffeine"
 cask "logi-options+"
 cask "logitech-options"
-cask "look"
 
 # Шрифты
 cask "font-symbols-only-nerd-font"

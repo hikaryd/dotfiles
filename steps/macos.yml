@@ -18,8 +18,8 @@
       force: true
 
 - shell:
-    - description: "Set Look launcher hotkey to Option+A"
-      command: build/bin/dots-tools setup look-hotkey
+    - description: "Set Tinycast launcher hotkey to Option+A"
+      command: build/bin/dots-tools setup tinycast-hotkey
     - description: "Configure Vorssaint battery and sound controls"
       command: scripts/vorssaint-defaults.sh
     - description: "Prefer key repeat over the accent menu"

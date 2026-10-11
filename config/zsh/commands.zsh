@@ -12,8 +12,8 @@ export BUN_INSTALL="$HOME/.bun"
 typeset -g DOTS_PRIVATE_ZSH="${DOTS_PRIVATE_ZSH:-${XDG_CONFIG_HOME:-$HOME/.config}/dots/private.zsh}"
 [[ -r "$DOTS_PRIVATE_ZSH" ]] && source "$DOTS_PRIVATE_ZSH"
 
-# Все Kubernetes-команды и guards живут в одном модуле. Его source не делает
-# сетевых запросов; подключение к кластеру начинается только при вызове команды.
+# Kubernetes-команды и guards — в dots-kube. Этот source только убирает
+# старые shell-функции; KUBECONFIG и приватные настройки не меняются.
 [[ -r "$DOTS_ROOT/config/zsh/kube-tools.zsh" ]] &&
   source "$DOTS_ROOT/config/zsh/kube-tools.zsh"
 
@@ -51,7 +51,7 @@ fpath=(
 [[ -d /opt/homebrew/lib/zsh ]] && module_path=(/opt/homebrew/lib $module_path)
 
 # --- Autoloaded functions (lazy — loaded only on first call) ---
-autoload -Uz _dots-zoxide-init extract graphify-merge-fix kafka-consume kafka-produce tp y z zi
+autoload -Uz _dots-zoxide-init extract graphify-merge-fix kafka-consume kafka-produce pytest-safe tp y z zi
 
 # --- Aliases ---
 alias v='nvim'

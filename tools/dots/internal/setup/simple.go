@@ -7,7 +7,6 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
 
 	"gopkg.in/yaml.v3"
@@ -207,37 +206,14 @@ func replaceConfigSymlink(p string, b []byte) error {
 	}
 	return os.Rename(f.Name(), p)
 }
-func lookHotkey() error {
-	p := filepath.Join(home(), ".look/config")
-	b, e := readOptional(p)
-	if e != nil {
+func tinycastHotkey() error {
+	// Swift's Codable HotKeyBinding.combo; Carbon optionKey=2048, kVK_ANSI_A=0.
+	const binding = `{"combo":{"_0":{"carbonModifiers":2048,"carbonKeyCode":0}}}`
+	if e := cliQuiet("defaults", "write", "com.tinycast.app", "hotkey.togglePalette", "-string", binding); e != nil {
 		return e
 	}
-	lines := strings.SplitAfter(string(b), "\n")
-	var out []string
-	found := false
-	re := regexp.MustCompile(`^\s*launcher_hotkey\s*=`)
-	for _, line := range lines {
-		if line == "" {
-			continue
-		}
-		if re.MatchString(line) {
-			if !found {
-				out = append(out, "launcher_hotkey=alt+a\n")
-				found = true
-			}
-			continue
-		}
-		out = append(out, line)
-	}
-	s := strings.Join(out, "")
-	if !found {
-		if s != "" && !strings.HasSuffix(s, "\n") {
-			s += "\n"
-		}
-		s += "launcher_hotkey=alt+a\n"
-	}
-	return commit([]change{{path: p, data: []byte(s), follow: true}})
+	fmt.Println("Tinycast launcher hotkey set to Option+A (restart Tinycast to apply)")
+	return nil
 }
 func instructionBlock(original, settings, begin, end string) (string, error) {
 	block := begin + "\n" + strings.TrimRight(settings, " \t\r\n") + "\n" + end

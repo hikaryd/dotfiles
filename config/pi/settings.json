@@ -5,6 +5,7 @@
     "openai/gpt-6.1-sol": "xhigh"
   },
   "httpProxy": "http://127.0.0.1:10810",
+  "shellCommandPrefix": "unset HTTP_PROXY HTTPS_PROXY ALL_PROXY http_proxy https_proxy all_proxy WS_PROXY WSS_PROXY ws_proxy wss_proxy",
   "terminal": {
     "showTerminalProgress": true
   },

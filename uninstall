@@ -3,7 +3,8 @@
 # Откат установки dotfiles — зеркало ./install.
 #
 # Что делает:
-#   · снимает симлинки из steps/*.yml (только те, что указывают в этот репозиторий);
+#   · снимает симлинки из steps/*.yml и native Kubernetes-команды
+#     (только те, что указывают в этот репозиторий);
 #   · скопированные конфиги и артефакты переносит в бэкап-каталог; смешанный
 #     Codex config сначала копирует, затем удаляет только управляемые ключи;
 #   · откатывает системные твики: git excludesFile, macOS defaults, шелл по
@@ -40,7 +41,7 @@ ${B}Использование:${R} ./uninstall [опции]
   --yes         Не спрашивать подтверждений
   -h, --help    Эта справка
 
-Симлинки берутся из steps/*.yml — скрипт всегда синхронен с install.
+Симлинки берутся из steps/*.yml и списка native Kubernetes-команд.
 Удаляются только ссылки, указывающие внутрь $BASEDIR.
 Скопированные файлы переезжают в бэкап: ~/dots-uninstall-backup-<дата>/
 EOF
@@ -103,7 +104,7 @@ cd "$BASEDIR" || die "не удалось перейти в $BASEDIR"
 
 # ─── план ────────────────────────────────────────────────────────────
 step "План отката (репозиторий: $BASEDIR)"
-printf '   · симлинки из steps/*.yml (только указывающие в репозиторий)\n'
+printf '   · симлинки из steps/*.yml и native Kubernetes-команды (только наши)\n'
 printf '   · Zen/Claude/Codex конфиги → бэкап\n'
 printf '   · TPM, yazi-плагины → бэкап\n'
 printf '   · git excludesFile, macOS defaults, шелл по умолчанию, /etc/shells\n'
@@ -119,6 +120,10 @@ confirm "Продолжить?" || die "отменено"
 step "Симлинки"
 LINK_TARGETS=$("$NATIVE" setup managed-links "$BASEDIR")
 [[ -n $LINK_TARGETS ]] || die "не удалось получить список симлинков из steps/*.yml"
+KUBE_COMMANDS=$("$NATIVE" kube commands) || die "не удалось получить список Kubernetes-команд"
+while IFS= read -r name; do
+  [[ -n $name ]] && LINK_TARGETS+=$'\n'"~/.local/bin/$name"
+done <<<"$KUBE_COMMANDS"
 
 REMOVED_DIRS=()
 while IFS= read -r t; do

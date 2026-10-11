@@ -182,6 +182,11 @@ func (c *controller) config(s object) (object, error) {
 	return object{
 		"log":      object{"loglevel": "warning"},
 		"inbounds": []any{object{"port": c.port, "listen": "127.0.0.1", "protocol": "http", "tag": "http-in", "settings": object{"timeout": 300}}},
+		// Clients launched from an old terminal or Herdr can inherit stale NO_PROXY.
+		// Keep the internal MCP endpoint reachable through the local proxy too.
+		"routing": object{"rules": []any{object{
+			"type": "field", "domain": []string{"full:nebula-staging.x5.ru"}, "outboundTag": "direct",
+		}}},
 		"outbounds": []any{
 			object{"protocol": "vless", "settings": object{"vnext": []any{object{"address": s["address"], "port": port, "users": []any{user}}}}, "streamSettings": streamSettings(s), "tag": "proxy"},
 			object{"protocol": "freedom", "tag": "direct"}, object{"protocol": "blackhole", "tag": "block"},

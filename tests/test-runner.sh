@@ -2,10 +2,18 @@
 # Fake-runtime contracts: no real installs, network or user data.
 set -euo pipefail
 root=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
-runner="$root/scripts/test.sh"
 work=$(mktemp -d "${TMPDIR:-/tmp}/dots-runner-test.XXXXXX")
 trap 'rm -rf "$work"' EXIT
-mkdir -p "$work/bin"
+# A fixed fixture inventory exercises both tested and untested modules even when
+# all real modules gain tests or standalone helpers are merged into dots-tools.
+mkdir -p "$work/bin" "$work/repo/scripts" "$work/repo/tools/dots" \
+  "$work/repo/tools/herdr-last-workspace" "$work/repo/tools/untested" \
+  "$work/repo/config/pi/tests"
+cp "$root/scripts/test.sh" "$work/repo/scripts/test.sh"
+touch "$work/repo/tools/dots/go.mod" "$work/repo/tools/dots/main_test.go" \
+  "$work/repo/tools/herdr-last-workspace/go.mod" "$work/repo/tools/herdr-last-workspace/main_test.go" \
+  "$work/repo/tools/untested/go.mod" "$work/repo/config/pi/tests/fixture.test.mjs"
+runner="$work/repo/scripts/test.sh"
 cat > "$work/bin/node" <<'SH'
 #!/bin/sh
 printf 'node %s\n' "$*" >> "$TEST_LOG"

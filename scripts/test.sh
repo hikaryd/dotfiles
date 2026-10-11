@@ -12,7 +12,7 @@ group=${1:-all}
 case "$group" in
   all|go|node|runner) ;;
   --list)
-    printf '%s\n' 'runner: tests/test-runner.sh (isolated fake runtimes)' \
+    printf '%s\n' 'runner: tests/test-runner.sh and tests/test-pytest-safe.zsh (isolated shell contracts)' \
       'go: tools/*/go.mod (race tests and vet; untested modules stay visible)' \
       'node: config/pi/tests/*.test.mjs'
     exit 0 ;;
@@ -49,6 +49,7 @@ node_suite() {
 }
 if [[ $group == all || $group == runner ]]; then
   run_suite 'runner contract' bash tests/test-runner.sh
+  run_suite 'pytest-safe contract' zsh -f tests/test-pytest-safe.zsh
 fi
 if [[ $group == all || $group == go ]]; then
   modules=(tools/*/go.mod)
