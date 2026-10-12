@@ -13,6 +13,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"dots/native/internal/kube/tui"
 )
 
 var logLevel = regexp.MustCompile(`(?i)\b(FATAL|CRITICAL|PANIC|ERROR|ERR|EXCEPTION|TRACEBACK|WARN|WARNING|INFO|NOTICE|DEBUG|TRACE)\b`)
@@ -46,7 +48,7 @@ func (w *lineWriter) flush() error {
 	return err
 }
 func (s *session) logOutput() *lineWriter {
-	color := s.value("NO_COLOR", "") == "" && (s.value("KUBE_COLOR", "auto") == "always" || isTerminal(os.Stdout))
+	color := tui.ColorEnabled(os.Stdout) && s.value("KUBE_COLOR", "auto") != "never"
 	return &lineWriter{line: func(line []byte) error {
 		if color {
 			line = logLevel.ReplaceAllFunc(line, func(level []byte) []byte {
@@ -185,6 +187,28 @@ func (s *session) jobs(filter string, save bool) error {
 	}
 	return err
 }
+
+// No pattern means an actual searchable multiselect, not a text-only prompt.
+// Explicit patterns retain the noninteractive matching behavior.
+func (s *session) chooseLogPods(pattern string) ([]string, error) {
+	if pattern != "" {
+		return s.matchingPods(pattern)
+	}
+	pods, err := s.resources("pods")
+	if err != nil {
+		return nil, err
+	}
+	if len(pods) == 0 {
+		return nil, s.emptyPods("")
+	}
+	chronological(pods, false)
+	selected, err := s.choose(podRows(pods), "choose pods · Space/Tab — отметить · Ctrl+A — все", "", true, false)
+	if err != nil {
+		return nil, err
+	}
+	return names(selected), nil
+}
+
 func (s *session) matchingPods(pattern string) ([]string, error) {
 	pods, err := s.resources("pods")
 	if err != nil {

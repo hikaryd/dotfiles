@@ -8,7 +8,6 @@
 __pycache__/
 *.py[cod]
 .dual-graph/
-/graphify-out/
 /CLAUDE.md
 /.claude/settings.local.json
 
@@ -48,7 +47,6 @@ config/git/private.inc
 /.pytest_cache/
 /.ruff_cache/
 /docs/private/
-/.abide
 
 # Compiled native runtime aliases and cross-builds.
 /build/

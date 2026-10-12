@@ -1,5 +1,0 @@
-- shell:
-    - command: build/bin/dots-tools setup abide-apply
-      description: Install pinned Abide, global hooks and compile skill
-      stdout: true
-      stderr: true

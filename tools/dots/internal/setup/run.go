@@ -13,14 +13,14 @@ func Run(root string, args []string) int {
 		return 2
 	}
 	if args[0] == "--help" || args[0] == "-h" || len(args) == 2 && (args[1] == "--help" || args[1] == "-h") {
-		fmt.Println("usage: dots-tools setup pi-install|pi-apply|abide-apply|abide-runtime-patch|codex-instructions-apply|codex-task-title-apply|waterfox-apply|tinycast-hotkey|claude-apply-json|claude-sync-json|codexbar-config|managed-links|json-keys [args]")
+		fmt.Println("usage: dots-tools setup pi-install|pi-apply|jevgrep-apply|codex-instructions-apply|codex-task-title-apply|waterfox-apply|tinycast-hotkey|claude-apply-json|claude-sync-json|codexbar-config|managed-links|json-keys [args]")
 		return 0
 	}
-	if (args[0] == "abide-runtime-patch" || args[0] == "json-keys") && len(args) != 2 {
-		fmt.Fprintf(os.Stderr, "usage: dots-tools setup %s %s\n", args[0], map[string]string{"abide-runtime-patch": "package", "json-keys": "filename"}[args[0]])
+	if args[0] == "json-keys" && len(args) != 2 {
+		fmt.Fprintln(os.Stderr, "usage: dots-tools setup json-keys filename")
 		return 2
 	}
-	if args[0] != "abide-runtime-patch" && args[0] != "json-keys" && args[0] != "managed-links" && len(args) != 1 {
+	if args[0] != "json-keys" && args[0] != "managed-links" && len(args) != 1 {
 		fmt.Fprintln(os.Stderr, "setup: unexpected arguments")
 		return 2
 	}
@@ -32,10 +32,8 @@ func Run(root string, args []string) int {
 	switch args[0] {
 	case "pi-apply":
 		err = piApply(root)
-	case "abide-apply":
-		err = abideApply(root)
-	case "abide-runtime-patch":
-		err = abideRuntime(args[1:])
+	case "jevgrep-apply":
+		err = jevgrepApply(root)
 	case "codex-instructions-apply":
 		err = codexInstructions(root)
 	case "codex-task-title-apply":

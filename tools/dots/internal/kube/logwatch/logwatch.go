@@ -43,7 +43,7 @@ var (
 			`(?:^|\s)(?:level|severity)=(fatal|critical|panic|error|err|warning|warn|info|debug|trace)(?:\s|$))`,
 	)
 	plainFailurePattern = regexp.MustCompile(
-		`(?i)(?:^|[\s:])(fatal|critical|panic|error|err|exception|traceback)(?:[\s:]|$)`,
+		`(?i)(?:^|[\s:])(fatal|critical|panic|error|err|exception|traceback|warning|warn|info|notice|debug|trace)(?:[\s:]|$)`,
 	)
 	exceptionLinePattern = regexp.MustCompile(
 		`(?i)^\s*[\w.]*?(error|exception):(?:\s|$)`,
@@ -91,6 +91,7 @@ type config struct {
 	pods        stringList
 	query       string
 	filter      bool
+	compact     bool
 	tail        int
 	buffer      int
 	maxBytes    int
@@ -108,10 +109,10 @@ type viewer struct {
 	lines           history
 	total, pausedAt uint64
 	pauseBuffer     []logLine
-	aliases         map[string]string
 	query           string
 	draft           string
 	filter          bool
+	compact         bool
 	editing         bool
 	paused          bool
 	details         bool
@@ -155,7 +156,7 @@ func Run(args []string) int {
 	resize := make(chan os.Signal, 1)
 	signal.Notify(resize, syscall.SIGWINCH)
 	defer signal.Stop(resize)
-	current := viewer{cfg: cfg, aliases: podAliases(cfg.pods), query: cfg.query, filter: cfg.filter, lines: newHistory(cfg.buffer, cfg.maxBytes)}
+	current := viewer{cfg: cfg, query: cfg.query, filter: cfg.filter, compact: cfg.compact, lines: newHistory(cfg.buffer, cfg.maxBytes)}
 	current.width, current.height = terminalSize()
 	current.render()
 	ticker := time.NewTicker(100 * time.Millisecond)
@@ -187,30 +188,6 @@ func Run(args []string) int {
 				dirty = false
 				lastDraw = time.Now()
 			}
-		}
-	}
-}
-func streamPlain(ctx context.Context, cfg config) int {
-	logs := make(chan logLine, 512)
-	var streams sync.WaitGroup
-	for _, pod := range cfg.pods {
-		streams.Add(1)
-		go func(pod string) { defer streams.Done(); followPodLogs(ctx, cfg, pod, logs) }(pod)
-	}
-	go func() { streams.Wait(); close(logs) }()
-	terms := queryTerms(cfg.query)
-	for {
-		select {
-		case <-ctx.Done():
-			return 0
-		case line, ok := <-logs:
-			if !ok {
-				return 0
-			}
-			if cfg.filter && !matchesAll(line.text, terms) {
-				continue
-			}
-			fmt.Printf("[%s/%s] %s\n", line.pod, line.container, tui.Plain(line.text))
 		}
 	}
 }
@@ -292,6 +269,7 @@ func parseConfig(args []string) (config, error) {
 	flags.Var(&cfg.pods, "pod", "pod name (repeatable)")
 	flags.StringVar(&cfg.query, "query", "", "initial highlight query")
 	flags.BoolVar(&cfg.filter, "filter", false, "initially show only matching lines")
+	flags.BoolVar(&cfg.compact, "compact", false, "opt-in JSON message summaries instead of full records")
 	flags.IntVar(&cfg.tail, "tail", 100, "initial log lines per pod")
 	flags.IntVar(&cfg.buffer, "buffer", 5000, "maximum retained records")
 	flags.IntVar(&cfg.maxBytes, "max-bytes", 32*1024*1024, "maximum retained log text bytes")
@@ -432,6 +410,8 @@ func (v *viewer) handleKey(key rune) bool {
 	case 'f', 'F':
 		v.filter = !v.filter
 		v.clampCursor()
+	case 'm', 'M':
+		v.compact = !v.compact
 	case 'c', 'C':
 		v.query = ""
 		v.draft = ""
@@ -442,10 +422,11 @@ func (v *viewer) handleKey(key rune) bool {
 	case 'j', 'J':
 		v.moveNewer()
 	case '\r', '\n':
-		if v.paused {
-			v.details = !v.details
-			v.detailOffset = 0
+		if !v.paused {
+			v.togglePause()
 		}
+		v.details = !v.details
+		v.detailOffset = 0
 	case 'q', 'Q':
 		return true
 	}
@@ -528,6 +509,14 @@ func (v *viewer) visibleLines(query string) []logLine {
 }
 
 func (v *viewer) render() {
+	frame := v.frame(tui.ColorEnabled(os.Stdout))
+	if v.painter == nil {
+		v.painter = tui.NewPainter(os.Stdout)
+	}
+	v.painter.Draw(frame)
+}
+
+func (v *viewer) frame(color bool) tui.Frame {
 	var out strings.Builder
 	state := "LIVE"
 	if v.paused {
@@ -542,11 +531,20 @@ func (v *viewer) render() {
 	if query != "" {
 		queryStatus = query
 	}
-	out.WriteString(fit(fmt.Sprintf("%s · %s · search: %s · %d held / %d retired", state, mode, queryStatus, v.lines.length, v.lines.dropped), v.width) + "\n")
+	view := "FULL RECORDS"
+	if v.compact {
+		view = "COMPACT SUMMARY"
+	}
+	out.WriteString(fit(fmt.Sprintf("%s · %s · %s · search: %s · %d held / %d retired", state, view, mode, queryStatus, v.lines.length, v.lines.dropped), v.width) + "\n")
 	out.WriteString(strings.Repeat("─", max(1, v.width)) + "\n")
 	terms := queryTerms(query)
 	visible := v.visibleLines(query)
 	rows := max(1, v.height-7)
+	if len(v.cfg.pods) > 1 && v.width >= 60 && !v.details {
+		out.WriteString(colorDim + fit(v.columns(visible).header(), v.width) + colorReset + "\n")
+		out.WriteString(colorDim + strings.Repeat("─", max(1, v.width)) + colorReset + "\n")
+		rows = max(1, rows-2)
+	}
 	if len(visible) == 0 {
 		message := "Waiting for logs…"
 		if v.lines.length > 0 && v.filter && len(terms) > 0 {
@@ -558,11 +556,11 @@ func (v *viewer) render() {
 	} else {
 		v.renderList(&out, visible, rows, terms)
 	}
-	help := "/ search · Space pause · f filter · Enter details · Esc / q back · Ctrl+C cancel"
+	help := "/ search · Space pause · f filter · m compact/full · Enter details · Esc / q back"
 	if v.editing {
 		help = "Search › " + v.draft + "█ · Enter apply · Esc cancel"
 	} else if v.paused {
-		help = "↑↓ / j/k line · Enter details · Space resume · / search · Esc back"
+		help = "↑↓ / j/k line · Enter details · Space resume · m compact/full · / search · Esc back"
 	}
 	if v.details && v.paused {
 		help = "↑↓ / PgUp PgDn scroll · ←→ record · Enter back · Space resume · Esc / q exit"
@@ -571,11 +569,7 @@ func (v *viewer) render() {
 	if len(v.cfg.pods) == 1 {
 		title = "Pod logs · " + v.cfg.pods[0]
 	}
-	frame := tui.Frame{Title: title, Environment: v.cfg.environment, Context: v.cfg.context, Namespace: v.cfg.namespace, Mode: "READ ONLY", Width: v.width, Height: v.height, Color: tui.ColorEnabled(os.Stdout), Body: out.String(), Footer: help}
-	if v.painter == nil {
-		v.painter = tui.NewPainter(os.Stdout)
-	}
-	v.painter.Draw(frame)
+	return tui.Frame{Title: title, Environment: v.cfg.environment, Context: v.cfg.context, Namespace: v.cfg.namespace, Mode: "READ ONLY", Width: v.width, Height: v.height, Color: color, Body: out.String(), Footer: help}
 }
 
 func (v *viewer) renderList(out *strings.Builder, visible []logLine, rows int, terms []string) {
@@ -587,7 +581,8 @@ func (v *viewer) renderList(out *strings.Builder, visible []logLine, rows int, t
 	if v.paused {
 		end = selected + 1
 	}
-	cards := len(v.cfg.pods) == 1
+	cards := len(v.cfg.pods) == 1 || v.width < 60
+	columns := v.columns(visible)
 	blocks := [][]string{}
 	used := 0
 	for index := end - 1; index >= 0; index-- {
@@ -596,28 +591,37 @@ func (v *viewer) renderList(out *strings.Builder, visible []logLine, rows int, t
 		if v.paused && index == selected {
 			marker = "›"
 		}
-		message := displayBody(line.text)
+		message := displayBody(line.text, v.compact)
 		tone := severityColor(line.text)
 		block := []string{}
 		if cards {
-			metadata := marker + " " + line.at.Format("15:04:05.000") + "  " + firstNonEmpty(line.container, "log")
+			metadata := marker + " " + line.at.Format("15:04:05.000") + "  " + levelLabel(line.text) + "  " + firstNonEmpty(line.container, "log")
 			block = append(block, colorDim+fit(metadata, v.width)+colorReset)
+			if len(v.cfg.pods) > 1 {
+				block = append(block, v.podTone(line.pod)+fit(line.pod, v.width)+colorReset)
+			}
 			parts := wrapCells(message, max(1, v.width-2))
 			for _, part := range parts {
 				block = append(block, "  "+highlight(part, terms, tone)+colorReset)
 			}
 			block = append(block, colorDim+strings.Repeat("─", max(1, v.width))+colorReset)
 		} else {
-			prefix := marker + " " + line.at.Format("15:04:05") + " " + tui.Pad(compact(v.aliases[line.pod], 10), 10) + " " + tui.Pad(compact(firstNonEmpty(line.container, "—"), 8), 8) + " "
-			bodyWidth := max(1, v.width-tui.Width(prefix))
-			block = append(block, colorDim+prefix+colorReset+highlight(tui.Clip(strings.ReplaceAll(message, "\n", " ↵ "), bodyWidth), terms, tone)+colorReset)
+			prefix := v.recordPrefix(line, marker, columns)
+			parts := wrapCells(message, columns.message)
+			for index, part := range parts {
+				lead := prefix
+				if index > 0 {
+					lead = continuation(prefix)
+				}
+				block = append(block, lead+highlight(part, terms, tone)+colorReset)
+			}
 		}
 		if used > 0 && used+len(block) > rows {
 			break
 		}
 		if len(block) > rows {
 			block = block[:rows]
-			block[len(block)-1] = colorDim + "… Pause and press Enter for full record" + colorReset
+			block[len(block)-1] = colorDim + fit(fmt.Sprintf("… %d display lines · Enter opens the full record", len(block)), v.width) + colorReset
 		}
 		blocks = append(blocks, block)
 		used += len(block)
@@ -868,35 +872,6 @@ func normalizeKubectlLine(pod, text string) (string, string) {
 	container := text[containerStart:containerEnd]
 	body := strings.TrimLeft(text[containerEnd+1:], " ")
 	return container, body
-}
-
-func podAliases(pods []string) map[string]string {
-	aliases := make(map[string]string, len(pods))
-	if len(pods) == 1 {
-		aliases[pods[0]] = pods[0]
-		return aliases
-	}
-
-	prefix := pods[0]
-	for _, pod := range pods[1:] {
-		for !strings.HasPrefix(pod, prefix) && prefix != "" {
-			prefix = prefix[:len(prefix)-1]
-		}
-	}
-	if boundary := strings.LastIndex(prefix, "-"); boundary >= 0 {
-		prefix = prefix[:boundary+1]
-	}
-
-	used := make(map[string]bool, len(pods))
-	for _, pod := range pods {
-		alias := strings.TrimPrefix(pod, prefix)
-		if alias == "" || used[alias] {
-			alias = pod
-		}
-		aliases[pod] = alias
-		used[alias] = true
-	}
-	return aliases
 }
 
 func firstNonEmpty(values ...string) string {

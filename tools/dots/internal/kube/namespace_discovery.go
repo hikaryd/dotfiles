@@ -61,7 +61,7 @@ func (s *session) discoverNamespaces(choice setupContext) ([]string, error) {
 	return names, nil
 }
 func (s *session) namespacePicker(choice setupContext, current string) (string, error) {
-	fmt.Fprintln(os.Stderr, "Чтение namespace · context="+tui.Clean(choice.entry.Name)+" · только read-only запрос")
+	fmt.Fprintln(os.Stderr, "Чтение namespace · "+strings.ToUpper(s.target.environment)+" · файл="+tui.Clean(s.displayPath(choice.entry.origin.path))+" · context="+tui.Clean(choice.entry.Name)+" · только read-only запрос")
 	names, err := s.discoverNamespaces(choice)
 	if err != nil {
 		return "", err
@@ -74,7 +74,7 @@ func (s *session) namespacePicker(choice setupContext, current string) (string, 
 		}
 		rows = append(rows, row)
 	}
-	frame := s.setupFrame(strings.ToUpper(s.target.environment)+" · Namespace из кластера", "Список получен из выбранного кластера. Выберите пространство имён приложения.\nКластер не изменяется. Выбор сохранится только после подтверждения.")
+	frame := s.setupFrame(strings.ToUpper(s.target.environment)+" · Namespace из кластера", "Файл: "+s.displayPath(choice.entry.origin.path)+"\nContext: "+choice.entry.Name+" · cluster: "+choice.entry.Context.Cluster+"\nСписок получен из этого подключения. Выберите пространство имён приложения.\nКластер не изменяется. Выбор сохранится только после подтверждения.")
 	frame.Mode = "READ ONLY"
 	frame.Context = choice.entry.Name
 	frame.Namespace = current

@@ -104,40 +104,6 @@ func TestCodexProtocolErrorRedacted(t *testing.T) {
 		t.Fatal(code, out, err)
 	}
 }
-func TestAbideHooksMergeAndTrust(t *testing.T) {
-	h := fixtureHome(t)
-	fakeCommand(t, "codex")
-	dir := filepath.Join(h, ".codex")
-	original := []byte(`{"hooks":{"PostToolUse":[{"matcher":"custom","extra":true,"hooks":[{"command":"old abide-hook.js"},{"command":"unrelated"}]}],"Other":[{"hooks":[{"command":"keep"}]}]}}`)
-	b, e := mergeAbideHooks(original, h)
-	if e != nil {
-		t.Fatal(e)
-	}
-	put(t, filepath.Join(dir, "hooks.json"), string(b))
-	if e = abideTrust(h, dir); e != nil {
-		t.Fatal(e)
-	}
-	entries, e := listHooks(h, filepath.Join(h, "bin/codex"), dir)
-	if e != nil {
-		t.Fatal(e)
-	}
-	count := 0
-	for _, entry := range entries {
-		if strings.Contains(entry.Command, "abide-hook.js") {
-			count++
-			if entry.TrustStatus != "trusted" || !entry.Enabled {
-				t.Fatal(entry)
-			}
-		}
-	}
-	if count != 4 {
-		t.Fatal(entries)
-	}
-	next, e := mergeAbideHooks(b, h)
-	if e != nil || string(next) != string(b) {
-		t.Fatal("not idempotent", e)
-	}
-}
 func TestTrustRejectsInlineTable(t *testing.T) {
 	s := `features = { hooks = false }`
 	if _, e := enableHooks(s); e == nil {

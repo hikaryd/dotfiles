@@ -1,5 +1,5 @@
 #!/bin/zsh -f
-# Standalone Codex CLI fallback for JevGrep; stdout remains JevGrep's output.
+# Official Jevgrep CLI through the shared dots proxy, including agent shells.
 export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
 source "${0:A:h:h}/config/shell/codex-proxy.sh" || exit
-jevgrep "$@"
+jg "$@"

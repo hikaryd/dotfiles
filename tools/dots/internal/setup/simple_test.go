@@ -200,7 +200,7 @@ func TestInstructionsPreserveAndBackup(t *testing.T) {
 	root := filepath.Join(h, "root")
 	p := filepath.Join(h, "codex/AGENTS.md")
 	t.Setenv("CODEX_CONFIG_DIR", filepath.Dir(p))
-	put(t, filepath.Join(root, "config/codex/search-instructions.md"), "new rules\n")
+	put(t, filepath.Join(root, "config/jevgrep/instructions.md"), "new rules\n")
 	put(t, p, "mine\n<!-- BEGIN DOTS SEARCH -->\nold\n<!-- END DOTS SEARCH -->\nafter\n")
 	if Run(root, []string{"codex-instructions-apply"}) != 0 {
 		t.Fatal("apply")

@@ -19,6 +19,28 @@ type metadata struct {
 	OwnerReferences   []ownerReference
 	Labels            map[string]string
 }
+
+// Job.status.active is a count; CronJob.status.active is ObjectReference[].
+// Decode both real Kubernetes schemas rather than assuming a shared scalar.
+type activeCount int
+
+func (count *activeCount) UnmarshalJSON(data []byte) error {
+	if strings.HasPrefix(strings.TrimSpace(string(data)), "[") {
+		var references []json.RawMessage
+		if err := json.Unmarshal(data, &references); err != nil {
+			return err
+		}
+		*count = activeCount(len(references))
+		return nil
+	}
+	var value int
+	if err := json.Unmarshal(data, &value); err != nil {
+		return err
+	}
+	*count = activeCount(value)
+	return nil
+}
+
 type condition struct{ Type, Status string }
 type containerStatus struct {
 	Name         string
@@ -35,7 +57,8 @@ type resource struct {
 	Status struct {
 		Phase                                      string
 		Replicas, ReadyReplicas, AvailableReplicas int
-		Active, Succeeded, Failed                  int
+		Active                                     activeCount
+		Succeeded, Failed                          int
 		StartTime                                  *time.Time
 		Conditions                                 []condition
 		ContainerStatuses                          []containerStatus

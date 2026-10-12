@@ -38,11 +38,11 @@ func (s *session) followMany(pods []string, query string) error {
 	return s.helper("kube-log-watch", args...)
 }
 func (s *session) logsMulti(args []string) error {
-	pattern, query, err := s.patternAndQuery(args, false)
-	if err != nil {
-		return err
+	query := ""
+	if len(args) > 1 {
+		query = strings.Join(args[1:], " ")
 	}
-	pods, err := s.matchingPods(pattern)
+	pods, err := s.chooseLogPods(argument(args, 0))
 	if err != nil {
 		return err
 	}

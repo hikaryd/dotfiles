@@ -18,7 +18,7 @@ func (s *session) emptyPods(pattern string) error {
 func (s *session) namespaceForChoice(environment string, choice setupContext) string {
 	settings, err := s.sourceSettings()
 	if err == nil && settings != nil {
-		if profile, ok := settings.Environments[environment]; ok && len(profile.Files) == len(choice.files) {
+		if profile, ok := settings.Environments[environment]; ok && len(profile.Files) == len(choice.files) && (profile.Context == "" || profile.Context == choice.entry.Name) {
 			same := true
 			for i, file := range profile.Files {
 				absolute, err := filepath.Abs(choice.files[i])

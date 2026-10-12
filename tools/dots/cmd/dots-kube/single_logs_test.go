@@ -61,8 +61,16 @@ func TestSinglePodAliasUsesReadablePausableLogsWithoutGum(t *testing.T) {
 	awaitScreen(t, capture, "Pod logs · api")
 	awaitScreen(t, capture, "readable second line")
 	initial := capture.String()
-	if strings.Contains(initial, "DETAIL_SENTINEL") || !strings.Contains(initial, "readable first line") {
-		t.Fatalf("metadata polluted reading view: %q", initial)
+	if !strings.Contains(initial, "hidden_detail") || !strings.Contains(initial, "payload") || !strings.Contains(initial, "readable first line") {
+		t.Fatalf("default view lost full JSON fields: %q", initial)
+	}
+	// Short summaries are an explicit mode, never silent truncation.
+	before := len(capture.String())
+	terminal.Write([]byte("m"))
+	awaitScreenAfter(t, capture, before, "COMPACT SUMMARY")
+	awaitScreenAfter(t, capture, before, "readable second line")
+	if strings.Contains(capture.String()[before:], "hidden_detail") {
+		t.Fatal("compact mode did not summarize")
 	}
 	terminal.Write([]byte(" "))
 	awaitScreen(t, capture, "PAUSED")

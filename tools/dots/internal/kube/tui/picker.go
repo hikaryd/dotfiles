@@ -3,10 +3,11 @@ package tui
 import (
 	"context"
 	"fmt"
-	"github.com/mattn/go-runewidth"
 	"strings"
 	"time"
 	"unicode"
+
+	"github.com/mattn/go-runewidth"
 )
 
 func matches(text, query string) bool {
@@ -70,6 +71,7 @@ func Select(ctx context.Context, frame Frame, rows []string, query string, multi
 	display := table(rows)
 	customFooter := frame.Footer
 	introOffset := 0
+	initialSelection := true
 	for {
 		width, height := Size(terminal)
 		visible := []int{}
@@ -77,6 +79,15 @@ func Select(ctx context.Context, frame Frame, rows []string, query string, multi
 			if matches(row, query) {
 				visible = append(visible, i)
 			}
+		}
+		if initialSelection {
+			for position, index := range visible {
+				if index == frame.InitialIndex {
+					cursor = position
+					break
+				}
+			}
+			initialSelection = false
 		}
 		cursor = max(0, min(cursor, len(visible)-1))
 		intro := runewidth.Wrap(CleanText(frame.Intro), max(1, width-1))
@@ -112,7 +123,11 @@ func Select(ctx context.Context, frame Frame, rows []string, query string, multi
 				}
 			}
 			if pos == cursor {
-				marker = "› "
+				if multi {
+					marker = "› " + marker
+				} else {
+					marker = "› "
+				}
 			}
 			row := marker + display[index]
 			if pos == cursor {
@@ -125,7 +140,7 @@ func Select(ctx context.Context, frame Frame, rows []string, query string, multi
 		}
 		footer := fmt.Sprintf("%d/%d rows · ↑↓ move · type to search · Enter select · Esc back", len(visible), len(rows))
 		if multi {
-			footer = fmt.Sprintf("%d selected · Tab toggle · Ctrl+A all · Enter apply · Esc back", len(selected))
+			footer = fmt.Sprintf("%d selected · Space/Tab toggle · Ctrl+A all · Enter apply · Esc back", len(selected))
 		}
 		if customFooter != "" {
 			footer = fmt.Sprintf("%d/%d · ", len(visible), len(rows)) + customFooter
@@ -153,7 +168,7 @@ func Select(ctx context.Context, frame Frame, rows []string, query string, multi
 			switch key.Name {
 			case "ctrl-o":
 				if frame.Action != "" {
-					return []int{-1}, nil
+					return nil, ErrAction
 				}
 			case "esc", "ctrl-c", "ctrl-d":
 				return nil, ErrCanceled
@@ -187,7 +202,7 @@ func Select(ctx context.Context, frame Frame, rows []string, query string, multi
 				query = ""
 				cursor = 0
 			case "text", "paste":
-				if key.Name == "text" && key.Text == " " && multi && query == "" && len(visible) > 0 {
+				if key.Name == "text" && key.Text == " " && multi && len(visible) > 0 {
 					index := visible[cursor]
 					if selected[index] {
 						delete(selected, index)
@@ -225,7 +240,7 @@ func Select(ctx context.Context, frame Frame, rows []string, query string, multi
 					}
 				}
 			case "enter":
-				if len(visible) == 0 {
+				if len(visible) == 0 && (!multi || len(selected) == 0) {
 					continue
 				}
 				if !multi {

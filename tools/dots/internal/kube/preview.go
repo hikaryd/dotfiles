@@ -6,6 +6,7 @@ import (
 	"os"
 	"strings"
 
+	"dots/native/internal/kube/logwatch"
 	"dots/native/internal/kube/tui"
 )
 
@@ -45,9 +46,7 @@ func preview(args []string) error {
 		frame.Title = "Pods"
 		frame.Body = "Search › api\n\n  NAME                  READY  STATUS       RESTARTS  AGE\n" + tui.Paint("› api-7c9df-abc          2/2    Running      0         12m", tui.Accent+tui.Bold, color) + "\n  api-7c9df-def          1/2    Pending      1         30s\n  worker-6d8c2-ghi       1/1    Running      0         2h\n\n2 matching pods · choose one or mark several"
 	case "logs":
-		frame.Title = "Live logs · 2 pods"
-		frame.Body = "LIVE · filter: request-id · 48 lines buffered\n\n" + tui.Paint("15:04:01  api-abc   INFO  GET /health 200  12ms", tui.Green, color) + "\n" + tui.Paint("15:04:02  api-def   WARN  retrying upstream request", tui.Yellow, color) + "\n15:04:03  api-abc   INFO  request-id=example completed"
-		frame.Footer = "/ search · Space pause · f filter · Enter details · Esc back · Ctrl+C cancel"
+		frame = logwatch.Preview(*width, *height, color)
 	case "deploy":
 		frame.Title = "Deployment watch"
 		frame.Body = tui.Paint("HEALTHY · 3/3 replicas ready", tui.Green+tui.Bold, color) + "\n\nWORKLOADS\n  NAME             DESIRED  UPDATED  READY  AVAILABLE\n  api              3        3        3      3\n\nPODS\n  api-abc          Running  2/2      0 restarts\n  api-def          Running  2/2      0 restarts\n  api-ghi          Running  2/2      0 restarts\n\nEVENTS\n  Normal · rollout complete"

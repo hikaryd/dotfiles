@@ -25,10 +25,6 @@ func (s *session) setupFrame(title, intro string) tui.Frame {
 func (s *session) setupSelect(title, intro string, rows []string, multi bool, query string) ([]int, error) {
 	frame := s.setupFrame(title, intro)
 	frame.Footer = "↑↓ — выбор · Enter — дальше · Esc — назад"
-	if strings.HasSuffix(title, "· Контекст") {
-		frame.Action = "Ctrl+O — изменить выбранные файлы"
-		frame.Footer += " · Ctrl+L — очистить поиск"
-	}
 	if multi {
 		frame.Footer = "Space — отметить · Ctrl+A — все · Enter — дальше · Esc — выйти"
 		frame.Action = "Ctrl+O — другая папка или файл"
@@ -114,10 +110,7 @@ func (s *session) selectSourceFiles() ([]string, error) {
 			rows = append(rows, filepath.Base(path)+"\t"+s.displayPath(filepath.Dir(path)))
 		}
 		chosen, err := s.setupSelect("Настройка · 1/3 · Файлы", "Найдены ваши kubeconfig. Выберите один или несколько файлов.\nРазные окружения могут использовать разные файлы — объединять их не нужно.\nИсходные файлы и ключи не изменяются. Space отмечает файл, Ctrl+A выбирает все.", rows, true, "")
-		if err != nil {
-			return nil, err
-		}
-		if len(chosen) == 1 && chosen[0] == -1 {
+		if errors.Is(err, tui.ErrAction) {
 			path, err := s.browseSource()
 			if errors.Is(err, tui.ErrCanceled) {
 				continue
@@ -134,6 +127,9 @@ func (s *session) selectSourceFiles() ([]string, error) {
 				sort.Strings(paths)
 			}
 			continue
+		}
+		if err != nil {
+			return nil, err
 		}
 		selected := []string{}
 		for _, index := range chosen {
@@ -220,23 +216,77 @@ func (s *session) availableSetupContexts(paths []string) []setupContext {
 	}
 	return result
 }
-func (s *session) chooseEnvironmentPlan(environment string, choices []setupContext) (bindingPlan, error) {
+func (s *session) preferredSetupIndex(environment string, choices []setupContext, draft *bindingPlan) int {
+	if draft == nil {
+		settings, err := s.sourceSettings()
+		if err != nil || settings == nil {
+			return 0
+		}
+		profile, ok := settings.Environments[environment]
+		if !ok {
+			return 0
+		}
+		loader := *s
+		loader.target = target{environment: environment}
+		loader.useSources(append([]string{s.contextFilePath(environment)}, profile.Files...))
+		inventory, err := loader.inventory()
+		if err != nil {
+			return 0
+		}
+		current, err := inventory.context(aliasContext(environment))
+		if err != nil {
+			return 0
+		}
+		draft = &bindingPlan{files: profile.Files, fields: current.Context, source: profile.Context}
+	}
+	for i, choice := range choices {
+		if sameSetupBinding(choice, draft) {
+			return i
+		}
+	}
+	return 0
+}
+
+func sameSetupBinding(choice setupContext, plan *bindingPlan) bool {
+	if len(choice.files) != len(plan.files) || choice.entry.Context.Cluster != plan.fields.Cluster || choice.entry.Context.User != plan.fields.User || plan.source != "" && plan.source != choice.entry.Name {
+		return false
+	}
+	for i, file := range choice.files {
+		absolute, err := filepath.Abs(file)
+		if err != nil || absolute != filepath.Clean(plan.files[i]) {
+			return false
+		}
+	}
+	return true
+}
+
+func (s *session) chooseEnvironmentPlan(environment string, choices []setupContext, draft *bindingPlan) (bindingPlan, error) {
 	s.target = target{environment: environment}
 	rows := []string{}
 	for _, choice := range choices {
 		entry := choice.entry
 		rows = append(rows, filepath.Base(entry.origin.path)+"\t"+entry.Name+"\t"+entry.Context.Cluster+"\t"+entry.Context.Namespace)
 	}
+	initialIndex := s.preferredSetupIndex(environment, choices, draft)
 	for {
-		selected, err := s.setupSelect(strings.ToUpper(environment)+" · Контекст", "Выберите, откуда команды будут брать подключение.\nФАЙЛ → КОНТЕКСТ → CLUSTER → NAMESPACE\nДаже одинаковые имена в разных файлах остаются разными подключениями.", rows, false, "")
+		frame := s.setupFrame(strings.ToUpper(environment)+" · Контекст", "Выберите, откуда команды будут брать подключение.\nФАЙЛ → КОНТЕКСТ → CLUSTER → NAMESPACE\nВыделена сохранённая привязка, если она доступна. Проверьте файл перед Enter.\nДаже одинаковые имена в разных файлах остаются разными подключениями.")
+		frame.InitialIndex = initialIndex
+		frame.Action = "Ctrl+O — изменить выбранные файлы"
+		frame.Footer = "↑↓ — выбор · Enter — дальше · Ctrl+L — очистить поиск · Esc — назад"
+		selected, err := tui.Select(s.ctx, frame, rows, "", false)
+		if errors.Is(err, tui.ErrAction) {
+			return bindingPlan{}, errSetupSources
+		}
 		if err != nil {
 			return bindingPlan{}, err
 		}
-		if len(selected) == 1 && selected[0] == -1 {
-			return bindingPlan{}, errSetupSources
-		}
+
+		initialIndex = selected[0]
 		choice := choices[selected[0]]
 		namespace := s.namespaceForChoice(environment, choice)
+		if draft != nil && sameSetupBinding(choice, draft) {
+			namespace = draft.fields.Namespace
+		}
 		validationNote := ""
 		for {
 			s.target.context = choice.entry.Name
@@ -250,6 +300,7 @@ func (s *session) chooseEnvironmentPlan(environment string, choices []setupConte
 			frame.Footer = "Введите namespace · Enter — дальше · Ctrl+L — очистить · Esc — к контекстам"
 			value, err := tui.Input(s.ctx, frame, namespace)
 			if errors.Is(err, tui.ErrAction) {
+				namespace = value
 				value, err = s.namespacePicker(choice, namespace)
 				if errors.Is(err, tui.ErrCanceled) {
 					continue
@@ -289,6 +340,10 @@ func (s *session) setupWizard(environment, path string, skipAliases bool, binDir
 	var paths []string
 	var err error
 	if path != "" {
+		path, err = filepath.Abs(path)
+		if err != nil {
+			return err
+		}
 		paths = []string{path}
 	} else {
 		paths, err = s.selectSourceFiles()
@@ -345,7 +400,14 @@ func (s *session) setupWizard(environment, path string, skipAliases bool, binDir
 			}
 			role = environments[selected[0]]
 		}
-		plan, err := s.chooseEnvironmentPlan(role, choices)
+		var draft *bindingPlan
+		for i := range plans {
+			if plans[i].environment == role {
+				draft = &plans[i]
+				break
+			}
+		}
+		plan, err := s.chooseEnvironmentPlan(role, choices, draft)
 		if errors.Is(err, errSetupSources) {
 			paths, err = s.selectSourceFiles()
 			if err != nil {

@@ -25,7 +25,5 @@ export CLAUDE_DIR SRC HAVE_CLAUDE
 # Validation precedes private backups and writes in the native implementation.
 "$REPO_DIR/build/bin/dots-tools" setup claude-apply-json
 
-if [[ -f "$HOME/.local/share/dots/abide/$(< "$REPO_DIR/config/abide/version")/node_modules/@coldtea/abide/package.json" ]]; then
-  "$REPO_DIR/build/bin/dots-tools" setup abide-apply
-fi
+"$REPO_DIR/build/bin/dots-tools" setup jevgrep-apply
 echo "claude-apply: готово"

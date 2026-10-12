@@ -17,6 +17,13 @@ import (
 )
 
 func runLogFixture() {
+	if os.Getenv("DOTS_KUBE_BLOCK_INITIAL") == "1" && strings.Contains(" "+strings.Join(os.Args[1:], " ")+" ", " get pod/api ") {
+		signals := make(chan os.Signal, 1)
+		signal.Notify(signals, os.Interrupt, syscall.SIGTERM)
+		os.WriteFile(os.Getenv("DOTS_KUBE_INITIAL_READY"), []byte("ready"), 0600)
+		<-signals
+		return
+	}
 	if strings.Contains(" "+strings.Join(os.Args[1:], " ")+" ", " get namespaces ") {
 		fmt.Println(`{"items":[{"metadata":{"name":"default"}},{"metadata":{"name":"application"}}]}`)
 		return
@@ -35,7 +42,11 @@ func runLogFixture() {
 	}
 	output := bufio.NewWriterSize(os.Stdout, 64*1024)
 	if os.Getenv("DOTS_KUBE_LOG_JSON") == "1" {
-		fmt.Fprintln(output, "[pod/"+pod+"/app] "+`{"level":"INFO","message":"readable first line\nreadable second line","hidden_detail":"DETAIL_SENTINEL","payload":{"one":1,"two":2}}`)
+		container := "app"
+		if os.Getenv("DOTS_KUBE_LOG_LAYOUT") == "1" {
+			container = "application-long-container"
+		}
+		fmt.Fprintln(output, "[pod/"+pod+"/"+container+"] "+`{"level":"INFO","message":"readable first line\nreadable second line","hidden_detail":"DETAIL_SENTINEL","payload":{"one":1,"two":2}}`)
 		output.Flush()
 		<-signals
 		return

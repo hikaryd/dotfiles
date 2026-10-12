@@ -55,6 +55,8 @@ kpstage namespace reads the namespace list and saves your choice after confirmat
 In setup, Ctrl+O on the namespace page fetches the list using a read-only request.
 Offline/manual entry remains available. Listing without writes: --list --json.
 
+logs-multi without arguments: search the pod list, Space/Tab mark, Enter follow.
+Full records are the default; m toggles optional JSON summaries. Long lines wrap.
 logs / logs-multi: Space pause, / search, f filter, arrows select,
 Enter full record, PgUp/PgDn scroll details, Esc/q/Ctrl+C exit.
 Pipes and saved logs remain undecorated. NO_COLOR disables colors.

@@ -47,11 +47,9 @@ func (h *history) snapshot() []logLine {
 	}
 	return result
 }
-func displayBody(text string) string {
-	// Keep structured metadata out of the reading path while retaining the raw
-	// record for search, detail view and saving. Most JSON loggers expose one of
-	// these message fields; decoding happens only for visible rows.
-	if strings.HasPrefix(strings.TrimSpace(text), "{") {
+func displayBody(text string, compact bool) string {
+	// Summaries are opt-in. The default reading view must not hide JSON fields.
+	if compact && strings.HasPrefix(strings.TrimSpace(text), "{") {
 		return jsonMessage(text)
 	}
 	return text

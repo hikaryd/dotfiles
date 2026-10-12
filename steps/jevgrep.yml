@@ -1,0 +1,5 @@
+- shell:
+    - command: scripts/jevgrep-install.sh
+      description: Install pinned official Jevgrep and global agent instructions/skill
+      stdout: true
+      stderr: true

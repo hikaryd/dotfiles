@@ -51,7 +51,7 @@ fpath=(
 [[ -d /opt/homebrew/lib/zsh ]] && module_path=(/opt/homebrew/lib $module_path)
 
 # --- Autoloaded functions (lazy — loaded only on first call) ---
-autoload -Uz _dots-zoxide-init extract graphify-merge-fix kafka-consume kafka-produce pytest-safe tp y z zi
+autoload -Uz _dots-zoxide-init extract kafka-consume kafka-produce pytest-safe tp y z zi
 
 # --- Aliases ---
 alias v='nvim'
@@ -60,7 +60,6 @@ alias l='nls'
 alias c='clear'
 alias lg='lazygit'
 alias gaa='git add -A'
-alias gmf='graphify-merge-fix'
 
 alias ..='cd ..'
 alias ...='cd ../..'

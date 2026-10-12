@@ -236,7 +236,7 @@ func codexInstructions(root string) error {
 	if e != nil {
 		return e
 	}
-	settings, e := os.ReadFile(filepath.Join(root, "config/codex/search-instructions.md"))
+	settings, e := os.ReadFile(filepath.Join(root, "config/jevgrep/instructions.md"))
 	if e != nil {
 		return e
 	}

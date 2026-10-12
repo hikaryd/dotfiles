@@ -1,6 +1,7 @@
 package podanalyze
 
 import (
+	"bytes"
 	"context"
 	"encoding/csv"
 	"encoding/json"
@@ -304,6 +305,28 @@ func Run(args []string) int {
 	defer cancel()
 	live := shouldRunLive(cfg, isTerminal(os.Stdout))
 	painter := tui.NewPainter(os.Stdout)
+	if live {
+		restore, err := tui.Raw(os.Stdin)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			return 1
+		}
+		defer restore()
+		endScreen := tui.Screen(os.Stdout)
+		defer endScreen()
+		input := tui.Keys(ctx, os.Stdin)
+		go func() {
+			for key := range input {
+				if key.Name == "esc" || key.Name == "ctrl-c" || key.Name == "ctrl-d" || key.Text == "q" {
+					cancel()
+					return
+				}
+			}
+			cancel()
+		}()
+
+		present(cfg, "\nReading selected pods…", true, painter)
+	}
 
 	analyzers := make([]*analyzer, 0, len(cfg.pods))
 	for _, podName := range cfg.pods {
@@ -312,6 +335,9 @@ func Run(args []string) int {
 		podConfig.multi = len(cfg.pods) > 1
 		a, buildErr := newAnalyzer(ctx, podConfig)
 		if buildErr != nil {
+			if ctx.Err() != nil {
+				return 0
+			}
 			fmt.Fprintf(os.Stderr, "cannot initialize pod/%s: %v\n", podName, buildErr)
 			return 1
 		}
@@ -358,25 +384,6 @@ func Run(args []string) int {
 		}
 		return 0
 	}
-
-	restore, err := tui.Raw(os.Stdin)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		return 1
-	}
-	defer restore()
-	endScreen := tui.Screen(os.Stdout)
-	defer endScreen()
-	input := tui.Keys(ctx, os.Stdin)
-	go func() {
-		for key := range input {
-			if key.Name == "esc" || key.Name == "ctrl-c" || key.Name == "ctrl-d" || key.Text == "q" {
-				cancel()
-				return
-			}
-		}
-		cancel()
-	}()
 
 	ticker := time.NewTicker(cfg.refresh)
 	defer ticker.Stop()
@@ -549,9 +556,11 @@ func kubectlOutput(ctx context.Context, cfg config, args ...string) ([]byte, err
 	requestCtx, cancel := context.WithTimeout(ctx, 15*time.Second)
 	defer cancel()
 	command := exec.CommandContext(requestCtx, cfg.kubectl, append(base, args...)...)
-	output, err := command.CombinedOutput()
+	var diagnostic bytes.Buffer
+	command.Stderr = &diagnostic
+	output, err := command.Output()
 	if err != nil {
-		message := strings.TrimSpace(string(output))
+		message := strings.TrimSpace(diagnostic.String())
 		if message == "" {
 			message = err.Error()
 		}

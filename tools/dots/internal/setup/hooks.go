@@ -108,56 +108,6 @@ func mergeTaskHooks(original []byte, command string) ([]byte, error) {
 	hooks["UserPromptSubmit"] = groups
 	return encode(d), nil
 }
-func abideCommands(root string) []string {
-	var out []string
-	for _, n := range []string{"session-start", "turn-start", "post-tool-use", "stop"} {
-		out = append(out, shellQuote(absolute(filepath.Join(root, "scripts/abide")))+" --hook "+n+" # abide-hook.js")
-	}
-	return out
-}
-func mergeAbideHooks(original []byte, root string) ([]byte, error) {
-	d := map[string]any{}
-	var e error
-	if original != nil {
-		d, e = object(original)
-		if e != nil {
-			return nil, e
-		}
-	}
-	commands := abideCommands(root)
-	for i, event := range []string{"SessionStart", "UserPromptSubmit", "PostToolUse", "Stop"} {
-		hooks, groups, e := hookGroups(d, event)
-		if e != nil {
-			return nil, e
-		}
-		kept := []any{}
-		for _, v := range groups {
-			group, entries, e := groupEntries(v)
-			if e != nil {
-				return nil, e
-			}
-			newEntries := []any{}
-			for _, v := range entries {
-				entry := v.(map[string]any)
-				s, _ := entry["command"].(string)
-				if !strings.Contains(s, "abide-hook.js") {
-					newEntries = append(newEntries, entry)
-				}
-			}
-			if len(newEntries) > 0 {
-				group["hooks"] = newEntries
-				kept = append(kept, group)
-			}
-		}
-		timeout := []int{10, 10, 20, 30}[i]
-		group := map[string]any{"hooks": []any{map[string]any{"type": "command", "command": commands[i], "timeout": timeout}}}
-		if event == "PostToolUse" {
-			group["matcher"] = "Edit|Write|MultiEdit|apply_patch"
-		}
-		hooks[event] = append(kept, group)
-	}
-	return encode(d), nil
-}
 func parseTOML(s string) (map[string]any, error) {
 	var d map[string]any
 	if e := toml.Unmarshal([]byte(s), &d); e != nil {
@@ -303,7 +253,7 @@ func listHooks(root, binary, directory string) ([]hookEntry, error) {
 			}
 		}
 	}
-	if e = send(map[string]any{"id": 1, "method": "initialize", "params": map[string]any{"clientInfo": map[string]any{"name": "dots_abide", "version": "1"}, "capabilities": map[string]any{"experimentalApi": true}}}); e != nil {
+	if e = send(map[string]any{"id": 1, "method": "initialize", "params": map[string]any{"clientInfo": map[string]any{"name": "dots_setup", "version": "1"}, "capabilities": map[string]any{"experimentalApi": true}}}); e != nil {
 		return nil, e
 	}
 	if _, e = response(1); e != nil {
@@ -544,88 +494,5 @@ func taskTitleApply(root string) error {
 		return errors.New("Other hook states changed; inspect the configuration backup")
 	}
 	fmt.Printf("Task titles: enabled/trusted UserPromptSubmit hook installed in %s; other hook states preserved\n", hp)
-	return nil
-}
-func abideTrust(root, dir string) error {
-	binary, e := exec.LookPath("codex")
-	if e != nil {
-		fmt.Println("Abide: Codex CLI не установлен; доверие к хукам настройте после установки через /hooks")
-		return nil
-	}
-	cp := filepath.Join(dir, "config.toml")
-	original, e := regularOptional(cp)
-	if e != nil {
-		return e
-	}
-	enabled, e := enableHooks(string(original))
-	if e != nil {
-		return e
-	}
-	if e = unchanged(cp, original); e != nil {
-		return e
-	}
-	if e = writeHookFile(cp, []byte(enabled), "abide", 0600); e != nil {
-		return e
-	}
-	entries, e := listHooks(root, binary, dir)
-	if e != nil {
-		return e
-	}
-	expected := map[string]bool{}
-	for _, s := range abideCommands(root) {
-		expected[s] = true
-	}
-	source := filepath.Join(dir, "hooks.json")
-	owned := func(h hookEntry) bool { return sameSource(h.SourcePath, source) && expected[h.Command] }
-	var ours []hookEntry
-	seen := map[string]bool{}
-	for _, h := range entries {
-		if owned(h) {
-			ours = append(ours, h)
-			seen[h.Command] = true
-		}
-	}
-	if len(ours) != 4 || len(seen) != 4 {
-		return errors.New("Codex не обнаружил четыре ожидаемых глобальных хука Abide")
-	}
-	current, e := regularOptional(cp)
-	if e != nil {
-		return e
-	}
-	updated, e := trustUpdate(string(current), ours, false)
-	if e != nil {
-		return e
-	}
-	if e = unchanged(cp, current); e != nil {
-		return e
-	}
-	if e = writeHookFile(cp, []byte(updated), "abide", 0600); e != nil {
-		return e
-	}
-	verified, e := listHooks(root, binary, dir)
-	if e != nil {
-		return e
-	}
-	count := 0
-	identities := map[string]hookEntry{}
-	for _, h := range ours {
-		identities[h.Key] = h
-	}
-	for _, h := range verified {
-		if owned(h) {
-			count++
-			before := identities[h.Key]
-			if h.TrustStatus != "trusted" || !h.Enabled || before.CurrentHash != h.CurrentHash || before.Command != h.Command {
-				return errors.New("Codex не подтвердил доверие к четырём хукам Abide")
-			}
-		}
-	}
-	if count != 4 {
-		return errors.New("Codex не подтвердил доверие к четырём хукам Abide")
-	}
-	if !reflect.DeepEqual(otherStates(entries, owned), otherStates(verified, owned)) {
-		return errors.New("состояние сторонних хуков изменилось; нужна проверка")
-	}
-	fmt.Println("Abide: Codex подтвердил четыре enabled/trusted хука; стороннее доверие сохранено")
 	return nil
 }

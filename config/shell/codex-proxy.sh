@@ -66,13 +66,13 @@ pi() {
   command pi "$@"
 }
 
-# JevGrep использует Node fetch: включаем поддержку proxy env для этого процесса.
-unalias jevgrep 2>/dev/null || true
-jevgrep() {
-  _codex_proxy_ensure || return
+# Jevgrep (jg) использует Node fetch: proxy env задаётся только этому процессу.
+unalias jg 2>/dev/null || true
+jg() {
+  _codex_proxy_ensure jg || return
   local proxy="$CODEX_PROXY_URL"
   HTTP_PROXY="$proxy" HTTPS_PROXY="$proxy" ALL_PROXY="$proxy" \
   http_proxy="$proxy" https_proxy="$proxy" all_proxy="$proxy" \
   NO_PROXY="127.0.0.1,localhost,::1,*.local" no_proxy="127.0.0.1,localhost,::1,*.local" \
-  NODE_USE_ENV_PROXY=1 command jevgrep "$@"
+  NODE_USE_ENV_PROXY=1 command jg "$@"
 }

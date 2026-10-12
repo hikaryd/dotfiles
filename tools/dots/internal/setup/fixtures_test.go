@@ -71,7 +71,7 @@ func fakeCodex() int {
 		id := request["id"]
 		switch method {
 		case "initialize":
-			if nested(request, "params", "clientInfo")["name"] != "dots_abide" {
+			if nested(request, "params", "clientInfo")["name"] != "dots_setup" {
 				return 97
 			}
 			encoder.Encode(map[string]any{"id": id, "result": map[string]any{}})

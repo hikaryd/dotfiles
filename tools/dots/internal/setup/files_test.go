@@ -50,15 +50,3 @@ func TestCommitRejectsDuplicateDestinations(t *testing.T) {
 		t.Fatal("duplicate target changed file")
 	}
 }
-func TestAbideMalformedConfigNoMutation(t *testing.T) {
-	h := fixtureHome(t)
-	root := filepath.Join(h, "root")
-	put(t, filepath.Join(root, "config/abide/version"), "0.0.7")
-	put(t, filepath.Join(root, "config/abide/instructions.md"), "instructions")
-	put(t, filepath.Join(h, ".claude/settings.json"), "")
-	before := tree(t, h)
-	code, _, _ := runCaptured(t, root, "abide-apply")
-	if code != 1 || !reflect.DeepEqual(before, tree(t, h)) {
-		t.Fatal("malformed config changed files")
-	}
-}

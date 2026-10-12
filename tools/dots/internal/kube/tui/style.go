@@ -86,6 +86,8 @@ type Frame struct {
 	Intro, Prompt, Action                                      string
 	Width, Height                                              int
 	Color                                                      bool
+	// InitialIndex is the original row index highlighted when Select opens.
+	InitialIndex int
 }
 
 func (f Frame) Header() string {

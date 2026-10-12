@@ -51,8 +51,3 @@ wire_api = "responses"
 
 [tui]
 status_line = ["model-with-reasoning", "git-branch", "context-remaining", "total-input-tokens", "total-output-tokens", "five-hour-limit", "weekly-limit"]
-
-# JevGrep discovers the authorized repository from the Codex working directory.
-[mcp_servers.jevgrep]
-command = "/bin/zsh"
-args = ["-f", "-c", "export PATH=\"/opt/homebrew/bin:/usr/local/bin:$PATH\"; source \"$HOME/.config/shell/codex-proxy.sh\"; jevgrep mcp"]

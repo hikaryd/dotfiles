@@ -13,7 +13,8 @@ import (
 // Store paths only. Every environment gets its own standard kubeconfig chain,
 // so equal cluster/user/context names in unrelated files never mix credentials.
 type sourceProfile struct {
-	Files []string `yaml:"kubeconfigs"`
+	Files   []string `yaml:"kubeconfigs"`
+	Context string   `yaml:"context,omitempty"`
 }
 type sourceSettings struct {
 	Version      int                      `yaml:"version"`
@@ -111,7 +112,11 @@ func (s *session) prepareSourceSettings(plans []bindingPlan, catalog []string) (
 		}
 	}
 	for _, plan := range plans {
-		settings.Environments[plan.environment] = sourceProfile{Files: plan.files}
+		source := plan.source
+		if source == aliasContext(plan.environment) && settings.Environments[plan.environment].Context != "" {
+			source = settings.Environments[plan.environment].Context
+		}
+		settings.Environments[plan.environment] = sourceProfile{Files: plan.files, Context: source}
 	}
 	file, err := readOutputFile(s.sourceSettingsPath())
 	if err != nil {
