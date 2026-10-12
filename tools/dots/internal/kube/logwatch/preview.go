@@ -3,7 +3,7 @@ package logwatch
 import (
 	"time"
 
-	"dots/native/internal/kube/tui"
+	"dots/native/internal/tui"
 )
 
 // Preview renders through the same frame builder as the live viewer, without

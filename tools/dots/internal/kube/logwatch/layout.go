@@ -3,7 +3,7 @@ package logwatch
 import (
 	"strings"
 
-	"dots/native/internal/kube/tui"
+	"dots/native/internal/tui"
 )
 
 type logColumns struct{ pod, container, message int }

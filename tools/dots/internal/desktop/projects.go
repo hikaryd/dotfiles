@@ -1,6 +1,7 @@
 package desktop
 
 import (
+	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
@@ -136,10 +137,11 @@ func sessionName(path string) string {
 	}
 	return truncate(slug, 45) + "-" + projectID(path)
 }
-func livePanes() ([]pane, error) {
+func livePanes() ([]pane, error) { return livePanesContext(context.Background()) }
+func livePanesContext(ctx context.Context) ([]pane, error) {
 	panes := []pane{}
 	if inHerdr() {
-		s, e := herdrSnapshot()
+		s, e := herdrSnapshotContext(ctx)
 		if e != nil {
 			return nil, e
 		}
@@ -166,7 +168,7 @@ func livePanes() ([]pane, error) {
 		}
 		return panes, nil
 	}
-	r, e := captureCommand(5*time.Second, 16*maxBytes, "", nil, "tmux", "list-panes", "-a", "-F", "#{session_id}\t#{session_name}\t#{window_id}\t#{pane_id}\t#{session_attached}\t#{pane_current_command}\t#{pane_active}\t#{pane_current_path}")
+	r, e := captureCommandContext(ctx, 5*time.Second, 16*maxBytes, "", nil, "tmux", "list-panes", "-a", "-F", "#{session_id}\t#{session_name}\t#{window_id}\t#{pane_id}\t#{session_attached}\t#{pane_current_command}\t#{pane_active}\t#{pane_current_path}")
 	if e != nil {
 		return nil, e
 	}
@@ -227,6 +229,9 @@ func sortPanes(path string, panes []pane) {
 	})
 }
 func inventory(worktrees bool) ([]project, error) {
+	return inventoryContext(context.Background(), worktrees)
+}
+func inventoryContext(ctx context.Context, worktrees bool) ([]project, error) {
 	roots := map[string][]pane{}
 	cache := map[string]metadata{}
 	repositories := map[string]string{}
@@ -246,7 +251,7 @@ func inventory(worktrees bool) ([]project, error) {
 		}
 		return m
 	}
-	panes, e := livePanes()
+	panes, e := livePanesContext(ctx)
 	if e != nil {
 		return nil, e
 	}
@@ -286,7 +291,7 @@ func inventory(worktrees bool) ([]project, error) {
 	}
 	if worktrees {
 		for _, c := range commons {
-			r, e := captureCommand(5*time.Second, 16*maxBytes, "", nil, "git", "-C", repositories[c], "worktree", "list", "--porcelain", "-z")
+			r, e := captureCommandContext(ctx, 5*time.Second, 16*maxBytes, "", nil, "git", "-C", repositories[c], "worktree", "list", "--porcelain", "-z")
 			if e != nil {
 				return nil, e
 			}
@@ -364,7 +369,7 @@ func openProject(target string) error {
 		if len(lines) == 0 {
 			return errors.New("Нет проектов: откройте Git-проект в tmux или передайте путь.")
 		}
-		i, e := selectLine(lines, []string{"filter", "--placeholder", "Проект / worktree"}, []string{"--prompt", "Проект > "}, false)
+		i, e := selectLine(lines, "Проект / worktree")
 		if e != nil {
 			return e
 		}

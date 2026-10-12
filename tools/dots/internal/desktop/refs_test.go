@@ -59,19 +59,6 @@ func TestRefsCLIStdinAndCapture(t *testing.T) {
 		t.Fatal("invalid pane accepted")
 	}
 }
-func TestRefsPickerDisablesFZFHooks(t *testing.T) {
-	f := newFixture(t)
-	f.fake("fzf", allRule("not a row", 0))
-	f.env = append(f.env, "FZF_DEFAULT_OPTS=--preview=unsafe", "FZF_DEFAULT_OPTS_FILE=/fixture/unsafe")
-	_, _, code := f.run("https://example.com", "refs", "--stdin")
-	if code != 0 {
-		t.Fatal(code)
-	}
-	calls := f.calls()
-	if len(calls) != 1 || calls[0].Env["FZF_DEFAULT_OPTS"] != "" || calls[0].Env["FZF_DEFAULT_OPTS_FILE"] != "/dev/null" {
-		t.Fatalf("picker env %+v", calls)
-	}
-}
 func TestRefsSizeLimit(t *testing.T) {
 	f := newFixture(t)
 	out, _, code := f.run(strings.Repeat("x", maxBytes+1), "refs", "--stdin", "--json")

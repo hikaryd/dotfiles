@@ -8,7 +8,8 @@ import (
 	"sort"
 	"strings"
 
-	"dots/native/internal/kube/tui"
+	"dots/native/internal/kube/kubeui"
+	"dots/native/internal/tui"
 )
 
 var errSetupBack = errors.New("вернуться к настройке")
@@ -20,7 +21,9 @@ type setupContext struct {
 }
 
 func (s *session) setupFrame(title, intro string) tui.Frame {
-	return tui.Frame{Title: title, Intro: intro, Mode: "LOCAL CONFIG", Environment: s.target.environment, Context: s.target.context, Namespace: s.target.namespace}
+	frame := kubeui.Frame(title, s.target.environment, s.target.context, s.target.namespace, "LOCAL CONFIG")
+	frame.Intro = intro
+	return frame
 }
 func (s *session) setupSelect(title, intro string, rows []string, multi bool, query string) ([]int, error) {
 	frame := s.setupFrame(title, intro)

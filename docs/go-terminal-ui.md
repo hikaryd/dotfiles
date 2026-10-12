@@ -6,9 +6,9 @@ CLI в `tools/dots`; UI работает без gum, zsh, Bubble Tea и Lip Glos
 
 ## Module, Interface, Implementation, Seam
 
-- **Module**: `tools/dots/internal/kube/tui`. Он владеет терминалом,
+- **Module**: `tools/dots/internal/tui`. Он владеет терминалом,
   клавиатурой, Ayu-стилем, раскладкой, селекторами и incremental rendering.
-- **Interface**: `Frame`, `Select`, `Input`, `Editor`, `Painter`, `Keys`,
+- **Interface**: `Frame`, `Select`, `Input`, `SecretInput`, `Confirm`, `Editor`, `Painter`, `Keys`,
   `Open`, `Raw`, `Screen` и небольшие функции форматирования. Помимо типов,
   контракт включает отмену, восстановление терминала и режим без TTY.
 - **Implementation**: ANSI escape sequences, platform-specific termios,
@@ -19,7 +19,7 @@ CLI в `tools/dots`; UI работает без gum, zsh, Bubble Tea и Lip Glos
 
 ## Карта исходников
 
-Пути ниже — относительно `tools/dots/internal/kube/`.
+Пути ниже — относительно `tools/dots/internal/`.
 
 | Файл | Ответственность |
 |---|---|
@@ -28,23 +28,28 @@ CLI в `tools/dots`; UI работает без gum, zsh, Bubble Tea и Lip Glos
 | `tui/terminal.go` | `/dev/tty`, raw/alternate screen, клавиатура и bracketed paste |
 | `tui/read_{darwin,linux}.go` | Ограниченное ожидание ввода через `VMIN=0`, `VTIME=1` |
 | `tui/picker.go` | `Select`, `Input`, `Editor` и их UI-состояние |
-| `ui.go` | Kubernetes-Adapter: domain header, resource selection, запасной gum |
-| `wizard.go`, `namespace_discovery.go` | Мастер: файлы → context → namespace → подтверждение |
-| `logwatch/` | Поток логов, bounded history, pause, search, details |
-| `deploywatch/`, `podanalyze/` | Refresh/polling и domain-specific dashboard presentation |
+| `kube/kubeui/frame.go`, `kube/ui.go` | Kubernetes-Adapter: domain labels, тон prod/action, resource selection |
+| `kube/wizard.go`, `kube/namespace_discovery.go` | Мастер: файлы → context → namespace → подтверждение |
+| `kube/logwatch/` | Поток логов, bounded history, pause, search, details |
+| `kube/deploywatch/`, `kube/podanalyze/` | Refresh/polling и domain-specific dashboard presentation |
+| `desktop/ui.go`, `desktop/status.go` | Desktop-Adapter, меню, status dashboard |
+| `uicli/run.go` | CLI bridge для shell: select/input/confirm/snapshot/message |
 
 Зависимости UI: `golang.org/x/term`, `golang.org/x/sys`,
 `github.com/mattn/go-runewidth`. `github.com/creack/pty` нужен тестам, не runtime.
 
 ## Стиль и компоновка
 
-`Frame` описывает экран: `Title`, `Environment`, `Context`, `Namespace`, `Mode`,
+`Frame` описывает экран: `Brand`, `Title`, `Subtitle`, `Targets`, `Mode`, `Tone`,
 `Intro`, `Prompt`, `Action`, `Body`, `Footer`, `Width`, `Height`, `Color`.
 `InitialIndex` — индекс **исходной строки**, выделяемой при открытии `Select`.
 После фильтрации возвращаются исходные индексы, а не позиции в видимом списке.
 
-Шапка сейчас содержит бренд **dots kube**, окружение, context, namespace и режим:
-`READ ONLY`, `ACTION`, `LOCAL CONFIG`. Prod выделяется красным; action — жёлтым.
+Шапка domain-neutral: бренд, target labels, subtitle, режим и тон задаёт Adapter.
+Kubernetes передаёт **dots kube**, окружение и context/namespace через `kubeui.Frame`;
+desktop — **dots**, proxy — **dots proxy**, AI — **dots AI**.
+`READ ONLY`, `ACTION`, `LOCAL CONFIG` — значения вызывающего кода;
+prod-красный и action-жёлтый задаёт Adapter, не скрытое Kubernetes-правило в UI.
 Общая палитра задаётся константами: cyan accent, mint success, amber warning,
 red error, purple detail, muted text/borders. Не вводить локальные варианты темы.
 
@@ -52,7 +57,8 @@ red error, purple detail, muted text/borders. Не вводить локальн
 терминальных ячеек, не число байтов. Длинный body ограничивается высотой экрана;
 при `Height=0` ограничение высоты не применяется. `Select` отдельно переносит и
 прокручивает длинное объяснение на узком экране. Это **не** универсальный scrolling
-layout: длинный `Input.Intro` и произвольный dashboard требуют своего layout.
+layout: `Input` ограничивает длинный Intro с явным маркером, оставляя поле ввода видимым;
+произвольный dashboard требует своего layout. `dots status` прокручивает body.
 
 Для внешних имён и сообщений использовать `Clean` или `CleanText`, чтобы не
 превращать данные в управление терминалом. `CleanText` сохраняет переносы строк.
@@ -94,7 +100,7 @@ sequence коротким ожиданием продолжения. Zero-byte t
 
 ## Минимальный пример для нового тула
 
-Внутри `tools/dots` импорт пока такой:
+Внутри `tools/dots` импорт такой:
 
 ```go
 import (
@@ -102,7 +108,7 @@ import (
     "errors"
     "fmt"
 
-    "dots/native/internal/kube/tui"
+    "dots/native/internal/tui"
 )
 
 type artifact struct { ID, State string }
@@ -116,7 +122,10 @@ func chooseArtifacts(ctx context.Context, items []artifact) ([]artifact, error) 
         rows[i] = fmt.Sprintf("%s\t%s", tui.Clean(item.ID), tui.Clean(item.State))
     }
     selected, err := tui.Select(ctx, tui.Frame{
+        Brand: "dots artifacts",
         Title: "Choose artifacts",
+        Subtitle: "Local inventory",
+        Tone: tui.Green,
         Intro: "Search and mark the artifacts to inspect.",
         Mode: "READ ONLY",
     }, rows, "", true)
@@ -168,17 +177,45 @@ Labels только отображаются; реальные ID берутся
 Для non-TTY: raw/alternate screen отключены; dashboard — один обычный snapshot,
 logs — исходный stream. JSON/сохранённые логи/диагностика имеют отдельные пути.
 
-## Как переносить на остальные Go tools
+## Подключение остальных Go tools и shell
 
-1. В том же модуле сначала повторно использовать `tui`, а не копировать ANSI-код.
-2. Перед массовым переносом вынести Module в `tools/dots/internal/tui` и убрать
-   Kubernetes-зависимости из `Frame`: бренд, дополнительные target labels и
-   режим/тон передавать явно. Kubernetes-specific mapping оставить в Adapter.
-3. Обновить все import paths и сохранить один клавиатурный контракт и Painter.
-4. Для **другого Go-модуля/репозитория** нужен отдельный public package/module:
-   Go `internal` нельзя импортировать извне. Текущий код ещё не такой пакет.
-5. Мигрировать по одному workflow, каждый раз проверяя прежние argv, данные,
-   exit status и действия отмены. Цветной preview не заменяет functional test.
+1. В том же модуле импортировать `internal/tui`, не копировать ANSI, raw mode или тему.
+2. Domain labels и выбор тона остаются в Adapter; `Frame` не знает Kubernetes.
+3. Повторно использовать Select/Input/SecretInput/Confirm/Editor и один Painter.
+4. Для другого Go-модуля нужен public package/module: Go `internal` нельзя
+   импортировать извне. Background `herdr-last-workspace` не имеет terminal UI.
+5. Сохранять прежние argv, данные, exit status и отмену. TTY UI не заменяет pipe/JSON.
+
+Shell orchestration использует встроенный bridge:
+
+```sh
+sesh list -i | dots-tools ui select --title "Sesh" --mode LOCAL
+dots-tools ui input --title "Hostname" --value "localhost"
+password=$(dots-tools ui input --title "Password" --secret)
+dots-tools ui confirm --title "Продолжить?" --mode ACTION
+printf '%s\\n' "$body" | dots-tools ui snapshot --title "План" --brand "dots VPN"
+printf '%s\\n' "$message" | dots-tools ui message --level warning
+```
+
+Select печатает **исходную строку** в stdout, но отображает очищенный label;
+shell использует результат как один quoted argv, не eval. Input/secret input
+печатают значение в stdout для command substitution; сам экран выводится в tty.
+Secret initial values запрещены в bridge, чтобы не передавать пароль через argv.
+Snapshot/message в pipe сохраняют исходные байты, без ANSI; строки данных для
+TTY очищаются. Общие shell helpers — `scripts/terminal-ui.sh`, без собственной палитры.
+
+Confirm требует ровно `yes`: Enter, иной текст, Esc или Ctrl+C не подтверждают
+действие. `SecretInput` маскирует ввод и paste. До подтверждения shell/Adapter
+не должны выполнять мутацию. `--yes`, `--dry-run` и `KPROD_CONFIRMED=1`
+остаются явными non-interactive путями.
+
+В собственных workflow нет gum/fzf fallback. При ErrNoTerminal picker не угадывает
+первый ресурс: Kubernetes допускает только явный однозначный запрос для single
+selection; multi — явные совпадения. Пустой/неоднозначный запрос — ошибка.
+Desktop предоставляет list/JSON/явный target вместо интерактивного выбора.
+Proxy и AI сохраняют прежний stdin protocol для scripted provisioning.
+Fzf остаётся зависимостью стороннего shell completion и стандартных Ctrl+T/Alt+C,
+не backend'ом собственных меню dots.
 
 ## Проверки перед распространением
 

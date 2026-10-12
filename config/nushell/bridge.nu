@@ -5,10 +5,10 @@ alias zs = ^($env.DOTS_ROOT | path join "scripts/dots-zsh") --run
 def --env --wrapped dots-cd [name: string, ...args: string] {
   let target = (^mktemp -t dots-nu-cwd | str trim)
   try {
-    try {
+    let code = try {
       ^($env.DOTS_ROOT | path join "scripts/dots-zsh") --cwd-file $target --run $name ...$args
-    } catch { }
-    let code = $env.LAST_EXIT_CODE
+      $env.LAST_EXIT_CODE
+    } catch { $env.LAST_EXIT_CODE? | default 1 }
     let directory = (open --raw $target)
     rm $target
     if ($directory | is-not-empty) { cd $"($directory)/." }

@@ -16,6 +16,8 @@ import (
 	"syscall"
 	"testing"
 	"time"
+
+	"dots/native/internal/tui"
 )
 
 type response struct {
@@ -42,7 +44,10 @@ func TestMain(m *testing.M) {
 			if json.Unmarshal(data, &rules) != nil {
 				os.Exit(98)
 			}
-			input, _ := io.ReadAll(os.Stdin)
+			var input []byte
+			if !tui.IsTerminal(os.Stdin) {
+				input, _ = io.ReadAll(os.Stdin)
+			}
 			entry, _ := json.Marshal(call{name, os.Args[1:], string(input), os.Getenv("KUBECONFIG")})
 			file, err := os.OpenFile(filepath.Join(dir, "calls"), os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0600)
 			if err != nil {
@@ -340,7 +345,6 @@ func TestLogSaveKeepsRawPrivateFileAndKubectlExitStatus(t *testing.T) {
 	f := newFixture(t)
 	f.set("KUBE_LOG_DIR", filepath.Join(f.home, "logs"))
 	f.fake("kubectl", exact(pinned("dev", "get", "pods", "-o", "json"), `{"items":[{"kind":"Pod","metadata":{"name":"api"}}]}`, 0), rule{Args: pinned("dev", "logs", "pod/api", "--all-containers=true", "--prefix=true", "--timestamps=true", "--tail=-1"), Responses: []response{{Output: "ERROR raw line\n", Stderr: "transport failed\n", Code: 9}}})
-	f.fake("gum", anyCall("api\tUnknown\n", 0))
 	out, diagnostic, status := f.run("", "kpdev-logs-save", "api")
 	if status != 9 {
 		t.Fatalf("%d %q %q", status, out, diagnostic)
@@ -382,7 +386,6 @@ func TestProdInteractiveActionsNeverRunWithoutConfirmation(t *testing.T) {
 		t.Run(action, func(t *testing.T) {
 			f := newFixture(t)
 			f.fake("kubectl", anyCall("", 0))
-			f.fake("gum", anyCall("", 0))
 			_, diagnostic, status := f.run("yes\n", "kpprod-"+action)
 			if status == 0 || len(f.calls()) != 0 || !strings.Contains(diagnostic, "MUTATING action="+action) {
 				t.Fatalf("%d %q %+v", status, diagnostic, f.calls())
@@ -393,7 +396,6 @@ func TestProdInteractiveActionsNeverRunWithoutConfirmation(t *testing.T) {
 func TestScaleUsesStructuredWorkloadAndPinnedMutation(t *testing.T) {
 	f := newFixture(t)
 	f.fake("kubectl", exact(pinned("stage", "get", "deployments,statefulsets", "-o", "json"), `{"items":[{"kind":"Deployment","metadata":{"name":"api"},"spec":{"replicas":2},"status":{"replicas":2,"readyReplicas":2,"availableReplicas":2}}]}`, 0), exact(pinned("stage", "scale", "deployment/api", "--replicas=4"), "scaled\n", 0))
-	f.fake("gum", anyCall("deployment/api\t2\t2\t2\t2\n", 0))
 	out, diagnostic, status := f.run("", "kpstage-scale", "api", "4")
 	if status != 0 || !strings.Contains(out, "2 -> 4") {
 		t.Fatalf("%d %q %q", status, out, diagnostic)
@@ -410,14 +412,13 @@ func TestInvalidScaleCountDoesNotMutate(t *testing.T) {
 func TestJobsAreOfferedNewestFirstAndSaveAllContainerLogs(t *testing.T) {
 	f := newFixture(t)
 	f.fake("kubectl", exact(pinned("dev", "get", "jobs", "-o", "json"), `{"items":[{"metadata":{"name":"old","creationTimestamp":"2025-01-01T00:00:00Z"},"status":{"failed":1}},{"metadata":{"name":"new","creationTimestamp":"2025-01-02T00:00:00Z","ownerReferences":[{"kind":"CronJob","name":"nightly"}]},"status":{"active":1}}]}`, 0), exact(pinned("dev", "logs", "-l", "job-name=new", "--all-containers=true", "--prefix=true", "--timestamps=true", "--tail=-1", "--max-log-requests=20", "--pod-running-timeout=2m"), "all logs\n", 0))
-	f.fake("gum", anyCall("new\tRunning\t2025-01-02 00:00:00\tnightly\n", 0))
 	_, diagnostic, status := f.run("", "kpdev-jobs-save", "nightly")
 	if status != 0 {
 		t.Fatalf("%d %q", status, diagnostic)
 	}
 	calls := f.calls()
-	if !strings.HasPrefix(calls[1].Input, "new\tRunning") || !strings.Contains(calls[1].Input, "old\tFailed") {
-		t.Fatalf("history %+v", calls[1])
+	if len(calls) != 2 || !strings.Contains(strings.Join(calls[1].Args, " "), "-l job-name=new") {
+		t.Fatalf("selected Job %+v", calls)
 	}
 }
 func TestCronRetriesOnlyContainerStartupErrorsAndSavesFinalRawLogs(t *testing.T) {
@@ -428,7 +429,6 @@ func TestCronRetriesOnlyContainerStartupErrorsAndSavesFinalRawLogs(t *testing.T)
 	create.Prefix = true
 	logs := rule{Args: pinned("dev", "logs", "-f"), Prefix: true, Responses: []response{{Stderr: `Error from server (BadRequest): container "app" in pod "nightly-pod" is waiting to start: ContainerCreating` + "\n", Code: 1}, {Output: "job complete\n"}}}
 	f.fake("kubectl", exact(pinned("dev", "get", "cronjobs", "-o", "json"), `{"items":[{"metadata":{"name":"nightly"}}]}`, 0), create, logs)
-	f.fake("gum", anyCall("nightly\n", 0))
 	_, diagnostic, status := f.run("", "kpdev-cron-run", "nightly")
 	if status != 0 || !strings.Contains(diagnostic, "retrying logs") {
 		t.Fatalf("%d %q", status, diagnostic)
@@ -442,7 +442,7 @@ func TestCronRetriesOnlyContainerStartupErrorsAndSavesFinalRawLogs(t *testing.T)
 		t.Fatalf("raw %q", data)
 	}
 	calls := f.calls()
-	if len(calls) != 5 || len(calls[2].Args[len(calls[2].Args)-1]) > 63 {
+	if len(calls) != 4 || len(calls[1].Args[len(calls[1].Args)-1]) > 63 {
 		t.Fatalf("cron %+v", calls)
 	}
 }
@@ -451,10 +451,9 @@ func TestCronCreateFailureRemovesEmptyLogFileAndDoesNotFollowLogs(t *testing.T) 
 	create := exact(pinned("dev", "create", "job", "--from=cronjob/nightly"), "", 13)
 	create.Prefix = true
 	f.fake("kubectl", exact(pinned("dev", "get", "cronjobs", "-o", "json"), `{"items":[{"metadata":{"name":"nightly"}}]}`, 0), create)
-	f.fake("gum", anyCall("nightly\n", 0))
-	_, diagnostic, status := f.run("", "kpdev-cron-run")
+	_, diagnostic, status := f.run("", "kpdev-cron-run", "nightly")
 	files, _ := filepath.Glob(filepath.Join(f.home, "Documents", "kube-logs", "*.log"))
-	if status != 13 || len(files) != 0 || len(f.calls()) != 3 {
+	if status != 13 || len(files) != 0 || len(f.calls()) != 2 {
 		t.Fatalf("%d %q %v %+v", status, diagnostic, files, f.calls())
 	}
 }
@@ -511,8 +510,7 @@ func TestRestartTracksNewReadyUIDAndDoesNotDeleteUnsupportedPods(t *testing.T) {
 			old := `{"kind":"Pod","metadata":{"name":"api-old","uid":"old-uid","ownerReferences":[` + owner + `]},"status":{"phase":"Running"}}`
 			replacement := `{"metadata":{"name":"api-new","uid":"new-uid","ownerReferences":[` + owner + `]},"status":{"phase":"Running","conditions":[{"type":"Ready","status":"True"}]}}`
 			f.fake("kubectl", exact(pinned("dev", "get", "pods", "-o", "json"), `{"items":[`+old+`]}`, 0), exact(pinned("dev", "get", "pod/api-old", "-o", "json"), old, 0), exact(pinned("dev", "get", "replicaset/api-rs", "-o", "json"), `{"metadata":{"uid":"owner-uid"},"spec":{"selector":{"matchLabels":{"app":"api"}}}}`, 0), rule{Args: pinned("dev", "get", "pods", "-o", "json", "-l", "app=api"), Responses: []response{{Output: `{"items":[` + old + `]}`}, {Output: `{"items":[` + replacement + `]}`}}}, exact(pinned("dev", "delete", "pod/api-old", "--wait=false"), "deleted\n", 0))
-			f.fake("gum", anyCall("api-old\tRunning\n", 0))
-			out, diagnostic, status := f.run("", "kpdev-pod-restart")
+			out, diagnostic, status := f.run("", "kpdev-pod-restart", "api-old")
 			if supported {
 				if status != 0 || !strings.Contains(out, "pod/api-new is Ready") {
 					t.Fatalf("%d %q %q", status, out, diagnostic)
@@ -532,12 +530,11 @@ func TestRestartTracksNewReadyUIDAndDoesNotDeleteUnsupportedPods(t *testing.T) {
 		})
 	}
 }
-func TestPickerCancellationDoesNotMutate(t *testing.T) {
+func TestPickerWithoutTerminalDoesNotGuessOrMutate(t *testing.T) {
 	f := newFixture(t)
 	f.fake("kubectl", exact(pinned("dev", "get", "cronjobs", "-o", "json"), `{"items":[{"metadata":{"name":"nightly"}}]}`, 0))
-	f.fake("gum", anyCall("", 130))
 	_, diagnostic, status := f.run("", "kpdev-cron-run")
-	if status != 130 || len(f.calls()) != 2 {
+	if status == 0 || len(f.calls()) != 1 || !strings.Contains(diagnostic, "terminal") {
 		t.Fatalf("%d %q %+v", status, diagnostic, f.calls())
 	}
 }
@@ -638,7 +635,6 @@ func TestPodAnalyzeUsesNativeHelperWithPinnedReadOnlyRequests(t *testing.T) {
 	pod := `{"kind":"Pod","metadata":{"name":"api","uid":"pod-uid"},"spec":{"containers":[{"name":"app","resources":{"requests":{"cpu":"100m","memory":"64Mi"}}}]},"status":{"phase":"Running","containerStatuses":[{"name":"app","ready":true}]}}`
 	helper := []string{"--context", "dots-prod", "--namespace", "prod-namespace"}
 	f.fake("kubectl", exact(pinned("prod", "get", "pods", "-o", "json"), `{"items":[`+pod+`]}`, 0), exact(append(append([]string{}, helper...), "get", "pod/api", "-o", "json"), pod, 0), exact(append(append([]string{}, helper...), "top", "pod", "api", "--containers", "--no-headers"), "api app 10m 32Mi\n", 0), rule{Args: append(append([]string{}, helper...), "get", "events"), Prefix: true, Responses: []response{{Output: `{"items":[]}`}}})
-	f.fake("gum", anyCall("api\tRunning\n", 0))
 	out, diagnostic, status := f.run("", "kpprod-pod-analyze", "api")
 	if status != 0 || !strings.Contains(out, "api") || !strings.Contains(out, "READ ONLY") {
 		t.Fatalf("%d %q %q", status, out, diagnostic)

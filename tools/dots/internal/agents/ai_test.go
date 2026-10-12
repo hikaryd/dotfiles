@@ -21,6 +21,9 @@ import (
 
 // TestMain makes this test executable act as inert Git/clipboard/notification commands.
 func TestMain(m *testing.M) {
+	if os.Getenv("AGENTS_AI_CLI") == "1" && len(os.Args) > 1 && os.Args[1] == "--mode" {
+		os.Exit(runAI(os.Args[1:], os.Stdin, os.Stdout, os.Stderr))
+	}
 	if os.Getenv("AGENTS_FAKE_COMMAND") == "1" {
 		fakeCommand()
 		return

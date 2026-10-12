@@ -3,13 +3,14 @@ package desktop
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/pelletier/go-toml/v2"
 	"os"
 	"path/filepath"
 	"regexp"
 	"sort"
 	"strings"
 	"time"
+
+	"github.com/pelletier/go-toml/v2"
 )
 
 type doctorCheck struct {
@@ -93,7 +94,7 @@ func diagnose(root, userHome string) ([]doctorCheck, error) {
 			add("OK", l.destination, "Managed link resolves correctly")
 		}
 	}
-	for _, name := range []string{"zsh", "git", "dots-tools", "tmux", "herdr", "sesh", "nvim", "fzf", "dots", "gum", "zoxide", "eza", "bat", "rg", "fd", "yazi", "lazygit", "atuin"} {
+	for _, name := range []string{"zsh", "git", "dots-tools", "tmux", "herdr", "sesh", "nvim", "dots", "zoxide", "eza", "bat", "rg", "fd", "yazi", "lazygit", "atuin"} {
 		status, detail := "OK", "Available"
 		if !available(name) {
 			status, detail = "WARN", "Not on PATH"

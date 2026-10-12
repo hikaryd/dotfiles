@@ -121,7 +121,6 @@ brew "jq-lsp"
 
 # Другие инструменты разработки
 brew "sesh"    
-brew "gum"    
 brew "rift", args: ["tap", "acsandmann/tap"]
 brew "fastfetch"    
 brew "ffmpeg"    

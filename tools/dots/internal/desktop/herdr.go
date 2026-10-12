@@ -2,6 +2,7 @@ package desktop
 
 import (
 	"bufio"
+	"context"
 	"encoding/json"
 	"errors"
 	"net"
@@ -13,6 +14,9 @@ import (
 // Explicit socket paths use one request per connection. Serialise before dialing:
 // Herdr 0.9.1 otherwise incurs its 100ms empty-read polling delay.
 func herdrCall(method string, params map[string]any, argv ...string) (map[string]any, error) {
+	return herdrCallContext(context.Background(), method, params, argv...)
+}
+func herdrCallContext(ctx context.Context, method string, params map[string]any, argv ...string) (map[string]any, error) {
 	var raw []byte
 	if path := os.Getenv("HERDR_SOCKET_PATH"); path != "" {
 		if params == nil {
@@ -23,11 +27,14 @@ func herdrCall(method string, params map[string]any, argv ...string) (map[string
 			return nil, errors.New("Некорректный запрос Herdr")
 		}
 		b = append(b, '\n')
-		c, e := net.DialTimeout("unix", path, 2*time.Second)
+		dialer := net.Dialer{Timeout: 2 * time.Second}
+		c, e := dialer.DialContext(ctx, "unix", path)
 		if e != nil {
 			return nil, errors.New("Herdr socket недоступен")
 		}
 		defer c.Close()
+		stop := context.AfterFunc(ctx, func() { c.Close() })
+		defer stop()
 		if e = c.SetDeadline(time.Now().Add(2 * time.Second)); e != nil {
 			return nil, errors.New("Herdr socket deadline failed")
 		}
@@ -40,7 +47,7 @@ func herdrCall(method string, params map[string]any, argv ...string) (map[string
 			return nil, errors.New("Herdr response unavailable or too large")
 		}
 	} else {
-		r, e := captureCommand(2*time.Second, 16*maxBytes, "", nil, append([]string{"herdr"}, argv...)...)
+		r, e := captureCommandContext(ctx, 2*time.Second, 16*maxBytes, "", nil, append([]string{"herdr"}, argv...)...)
 		if e != nil {
 			return nil, e
 		}
@@ -74,8 +81,9 @@ func readLineLimited(r *bufio.Reader, limit int) ([]byte, error) {
 		return b, e
 	}
 }
-func herdrSnapshot() (map[string]any, error) {
-	r, e := herdrCall("session.snapshot", nil, "api", "snapshot")
+func herdrSnapshot() (map[string]any, error) { return herdrSnapshotContext(context.Background()) }
+func herdrSnapshotContext(ctx context.Context) (map[string]any, error) {
+	r, e := herdrCallContext(ctx, "session.snapshot", nil, "api", "snapshot")
 	if e != nil {
 		return nil, e
 	}

@@ -11,7 +11,6 @@ func TestPipedSingleLogsStayRawEvenWithForcedColor(t *testing.T) {
 	f.set("KUBE_COLOR", "always")
 	raw := "ERROR application record\n"
 	f.fake("kubectl", exact(pinned("stage", "get", "pods", "-o", "json"), `{"items":[{"metadata":{"name":"api"}}]}`, 0), exact(pinned("stage", "logs", "-f", "pod/api", "--all-containers=true", "--prefix=true", "--tail=200"), raw, 0))
-	f.fake("gum", anyCall("api\tUnknown\n", 0))
 	out, diagnostic, status := f.run("", "kpstage-logs", "api")
 	if status != 0 || out != raw {
 		t.Fatalf("pipe was decorated: %d %q %q", status, out, diagnostic)
@@ -51,8 +50,7 @@ func TestCronRunAcceptsActiveJobReferences(t *testing.T) {
 	logs := exact(pinned("preprod", "logs", "-f"), "job complete\n", 0)
 	logs.Prefix = true
 	f.fake("kubectl", exact(pinned("preprod", "get", "cronjobs", "-o", "json"), `{"items":[{"kind":"CronJob","metadata":{"name":"nightly"},"status":{"active":[{"kind":"Job","name":"nightly-scheduled","namespace":"preprod-namespace","uid":"active-job"}],"lastScheduleTime":"2026-01-01T00:00:00Z"}}]}`, 0), create, logs)
-	f.fake("gum", anyCall("nightly\n", 0))
-	out, diagnostic, status := f.run("", "kppreprod-cron-run")
+	out, diagnostic, status := f.run("", "kppreprod-cron-run", "nightly")
 	if status != 0 || !strings.Contains(out, "job complete") {
 		t.Fatalf("CronJob active references broke selector: %d %q %q", status, out, diagnostic)
 	}
@@ -65,7 +63,6 @@ func TestPodAnalyticsDoesNotDecodeKubectlWarningsAsJSON(t *testing.T) {
 	pod := `{"kind":"Pod","metadata":{"name":"api","uid":"fixture"},"spec":{"containers":[{"name":"app"}]},"status":{"phase":"Running"}}`
 	helper := []string{"--context", "dots-stage", "--namespace", "stage-namespace"}
 	f.fake("kubectl", exact(pinned("stage", "get", "pods", "-o", "json"), `{"items":[`+pod+`]}`, 0), rule{Args: append(append([]string{}, helper...), "get", "pod/api", "-o", "json"), Responses: []response{{Output: pod, Stderr: "Warning: API deprecation\n"}}}, exact(append(append([]string{}, helper...), "top", "pod", "api", "--containers", "--no-headers"), "api app 10m 32Mi\n", 0), rule{Args: append(append([]string{}, helper...), "get", "events"), Prefix: true, Responses: []response{{Output: `{"items":[]}`, Stderr: "Warning: API deprecation\n"}}})
-	f.fake("gum", anyCall("api\tRunning\n", 0))
 	out, diagnostic, status := f.run("", "kpstage-pod-analyze", "api")
 	if status != 0 || !strings.Contains(out, "api") {
 		t.Fatalf("successful response rejected because of warning: %d %q %q", status, out, diagnostic)

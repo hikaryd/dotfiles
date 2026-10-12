@@ -9,11 +9,15 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"os/signal"
 	"os/user"
 	"path/filepath"
 	"strings"
+	"syscall"
 	"time"
 	"unicode"
+
+	"dots/native/internal/tui"
 )
 
 const maxBytes = 1024 * 1024
@@ -156,7 +160,10 @@ type commandResult struct {
 
 // Captured errors never contain argv or stderr, which may carry credentials.
 func captureCommand(timeout time.Duration, limit int, input string, env []string, args ...string) (commandResult, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	return captureCommandContext(context.Background(), timeout, limit, input, env, args...)
+}
+func captureCommandContext(parent context.Context, timeout time.Duration, limit int, input string, env []string, args ...string) (commandResult, error) {
+	ctx, cancel := context.WithTimeout(parent, timeout)
 	defer cancel()
 	cmd := exec.CommandContext(ctx, args[0], args[1:]...)
 	cmd.WaitDelay = time.Second
@@ -283,35 +290,16 @@ func usageError(command string) int {
 	return 2
 }
 func fail(prefix string, e error) int { fmt.Fprintf(os.Stderr, "%s: %s\n", prefix, e); return 1 }
-func selectLine(lines []string, gum, fzf []string, safe bool) (int, error) {
-	gum, fzf = selectorArgs(gum, fzf, colorEnabled(os.Stderr))
-	var argv []string
-	if available("fzf") {
-		argv = append([]string{"fzf"}, fzf...)
-	} else if available("gum") {
-		argv = append([]string{"gum"}, gum...)
-	} else {
-		return -1, errors.New("Нужен gum или fzf для выбора.")
-	}
-	cmd := exec.Command(argv[0], argv[1:]...)
-	cmd.Stdin = strings.NewReader(strings.Join(lines, "\n") + "\n")
-	cmd.Stderr = os.Stderr
-	out := &limitedBuffer{limit: maxBytes}
-	cmd.Stdout = out
-	if safe {
-		cmd.Env = envSet(os.Environ(), "FZF_DEFAULT_OPTS=", "FZF_DEFAULT_OPTS_FILE=/dev/null")
-	}
-	if e := cmd.Run(); e != nil {
+func selectLine(lines []string, title string) (int, error) {
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+	indexes, err := tui.Select(ctx, desktopFrame(title), lines, "", false)
+	if errors.Is(err, tui.ErrCanceled) || errors.Is(err, context.Canceled) {
 		return -1, nil
 	}
-	if out.overflow {
-		return -1, errors.New("Превышен лимит вывода выбора.")
+	if err != nil {
+		return -1, err
 	}
-	answer := strings.TrimRight(out.String(), "\n")
-	for i, line := range lines {
-		if line == answer {
-			return i, nil
-		}
-	}
-	return -1, nil
+	return indexes[0], nil
 }
+func isTerminal(file *os.File) bool { return tui.IsTerminal(file) }

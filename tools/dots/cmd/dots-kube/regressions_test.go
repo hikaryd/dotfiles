@@ -131,7 +131,7 @@ func TestMultiselectCanSubmitMarkedPodsHiddenBySearch(t *testing.T) {
 	terminal, capture, command := startUITest(t, env, "kpstage-logs-multi")
 	awaitScreen(t, capture, "choose pods")
 	uiStep(t, terminal, capture, "api ", "1 selected")
-	uiStep(t, terminal, capture, "\x0cnot-a-pod", "No matching resources")
+	uiStep(t, terminal, capture, "\x0cnot-a-pod", "Нет совпадений")
 	uiStep(t, terminal, capture, "\r", "log fixture")
 	data, _ := os.ReadFile(calls)
 	if !strings.Contains(string(data), "pod/api-one") || strings.Contains(string(data), "pod/worker-two") {

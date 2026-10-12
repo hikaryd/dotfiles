@@ -9,6 +9,8 @@ import (
 	"strconv"
 	"strings"
 	"unicode"
+
+	"dots/native/internal/tui"
 )
 
 type object = map[string]any
@@ -207,10 +209,9 @@ func (c *controller) saveServers(servers []object) error {
 	return nil
 }
 func (c *controller) setSingle() error {
-	fmt.Fprintln(c.out, "Paste your full vless:// config URL:")
-	link, err := c.prompt("> ")
+	link, err := c.prompt("VLESS config URL")
 	if err != nil {
-		return errors.New("Invalid VLESS URL. It must start with vless://")
+		return err
 	}
 	s, err := parseVLESS(link)
 	if err != nil {
@@ -241,9 +242,11 @@ func (c *controller) subscription() (string, error) {
 	if !errors.Is(err, os.ErrNotExist) {
 		return "", errors.New("Could not read subscription URL.")
 	}
-	fmt.Fprintln(c.out, "First run — enter your VLESS subscription URL:\nIf you have only one VLESS config, use: codex-proxy --set-vless")
-	s, err = c.prompt("> ")
-	if err != nil || s == "" {
+	s, err = c.prompt("VLESS subscription URL")
+	if err != nil {
+		return "", err
+	}
+	if s == "" {
 		return "", errors.New("URL cannot be empty.")
 	}
 	return s, c.saveSubscription(s)
@@ -332,6 +335,17 @@ func (c *controller) selectAndStart() error {
 	}
 	if len(servers) == 0 {
 		return errors.New("No servers found. Use codex-proxy --set-vless or codex-proxy --set-sub.")
+	}
+	if c.interactive() {
+		rows := make([]string, len(servers))
+		for i, server := range servers {
+			rows[i] = fmt.Sprintf("%s\t%s\t%s\t%s\t%s", tui.Clean(value(server, "name", "")), tui.Clean(value(server, "address", "")), tui.Clean(value(server, "port", "")), tui.Clean(value(server, "type", "")), tui.Clean(value(server, "security", "")))
+		}
+		selected, err := tui.Select(c.ctx, tui.Frame{Brand: "dots proxy", Title: "Выбор сервера", Mode: "LOCAL CONFIG", Tone: tui.Yellow}, rows, "", false)
+		if err != nil {
+			return err
+		}
+		return c.start(servers[selected[0]])
 	}
 	c.display(servers)
 	fmt.Fprintf(c.out, "\nSelect server (1-%d):\n", len(servers))

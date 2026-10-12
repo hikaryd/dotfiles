@@ -7,7 +7,7 @@ import (
 	"sort"
 	"strings"
 
-	"dots/native/internal/kube/tui"
+	"dots/native/internal/tui"
 )
 
 func dedent(input string) string {
@@ -46,7 +46,7 @@ func (s *session) exec(args []string) error {
 			rows = append(rows, resourceName(item))
 		}
 		sort.Strings(rows)
-		selected, err := s.choose(rows, "choose where to execute", "", false, false)
+		selected, err := s.choose(rows, "choose where to execute", "", false)
 		if err != nil {
 			return err
 		}
@@ -71,7 +71,7 @@ func (s *session) exec(args []string) error {
 	if isTerminal(os.Stdin) {
 		return s.execute(os.Stdin, append([]string{"exec", "-it", target, "--"}, command...)...)
 	}
-	data, err := readInput(s.ctx, os.Stdin, false)
+	data, err := readInput(s.ctx, os.Stdin)
 	if err != nil {
 		return err
 	}
@@ -79,12 +79,12 @@ func (s *session) exec(args []string) error {
 	return s.execute(strings.NewReader(dedent(data)), append([]string{"exec", "-i", target, "--"}, command...)...)
 }
 func (s *session) execInteractive(target string) error {
-	selected, err := s.choose([]string{"bash\tinteractive shell", "python\tpaste multiline script · auto-dedent"}, target+" · what to execute", "", false, false)
+	selected, err := s.choose([]string{"bash\tinteractive shell", "python\tpaste multiline script · auto-dedent"}, target+" · what to execute", "", false)
 	if err != nil {
 		return err
 	}
 	mode := firstColumn(selected[0])
-	selected, err = s.choose([]string{"default\tcontainer WORKDIR", "..\tparent of container WORKDIR", "../..\ttwo levels above container WORKDIR", "custom\tenter a path"}, target+" · working directory", "", false, false)
+	selected, err = s.choose([]string{"default\tcontainer WORKDIR", "..\tparent of container WORKDIR", "../..\ttwo levels above container WORKDIR", "custom\tenter a path"}, target+" · working directory", "", false)
 	if err != nil {
 		return err
 	}
@@ -109,12 +109,6 @@ func (s *session) execInteractive(target string) error {
 		return s.execute(os.Stdin, append([]string{"exec", "-it", target, "--"}, command...)...)
 	}
 	script, err := tui.Editor(s.ctx, s.frame("Python in "+target))
-	if errors.Is(err, tui.ErrNoTerminal) {
-		cmd := s.process("gum", "write", "--height="+s.value("KUBE_EXEC_EDITOR_HEIGHT", "18"), "--header=Python in "+target, "--show-line-numbers", "--show-help", "--cursor.foreground=#73d0ff")
-		cmd.Stderr = os.Stderr
-		data, writeErr := cmd.Output()
-		script, err = string(data), writeErr
-	}
 	if err != nil {
 		return err
 	}

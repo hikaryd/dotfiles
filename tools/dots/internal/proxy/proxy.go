@@ -3,14 +3,19 @@ package proxy
 
 import (
 	"bufio"
+	"context"
 	"errors"
 	"fmt"
 	"io"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"strconv"
 	"strings"
+	"syscall"
 	"unicode/utf8"
+
+	"dots/native/internal/tui"
 )
 
 // Nebula's internal MCP endpoint must use the corporate network, not VLESS.
@@ -23,6 +28,7 @@ type controller struct {
 	port        int
 	in          *bufio.Reader
 	rawIn       io.Reader
+	ctx         context.Context
 	out, errOut io.Writer
 }
 
@@ -54,13 +60,18 @@ func run(_ string, args []string, in io.Reader, out, errOut io.Writer) int {
 		fmt.Fprintln(errOut, "CODEX_PROXY_PORT must be between 1 and 65535")
 		return 1
 	}
-	c := &controller{home: home, dir: filepath.Join(home, ".config", "xray-codex"), port: port, in: bufio.NewReader(in), rawIn: in, out: out, errOut: errOut}
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+	c := &controller{ctx: ctx, home: home, dir: filepath.Join(home, ".config", "xray-codex"), port: port, in: bufio.NewReader(in), rawIn: in, out: out, errOut: errOut}
 	if err = c.harden(); err != nil {
 		fmt.Fprintln(errOut, "codex-proxy: could not secure configuration")
 		return 1
 	}
 	code, err := c.dispatch(args[1:])
 	if err != nil {
+		if errors.Is(err, tui.ErrCanceled) || errors.Is(err, context.Canceled) {
+			return 130
+		}
 		fmt.Fprintln(errOut, err)
 		if code == 0 {
 			code = 1
@@ -140,7 +151,15 @@ func optionalText(path string) (string, error) {
 	}
 	return s, err
 }
+func (c *controller) interactive() bool {
+	file, ok := c.rawIn.(*os.File)
+	return ok && tui.IsTerminal(file)
+}
 func (c *controller) prompt(prompt string) (string, error) {
+	if c.interactive() {
+		return tui.SecretInput(c.ctx, tui.Frame{Brand: "dots proxy", Title: prompt, Mode: "LOCAL CONFIG", Tone: tui.Yellow, Intro: "Ввод скрыт. Esc — отмена; Ctrl+L — очистить."}, "")
+	}
+	// Keep the explicit stdin protocol for scripted provisioning.
 	fmt.Fprint(c.out, prompt)
 	s, err := c.in.ReadString('\n')
 	if errors.Is(err, io.EOF) && s != "" {
@@ -192,7 +211,7 @@ func (c *controller) dispatch(args []string) (int, error) {
 	case has("--set-sub"):
 		s, err := c.prompt("Enter subscription URL: ")
 		if err != nil {
-			return 1, errors.New("Subscription URL cannot be empty.")
+			return 1, err
 		}
 		if err := c.saveSubscription(s); err != nil {
 			return 1, err

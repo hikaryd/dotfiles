@@ -18,7 +18,7 @@ import (
 	"dots/native/internal/kube/deploywatch"
 	"dots/native/internal/kube/logwatch"
 	"dots/native/internal/kube/podanalyze"
-	"dots/native/internal/kube/tui"
+	"dots/native/internal/tui"
 )
 
 var Version = "0.1.0"
@@ -269,7 +269,7 @@ func (s *session) banner(namespace string) {
 	if tui.ColorEnabled(os.Stderr) {
 		width, _ := tui.Size(os.Stderr)
 		frame := s.frame("Kubernetes")
-		frame.Namespace = namespace
+		frame.Subtitle = "context: " + s.target.context + "   namespace: " + namespace
 		frame.Width = width
 		frame.Color = true
 		fmt.Fprint(os.Stderr, frame.Header())
@@ -291,52 +291,22 @@ func (s *session) confirm(action, namespace string) error {
 	if !isTerminal(os.Stdin) {
 		return errors.New("Aborted: interactive confirmation required (or deliberate KPROD_CONFIRMED=1)")
 	}
-	fmt.Fprint(os.Stderr, "Type 'yes' to proceed: ")
-	answer, err := readInput(s.ctx, os.Stdin, true)
-	if err != nil {
-		return err
-	}
-	if answer != "yes" {
-		return errors.New("Aborted")
-	}
-	return nil
+	frame := s.frame("Подтверждение prod-действия")
+	frame.Mode, frame.Tone = "ACTION", tui.Red
+	frame.Subtitle = "context: " + s.target.context + "   namespace: " + namespace
+	frame.Intro = "Изменение кластера: " + action + "\nEnter без yes не подтверждает действие."
+	return tui.Confirm(s.ctx, frame)
 }
 
-// Read terminal prompts one byte at a time so confirmation cannot consume the
-// following exec input. Cancellation must also work while stdin stays open.
-func readInput(ctx context.Context, input io.Reader, lineOnly bool) (string, error) {
+// Piped exec input remains raw data, not a UI prompt. Cancellation does not wait
+// for a producer to close stdin.
+func readInput(ctx context.Context, input io.Reader) (string, error) {
 	type result struct {
 		text string
 		err  error
 	}
 	done := make(chan result, 1)
-	go func() {
-		if !lineOnly {
-			data, err := io.ReadAll(input)
-			done <- result{string(data), err}
-			return
-		}
-		var text strings.Builder
-		var b [1]byte
-		for {
-			n, err := input.Read(b[:])
-			if n > 0 {
-				if b[0] == '\n' {
-					done <- result{text.String(), nil}
-					return
-				}
-				text.WriteByte(b[0])
-			}
-			if err != nil {
-				done <- result{"", err}
-				return
-			}
-			if text.Len() > 65536 {
-				done <- result{"", errors.New("Input line is too long")}
-				return
-			}
-		}
-	}()
+	go func() { data, err := io.ReadAll(input); done <- result{string(data), err} }()
 	select {
 	case value := <-done:
 		return value.text, value.err

@@ -1,8 +1,8 @@
 package desktop
 
 import (
-	"bufio"
 	"bytes"
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -11,12 +11,16 @@ import (
 	"math"
 	"math/big"
 	"os"
+	"os/signal"
 	"regexp"
 	"strconv"
 	"strings"
+	"syscall"
 	"time"
 	"unicode"
 	"unicode/utf8"
+
+	"dots/native/internal/tui"
 )
 
 var clipModes = []string{"json", "compact", "base64", "jwt", "time", "redact"}
@@ -382,20 +386,13 @@ func preview(s string) string {
 	q := strconv.QuoteToASCII(string(r))
 	return q[1:len(q)-1] + suffix
 }
-func confirmClipboard() bool {
-	f, e := os.OpenFile("/dev/tty", os.O_WRONLY, 0)
-	if e != nil {
-		return false
-	}
-	fmt.Fprint(f, "Перезаписать clipboard? Введите yes: ")
-	f.Close()
-	f, e = os.Open("/dev/tty")
-	if e != nil {
-		return false
-	}
-	defer f.Close()
-	s, _ := bufio.NewReader(io.LimitReader(f, 64)).ReadString('\n')
-	return strings.TrimSpace(s) == "yes"
+func confirmClipboard(result string) bool {
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+	frame := desktopFrame("Перезаписать clipboard?")
+	frame.Mode, frame.Tone = "ACTION", tui.Yellow
+	frame.Intro = preview(result) + "\n\nЗапись только после явного yes; clipboard проверяется повторно."
+	return tui.Confirm(ctx, frame) == nil
 }
 func clipRun(args []string) int {
 	o, e := parse(args, "--stdout --write --stdin", "--keys")
@@ -420,7 +417,7 @@ func clipRun(args []string) int {
 		}
 	}
 	if mode == "" {
-		i, e := selectLine(clipModes, append([]string{"choose"}, clipModes...), []string{"--prompt=Clipboard transform > "}, false)
+		i, e := selectLine(clipModes, "Clipboard transform")
 		if e != nil {
 			return fail("dots clip", e)
 		}
@@ -463,8 +460,7 @@ func clipRun(args []string) int {
 		fmt.Fprintln(os.Stderr, "Redact: только указанные ключи; это не гарантия удаления всех секретов.")
 	}
 	if !o.flag("--write") {
-		fmt.Fprintln(os.Stderr, preview(result))
-		if !confirmClipboard() {
+		if !confirmClipboard(result) {
 			return 130
 		}
 	}

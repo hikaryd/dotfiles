@@ -148,7 +148,7 @@ func TestDoctorReadOnlyFixtureAndStrict(t *testing.T) {
 	f.write(filepath.Join(f.home, ".config/dots/ghostty-style.conf"), "# fixture", 0600)
 	f.registry()
 	f.write(filepath.Join(f.home, ".ssh/id_fixture"), "never-read-fixture-secret", 0600)
-	for _, name := range []string{"zsh", "git", "dots-tools", "tmux", "herdr", "sesh", "nvim", "fzf", "dots", "gum", "zoxide", "eza", "bat", "rg", "fd", "yazi", "lazygit", "atuin"} {
+	for _, name := range []string{"zsh", "git", "dots-tools", "tmux", "herdr", "sesh", "nvim", "dots", "zoxide", "eza", "bat", "rg", "fd", "yazi", "lazygit", "atuin"} {
 		f.fake(name, allRule("", 0))
 	}
 	out, err, code := f.run("", "doctor", "--json", "--strict")
@@ -166,7 +166,7 @@ func TestDoctorReadOnlyFixtureAndStrict(t *testing.T) {
 	if len(calls) != 1 || calls[0].Name != "zsh" || !reflect.DeepEqual(calls[0].Args, []string{"-f", "-n", filepath.Join(f.root, "config/zsh/.zshrc")}) {
 		t.Fatalf("doctor executed unsafe commands %+v", calls)
 	}
-	os.Remove(filepath.Join(f.bin, "gum"))
+	os.Remove(filepath.Join(f.bin, "sesh"))
 	_, _, code = f.run("", "doctor", "--strict")
 	if code != 1 {
 		t.Fatal("strict ignored missing optional command")

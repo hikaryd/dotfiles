@@ -5,17 +5,11 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"dots/native/internal/tui"
 )
 
-const (
-	ayuAccent  = "#73d0ff"
-	ayuText    = "#bfbdb6"
-	ayuMuted   = "#65758b"
-	ayuBorder  = "#273747"
-	ayuSuccess = "#95e6cb"
-	ayuWarning = "#e6b450"
-	menuKeys   = "↑/↓ выбор · Enter открыть · Esc отмена"
-)
+const menuKeys = "↑/↓ выбор · Enter открыть · Esc отмена"
 
 type menuAction struct {
 	key, group, description string
@@ -65,22 +59,8 @@ func menuContext() string {
 	return truncate(printable(filepath.Base(cwd)), 24)
 }
 
-func colorEnabled(output *os.File) bool {
-	_, noColor := os.LookupEnv("NO_COLOR")
-	return !noColor && os.Getenv("TERM") != "dumb" && isTerminal(output)
-}
-
-func ayu(s, hex string, enabled bool) string {
-	if !enabled {
-		return s
-	}
-	var r, g, b uint8
-	fmt.Sscanf(hex, "#%02x%02x%02x", &r, &g, &b)
-	return fmt.Sprintf("\x1b[38;2;%d;%d;%dm%s\x1b[0m", r, g, b, s)
-}
-
-func selectorHeader(title string) string {
-	return "dots · " + title + "\n" + menuKeys
+func desktopFrame(title string) tui.Frame {
+	return tui.Frame{Brand: "dots", Title: title, Mode: "LOCAL", Tone: tui.Green}
 }
 
 func menuRun(root string, args []string) int {
@@ -91,84 +71,35 @@ func menuRun(root string, args []string) int {
 	if !o.flag("--preview") {
 		return menu(root)
 	}
-	// A static context deliberately avoids reading private profile or live data.
-	color := !o.flag("--plain") && colorEnabled(os.Stdout)
-	fmt.Println(ayu(selectorHeader(menuTitle("preview")), ayuAccent, color))
-	fmt.Println(ayu("Поиск > команда или описание", ayuMuted, color))
+	frame := desktopFrame(menuTitle("preview"))
+	frame.Width, _ = tui.Size(os.Stdout)
+	frame.Color = !o.flag("--plain") && tui.ColorEnabled(os.Stdout)
+	var body strings.Builder
+	body.WriteString("Поиск › команда или описание\n\n")
 	group := ""
-	for i, c := range menuChoices() {
+	for i, choice := range menuChoices() {
 		if group != menuActions[i].group {
-			fmt.Println()
 			group = menuActions[i].group
+			body.WriteString("\n" + group + "\n")
 		}
-		fmt.Println("  " + ayu(c[0], ayuAccent, color) + ayu(" · "+c[1], ayuText, color))
+		body.WriteString("  " + choice[0] + " · " + choice[1] + "\n")
 	}
-	fmt.Println()
-	fmt.Println(ayu("Предпросмотр · действия не выполняются", ayuSuccess, color))
+	frame.Body, frame.Footer = body.String(), menuKeys+" · Предпросмотр · действия не выполняются"
+	fmt.Print(frame.Render())
 	return 0
 }
-
-// Selectors own the terminal UI; their stdout remains an undecorated selection.
-// Normalize choose to filter so clipboard and refs also start with search.
-func selectorArgs(gum, fzf []string, color bool) ([]string, []string) {
-	gum = append([]string{}, gum...)
-	fzf = append([]string{}, fzf...)
-	title := "Поиск"
-	for i := 0; i+1 < len(gum); i++ {
-		if has(gum[i], "--header", "--placeholder") {
-			title = gum[i+1]
-		}
-	}
-	if len(gum) > 0 && gum[0] == "choose" {
-		gum = []string{"filter", "--limit", "1", "--no-sort"}
-	}
-	// Replace only display flags; retain caller ordering and selection limits.
-	filtered := gum[:0]
-	for i := 0; i < len(gum); i++ {
-		if has(gum[i], "--header", "--placeholder") && i+1 < len(gum) {
-			i++
-			continue
-		}
-		filtered = append(filtered, gum[i])
-	}
-	gumHeader := "dots · " + title + "\n↑/↓ выбор · Enter открыть · Ctrl+C отмена (Esc ×2)"
-	gum = append(filtered, "--header", gumHeader, "--placeholder", "Поиск: команда или описание", "--padding", "0 1")
-	colors := []string{ayuAccent, ayuText, ayuSuccess, ayuMuted, ayuAccent, ayuAccent, ayuText}
-	for i, flag := range []string{"--indicator.foreground", "--text.foreground", "--match.foreground", "--placeholder.foreground", "--prompt.foreground", "--header.foreground", "--cursor-text.foreground"} {
-		value := colors[i]
-		if !color {
-			value = ""
-		}
-		gum = append(gum, flag, value)
-	}
-	fzf = append(fzf, "--layout=reverse", "--border=rounded", "--header", selectorHeader(title), "--bind", "ctrl-n:down,ctrl-p:up,esc:abort")
-	palette := "bw"
-	if color {
-		palette = strings.Join([]string{"fg:" + ayuText, "fg+:" + ayuText, "hl:" + ayuSuccess, "hl+:" + ayuSuccess, "border:" + ayuBorder, "header:" + ayuMuted, "prompt:" + ayuAccent, "pointer:" + ayuAccent, "marker:" + ayuSuccess, "info:" + ayuWarning}, ",")
-	}
-	return gum, append(fzf, "--color", palette)
-}
-
 func printMenuHelp() {
-	color := colorEnabled(os.Stdout)
-	fmt.Println(ayu("dots · Меню", ayuAccent, color))
-	fmt.Println("usage: dots menu [--preview [--plain]]")
-	fmt.Println("\nПоиск по команде или описанию; " + menuKeys)
-	fmt.Println("Ctrl+N/P — следующий / предыдущий пункт. Gum fallback: Ctrl+C / Esc ×2 — отмена.")
-	fmt.Println("\ndots menu --preview         показать меню без запуска действий")
-	fmt.Println("dots menu --preview --plain обычный текст без цвета")
+	frame := desktopFrame("Меню")
+	frame.Width, _ = tui.Size(os.Stdout)
+	frame.Color = tui.ColorEnabled(os.Stdout)
+	frame.Body = "usage: dots menu [--preview [--plain]]\n\nПоиск по команде или описанию; " + menuKeys + "\nCtrl+L — очистить поиск\n\ndots menu --preview         показать меню без запуска действий\ndots menu --preview --plain обычный текст без цвета"
+	fmt.Print(frame.Render())
 }
-
 func printHelp() {
-	color := colorEnabled(os.Stdout)
-	fmt.Println(ayu("dots · desktop", ayuAccent, color))
-	for _, line := range strings.Split(helpText, "\n") {
-		tone := ayuText
-		if line != "" && !strings.HasPrefix(line, " ") {
-			tone = ayuAccent
-		}
-		fmt.Println(ayu(line, tone, color))
-	}
+	frame := desktopFrame("desktop")
+	frame.Width, _ = tui.Size(os.Stdout)
+	frame.Color, frame.Body = tui.ColorEnabled(os.Stdout), helpText
+	fmt.Print(frame.Render())
 }
 
 const helpText = `
@@ -211,8 +142,7 @@ const helpText = `
 
 Клавиши
   Поиск по команде или описанию; ↑/↓ выбор
-  Enter открыть · Esc отмена; Ctrl+N/P — выбор
-  Gum fallback: Ctrl+C / Esc ×2 — отмена
+  Enter открыть · Esc/Ctrl+C отмена; Ctrl+L — очистить поиск
   zsh Ctrl+O — меню; Ctrl+R — история Atuin
   tmux/Herdr prefix = Ctrl+A: O меню, P проекты, T сессии
   F refs, Y clipboard, V status

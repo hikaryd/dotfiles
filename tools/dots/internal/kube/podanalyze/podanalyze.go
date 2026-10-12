@@ -21,7 +21,8 @@ import (
 	"syscall"
 	"time"
 
-	"dots/native/internal/kube/tui"
+	"dots/native/internal/kube/kubeui"
+	"dots/native/internal/tui"
 )
 
 const (
@@ -403,7 +404,9 @@ func present(cfg config, body string, live bool, painter *tui.Painter) {
 	if index := strings.IndexByte(body, '\n'); index >= 0 {
 		body = body[index+1:]
 	}
-	frame := tui.Frame{Title: "Pod analytics", Environment: cfg.environment, Context: cfg.context, Namespace: cfg.namespace, Mode: "READ ONLY", Width: width, Color: tui.ColorEnabled(os.Stdout), Body: body, Footer: "Updates every " + cfg.refresh.String() + " · Esc / q back · Ctrl+C cancel"}
+	frame := kubeui.Frame("Pod analytics", cfg.environment, cfg.context, cfg.namespace, "READ ONLY")
+	frame.Width, frame.Color, frame.Body = width, tui.ColorEnabled(os.Stdout), body
+	frame.Footer = "Updates every " + cfg.refresh.String() + " · Esc / q back · Ctrl+C cancel"
 	if live {
 		frame.Height = height
 		painter.Draw(frame)

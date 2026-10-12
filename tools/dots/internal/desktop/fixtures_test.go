@@ -13,6 +13,9 @@ import (
 	"strings"
 	"syscall"
 	"testing"
+	"time"
+
+	"dots/native/internal/tui"
 )
 
 type fakeRule struct {
@@ -22,6 +25,7 @@ type fakeRule struct {
 	Outputs []string
 	Stderr  string
 	Code    int
+	Block   bool
 }
 type fakeCall struct {
 	Name  string
@@ -38,7 +42,10 @@ func TestMain(m *testing.M) {
 			if json.Unmarshal(b, &rules) != nil {
 				os.Exit(98)
 			}
-			input, _ := io.ReadAll(io.LimitReader(os.Stdin, maxBytes+1))
+			var input []byte
+			if !tui.IsTerminal(os.Stdin) {
+				input, _ = io.ReadAll(io.LimitReader(os.Stdin, maxBytes+1))
+			}
 			call := fakeCall{Name: name, Args: os.Args[1:], Input: string(input), Env: map[string]string{"DOTS_ROOT": os.Getenv("DOTS_ROOT"), "DOTS_ZSH_BIN": os.Getenv("DOTS_ZSH_BIN"), "PATH": os.Getenv("PATH"), "GIT_OPTIONAL_LOCKS": os.Getenv("GIT_OPTIONAL_LOCKS"), "FZF_DEFAULT_OPTS": os.Getenv("FZF_DEFAULT_OPTS"), "FZF_DEFAULT_OPTS_FILE": os.Getenv("FZF_DEFAULT_OPTS_FILE")}}
 			f, e := os.OpenFile(filepath.Join(dir, "calls"), os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0600)
 			if e != nil {
@@ -59,6 +66,10 @@ func TestMain(m *testing.M) {
 						n, _ := strconv.Atoi(string(b))
 						out = r.Outputs[min(n, len(r.Outputs)-1)]
 						os.WriteFile(counter, []byte(strconv.Itoa(n+1)), 0600)
+					}
+					if r.Block {
+						os.WriteFile(filepath.Join(dir, "blocked-"+name), []byte("ready"), 0600)
+						time.Sleep(time.Minute)
 					}
 					fmt.Fprint(os.Stdout, out)
 					fmt.Fprint(os.Stderr, r.Stderr)

@@ -34,8 +34,17 @@ kpprod-deploy-watch api           # read-only dashboard
 kube-tools-help
 ```
 
-↑/↓ — выбор, Enter — открыть, Esc — отмена; в запасном gum — Ctrl+C или Esc ×2.
-`NO_COLOR` отключает цвета; `--json` даёт чистый вывод для скриптов.
+Все собственные интерактивные команды используют один native Go UI: ↑/↓ — выбор,
+ввод — поиск, Ctrl+L — очистить, Enter — открыть, Esc/Ctrl+C — отмена.
+Это относится и к tmux/sesh, gtab и `zi`: shell-обёртки вызывают `dots-tools ui`,
+а не внешние picker’ы. Clipboard, prod-действия и uninstall требуют явного `yes`;
+пустой Enter ничего не подтверждает. Пароли и URI подписок вводятся скрыто.
+`dots status --interactive`: r/Enter — обновить, o — открыть, ↑↓/PgUp/PgDn — прокрутка,
+Esc/q — выход, в том числе во время сбора снимка.
+`NO_COLOR` отключает цвета; `--json` и pipe/export сохраняют обычный вывод.
+Без терминала Kubernetes picker требует явный однозначный запрос, а не угадывает ресурс.
+`fzf` оставлен для стороннего shell completion и стандартных Ctrl+T/Alt+C;
+собственные меню от него не зависят.
 [VPS и роутер](vpn/README.md) настраиваются отдельно, не обычным `./install`.
 
 ## Kubernetes: один переносимый бинарник

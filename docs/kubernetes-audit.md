@@ -50,7 +50,7 @@ Ctrl+O и в Select, и в Input возвращает `ErrAction`; служеб�
 | Prod | Mutating workflows and plain kubectl commands fail closed without explicit confirmation |
 | Distribution | Standalone help/config/preview/version без repo/Go/gum; command installation/collisions; four release targets |
 
-Native exec/scale/jobs дополнительно пройдены через PTY; это не только тесты gum.
+Native exec/scale/jobs дополнительно пройдены через PTY. Старые gum fallback и fake-picker тесты удалены; общий UI теперь в `internal/tui`.
 Старый источник ложной уверенности исправлен: namespace fixtures теперь имеют
 **разные ответы для разных источников**. Проверка переключения смотрит свежий
 screen после действия и фактический KUBECONFIG, а не старый текст в capture.

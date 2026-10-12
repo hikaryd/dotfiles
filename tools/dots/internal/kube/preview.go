@@ -6,8 +6,9 @@ import (
 	"os"
 	"strings"
 
+	"dots/native/internal/kube/kubeui"
 	"dots/native/internal/kube/logwatch"
-	"dots/native/internal/kube/tui"
+	"dots/native/internal/tui"
 )
 
 func preview(args []string) error {
@@ -32,14 +33,15 @@ func preview(args []string) error {
 	}
 	_, noColor := os.LookupEnv("NO_COLOR")
 	color := !*plain && !noColor && (*forceColor || tui.ColorEnabled(os.Stdout))
-	frame := tui.Frame{Environment: "stage", Context: "dots-stage", Namespace: "example-app", Mode: "READ ONLY", Width: *width, Height: *height, Color: color, Footer: "↑↓ move · / search · Tab mark · Enter open · Esc back · Ctrl+C cancel"}
+	frame := kubeui.Frame("", "stage", "dots-stage", "example-app", "READ ONLY")
+	frame.Width, frame.Height, frame.Color = *width, *height, color
+	frame.Footer = "↑↓ move · type to search · Space/Tab mark · Enter open · Esc back"
 	switch screen {
 	case "setup":
 		frame.Title = "Настройка · 1/3 · Файлы"
 		frame.Mode = "LOCAL CONFIG"
-		frame.Environment = ""
-		frame.Context = ""
-		frame.Namespace = ""
+		frame.Targets = nil
+		frame.Subtitle = "Локальная настройка · без запросов к кластеру"
 		frame.Body = "Найдены ваши kubeconfig. Выберите один или несколько файлов.\nОкружения могут использовать разные файлы — объединять их не нужно.\nИсходные файлы и ключи не изменяются.\n\nПоиск › \n\n› ● stage.yaml     ~/.kube/config\n  ● prod.yaml      ~/.kube/config\n  ○ development.yaml ~/.kube/config\n\nCtrl+O — другая папка или файл"
 		frame.Footer = "Выбрано: 2 · Space отметить · Ctrl+A все · Enter дальше · Esc выйти"
 	case "selector":

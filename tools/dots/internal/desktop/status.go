@@ -1,16 +1,20 @@
 package desktop
 
 import (
-	"bufio"
+	"context"
 	"errors"
 	"fmt"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"sort"
 	"strconv"
 	"strings"
 	"sync"
+	"syscall"
 	"time"
+
+	"dots/native/internal/tui"
 )
 
 type gitState struct {
@@ -71,12 +75,12 @@ func parseGit(data string) (gitState, error) {
 	}
 	return g, nil
 }
-func statusCommand(args ...string) (commandResult, error) {
-	return captureCommand(5*time.Second, 16*maxBytes, "", envSet(os.Environ(), "GIT_OPTIONAL_LOCKS=0"), args...)
+func statusCommand(ctx context.Context, args ...string) (commandResult, error) {
+	return captureCommandContext(ctx, 5*time.Second, 16*maxBytes, "", envSet(os.Environ(), "GIT_OPTIONAL_LOCKS=0"), args...)
 }
-func gitStatus(path string) gitState {
+func gitStatus(ctx context.Context, path string) gitState {
 	unknown := func(msg string) gitState { return gitState{State: "unknown", Branch: "?", Error: msg} }
-	r, e := statusCommand("git", "-C", path, "config", "--null", "--get-regexp", `^filter\..*\.(clean|process)$`)
+	r, e := statusCommand(ctx, "git", "-C", path, "config", "--null", "--get-regexp", `^filter\..*\.(clean|process)$`)
 	if e != nil {
 		return unknown("git unavailable/timeout")
 	}
@@ -86,7 +90,7 @@ func gitStatus(path string) gitState {
 	for _, record := range strings.Split(r.out, "\x00") {
 		_, value, _ := strings.Cut(record, "\n")
 		if value != "" {
-			r, e = statusCommand("git", "-C", path, "symbolic-ref", "--short", "-q", "HEAD")
+			r, e = statusCommand(ctx, "git", "-C", path, "symbolic-ref", "--short", "-q", "HEAD")
 			if e != nil {
 				return unknown("git unavailable/timeout")
 			}
@@ -98,7 +102,7 @@ func gitStatus(path string) gitState {
 			return g
 		}
 	}
-	r, e = statusCommand("git", "--no-optional-locks", "-C", path, "-c", "core.fsmonitor=false", "status", "--porcelain=v1", "-z", "--branch", "--untracked-files=normal", "--ignore-submodules=dirty")
+	r, e = statusCommand(ctx, "git", "--no-optional-locks", "-C", path, "-c", "core.fsmonitor=false", "status", "--porcelain=v1", "-z", "--branch", "--untracked-files=normal", "--ignore-submodules=dirty")
 	if e != nil {
 		return unknown("git unavailable/timeout")
 	}
@@ -199,16 +203,16 @@ type portRow struct {
 	Via     string `json:"via"`
 }
 
-func localPorts(projects []project) (map[string][]portRow, []portRow, []string) {
+func localPorts(ctx context.Context, projects []project) (map[string][]portRow, []portRow, []string) {
 	warnings := []string{}
 	attributed := map[string][]portRow{}
 	unassigned := []portRow{}
-	r, e := statusCommand("ps", "-axo", "pid=,ppid=,comm=")
+	r, e := statusCommand(ctx, "ps", "-axo", "pid=,ppid=,comm=")
 	processes := parseProcesses(r.out)
 	if e != nil || r.code != 0 {
 		warnings = append(warnings, "Process ancestry unavailable")
 	}
-	r, e = statusCommand("lsof", "-nP", "-iTCP", "-sTCP:LISTEN", "-Fpcn0")
+	r, e = statusCommand(ctx, "lsof", "-nP", "-iTCP", "-sTCP:LISTEN", "-Fpcn0")
 	if e != nil {
 		return attributed, unassigned, append(warnings, "TCP listeners unavailable (lsof missing/timeout)")
 	}
@@ -227,7 +231,7 @@ func localPorts(projects []project) (map[string][]portRow, []portRow, []string) 
 		for _, pid := range pids {
 			parts = append(parts, strconv.Itoa(pid))
 		}
-		r, e = statusCommand("lsof", "-a", "-p", strings.Join(parts, ","), "-d", "cwd", "-Fpn0")
+		r, e = statusCommand(ctx, "lsof", "-a", "-p", strings.Join(parts, ","), "-d", "cwd", "-Fpn0")
 		if e != nil || r.code != 0 && r.code != 1 {
 			warnings = append(warnings, "Process cwd unavailable; ancestry attribution only")
 		}
@@ -242,7 +246,7 @@ func localPorts(projects []project) (map[string][]portRow, []portRow, []string) 
 	paneProjects := map[int]string{}
 	if inHerdr() {
 		for pane, id := range paneIDs {
-			r, e := herdrCall("pane.process_info", map[string]any{"pane_id": pane}, "pane", "process-info", "--pane", pane)
+			r, e := herdrCallContext(ctx, "pane.process_info", map[string]any{"pane_id": pane}, "pane", "process-info", "--pane", pane)
 			if e != nil {
 				warnings = append(warnings, "Herdr pane process attribution unavailable")
 				break
@@ -253,7 +257,7 @@ func localPorts(projects []project) (map[string][]portRow, []portRow, []string) 
 			}
 		}
 	} else {
-		r, e = statusCommand("tmux", "list-panes", "-a", "-F", "#{pane_id}\t#{pane_pid}")
+		r, e = statusCommand(ctx, "tmux", "list-panes", "-a", "-F", "#{pane_id}\t#{pane_pid}")
 		if e != nil {
 			warnings = append(warnings, "Pane process attribution unavailable")
 		}
@@ -311,12 +315,12 @@ type statusReport struct {
 	Warnings   []string        `json:"warnings"`
 }
 
-func collectStatus(all bool) (statusReport, error) {
-	ps, e := inventory(false)
+func collectStatus(ctx context.Context, all bool) (statusReport, error) {
+	ps, e := inventoryContext(ctx, false)
 	if e != nil {
 		return statusReport{}, e
 	}
-	ports, unassigned, warnings := localPorts(ps)
+	ports, unassigned, warnings := localPorts(ctx, ps)
 	report := statusReport{At: time.Now().UTC().Format("2006-01-02T15:04:05+00:00"), Projects: []statusProject{}, Known: len(ps), Unassigned: unassigned, Warnings: warnings}
 	for _, p := range ps {
 		if all || len(p.Panes) > 0 || len(ports[p.ID]) > 0 {
@@ -333,9 +337,13 @@ func collectStatus(all bool) (statusReport, error) {
 		wg.Add(1)
 		go func(i int) {
 			defer wg.Done()
-			sem <- struct{}{}
+			select {
+			case sem <- struct{}{}:
+			case <-ctx.Done():
+				return
+			}
 			defer func() { <-sem }()
-			report.Projects[i].Git = gitStatus(report.Projects[i].Path)
+			report.Projects[i].Git = gitStatus(ctx, report.Projects[i].Path)
 		}(i)
 	}
 	wg.Wait()
@@ -360,15 +368,16 @@ func gitSummary(g gitState) string {
 	}
 	return fmt.Sprintf("S%d M%d ?%d !%d", *g.Staged, *g.Unstaged, *g.Untracked, *g.Conflicts)
 }
-func renderStatus(r statusReport) {
-	fmt.Printf("PROJECTS · %s · %d/%d shown\n", r.At, len(r.Projects), r.Known)
-	fmt.Println("Opened panes / local listeners · one-shot snapshot, no network")
-	fmt.Printf("%-32s %-25s %-18s %-23s LISTEN\n", "PROJECT", "BRANCH", "GIT", "PROCESSES")
+func statusText(r statusReport) string {
+	var out strings.Builder
+	fmt.Fprintf(&out, "PROJECTS · %s · %d/%d shown\n", r.At, len(r.Projects), r.Known)
+	fmt.Fprintln(&out, "Opened panes / local listeners · one-shot snapshot, no network")
+	fmt.Fprintf(&out, "%s %s %s %s LISTEN\n", tui.Pad("PROJECT", 32), tui.Pad("BRANCH", 25), tui.Pad("GIT", 18), tui.Pad("PROCESSES", 23))
 	width := 120
 	if n, e := strconv.Atoi(os.Getenv("COLUMNS")); e == nil && n > 0 {
 		width = n
 	}
-	fmt.Println(strings.Repeat("─", min(width, 140)))
+	fmt.Fprintln(&out, strings.Repeat("─", min(width, 140)))
 	for _, p := range r.Projects {
 		counts := map[string]int{}
 		for _, pane := range p.Panes {
@@ -397,70 +406,170 @@ func renderStatus(r statusReport) {
 		if listen == "" {
 			listen = "—"
 		}
-		fmt.Printf("%-32s %-25s %-18s %-23s %s\n", truncate(printable(p.Name+" ["+p.ID[:4]+"]"), 32), truncate(printable(p.Git.Branch), 25), gitSummary(p.Git), truncate(proc, 23), printable(listen))
+		fmt.Fprintf(&out, "%s %s %s %s %s\n", tui.Pad(printable(p.Name+" ["+p.ID[:4]+"]"), 32), tui.Pad(printable(p.Git.Branch), 25), tui.Pad(gitSummary(p.Git), 18), tui.Pad(proc, 23), printable(listen))
 	}
 	if len(r.Projects) == 0 {
-		fmt.Println("Нет открытых проектов; --all покажет сохранённые worktree.")
+		fmt.Fprintln(&out, "Нет открытых проектов; --all покажет сохранённые worktree.")
 	}
-	fmt.Println("S staged · M unstaged · ? untracked entries · ! conflicts; unknown ≠ clean")
-	fmt.Printf("Unassigned TCP listeners: %d; LISTEN не доказывает готовность сервиса.\n", len(r.Unassigned))
+	fmt.Fprintln(&out, "S staged · M unstaged · ? untracked entries · ! conflicts; unknown ≠ clean")
+	fmt.Fprintf(&out, "Unassigned TCP listeners: %d; LISTEN не доказывает готовность сервиса.\n", len(r.Unassigned))
 	for _, w := range r.Warnings {
-		fmt.Println("WARN: " + w)
+		fmt.Fprintln(&out, "WARN: "+w)
 	}
 	for _, p := range r.Projects {
 		if p.Git.State == "unknown" {
-			fmt.Printf("WARN: %s: %s\n", printable(p.Name), printable(p.Git.Error))
+			fmt.Fprintf(&out, "WARN: %s: %s\n", printable(p.Name), printable(p.Git.Error))
 		}
 	}
+	return out.String()
 }
 func statusRun(args []string) int {
 	o, e := parse(args, "--all --json --interactive", "")
 	if e != nil || len(o.pos) > 0 || o.flag("--json") && o.flag("--interactive") || o.flag("--interactive") && !isTerminal(os.Stdin) {
 		return usageError("status")
 	}
-	reader := bufio.NewReader(os.Stdin)
+	if o.flag("--interactive") && isTerminal(os.Stdout) {
+		report, open, code := statusInteractive(o.flag("--all"))
+		if code != 0 || !open {
+			return code
+		}
+		labels := []string{}
+		for _, p := range report.Projects {
+			labels = append(labels, fmt.Sprintf("%s  %s  %s  %s", p.ID, printable(p.Name), printable(p.Git.Branch), gitSummary(p.Git)))
+		}
+		if len(labels) == 0 {
+			return 0
+		}
+		i, err := selectLine(labels, "Открыть проект")
+		if err != nil {
+			return fail("dots status", err)
+		}
+		if i >= 0 {
+			if err := openProject(report.Projects[i].ID); err != nil {
+				return fail("dots status", err)
+			}
+		}
+		return 0
+	}
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+	report, err := collectStatus(ctx, o.flag("--all"))
+	if err != nil {
+		return fail("dots status", errors.New("сбор снимка не удался; проверьте dots projects list и локальные tools."))
+	}
+	if o.flag("--json") {
+		return jsonExit(report, true)
+	}
+	fmt.Print(statusText(report))
+	return 0
+}
+
+// Keyboard is connected before collection. Refresh subprocesses share ctx and
+// cannot outlive cancellation; only presentation runs on the event-loop thread.
+func statusInteractive(all bool) (statusReport, bool, int) {
+	terminal, err := tui.Open()
+	if err != nil {
+		return statusReport{}, false, fail("dots status", err)
+	}
+	defer terminal.Close()
+	restore, err := tui.Raw(terminal)
+	if err != nil {
+		return statusReport{}, false, fail("dots status", err)
+	}
+	defer restore()
+	end := tui.Screen(terminal)
+	defer end()
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+	ctx, cancel := context.WithCancel(ctx)
+	var workers sync.WaitGroup
+	defer func() { cancel(); workers.Wait() }()
+	keys := tui.Keys(ctx, terminal)
+	painter := tui.NewPainter(terminal)
+	type result struct {
+		report statusReport
+		err    error
+	}
+	results := make(chan result, 1)
+	loading := false
+	refresh := func() {
+		if loading {
+			return
+		}
+		loading = true
+		workers.Add(1)
+		go func() {
+			defer workers.Done()
+			report, err := collectStatus(ctx, all)
+			select {
+			case results <- result{report, err}:
+			case <-ctx.Done():
+			}
+		}()
+	}
+	refresh()
+	report := statusReport{}
+	body, offset := "Сбор локального снимка…", 0
+	ticker := time.NewTicker(150 * time.Millisecond)
+	defer ticker.Stop()
 	for {
-		r, e := collectStatus(o.flag("--all"))
-		if e != nil {
-			return fail("dots status", errors.New("сбор снимка не удался; проверьте dots projects list и локальные tools."))
+		frame := desktopFrame("Project status")
+		frame.Mode = "READ ONLY"
+		frame.Width, frame.Height = tui.Size(terminal)
+		frame.Color = tui.ColorEnabled(terminal)
+		lines := strings.Split(body, "\n")
+		budget := max(1, frame.Height-5)
+		offset = min(max(0, offset), max(0, len(lines)-budget))
+		frame.Body = strings.Join(lines[offset:min(len(lines), offset+budget)], "\n")
+		frame.Footer = "r/Enter обновить · o открыть · ↑↓/PgUp/PgDn прокрутка · Esc/q выход"
+		if loading {
+			frame.Footer = "Сбор снимка… · Esc/q отмена"
 		}
-		if o.flag("--json") {
-			return jsonExit(r, true)
-		}
-		if o.flag("--interactive") && isTerminal(os.Stdout) {
-			fmt.Print("\x1b[2J\x1b[H")
-		}
-		renderStatus(r)
-		if !o.flag("--interactive") {
-			return 0
-		}
-		fmt.Print("[Enter/r] обновить · [o] открыть проект · [q] выход: ")
-		line, e := reader.ReadString('\n')
-		if e != nil {
-			return 0
-		}
-		choice := strings.ToLower(strings.TrimSpace(line))
-		if choice == "o" {
-			labels := []string{}
-			for _, p := range r.Projects {
-				labels = append(labels, fmt.Sprintf("%s  %s  %s  %s", p.ID, printable(p.Name), printable(p.Git.Branch), gitSummary(p.Git)))
+		painter.Draw(frame)
+		select {
+		case <-ctx.Done():
+			return report, false, 0
+		case <-ticker.C:
+		case result := <-results:
+			loading = false
+			if result.err != nil {
+				body = "Сбор снимка не удался; r — повторить."
+			} else {
+				report, body = result.report, statusText(result.report)
 			}
-			if len(labels) == 0 {
-				return 0
+		case key, ok := <-keys:
+			if !ok {
+				return report, false, 0
 			}
-			i, e := selectLine(labels, []string{"filter", "--placeholder", "Открыть проект", "--no-sort", "--limit", "1"}, []string{"--prompt", "Проект > ", "--no-multi"}, false)
-			if e != nil {
-				return fail("dots status", e)
-			}
-			if i >= 0 {
-				if e = openProject(r.Projects[i].ID); e != nil {
-					return fail("dots status", e)
+			switch key.Name {
+			case "esc", "ctrl-c", "ctrl-d":
+				return report, false, 0
+			case "up":
+				offset--
+			case "down":
+				offset++
+			case "page-up":
+				offset -= budget
+			case "page-down":
+				offset += budget
+			case "home":
+				offset = 0
+			case "end":
+				offset = len(lines)
+			case "enter":
+				refresh()
+			case "text":
+				switch key.Text {
+				case "q":
+					return report, false, 0
+				case "r":
+					refresh()
+				case "o":
+					if !loading {
+						return report, true, 0
+					}
 				}
 			}
-			return 0
-		}
-		if !has(choice, "", "r") {
-			return 0
 		}
 	}
 }

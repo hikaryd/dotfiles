@@ -54,7 +54,7 @@ func (s *session) analyze(filter string) error {
 		return err
 	}
 	sort.Slice(pods, func(i, j int) bool { return pods[i].Metadata.Name < pods[j].Metadata.Name })
-	selected, err := s.choose(podRows(pods), "pod analytics · choose one or more · READ ONLY", filter, true, false)
+	selected, err := s.choose(podRows(pods), "pod analytics · choose one or more · READ ONLY", filter, true)
 	if err != nil {
 		return err
 	}
@@ -133,7 +133,7 @@ func (s *session) deployWatch(filter string) error {
 	if len(group) > 1 {
 		rows = append([]string{fmt.Sprintf("group/configured-suite\tPrivate configured group (%d/%d workloads found)", len(group), len(configured))}, rows...)
 	}
-	selected, err := s.choose(rows, "deployment watch · READ ONLY", filter, false, false)
+	selected, err := s.choose(rows, "deployment watch · READ ONLY", filter, false)
 	if err != nil {
 		return err
 	}

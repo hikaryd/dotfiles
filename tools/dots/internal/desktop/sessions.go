@@ -366,7 +366,7 @@ func sessionsRun(args []string) int {
 			}
 			labels = append(labels, fmt.Sprintf("%s  [%s]  %s", s.Name, detail, ptrText(s.Path)))
 		}
-		selected, e = selectLine(labels, []string{"filter", "--limit", "1", "--no-sort", "--placeholder", "Session / workspace"}, []string{"--no-sort", "--prompt", "Session > "}, false)
+		selected, e = selectLine(labels, "Session / workspace")
 		if e != nil {
 			return fail("dots sessions", e)
 		}

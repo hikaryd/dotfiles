@@ -161,7 +161,6 @@ func TestConflictingContextDefinitionsFailClosed(t *testing.T) {
 func TestSetupRequiresExplicitApprovalWithoutATerminal(t *testing.T) {
 	f := newFixture(t)
 	original, _ := os.ReadFile(f.config)
-	f.fake("gum", anyCall("yes\n", 0))
 	_, diagnostic, status := f.run("yes\n", "setup", "stage", "--context", "unrelated", "--namespace", "changed", "--skip-aliases")
 	data, _ := os.ReadFile(f.config)
 	if status == 0 || string(data) != string(original) || len(f.calls()) != 0 || !strings.Contains(diagnostic, "--yes") {

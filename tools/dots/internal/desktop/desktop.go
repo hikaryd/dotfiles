@@ -87,22 +87,25 @@ func commandHelp(command string) int {
 	}
 	return usageError(command)
 }
-func pickMenu(title string, choices [][2]string) string {
+func pickMenu(title string, choices [][2]string) (string, error) {
 	lines := []string{}
 	for _, c := range choices {
 		lines = append(lines, c[0]+" · "+c[1])
 	}
-	i, e := selectLine(lines, []string{"filter", "--placeholder", title, "--no-sort", "--limit", "1"}, []string{"--prompt", "Поиск > ", "--no-sort", "--no-multi"}, true)
+	i, e := selectLine(lines, title)
 	if e != nil {
-		fmt.Fprintln(os.Stderr, "Для меню нужен gum или fzf.")
+		return "", e
 	}
 	if i < 0 {
-		return ""
+		return "", nil
 	}
-	return choices[i][0]
+	return choices[i][0], nil
 }
 func menu(root string) int {
-	choice := pickMenu(menuTitle(menuContext()), menuChoices())
+	choice, err := pickMenu(menuTitle(menuContext()), menuChoices())
+	if err != nil {
+		return fail("dots menu", err)
+	}
 	switch choice {
 	case "":
 		return 0
@@ -113,14 +116,20 @@ func menu(root string) int {
 			return Run(root, []string{"status", "--interactive"})
 		}
 	case "style":
-		style := pickMenu("Стиль", [][2]string{{"glass", "Текущее стекло"}, {"focus", "Без прозрачности и движения"}, {"presentation", "Крупнее, без путей в prompt"}})
+		style, err := pickMenu("Стиль", [][2]string{{"glass", "Текущее стекло"}, {"focus", "Без прозрачности и движения"}, {"presentation", "Крупнее, без путей в prompt"}})
+		if err != nil {
+			return fail("dots style", err)
+		}
 		if style == "" {
 			return 0
 		}
 		return Run(root, []string{"style", style})
 	case "config":
 		configs := [][2]string{{"zsh", "config/zsh/.zshrc"}, {"tmux", "config/tmux/tmux.conf"}, {"herdr", "config/herdr/config.toml"}, {"ghostty", "config/ghostty/config"}, {"nvim", "config/nvim/init.lua"}, {"sesh", "config/sesh/sesh.toml"}, {"atuin", "config/atuin/config.toml"}}
-		key := pickMenu("Редактировать конфиг", configs)
+		key, err := pickMenu("Редактировать конфиг", configs)
+		if err != nil {
+			return fail("dots config", err)
+		}
 		for _, c := range configs {
 			if key == c[0] {
 				return interactive("nvim", filepath.Join(root, c[1]))
@@ -131,11 +140,17 @@ func menu(root string) int {
 	return Run(root, []string{choice})
 }
 func kube(root string) int {
-	environment := pickMenu("Окружение Kubernetes", [][2]string{{"dev", "DEV"}, {"stage", "STAGE"}, {"preprod", "PREPROD"}, {"prod", "PROD · только чтение"}})
+	environment, err := pickMenu("Окружение Kubernetes", [][2]string{{"dev", "DEV"}, {"stage", "STAGE"}, {"preprod", "PREPROD"}, {"prod", "PROD · только чтение"}})
+	if err != nil {
+		return fail("dots kube", err)
+	}
 	if environment == "" {
 		return 0
 	}
-	action := pickMenu("Read-only действие", [][2]string{{"pods", "Список pod"}, {"logs", "Выбрать pod и открыть логи"}, {"watch", "Наблюдать workload"}, {"analyze", "CPU/RAM и состояние pod"}})
+	action, err := pickMenu("Read-only действие", [][2]string{{"pods", "Список pod"}, {"logs", "Выбрать pod и открыть логи"}, {"watch", "Наблюдать workload"}, {"analyze", "CPU/RAM и состояние pod"}})
+	if err != nil {
+		return fail("dots kube", err)
+	}
 	if action == "" {
 		return 0
 	}

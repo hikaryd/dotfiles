@@ -6,38 +6,16 @@
 # ╚══════════════════════════════════════════════════════════════════╝
 set -euo pipefail
 
-# ─── оформление ──────────────────────────────────────────────────────
-if [[ -t 1 ]]; then
-  B=$'\033[1m'; DIM=$'\033[2m'; R=$'\033[0m'
-  RED=$'\033[31m'; GRN=$'\033[32m'; YEL=$'\033[33m'; BLU=$'\033[34m'; CYA=$'\033[36m'
-else
-  B=''; DIM=''; R=''; RED=''; GRN=''; YEL=''; BLU=''; CYA=''
-fi
-step() { printf '\n%s━━ %s %s\n' "$BLU$B" "$*" "$R"; }
-ok()   { printf '   %s✓%s %s\n' "$GRN" "$R" "$*"; }
-warn() { printf '   %s!%s %s\n' "$YEL" "$R" "$*"; }
-die()  { printf '\n%s✗ %s%s\n' "$RED$B" "$*" "$R" >&2; exit 1; }
-ask()  { local p=$1 d=${2:-} a; if [[ -n $d ]]; then read -rp "   $p [$d]: " a; echo "${a:-$d}"; else read -rp "   $p: " a; echo "$a"; fi; }
-ask_secret() {
-  local a
-  read -rsp "   $1: " a || return
-  printf '\n' >&2
-  printf '%s\n' "$a"
-}
-
-banner() {
-  printf '%s' "$CYA$B"
-  cat <<'ART'
-   ┌────────────────────────────────────────────────┐
-   │   AmneziaWG · sing-box · split-VPN  installer    │
-   └────────────────────────────────────────────────┘
-ART
-  printf '%s' "$R"
-}
+SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+REPO_ROOT=$(cd "$SCRIPT_DIR/.." && pwd)
+NATIVE="$REPO_ROOT/build/bin/dots-tools"
+UI_BRAND="dots VPN"
+UI_MODE="ACTION"
+source "$REPO_ROOT/scripts/terminal-ui.sh"
 
 usage() {
   cat <<EOF
-${B}Использование:${R} ./install.sh [опции]
+Использование: ./install.sh [опции]
 
   --sub-url URL        Ссылка на подписку (vless://… список)        [обяз.]
   --vps TARGET         SSH к VPS, напр. root@203.0.113.10           [обяз.]
@@ -93,15 +71,14 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-banner
-SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
-REPO_ROOT=$(cd "$SCRIPT_DIR/.." && pwd)
-VPN_LOCAL="$REPO_ROOT/build/bin/dots-tools"
+[[ -x $NATIVE ]] || { printf 'Build native tools first: ./scripts/build-go-tools.sh\n' >&2; exit 1; }
+step "AmneziaWG · sing-box · split-VPN installer"
+VPN_LOCAL="$NATIVE"
 
 # ─── интерактивный доспрос ───────────────────────────────────────────
 [[ $SKIP_VPS -eq 1 && $SKIP_ROUTER -eq 1 ]] && die "нечего делать: --skip-vps и --skip-router одновременно"
 if [[ $SKIP_VPS -eq 0 ]]; then
-  [[ -z $SUB_URL ]] && SUB_URL=$(ask "Ссылка на подписку")
+  [[ -z $SUB_URL ]] && SUB_URL=$(ask_secret "Ссылка на подписку")
   [[ -z $SUB_URL ]] && die "Нужен --sub-url (или --skip-vps, если сервер уже развёрнут)"
 fi
 [[ -z $VPS ]] && VPS=$(ask "SSH к VPS (root@IP)")
@@ -165,9 +142,9 @@ if [[ $SKIP_ROUTER -eq 0 ]]; then
   ok "роутер опознан: $ROUTER_NAME"
 fi
 
-printf '\n%s   подписка:%s %s…\n' "$DIM" "$R" "${SUB_URL:0:42}"
-printf '%s   VPS:%s %s   %sтуннель:%s %s (srv %s, cli %s)\n' "$DIM" "$R" "$SERVER_HOST" "$DIM" "$R" "$TUN_CIDR" "$TUN_SRV" "$TUN_CLI"
-printf '%s   AWG-порт:%s %s   %sMTU:%s %s   %sadblock:%s %s\n' "$DIM" "$R" "$AWG_PORT" "$DIM" "$R" "$MTU" "$DIM" "$R" "$([[ $ADBLOCK == 1 ]] && echo вкл || echo выкл)"
+ui_message info "Подписка: [скрыта]"
+ui_message info "VPS: $SERVER_HOST · туннель: $TUN_CIDR (srv $TUN_SRV, cli $TUN_CLI)"
+ui_message info "AWG-порт: $AWG_PORT · MTU: $MTU · adblock: $([[ $ADBLOCK == 1 ]] && echo вкл || echo выкл)"
 
 # ─── VPS ─────────────────────────────────────────────────────────────
 VARS_FILE=$(mktemp)
@@ -271,21 +248,21 @@ else
   warn "панель пока не отвечает (проверь позже)"
 fi
 EXIT_IP=$(curl --noproxy '*' -s -m 10 https://api.ipify.org 2>/dev/null || true)
-[[ -n $EXIT_IP ]] && printf '   %sтекущий выходной IP:%s %s\n' "$DIM" "$R" "$EXIT_IP"
+[[ -n $EXIT_IP ]] && ui_message info "Текущий выходной IP: $EXIT_IP"
 
 # ─── итог ────────────────────────────────────────────────────────────
 step "Готово"
 cat <<EOF
-   ${GRN}${B}Стек развёрнут.${R}
+   Стек развёрнут.
 
-   ${B}Панель sing-box:${R}  http://$TUN_SRV:$CLASH_PORT/ui/
-   ${B}Пароль панели:${R}    $PANEL_SECRET
-   ${B}Туннель:${R}          $SERVER_HOST:$AWG_PORT  (AmneziaWG, $TUN_CIDR)
-   ${B}Роутер:${R}           $([[ $SKIP_ROUTER == 0 ]] && echo "$ROUTER_NAME → $TUN_CLI (реестр пиров: peer-register.sh list на VPS)" || echo "пропущен (--skip-router)")
-   ${B}Маршрутизация:${R}    РФ напрямую · остальное → VPN · adblock $([[ $ADBLOCK == 1 ]] && echo вкл || echo выкл)
-   ${B}Клиенты LAN:${R}      $([[ $SKIP_ROUTER == 0 ]] && echo "$ROUTER_LAN_INTERFACE → AWG_LAN → только WG (HTTP RCI)" || echo "настройка пропущена")
-   ${B}Failover:${R}         роутер → WAN; для LAN-политики AWG_LAN WAN не разрешён
+   Панель sing-box:  http://$TUN_SRV:$CLASH_PORT/ui/
+   Пароль панели:    $PANEL_SECRET
+   Туннель:          $SERVER_HOST:$AWG_PORT  (AmneziaWG, $TUN_CIDR)
+   Роутер:           $([[ $SKIP_ROUTER == 0 ]] && echo "$ROUTER_NAME → $TUN_CLI (реестр пиров: peer-register.sh list на VPS)" || echo "пропущен (--skip-router)")
+   Маршрутизация:    РФ напрямую · остальное → VPN · adblock $([[ $ADBLOCK == 1 ]] && echo вкл || echo выкл)
+   Клиенты LAN:      $([[ $SKIP_ROUTER == 0 ]] && echo "$ROUTER_LAN_INTERFACE → AWG_LAN → только WG (HTTP RCI)" || echo "настройка пропущена")
+   Failover:         роутер → WAN; для LAN-политики AWG_LAN WAN не разрешён
 
-   ${DIM}Подписка обновляется сама (таймер 6ч). На устройствах обнови
-   аренду DHCP (переподключи Wi-Fi), чтобы получить чистый DNS.${R}
+   Подписка обновляется сама (таймер 6ч). На устройствах обнови
+   аренду DHCP (переподключи Wi-Fi), чтобы получить чистый DNS.
 EOF

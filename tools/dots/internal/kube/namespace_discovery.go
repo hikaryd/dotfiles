@@ -13,7 +13,7 @@ import (
 	"strings"
 	"time"
 
-	"dots/native/internal/kube/tui"
+	"dots/native/internal/tui"
 )
 
 // Discovery uses the explicitly selected context/source, not the global current
@@ -76,8 +76,7 @@ func (s *session) namespacePicker(choice setupContext, current string) (string, 
 	}
 	frame := s.setupFrame(strings.ToUpper(s.target.environment)+" · Namespace из кластера", "Файл: "+s.displayPath(choice.entry.origin.path)+"\nContext: "+choice.entry.Name+" · cluster: "+choice.entry.Context.Cluster+"\nСписок получен из этого подключения. Выберите пространство имён приложения.\nКластер не изменяется. Выбор сохранится только после подтверждения.")
 	frame.Mode = "READ ONLY"
-	frame.Context = choice.entry.Name
-	frame.Namespace = current
+	frame.Subtitle = "context: " + choice.entry.Name + "   namespace: " + current
 	frame.Footer = "↑↓ — выбор · ввод — поиск · Ctrl+L — очистить · Enter — выбрать · Esc — назад"
 	selected, err := tui.Select(s.ctx, frame, rows, "", false)
 	if err != nil {

@@ -18,9 +18,10 @@ import (
 	"sync"
 	"syscall"
 	"time"
-
-	"dots/native/internal/kube/tui"
 	"unicode/utf8"
+
+	"dots/native/internal/kube/kubeui"
+	"dots/native/internal/tui"
 )
 
 const (
@@ -926,7 +927,9 @@ func (d *dashboard) render() {
 		renderLogTail(&out, d.logs, logRows, d.width)
 	}
 
-	frame := tui.Frame{Title: "Deployment watch", Environment: d.cfg.environment, Context: d.cfg.context, Namespace: d.cfg.namespace, Mode: "READ ONLY", Width: d.width, Height: d.height, Color: tui.ColorEnabled(os.Stdout), Body: out.String(), Footer: "Updates every " + d.cfg.refresh.String() + " · Esc / q back · Ctrl+C cancel"}
+	frame := kubeui.Frame("Deployment watch", d.cfg.environment, d.cfg.context, d.cfg.namespace, "READ ONLY")
+	frame.Width, frame.Height, frame.Color = d.width, d.height, tui.ColorEnabled(os.Stdout)
+	frame.Body, frame.Footer = out.String(), "Updates every "+d.cfg.refresh.String()+" · Esc / q back · Ctrl+C cancel"
 	if d.cfg.once {
 		fmt.Print(frame.Render())
 	} else {
@@ -1060,7 +1063,7 @@ func fit(value string, width int) string {
 }
 
 func bold(value string) string {
-	return "\x1b[1m" + value + "\x1b[22m"
+	return tui.Bold + value + tui.Unbold
 }
 
 func oneLine(value string) string {

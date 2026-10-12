@@ -83,22 +83,6 @@ func TestClipboardABACountAndSameCountContent(t *testing.T) {
 		}
 	}
 }
-func TestPickerWhitelistAndCancellation(t *testing.T) {
-	for _, out := range []string{"evil · run\n", "projects · Рабочие пространства; rm\n", ""} {
-		f := newFixture(t)
-		f.fake("gum", allRule(out, 0))
-		_, _, code := f.run("", "menu")
-		if code != 0 || len(f.calls()) != 1 {
-			t.Fatalf("menu did not cancel: %d %+v", code, f.calls())
-		}
-	}
-	f := newFixture(t)
-	f.fake("gum", allRule("not-a-mode", 0))
-	_, _, code := f.run("", "clip")
-	if code != 130 {
-		t.Fatalf("clip cancellation %d", code)
-	}
-}
 func TestPortsExitAndArgv(t *testing.T) {
 	for _, status := range []int{0, 1, 3} {
 		f := newFixture(t)
@@ -229,40 +213,12 @@ func TestClipboardConfirmationWithoutTerminalCancels(t *testing.T) {
 	f.fake("pbpaste", allRule(`{"fixture":"hello\nworld"}`, 0))
 	f.fake("pbcopy", allRule("", 0))
 	out, err, code := f.run("", "clip", "json")
-	if code != 130 || out != "" || !strings.Contains(err, `\n`) {
+	if code != 130 || out != "" || err != "" {
 		t.Fatalf("confirmation %d %q %q", code, out, err)
 	}
 	for _, c := range f.calls() {
 		if c.Name == "pbcopy" {
 			t.Fatal("clipboard written without confirmation")
 		}
-	}
-}
-func TestKubeWhitelistArgv(t *testing.T) {
-	f := newFixture(t)
-	f.fake("gum", fakeRule{Args: []string{}, Prefix: true, Outputs: []string{"prod · PROD · только чтение\n", "pods · Список pod\n"}})
-	f.fake("dots-tools", allRule("", 0))
-	_, err, code := f.run("", "kube")
-	if code != 0 {
-		t.Fatal(err)
-	}
-	calls := f.calls()
-	last := calls[len(calls)-1]
-	if last.Name != "dots-tools" || !reflect.DeepEqual(last.Args, []string{"kube", "kpprod", "get", "pods"}) {
-		t.Fatalf("kube argv %+v", last)
-	}
-}
-func TestMenuConfigUsesKnownPath(t *testing.T) {
-	f := newFixture(t)
-	f.fake("gum", fakeRule{Args: []string{}, Prefix: true, Outputs: []string{"config · Настройка / Открыть конфиг\n", "herdr · config/herdr/config.toml\n"}})
-	f.fake("nvim", allRule("", 0))
-	_, err, code := f.run("", "menu")
-	if code != 0 {
-		t.Fatal(err)
-	}
-	calls := f.calls()
-	last := calls[len(calls)-1]
-	if last.Name != "nvim" || !reflect.DeepEqual(last.Args, []string{filepath.Join(f.root, "config/herdr/config.toml")}) {
-		t.Fatalf("menu argv %+v", last)
 	}
 }

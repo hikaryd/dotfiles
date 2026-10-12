@@ -10,7 +10,7 @@ import (
 	"sort"
 	"strings"
 
-	"dots/native/internal/kube/tui"
+	"dots/native/internal/tui"
 	"gopkg.in/yaml.v3"
 )
 
@@ -156,7 +156,7 @@ func (s *session) setup(args []string) error {
 				rows = append(rows, row)
 				rowContexts[row] = item.Name
 			}
-			choice, err := s.choose(rows, "Setup · choose source context", "", false, true)
+			choice, err := s.choose(rows, "Setup · choose source context", "", false)
 			if err != nil {
 				return err
 			}

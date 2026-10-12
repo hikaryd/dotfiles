@@ -17,17 +17,18 @@ import (
 	"sync"
 	"syscall"
 	"time"
-
-	"dots/native/internal/kube/tui"
-	"github.com/mattn/go-runewidth"
 	"unicode"
+
+	"dots/native/internal/kube/kubeui"
+	"dots/native/internal/tui"
+	"github.com/mattn/go-runewidth"
 )
 
 const (
 	colorReset     = tui.Reset
 	colorDim       = tui.Dim
 	colorRed       = tui.Red
-	colorDimRed    = "\x1b[2m" + tui.Red
+	colorDimRed    = tui.Faint + tui.Red
 	colorGreen     = tui.Green
 	colorYellow    = tui.Yellow
 	colorBlue      = tui.Accent
@@ -569,7 +570,10 @@ func (v *viewer) frame(color bool) tui.Frame {
 	if len(v.cfg.pods) == 1 {
 		title = "Pod logs · " + v.cfg.pods[0]
 	}
-	return tui.Frame{Title: title, Environment: v.cfg.environment, Context: v.cfg.context, Namespace: v.cfg.namespace, Mode: "READ ONLY", Width: v.width, Height: v.height, Color: color, Body: out.String(), Footer: help}
+	frame := kubeui.Frame(title, v.cfg.environment, v.cfg.context, v.cfg.namespace, "READ ONLY")
+	frame.Width, frame.Height, frame.Color = v.width, v.height, color
+	frame.Body, frame.Footer = out.String(), help
+	return frame
 }
 
 func (v *viewer) renderList(out *strings.Builder, visible []logLine, rows int, terms []string) {

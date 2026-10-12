@@ -14,6 +14,7 @@ import (
 	"dots/native/internal/palette"
 	"dots/native/internal/proxy"
 	"dots/native/internal/setup"
+	"dots/native/internal/uicli"
 	"dots/native/internal/vpn"
 )
 
@@ -44,8 +45,8 @@ func dispatch(root, name string, args []string) int {
 		return desktop.Run(root, args)
 	case "dots-nu":
 		return desktop.Run(root, append([]string{"nu"}, args...))
- case "dots-kube":
-  return kube.Run(args)
+	case "dots-kube":
+		return kube.Run(args)
 	case "ai_helper":
 		return agents.Run(root, append([]string{"ai"}, args...))
 	case "dots-vpn":
@@ -56,11 +57,13 @@ func dispatch(root, name string, args []string) int {
 		return agents.Run(root, append([]string{"task-titles"}, args...))
 	}
 	if len(args) == 0 || args[0] == "-h" || args[0] == "--help" || args[0] == "help" {
-		fmt.Println("Usage: dots-tools desktop|setup|codexconfig|agents|proxy|palette|vpn|kube <command> [args]")
+		fmt.Println("Usage: dots-tools desktop|setup|codexconfig|agents|proxy|palette|vpn|kube|ui <command> [args]")
 		fmt.Println("Aliases: dots, dots-nu, ai_helper, dots-vpn, dots-task-titles")
 		return 0
 	}
 	switch args[0] {
+	case "ui":
+		return uicli.Run(args[1:])
 	case "desktop":
 		return desktop.Run(root, args[1:])
 	case "setup":

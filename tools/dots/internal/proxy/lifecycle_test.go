@@ -17,6 +17,9 @@ import (
 )
 
 func TestMain(m *testing.M) {
+	if os.Getenv("DOTS_PROXY_CLI") == "1" {
+		os.Exit(Run("", os.Args[1:]))
+	}
 	if fixture := os.Getenv("DOTS_PROXY_TEST_FIXTURE"); fixture != "" {
 		switch filepath.Base(os.Args[0]) {
 		case "xray":

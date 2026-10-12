@@ -8,7 +8,8 @@ import (
 	"os/exec"
 	"strings"
 
-	"dots/native/internal/kube/tui"
+	"dots/native/internal/kube/kubeui"
+	"dots/native/internal/tui"
 )
 
 type environmentReport struct {
@@ -145,5 +146,8 @@ func (s *session) printConfiguration(state configurationReport, doctor bool) {
 	if knownEnvironment(s.target.environment) {
 		title = "Подключение · " + strings.ToUpper(s.target.environment)
 	}
-	fmt.Print((tui.Frame{Title: title, Mode: "LOCAL CONFIG", Width: width, Color: color, Body: body.String(), Footer: "Изменить: dots-kube setup · проверить: dots-kube doctor · JSON: config --json"}).Render())
+	frame := kubeui.Frame(title, "", "", "", "LOCAL CONFIG")
+	frame.Width, frame.Color, frame.Body = width, color, body.String()
+	frame.Footer = "Изменить: dots-kube setup · проверить: dots-kube doctor · JSON: config --json"
+	fmt.Print(frame.Render())
 }

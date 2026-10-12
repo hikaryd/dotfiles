@@ -111,7 +111,7 @@ func Select(ctx context.Context, frame Frame, rows []string, query string, multi
 		}
 		fmt.Fprintf(&body, "Поиск › %s\n\n", Clean(query))
 		if len(visible) == 0 {
-			body.WriteString(Paint("No matching resources. Change the search text.", Dim, ColorEnabled(terminal)) + "\n")
+			body.WriteString(Paint("Нет совпадений. Измените поиск.", Dim, ColorEnabled(terminal)) + "\n")
 		}
 		for pos := start; pos < end; pos++ {
 			index := visible[pos]
@@ -261,6 +261,15 @@ func Select(ctx context.Context, frame Frame, rows []string, query string, multi
 	}
 }
 func Input(ctx context.Context, frame Frame, value string) (string, error) {
+	return input(ctx, frame, value, false)
+}
+
+// SecretInput never renders the value, including initial values and pasted text.
+func SecretInput(ctx context.Context, frame Frame, value string) (string, error) {
+	return input(ctx, frame, value, true)
+}
+
+func input(ctx context.Context, frame Frame, value string, secret bool) (string, error) {
 	terminal, err := Open()
 	if err != nil {
 		return "", err
@@ -282,10 +291,16 @@ func Input(ctx context.Context, frame Frame, value string) (string, error) {
 	for {
 		width, height := Size(terminal)
 		frame.Width, frame.Height, frame.Color = width, height, ColorEnabled(terminal)
-		frame.Body = runewidth.Wrap(CleanText(frame.Intro), max(1, width-1)) + "\n\n" + Clean(frame.Prompt) + " › " + Clean(value) + "█\n"
-		if frame.Prompt == "" {
-			frame.Body = runewidth.Wrap(CleanText(frame.Intro), max(1, width-1)) + "\n\n› " + Clean(value) + "█\n"
+		display := Clean(value)
+		if secret {
+			display = strings.Repeat("•", len([]rune(value)))
 		}
+		intro := strings.Split(runewidth.Wrap(CleanText(frame.Intro), max(1, width-1)), "\n")
+		budget := max(0, height-8)
+		if len(intro) > budget {
+			intro = append(intro[:max(0, budget-1)], "… описание сокращено")
+		}
+		frame.Body = strings.Join(intro, "\n") + "\n\n" + Clean(frame.Prompt) + " › " + Clip(display, max(1, width-Width(frame.Prompt)-5)) + "█\n"
 		if frame.Action != "" {
 			frame.Body += "\n" + frame.Action + "\n"
 		}

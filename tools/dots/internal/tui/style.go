@@ -1,9 +1,8 @@
-// Package tui owns the shared Ayu presentation and terminal lifecycle of the
-// Kubernetes tools. Its renderers are pure; raw terminal state is always restored.
+// Package tui owns the shared Ayu presentation and terminal lifecycle of dots
+// tools. Its renderers are pure; raw terminal state is always restored.
 package tui
 
 import (
-	"fmt"
 	"os"
 	"regexp"
 	"strings"
@@ -16,6 +15,8 @@ import (
 const (
 	Reset     = "\x1b[0m"
 	Bold      = "\x1b[1m"
+	Faint     = "\x1b[2m"
+	Unbold    = "\x1b[22m"
 	Dim       = "\x1b[38;2;101;117;139m"
 	Text      = "\x1b[38;2;191;189;182m"
 	Accent    = "\x1b[38;2;115;208;255m"
@@ -82,10 +83,11 @@ func Size(file *os.File) (int, int) {
 }
 
 type Frame struct {
-	Title, Environment, Context, Namespace, Mode, Body, Footer string
-	Intro, Prompt, Action                                      string
-	Width, Height                                              int
-	Color                                                      bool
+	Brand, Title, Subtitle, Mode, Tone, Body, Footer string
+	Targets                                          []string
+	Intro, Prompt, Action                            string
+	Width, Height                                    int
+	Color                                            bool
 	// InitialIndex is the original row index highlighted when Select opens.
 	InitialIndex int
 }
@@ -96,29 +98,27 @@ func (f Frame) Header() string {
 	if mode == "" {
 		mode = "READ ONLY"
 	}
-	title := "dots kube · " + Clean(f.Title)
-	tone := Green
-	if mode == "ACTION" {
-		tone = Yellow
+	brand := Clean(f.Brand)
+	if brand == "" {
+		brand = "dots"
 	}
-	if f.Environment == "prod" {
-		tone = Red
+	title := brand + " · " + Clean(f.Title)
+	tone := f.Tone
+	if tone == "" {
+		tone = Green
 	}
-	right := Clip(strings.ToUpper(Clean(f.Environment))+"  "+mode, width-4)
+	labels := []string{}
+	for _, label := range f.Targets {
+		if clean := Clean(label); clean != "" {
+			labels = append(labels, clean)
+		}
+	}
+	labels = append(labels, Clean(mode))
+	right := Clip(strings.Join(labels, "  "), width-4)
 	left := Clip(title, max(1, width-Width(right)-2))
 	space := max(1, width-Width(left)-Width(right))
-	context, namespace := Clean(f.Context), Clean(f.Namespace)
-	if context == "" {
-		context = "—"
-	}
-	if namespace == "" {
-		namespace = "—"
-	}
-	if mode == "LOCAL CONFIG" && f.Context == "" && f.Namespace == "" {
-		return Paint(left, Accent+Bold, f.Color) + strings.Repeat(" ", space) + Paint(right, tone+Bold, f.Color) + "\n" + Paint("Локальная настройка · без запросов к кластеру", Dim, f.Color) + "\n" + Paint(strings.Repeat("─", width), Border, f.Color) + "\n"
-	}
 	return Paint(left, Accent+Bold, f.Color) + strings.Repeat(" ", space) + Paint(right, tone+Bold, f.Color) + "\n" +
-		Paint(Clip("context: "+context+"   namespace: "+namespace, width), Dim, f.Color) + "\n" +
+		Paint(Clip(Clean(f.Subtitle), width), Dim, f.Color) + "\n" +
 		Paint(strings.Repeat("─", width), Border, f.Color) + "\n"
 }
 func (f Frame) Render() string {
@@ -131,7 +131,7 @@ func (f Frame) Render() string {
 		budget = max(1, f.Height-5)
 	}
 	if len(lines) > budget {
-		lines = append(lines[:max(0, budget-1)], Paint("… More details are available in a wider terminal", Dim, f.Color))
+		lines = append(lines[:max(0, budget-1)], Paint("… More details are available in a larger terminal", Dim, f.Color))
 	}
 	for _, line := range lines {
 		if !f.Color {
@@ -143,11 +143,4 @@ func (f Frame) Render() string {
 		out += Paint(strings.Repeat("─", width), Border, f.Color) + "\n" + Paint(Clip(Clean(f.Footer), width), Dim, f.Color) + "\n"
 	}
 	return out
-}
-func Draw(file *os.File, frame string) {
-	if term.IsTerminal(int(file.Fd())) {
-		fmt.Fprint(file, "\x1b[H", strings.ReplaceAll(frame, "\n", "\r\n"), "\x1b[J")
-	} else {
-		fmt.Fprint(file, Plain(frame))
-	}
 }

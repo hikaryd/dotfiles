@@ -238,7 +238,7 @@ func refsRun(args []string) int {
 		return 0
 	}
 	pick := func(lines []string, title string) (int, error) {
-		return selectLine(lines, []string{"choose", "--header", title}, []string{"--no-multi", "--prompt", title + ": "}, true)
+		return selectLine(lines, title)
 	}
 	i, e := pick(labels, "Ссылка из логов")
 	if e != nil {

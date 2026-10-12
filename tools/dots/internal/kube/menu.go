@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"dots/native/internal/kube/tui"
+	"dots/native/internal/tui"
 )
 
 func (s *session) menu() error {
@@ -13,7 +13,7 @@ func (s *session) menu() error {
 	for _, environment := range state.Environments {
 		rows = append(rows, fmt.Sprintf("%s\t%s\t%s\t%s", environment.Environment, environment.Context, environment.Namespace, environment.Status))
 	}
-	selected, err := s.choose(rows, "Kubernetes · home", "", false, true)
+	selected, err := s.choose(rows, "Kubernetes · home", "", false)
 	if err != nil {
 		if err == tui.ErrCanceled {
 			return nil
@@ -34,7 +34,7 @@ func (s *session) menu() error {
 		return err
 	}
 	choices := []string{"pods\tList pods · READ ONLY", "logs\tChoose pod logs · READ ONLY", "logs-multi\tFollow multiple pods · READ ONLY", "jobs\tRecent Job logs · READ ONLY", "deploy-watch\tDeployment dashboard · READ ONLY", "pod-analyze\tCPU/RAM and processes · READ ONLY", "exec\tExecute in a container · ACTION", "cron-run\tRun a CronJob · ACTION", "scale\tChange replicas · ACTION", "pod-restart\tRestart controller-managed pods · ACTION"}
-	selected, err = s.choose(choices, "Choose an action", "", false, true)
+	selected, err = s.choose(choices, "Choose an action", "", false)
 	if err != nil {
 		if err == tui.ErrCanceled {
 			return nil

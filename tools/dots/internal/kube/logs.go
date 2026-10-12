@@ -14,7 +14,7 @@ import (
 	"sync"
 	"time"
 
-	"dots/native/internal/kube/tui"
+	"dots/native/internal/tui"
 )
 
 var logLevel = regexp.MustCompile(`(?i)\b(FATAL|CRITICAL|PANIC|ERROR|ERR|EXCEPTION|TRACEBACK|WARN|WARNING|INFO|NOTICE|DEBUG|TRACE)\b`)
@@ -52,16 +52,16 @@ func (s *session) logOutput() *lineWriter {
 	return &lineWriter{line: func(line []byte) error {
 		if color {
 			line = logLevel.ReplaceAllFunc(line, func(level []byte) []byte {
-				shade := "\x1b[2m"
+				shade := tui.Dim
 				switch strings.ToUpper(string(level)) {
 				case "FATAL", "CRITICAL", "PANIC", "ERROR", "ERR", "EXCEPTION", "TRACEBACK":
-					shade = "\x1b[31m"
+					shade = tui.Red
 				case "WARN", "WARNING":
-					shade = "\x1b[33m"
+					shade = tui.Yellow
 				case "INFO", "NOTICE":
-					shade = "\x1b[32m"
+					shade = tui.Green
 				}
-				return []byte(shade + string(level) + "\x1b[0m")
+				return []byte(tui.Paint(string(level), shade, true))
 			})
 		}
 		_, err := os.Stdout.Write(line)
@@ -101,7 +101,7 @@ func (s *session) logs(filter string, save bool) error {
 		return s.emptyPods("")
 	}
 	chronological(pods, false)
-	selected, err := s.choose(podRows(pods), "choose a pod", filter, false, false)
+	selected, err := s.choose(podRows(pods), "choose a pod", filter, false)
 	if err != nil {
 		return err
 	}
@@ -158,7 +158,7 @@ func (s *session) jobs(filter string, save bool) error {
 		}
 		rows = append(rows, fmt.Sprintf("%s\t%s\t%s\t%s", job.Metadata.Name, state, stamp, cron))
 	}
-	selected, err := s.choose(rows, "Jobs newest first · NAME / STATUS / STARTED / CRONJOB", filter, false, true)
+	selected, err := s.choose(rows, "Jobs newest first · NAME / STATUS / STARTED / CRONJOB", filter, false)
 	if err != nil {
 		return err
 	}
@@ -202,7 +202,7 @@ func (s *session) chooseLogPods(pattern string) ([]string, error) {
 		return nil, s.emptyPods("")
 	}
 	chronological(pods, false)
-	selected, err := s.choose(podRows(pods), "choose pods · Space/Tab — отметить · Ctrl+A — все", "", true, false)
+	selected, err := s.choose(podRows(pods), "choose pods · Space/Tab — отметить · Ctrl+A — все", "", true)
 	if err != nil {
 		return nil, err
 	}

@@ -32,7 +32,7 @@ func (s *session) scale(args []string) error {
 		rows = append(rows, fmt.Sprintf("%s\t%d\t%d\t%d\t%d", resourceName(item), desired, item.Status.Replicas, item.Status.ReadyReplicas, item.Status.AvailableReplicas))
 	}
 	sort.Strings(rows)
-	selected, err := s.choose(rows, "scale workload · RESOURCE / DESIRED / CURRENT / READY / AVAILABLE", argument(args, 0), false, false)
+	selected, err := s.choose(rows, "scale workload · RESOURCE / DESIRED / CURRENT / READY / AVAILABLE", argument(args, 0), false)
 	if err != nil {
 		return err
 	}
@@ -111,7 +111,7 @@ func (s *session) cron(filter string) error {
 		rows = append(rows, item.Metadata.Name)
 	}
 	sort.Strings(rows)
-	selected, err := s.choose(rows, "run a CronJob now · ACTION", filter, false, false)
+	selected, err := s.choose(rows, "run a CronJob now · ACTION", filter, false)
 	if err != nil {
 		return err
 	}
@@ -183,7 +183,7 @@ func (s *session) restart(filter string) error {
 		return err
 	}
 	chronological(pods, false)
-	selected, err := s.choose(podRows(pods), "restart pods · ACTION", filter, true, false)
+	selected, err := s.choose(podRows(pods), "restart pods · ACTION", filter, true)
 	if err != nil {
 		return err
 	}

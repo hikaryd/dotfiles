@@ -19,6 +19,8 @@ import (
 	"runtime"
 	"strings"
 	"time"
+
+	"dots/native/internal/tui"
 )
 
 var proxyKeys = map[string]bool{"HTTP_PROXY": true, "HTTPS_PROXY": true, "ALL_PROXY": true, "NO_PROXY": true, "http_proxy": true, "https_proxy": true, "all_proxy": true, "no_proxy": true, "WS_PROXY": true, "WSS_PROXY": true, "ws_proxy": true, "wss_proxy": true}
@@ -263,8 +265,17 @@ func runAIContext(ctx context.Context, args []string, in io.Reader, out, errout 
 	var prompt, notification string
 	switch *mode {
 	case "mr":
-		fmt.Fprint(out, "Введите целевую ветку для MR: ")
-		target, readErr := readAIInput(ctx, in)
+		var target string
+		var readErr error
+		if file, ok := in.(*os.File); ok && tui.IsTerminal(file) {
+			target, readErr = tui.Input(ctx, tui.Frame{Brand: "dots AI", Title: "Целевая ветка MR", Mode: "READ ONLY", Tone: tui.Green, Intro: "Git diff будет передан настроенному AI-провайдеру. Результат скопируется в clipboard."}, "")
+		} else {
+			fmt.Fprint(out, "Введите целевую ветку для MR: ")
+			target, readErr = readAIInput(ctx, in)
+		}
+		if errors.Is(readErr, tui.ErrCanceled) {
+			return 130
+		}
 		if readErr != nil && readErr != io.EOF {
 			return fail("AI Helper", errors.New("Не удалось прочитать целевую ветку."))
 		}
