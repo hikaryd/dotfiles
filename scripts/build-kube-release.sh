@@ -60,6 +60,9 @@ Full records are the default; m toggles optional JSON summaries. Long lines wrap
 logs / logs-multi: Space pause, / search, f filter, arrows select,
 Enter full record, PgUp/PgDn scroll details, Esc/q/Ctrl+C exit.
 Pipes and saved logs remain undecorated. NO_COLOR disables colors.
+kpstage-rollout-restart selects Deployment/StatefulSet/DaemonSet workloads and
+requests their rollouts without waiting for each pod. Kubernetes owns the strategy.
+Paused/OnDelete targets are rejected; use pod-restart for deliberate selected pods.
 Prod mutations need interactive yes or deliberate KPROD_CONFIRMED=1.
 
 Run ./dots-kube --help for all commands; preview needs no cluster or kubectl.

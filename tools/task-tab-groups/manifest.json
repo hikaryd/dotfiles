@@ -1,0 +1,24 @@
+{
+  "manifest_version": 3,
+  "name": "Задачи · Группы вкладок",
+  "version": "0.1.2",
+  "description": "ATS-номер и название задачи для групп Kaiten + GitLab. Только в выбранном окне.",
+  "permissions": [
+    "tabs",
+    "tabGroups",
+    "storage"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "action": {
+    "default_title": "Названия групп задач",
+    "default_popup": "popup.html"
+  },
+  "commands": {
+    "refresh-groups": {
+      "description": "Обновить названия групп в выбранном окне"
+    }
+  }
+}

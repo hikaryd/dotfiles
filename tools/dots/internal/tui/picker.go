@@ -72,10 +72,19 @@ func Select(ctx context.Context, frame Frame, rows []string, query string, multi
 	customFooter := frame.Footer
 	introOffset := 0
 	initialSelection := true
+	searchOnly := map[int]bool{}
+	for _, index := range frame.SearchOnly {
+		searchOnly[index] = true
+	}
 	for {
 		width, height := Size(terminal)
 		visible := []int{}
+		total := 0
 		for i, row := range rows {
+			if strings.TrimSpace(query) == "" && searchOnly[i] {
+				continue
+			}
+			total++
 			if matches(row, query) {
 				visible = append(visible, i)
 			}
@@ -138,14 +147,14 @@ func Select(ctx context.Context, frame Frame, rows []string, query string, multi
 		if frame.Action != "" {
 			body.WriteString("\n" + frame.Action + "\n")
 		}
-		footer := fmt.Sprintf("%d/%d rows · ↑↓ move · type to search · Enter select · Esc back", len(visible), len(rows))
+		footer := fmt.Sprintf("%d/%d rows · ↑↓ / Ctrl+N/P move · type to search · Enter select · Esc back", len(visible), total)
 		if multi {
 			footer = fmt.Sprintf("%d selected · Space/Tab toggle · Ctrl+A all · Enter apply · Esc back", len(selected))
 		}
 		if customFooter != "" {
-			footer = fmt.Sprintf("%d/%d · ", len(visible), len(rows)) + customFooter
+			footer = fmt.Sprintf("%d/%d · ", len(visible), total) + customFooter
 			if multi {
-				footer = fmt.Sprintf("Выбрано: %d · %d/%d · %s", len(selected), len(visible), len(rows), customFooter)
+				footer = fmt.Sprintf("Выбрано: %d · %d/%d · %s", len(selected), len(visible), total, customFooter)
 			}
 		}
 		frame.Width, frame.Height, frame.Color = width, height, ColorEnabled(terminal)

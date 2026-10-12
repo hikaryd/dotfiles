@@ -19,7 +19,8 @@ var ErrAction = errors.New("additional screen action")
 
 type Key struct{ Name, Text string }
 
-// Keys decodes arrows, a standalone Esc, Unicode and bracketed paste. Consumers
+// Keys normalizes arrows and Ctrl+N/P to down/up, and decodes a standalone Esc,
+// Unicode and bracketed paste. Consumers
 // never interpret pasted text as terminal commands or keyboard shortcuts.
 func Keys(ctx context.Context, input *os.File) <-chan Key {
 	output := make(chan Key, 32)
@@ -115,9 +116,9 @@ func Keys(ctx context.Context, input *os.File) <-chan Key {
 						}
 					}
 					switch sequence.String() {
-					case "A":
+					case "A", "112;5u":
 						send(Key{Name: "up"})
-					case "B":
+					case "B", "110;5u":
 						send(Key{Name: "down"})
 					case "C":
 						send(Key{Name: "right"})
@@ -176,8 +177,12 @@ func Keys(ctx context.Context, input *os.File) <-chan Key {
 					name = "enter"
 				case 12:
 					name = "ctrl-l"
+				case 14:
+					name = "down"
 				case 15:
 					name = "ctrl-o"
+				case 16:
+					name = "up"
 				}
 				if name != "text" || unicode.IsPrint(r) {
 					if !send(Key{Name: name, Text: string(r)}) {

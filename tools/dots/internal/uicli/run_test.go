@@ -52,6 +52,30 @@ func TestNativeSelectorKeepsOriginalDataAndHiddenMarks(t *testing.T) {
 		t.Fatalf("selected data %q", out.String())
 	}
 }
+func TestNativeSelectorControlNavigation(t *testing.T) {
+	for _, tc := range []struct{ name, keys, want string }{
+		{"ctrl-n", "\x0e", "second\n"},
+		{"ctrl-p", "\x1b[B\x10", "first\n"},
+		{"csi-u-ctrl-n", "\x1b[110;5u", "second\n"},
+		{"csi-u-ctrl-p", "\x1b[B\x1b[112;5u", "first\n"},
+		{"pasted-controls-are-not-navigation", "\x1b[200~\x0e\x10\x1b[201~", "first\n"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			cmd := command(t, "select", "--title", "Navigation")
+			cmd.Stdin = strings.NewReader("first\nsecond\nthird\n")
+			var output bytes.Buffer
+			cmd.Stdout = &output
+			p := testpty.Start(t, cmd)
+			p.Screen("Navigation")
+			p.Send(tc.keys + "\r")
+			p.Wait(0)
+			if output.String() != tc.want {
+				t.Fatalf("navigation selected %q, want %q", output.String(), tc.want)
+			}
+		})
+	}
+}
+
 func TestNativeSecretInputPasteClearResizeAndCancel(t *testing.T) {
 	for _, cancel := range []bool{false, true} {
 		cmd := command(t, "input", "--secret", "--title", "Credential")

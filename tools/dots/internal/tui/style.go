@@ -90,6 +90,9 @@ type Frame struct {
 	Color                                            bool
 	// InitialIndex is the original row index highlighted when Select opens.
 	InitialIndex int
+	// SearchOnly contains original row indexes hidden while the query is blank.
+	// Rows become searchable normally as soon as the user types.
+	SearchOnly []int
 }
 
 func (f Frame) Header() string {

@@ -9,7 +9,7 @@ import (
 	"dots/native/internal/tui"
 )
 
-const menuKeys = "↑/↓ выбор · Enter открыть · Esc отмена"
+const menuKeys = "↑/↓ / Ctrl+N/P выбор · Enter открыть · Esc отмена"
 
 type menuAction struct {
 	key, group, description string
@@ -17,7 +17,7 @@ type menuAction struct {
 
 // One source for the preview and the picker's exact-match whitelist.
 var menuActions = []menuAction{
-	{"sessions", "Работа", "Herdr / tmux / каталоги"},
+	{"sessions", "Работа", "Рабочие пространства / проект по имени"},
 	{"projects", "Работа", "Проекты и worktree"},
 	{"git", "Работа", "LazyGit здесь"},
 	{"refs", "Инструменты", "Ссылки / ID / file:line"},
@@ -105,7 +105,9 @@ func printHelp() {
 const helpText = `
 Работа
   dots menu                 поиск действий
-  dots sessions open        Herdr / tmux / каталоги
+  dots sessions open        Живые сессии; поиск проекта из ~/Documents/dev
+  dots sessions open NAME   Открыть/создать сессию по имени проекта
+  dots sessions open --all  Импорт: tmux / сохранённые / история каталогов
   dots projects open        проекты и worktree
   dots projects list        inventory; --json для скриптов
   dots projects refresh     обновить приватный inventory
@@ -141,7 +143,7 @@ const helpText = `
   dots <команда> --help      все аргументы команды
 
 Клавиши
-  Поиск по команде или описанию; ↑/↓ выбор
+  Поиск по команде или описанию; ↑/↓ / Ctrl+N/P выбор
   Enter открыть · Esc/Ctrl+C отмена; Ctrl+L — очистить поиск
   zsh Ctrl+O — меню; Ctrl+R — история Atuin
   tmux/Herdr prefix = Ctrl+A: O меню, P проекты, T сессии

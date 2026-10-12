@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"os"
+	"path/filepath"
 	"sort"
 	"strconv"
 	"strings"
@@ -99,6 +101,33 @@ func sessionInventory() ([]session, error) {
 	return entries, nil
 }
 
+// Project candidates are discovered directly, not inferred from zoxide history.
+// This is a shallow scan: caches, files and nested repositories are not sessions.
+func devProjects() ([]session, error) {
+	root := filepath.Join(home(), "Documents", "dev")
+	rows, err := os.ReadDir(root)
+	if os.IsNotExist(err) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, errors.New("Не удалось прочитать ~/Documents/dev")
+	}
+	projects := []session{}
+	for _, row := range rows {
+		name := row.Name()
+		if strings.HasPrefix(name, ".") || !cleanText(name) {
+			continue
+		}
+		path := directory(filepath.Join(root, name))
+		if path == "" {
+			continue
+		}
+		key := sessionKey("project", name, path)
+		projects = append(projects, session{ID: "project:" + key, Source: "project", Name: name, Path: &path, Fresh: true, ImportKey: &key})
+	}
+	return projects, nil
+}
+
 type layoutPane struct {
 	index int
 	path  string
@@ -174,6 +203,13 @@ func existingWorkspace(entry session, snapshot map[string]any, windows []layoutW
 	if len(matches) == 0 {
 		for _, w := range workspaces {
 			if w.Name == entry.Name && ptrText(w.Path) == ptrText(entry.Path) {
+				matches = append(matches, w)
+			}
+		}
+	}
+	if len(matches) == 0 && entry.Source == "project" {
+		for _, w := range workspaces {
+			if w.Name == entry.Name || ptrText(w.Path) == ptrText(entry.Path) {
 				matches = append(matches, w)
 			}
 		}
@@ -311,8 +347,8 @@ func sessionsRun(args []string) int {
 	if len(args) == 0 {
 		args = []string{"open"}
 	}
-	o, e := parse(args[1:], "--json", "")
-	if e != nil || !has(args[0], "open", "list") || args[0] == "list" && len(o.pos) > 0 || args[0] == "open" && (len(o.pos) > 1 || o.flag("--json")) {
+	o, e := parse(args[1:], "--json --all", "")
+	if e != nil || !has(args[0], "open", "list") || args[0] == "list" && (len(o.pos) > 0 || o.flag("--all")) || args[0] == "open" && (len(o.pos) > 1 || o.flag("--json")) {
 		return usageError("sessions")
 	}
 	entries, e := sessionInventory()
@@ -332,6 +368,11 @@ func sessionsRun(args []string) int {
 		}
 		return 0
 	}
+	projects, e := devProjects()
+	if e != nil {
+		return fail("dots sessions", e)
+	}
+	entries = append(entries, projects...)
 	selected := -1
 	if len(o.pos) > 0 {
 		matches := []int{}
@@ -349,6 +390,23 @@ func sessionsRun(args []string) int {
 			}
 			if len(live) == 1 {
 				matches = live
+			} else if len(live) == 0 {
+				// A project may also have a sesh/zoxide entry for the same path.
+				for _, i := range matches {
+					if entries[i].Source != "project" {
+						continue
+					}
+					same := true
+					for _, j := range matches {
+						if ptrText(entries[j].Path) != ptrText(entries[i].Path) {
+							same = false
+						}
+					}
+					if same {
+						matches = []int{i}
+						break
+					}
+				}
 			}
 		}
 		if len(matches) != 1 {
@@ -356,6 +414,42 @@ func sessionsRun(args []string) int {
 		}
 		selected = matches[0]
 	} else {
+		frame := desktopFrame("Session / workspace")
+		if !o.flag("--all") {
+			// Show live sessions initially, and discover new projects on search.
+			// Keep the full import/history inventory behind --all.
+			live := []session{}
+			for _, s := range entries {
+				if s.Source == "herdr" {
+					live = append(live, s)
+				}
+			}
+			if len(live) == 0 {
+				for _, s := range entries {
+					if s.Source == "tmux" {
+						live = append(live, s)
+					}
+				}
+			}
+			frame.Intro = "Введите имя проекта из ~/Documents/dev, чтобы открыть или создать сессию."
+			for _, p := range projects {
+				alreadyLive := false
+				for _, s := range live {
+					if s.Source != "project" && (s.Name == p.Name || ptrText(s.Path) == ptrText(p.Path)) {
+						alreadyLive = true
+						break
+					}
+				}
+				if !alreadyLive {
+					frame.SearchOnly = append(frame.SearchOnly, len(live))
+					live = append(live, p)
+				}
+			}
+			entries = live
+		}
+		if len(entries) == 0 {
+			return fail("dots sessions", errors.New("Нет живых сессий; используйте dots sessions open --all для импорта"))
+		}
 		labels := []string{}
 		for _, s := range entries {
 			detail := s.Source + " · fresh shell"
@@ -363,10 +457,12 @@ func sessionsRun(args []string) int {
 				detail = fmt.Sprintf("Herdr %s · %d tabs", s.Workspace, *s.Tabs)
 			} else if s.Source == "tmux" {
 				detail = "tmux · copy layout as fresh shells"
+			} else if s.Source == "project" {
+				detail = "project · new shell"
 			}
 			labels = append(labels, fmt.Sprintf("%s  [%s]  %s", s.Name, detail, ptrText(s.Path)))
 		}
-		selected, e = selectLine(labels, "Session / workspace")
+		selected, e = selectFrame(labels, frame)
 		if e != nil {
 			return fail("dots sessions", e)
 		}

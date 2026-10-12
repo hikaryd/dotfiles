@@ -33,7 +33,7 @@ func (s *session) menu() error {
 	if err := s.configure(invocation{entry, "namespace", "kubectl"}); err != nil {
 		return err
 	}
-	choices := []string{"pods\tList pods · READ ONLY", "logs\tChoose pod logs · READ ONLY", "logs-multi\tFollow multiple pods · READ ONLY", "jobs\tRecent Job logs · READ ONLY", "deploy-watch\tDeployment dashboard · READ ONLY", "pod-analyze\tCPU/RAM and processes · READ ONLY", "exec\tExecute in a container · ACTION", "cron-run\tRun a CronJob · ACTION", "scale\tChange replicas · ACTION", "pod-restart\tRestart controller-managed pods · ACTION"}
+	choices := []string{"pods\tList pods · READ ONLY", "logs\tChoose pod logs · READ ONLY", "logs-multi\tFollow multiple pods · READ ONLY", "jobs\tRecent Job logs · READ ONLY", "deploy-watch\tDeployment dashboard · READ ONLY", "pod-analyze\tCPU/RAM and processes · READ ONLY", "exec\tExecute in a container · ACTION", "cron-run\tRun a CronJob · ACTION", "scale\tChange replicas · ACTION", "pod-restart\tRestart controller-managed pods sequentially · ACTION", "rollout-restart\tRestart workloads via Kubernetes strategy · ACTION"}
 	selected, err = s.choose(choices, "Choose an action", "", false)
 	if err != nil {
 		if err == tui.ErrCanceled {

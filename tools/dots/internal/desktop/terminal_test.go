@@ -1,6 +1,7 @@
 package desktop
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -225,6 +226,54 @@ func TestNativeStatusCancelsInitialSubprocess(t *testing.T) {
 	p.Wait(0)
 	if len(f.calls()) != 1 {
 		t.Fatalf("cancel kept collecting %+v", f.calls())
+	}
+}
+
+func TestNativeSessionsControlNavigation(t *testing.T) {
+	for _, tc := range []struct{ name, keys, workspace string }{
+		{"next", "\x0e", "ws-second"},
+		{"previous", "\x1b[B\x10", "ws-first"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			f := newFixture(t)
+			f.fake("herdr",
+				fakeRule{Args: []string{"api", "snapshot"}, Output: `{"result":{"snapshot":{"workspaces":[{"workspace_id":"ws-first","label":"Alpha","tab_count":1,"pane_count":1},{"workspace_id":"ws-second","label":"Beta","tab_count":1,"pane_count":1}],"panes":[]}}}`},
+				fakeRule{Args: []string{"workspace", "focus", tc.workspace}, Output: `{"result":{}}`},
+			)
+			f.fake("sesh", allRule("[]", 0))
+			p := f.terminal("sessions", "open")
+			p.Screen("Session / workspace")
+			p.Send(tc.keys + "\r")
+			p.Wait(0)
+			calls := f.calls()
+			if len(calls) != 3 || calls[2].Name != "herdr" || !reflect.DeepEqual(calls[2].Args, []string{"workspace", "focus", tc.workspace}) {
+				t.Fatalf("wrong workspace selected: %+v", calls)
+			}
+		})
+	}
+}
+
+func TestNativeSessionsDefaultPickerIsLiveAndAllIsExplicit(t *testing.T) {
+	for _, all := range []bool{false, true} {
+		t.Run(map[bool]string{false: "live", true: "all"}[all], func(t *testing.T) {
+			f := newFixture(t)
+			f.fake("herdr", allRule(`{"result":{"snapshot":{"workspaces":[{"workspace_id":"w1","label":"Live","tab_count":1,"pane_count":1}],"panes":[]}}}`, 0))
+			rows := fmt.Sprintf(`[{"Src":"zoxide","Name":"History","Path":%q},{"Src":"config","Name":"Saved","Path":%q},{"Src":"tmux","Name":"Old","Path":%q}]`, f.home, f.home, f.home)
+			f.fake("sesh", allRule(rows, 0))
+			args := []string{"sessions", "open"}
+			want := "1/1 rows"
+			if all {
+				args = append(args, "--all")
+				want = "4/4 rows"
+			}
+			p := f.terminal(args...)
+			p.Screen(want)
+			if !all && strings.Contains(p.Text(), "History") {
+				t.Fatal("directory history shown as a live session")
+			}
+			p.Send("\x1b")
+			p.Wait(0)
+		})
 	}
 }
 

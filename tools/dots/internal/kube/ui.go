@@ -15,7 +15,7 @@ func isTerminal(file *os.File) bool { return tui.IsTerminal(file) }
 func (s *session) frame(title string) tui.Frame {
 	mode := "READ ONLY"
 	switch s.action {
-	case "exec", "scale", "cron-run", "pod-restart":
+	case "exec", "scale", "cron-run", "pod-restart", "rollout-restart":
 		mode = "ACTION"
 	case "setup", "config", "doctor":
 		mode = "LOCAL CONFIG"
@@ -69,7 +69,7 @@ func (s *session) workflow(action string, args []string) error {
 	s.action = action
 	s.banner(s.target.namespace)
 	switch action {
-	case "exec", "scale", "cron-run", "pod-restart":
+	case "exec", "scale", "cron-run", "pod-restart", "rollout-restart":
 		if s.target.environment == "prod" {
 			if err := s.confirm(action, s.target.namespace); err != nil {
 				return err
@@ -91,6 +91,8 @@ func (s *session) workflow(action string, args []string) error {
 		return s.cron(argument(args, 0))
 	case "pod-restart":
 		return s.restart(argument(args, 0))
+	case "rollout-restart":
+		return s.rolloutRestart(args)
 	case "logs-multi":
 		return s.logsMulti(args)
 	case "pod-analyze":

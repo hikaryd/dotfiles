@@ -51,8 +51,11 @@ type resource struct {
 	Kind     string
 	Metadata metadata
 	Spec     struct {
-		Replicas *int
-		Selector json.RawMessage
+		Replicas       *int
+		Selector       json.RawMessage
+		Paused         bool
+		Strategy       struct{ Type string }
+		UpdateStrategy struct{ Type string }
 	}
 	Status struct {
 		Phase                                      string

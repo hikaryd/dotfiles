@@ -24,7 +24,7 @@ import (
 var Version = "0.1.0"
 
 var environments = []string{"dev", "stage", "preprod", "prod"}
-var actions = []string{"logs", "logs-save", "logs-multi", "cron-run", "jobs", "jobs-save", "exec", "log-search", "deploy-watch", "scale", "pod-analyze", "pod-restart"}
+var actions = []string{"logs", "logs-save", "logs-multi", "cron-run", "jobs", "jobs-save", "exec", "log-search", "deploy-watch", "scale", "pod-analyze", "pod-restart", "rollout-restart"}
 
 type invocation struct{ environment, scope, action string }
 
@@ -406,7 +406,8 @@ kp<environment>-pod-analyze [text]        live pod metrics and processes
 kp<environment>-exec [target] -- <command> execute a command (or choose bash/Python)
 kp<environment>-cron-run [text]           ACTION: run CronJob and save logs
 kp<environment>-scale [text] [count]      ACTION: change workload replicas
-kp<environment>-pod-restart [text]        ACTION: restart controller-managed pods
+kp<environment>-pod-restart [text]        ACTION: restart selected pods sequentially
+kp<environment>-rollout-restart [text]    ACTION: restart selected workloads; no Ready wait
 
 Target/auth overrides are rejected before --; container arguments after -- are preserved.
 Short flags must be separate except -it/-ti and attached -o/-l/-c/-v values.

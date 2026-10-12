@@ -35,6 +35,15 @@ CLI в `tools/dots`; UI работает без gum, zsh, Bubble Tea и Lip Glos
 | `desktop/ui.go`, `desktop/status.go` | Desktop-Adapter, меню, status dashboard |
 | `uicli/run.go` | CLI bridge для shell: select/input/confirm/snapshot/message |
 
+`dots sessions open` без поиска показывает живые пространства Herdr, а при их
+отсутствии — живые tmux-сессии. При вводе имени также появляются каталоги проектов
+из `~/Documents/dev`; Enter открывает существующее пространство или создаёт новое
+с shell в выбранном каталоге. Каталог сканируется на один уровень, независимо от
+истории zoxide. Открытие по имени проекта работает и без UI: `open <имя>`.
+Полная история zoxide и импорты доступны через `open --all`; `list --json`
+сохраняет прежний полный inventory. История каталогов не удаляется, дубли импортов
+не засоряют обычный переключатель.
+
 Зависимости UI: `golang.org/x/term`, `golang.org/x/sys`,
 `github.com/mattn/go-runewidth`. `github.com/creack/pty` нужен тестам, не runtime.
 
@@ -44,6 +53,8 @@ CLI в `tools/dots`; UI работает без gum, zsh, Bubble Tea и Lip Glos
 `Intro`, `Prompt`, `Action`, `Body`, `Footer`, `Width`, `Height`, `Color`.
 `InitialIndex` — индекс **исходной строки**, выделяемой при открытии `Select`.
 После фильтрации возвращаются исходные индексы, а не позиции в видимом списке.
+`SearchOnly` содержит индексы строк, показываемых только при непустом поиске;
+скрытие строк не меняет их исходные индексы или выбор.
 
 Шапка domain-neutral: бренд, target labels, subtitle, режим и тон задаёт Adapter.
 Kubernetes передаёт **dots kube**, окружение и context/namespace через `kubeui.Frame`;
@@ -71,19 +82,21 @@ layout: `Input` ограничивает длинный Intro с явным ма
 
 | Экран | Управление |
 |---|---|
-| Selector | ↑↓, Home/End; ввод — поиск; Ctrl+L — очистить; Enter — выбрать; Esc — назад |
-| Multiselect | Space/Tab — отметить, в том числе после поиска; Ctrl+A — все совпадения; Enter — все отмеченные |
+| Selector | ↑↓ или Ctrl+N/Ctrl+P, Home/End; ввод — поиск; Ctrl+L — очистить; Enter — выбрать; Esc — назад |
+| Multiselect | ↑↓ или Ctrl+N/Ctrl+P — перемещение; Space/Tab — отметить, в том числе после поиска; Ctrl+A — все совпадения; Enter — все отмеченные |
 | Дополнительное действие | Ctrl+O, только когда задан `Frame.Action` |
 | Input | Ввод/backspace, Ctrl+L — очистить, Enter — подтвердить, Esc — назад |
 | Multiline editor | Enter — новая строка, Ctrl+D — отправить, Esc/Ctrl+C — отменить |
-| Logs | Space/p — pause; `/` — поиск; f — filter; c — clear; m — full/compact; ↑↓/j/k — запись; Enter — pause + details |
+| Logs | Space/p — pause; `/` — поиск; f — filter; c — clear; m — full/compact; ↑↓/Ctrl+N/Ctrl+P/j/k — запись; Enter — pause + details |
 
 Отметки multiselect сохраняются при изменении поиска; Enter может отправить
 отмеченное даже при нуле текущих совпадений. Space в multiselect — действие,
 не пробел в поиске; составной запрос с пробелами можно вставить.
 Текущая отмеченная строка показывает и курсор, и checkbox, а не один курсор.
 
-`Keys` возвращает `Key{Name, Text}`. Bracketed paste возвращается **одним** событием
+`Keys` возвращает `Key{Name, Text}`. Ctrl+N/Ctrl+P нормализуются в `down/up`,
+как стрелки, в legacy-вводе и CSI-u; обработчики используют один контракт.
+Bracketed paste возвращается **одним** событием
 `paste`: не исполнять его символы как hotkeys. Одиночный Esc отличается от escape
 sequence коротким ожиданием продолжения. Zero-byte tty timeout не означает EOF.
 

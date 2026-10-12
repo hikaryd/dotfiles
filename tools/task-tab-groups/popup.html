@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="ru">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Названия групп задач</title><link rel="stylesheet" href="popup.css"></head>
+<body>
+<header><h1>Задачи в группах</h1><p>Номер первым. Только выбранное окно.</p></header>
+<section class="scope">
+<label for="window">Окно с задачами</label>
+<div class="line"><select id="window"></select><button id="select">Выбрать</button></div>
+<div class="line"><label class="toggle"><input id="auto" type="checkbox"> Автоматически</label><button id="refresh">Обновить названия</button></div>
+</section>
+<p id="status" role="status"></p>
+<div id="groups"></div>
+<footer>Вкладки, цвета и свёрнутость не меняются. 🔒 сохраняет имя даже после перезапуска.</footer>
+<script type="module" src="popup.js"></script>
+</body></html>

@@ -291,9 +291,12 @@ func usageError(command string) int {
 }
 func fail(prefix string, e error) int { fmt.Fprintf(os.Stderr, "%s: %s\n", prefix, e); return 1 }
 func selectLine(lines []string, title string) (int, error) {
+	return selectFrame(lines, desktopFrame(title))
+}
+func selectFrame(lines []string, frame tui.Frame) (int, error) {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
-	indexes, err := tui.Select(ctx, desktopFrame(title), lines, "", false)
+	indexes, err := tui.Select(ctx, frame, lines, "", false)
 	if errors.Is(err, tui.ErrCanceled) || errors.Is(err, context.Canceled) {
 		return -1, nil
 	}

@@ -34,7 +34,8 @@ kpprod-deploy-watch api           # read-only dashboard
 kube-tools-help
 ```
 
-Все собственные интерактивные команды используют один native Go UI: ↑/↓ — выбор,
+Все собственные интерактивные команды используют один native Go UI: ↑/↓ или
+Ctrl+N/Ctrl+P — выбор,
 ввод — поиск, Ctrl+L — очистить, Enter — открыть, Esc/Ctrl+C — отмена.
 Это относится и к tmux/sesh, gtab и `zi`: shell-обёртки вызывают `dots-tools ui`,
 а не внешние picker’ы. Clipboard, prod-действия и uninstall требуют явного `yes`;
@@ -158,6 +159,30 @@ namespace read-only запросом и позволяет изменить то
 `logs-save`. При выводе в pipe/файл TUI и цвета не добавляются; сохранённые логи
 остаются исходными. Piped multi-logs сохраняют исходные байты, stderr отдельно
 и код ошибки kubectl. `KUBE_LOG_DIR` меняет каталог сохранения.
+
+### Перезапуск: pod или workload
+
+```sh
+kpstage-rollout-restart          # выбрать Deployment/StatefulSet/DaemonSet
+kppreprod-rollout-restart api     # поиск в списке workloads
+kpstage-deploy-watch             # смотреть ход обновления
+```
+
+`rollout-restart` позволяет отметить несколько workloads (Space/Tab, Ctrl+A)
+и запускает `kubectl rollout restart` сразу для всех выбранных, **без ожидания
+Ready каждого по очереди**. Контроллеры обновляются независимо по своим стратегиям;
+`maxSurge`, `maxUnavailable`, StatefulSet partitions и прочие настройки не меняются.
+Это не гарантия одновременной замены всех подов или отсутствия downtime:
+Deployment с Recreate сохраняет Recreate, StatefulSet может обновляться по порядку.
+Успех команды означает принятие запроса, а не завершение rollout.
+
+Paused Deployment и OnDelete workloads отклоняются до отправки всех restart
+запросов: одного изменения annotation недостаточно для автоматической замены подов.
+В prod сохраняется обязательное подтверждение. Если kubectl возвращает ошибку,
+часть запросов уже могла примениться — проверьте dashboard перед повтором.
+
+`pod-restart` остаётся отдельной командой: удаление конкретных выбранных подов
+последовательно с ожиданием Ready замены. Поведение этой команды не изменено.
 
 ### Сборка и предпросмотр
 

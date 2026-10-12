@@ -16,8 +16,13 @@ import (
 // wizard, selectors, dispatch, sources and native log dashboard remain real.
 func startUITest(t *testing.T, env []string, args ...string) (*os.File, *terminalCapture, *exec.Cmd) {
 	t.Helper()
+	return startUITestBinary(t, env, testBinary, args...)
+}
+
+func startUITestBinary(t *testing.T, env []string, binary string, args ...string) (*os.File, *terminalCapture, *exec.Cmd) {
+	t.Helper()
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
-	command := exec.CommandContext(ctx, testBinary, args...)
+	command := exec.CommandContext(ctx, binary, args...)
 	command.Env = env
 	terminal, err := pty.StartWithSize(command, &pty.Winsize{Rows: 32, Cols: 110})
 	if err != nil {

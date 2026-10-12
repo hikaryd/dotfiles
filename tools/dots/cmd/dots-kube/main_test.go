@@ -107,6 +107,12 @@ esac
 	if info, err := os.Stat(canonical); err != nil || info.Mode().Perm() != 0755 {
 		t.Fatalf("installed binary %v %v", info, err)
 	}
+	for _, name := range []string{"kpdev-rollout-restart", "kpstage-rollout-restart", "kppreprod-rollout-restart", "kpprod-rollout-restart"} {
+		target, err := os.Readlink(filepath.Join(bin, name))
+		if err != nil || target != "dots-kube" {
+			t.Fatalf("missing standalone rollout alias %s: %q %v", name, target, err)
+		}
+	}
 	out, diagnostic, status = execute(t, env, filepath.Join(bin, "kpstage"), "get", "pods")
 	if status != 0 || out != "fixture pods\n" || !strings.Contains(diagnostic, "context=dots-stage namespace=stage-ns") {
 		t.Fatalf("alias %d %q %q", status, out, diagnostic)
