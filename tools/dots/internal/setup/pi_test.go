@@ -34,6 +34,7 @@ func fixturePi(t *testing.T) (string, string) {
 	t.Setenv("PI_CODING_AGENT_DIR", agent)
 	put(t, filepath.Join(root, "config/pi/settings.json"), `{"theme":"ayu","defaultProvider":"openai","defaultModel":"gpt-6.1-sol","modelThinkingLevels":{"openai/gpt-6.1-sol":"xhigh"},"httpProxy":"http://127.0.0.1:10810","terminal":{"showTerminalProgress":true},"hideThinkingBlock":true,"enableInstallTelemetry":false,"defaultProjectTrust":"always"}`)
 	put(t, filepath.Join(root, "config/pi/models.json"), `{"providers":{"openai":{"modelOverrides":{"gpt-6.1-sol":{"contextWindow":400000}}}}}`)
+	put(t, filepath.Join(root, "config/pi/mcp.json"), `{"mcpServers":{"peekaboo":{"command":"/opt/homebrew/bin/peekaboo","args":["mcp","--allow-foreground"],"exposure":"codemode","toolExposure":{"agent":"hidden","analyze":"hidden","browser":"hidden"}}}}`)
 	for _, r := range []string{"themes/ayu.json", "extensions/ayu-bar/index.ts", "extensions/task-titles/index.ts"} {
 		put(t, filepath.Join(root, "config/pi", r), "resource")
 	}
@@ -119,7 +120,7 @@ func TestPiIdempotentAndPrivate(t *testing.T) {
 	if !reflect.DeepEqual(before, tree(t, agent)) {
 		t.Fatal("repeat changed files")
 	}
-	for _, name := range []string{"settings.json", "models.json"} {
+	for _, name := range []string{"settings.json", "models.json", "mcp.json"} {
 		i, e := os.Stat(filepath.Join(agent, name))
 		if e != nil || i.Mode().Perm() != 0600 {
 			t.Fatal("mode", e)
@@ -212,7 +213,7 @@ func TestPiSettingsSymlink(t *testing.T) {
 	}
 }
 func TestPiInvalidNoMutation(t *testing.T) {
-	for _, name := range []string{"settings.json", "models.json"} {
+	for _, name := range []string{"settings.json", "models.json", "mcp.json"} {
 		for _, data := range []string{"bad JSON", "", "[]", "null", "{} {}"} {
 			t.Run(name+data, func(t *testing.T) {
 				root, agent := fixturePi(t)
@@ -228,6 +229,60 @@ func TestPiInvalidNoMutation(t *testing.T) {
 		}
 	}
 }
+func TestPiMCPPreservesLocalServers(t *testing.T) {
+	root, agent := fixturePi(t)
+	path := filepath.Join(agent, "mcp.json")
+	original := `{"autoEnableCodemode":false,"mcpServers":{"personal":{"url":"https://example.invalid/mcp","headers":{"Authorization":"fixture-private-token"}},"peekaboo":{"url":"https://old.invalid/mcp","headers":{"Authorization":"old-token"},"enabled":false}}}`
+	put(t, path, original)
+	if Run(root, []string{"pi-apply"}) != 0 {
+		t.Fatal("apply")
+	}
+	current, err := readObject(path, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	servers := current["mcpServers"].(map[string]any)
+	want, _ := object([]byte(original))
+	if !reflect.DeepEqual(servers["personal"], want["mcpServers"].(map[string]any)["personal"]) || current["autoEnableCodemode"] != false {
+		t.Fatal("local MCP data changed")
+	}
+	template, _ := readObject(filepath.Join(root, "config/pi/mcp.json"), false)
+	if !reflect.DeepEqual(servers["peekaboo"], template["mcpServers"].(map[string]any)["peekaboo"]) {
+		t.Fatal("managed server retained stale transport, credentials or enabled state")
+	}
+	backups, _ := filepath.Glob(path + ".bak-*")
+	if len(backups) != 1 || get(t, backups[0]) != original {
+		t.Fatal("missing original MCP backup")
+	}
+	before := tree(t, agent)
+	if Run(root, []string{"pi-apply"}) != 0 || !reflect.DeepEqual(before, tree(t, agent)) {
+		t.Fatal("MCP apply is not idempotent")
+	}
+	if strings.Contains(get(t, filepath.Join(root, "config/pi/mcp.json")), "fixture-private-token") {
+		t.Fatal("private MCP credentials leaked into dots")
+	}
+}
+
+func TestPiInvalidMCPServersNoMutation(t *testing.T) {
+	for _, location := range []string{"live", "template"} {
+		for _, data := range []string{`{"mcpServers":null}`, `{"mcpServers":[]}`, `{"mcpServers":"invalid"}`} {
+			t.Run(location+data, func(t *testing.T) {
+				root, agent := fixturePi(t)
+				put(t, filepath.Join(agent, "settings.json"), `{"theme":"old"}`)
+				path := filepath.Join(agent, "mcp.json")
+				if location == "template" {
+					path = filepath.Join(root, "config/pi/mcp.json")
+				}
+				put(t, path, data)
+				before := tree(t, agent)
+				if Run(root, []string{"pi-apply"}) != 1 || !reflect.DeepEqual(before, tree(t, agent)) {
+					t.Fatal("invalid MCP object accepted or live files changed")
+				}
+			})
+		}
+	}
+}
+
 func TestPiMissingResourceNoMutation(t *testing.T) {
 	root, agent := fixturePi(t)
 	put(t, filepath.Join(agent, "settings.json"), `{"theme":"old"}`)

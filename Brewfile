@@ -7,6 +7,7 @@ tap "duongductrong/snapzy", "https://github.com/duongductrong/Snapzy"
 tap "abue-ammar/tinycast"
 tap "homebrew-zathura/zathura"
 tap "ajrosen/tap"
+tap "openclaw/tap"
 
 # Основные системные пакеты
 brew "coreutils"
@@ -120,6 +121,7 @@ brew "biome"
 brew "jq-lsp"
 
 # Другие инструменты разработки
+brew "openclaw/tap/peekaboo" # Локальный MCP для управления macOS в Pi и Codex
 brew "sesh"    
 brew "rift", args: ["tap", "acsandmann/tap"]
 brew "fastfetch"    

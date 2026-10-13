@@ -16,6 +16,14 @@ inherit = "core"
 command = "/opt/homebrew/bin/blueprint-mcp"
 startup_timeout_sec = 15.0
 
+[mcp_servers.peekaboo]
+command = "/opt/homebrew/bin/peekaboo"
+args = ["mcp", "--allow-foreground"]
+startup_timeout_sec = 15.0
+tool_timeout_sec = 60.0
+# Только управление рабочим столом: без встроенного AI-агента и browser MCP.
+disabled_tools = ["agent", "analyze", "browser"]
+
 [mcp_servers.token-counter]
 command = "npx"
 args = ["-y", "token-counter-mcp"]

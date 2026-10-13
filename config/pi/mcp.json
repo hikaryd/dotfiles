@@ -1,0 +1,20 @@
+{
+  "mcpServers": {
+    "peekaboo": {
+      "type": "stdio",
+      "command": "/opt/homebrew/bin/peekaboo",
+      "args": [
+        "mcp",
+        "--allow-foreground"
+      ],
+      "timeout": 60,
+      "exposure": "codemode",
+      "description": "Local macOS desktop control: screenshots, Accessibility inspection, clicks, typing, windows and menus.",
+      "toolExposure": {
+        "agent": "hidden",
+        "analyze": "hidden",
+        "browser": "hidden"
+      }
+    }
+  }
+}
