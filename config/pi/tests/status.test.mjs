@@ -46,11 +46,11 @@ test("missing and malformed usage does not poison session stats", () => {
   );
 });
 
-test("Ayu footer is local-only: no external commands or account polling", () => {
+test("Ayu footer keeps local session stats without external CLI dependencies", () => {
   const source = readFileSync(
     new URL("../extensions/ayu-bar/index.ts", import.meta.url),
     "utf8",
   );
-  assert.doesNotMatch(source, /pi\.exec|setInterval|fetch\(|quota|codexbar/i);
+  assert.doesNotMatch(source, /pi\.exec|codexbar|\.codex\//i);
   assert.match(source, /sessionUsage\(branch\)/);
 });

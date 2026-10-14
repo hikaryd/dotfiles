@@ -6,7 +6,10 @@ import type {
 } from "@earendil-works/pi-coding-agent";
 import { truncateToWidth, visibleWidth } from "@earendil-works/pi-tui";
 import { formatTokens, sessionUsage } from "./status.mjs";
+import { createQuotaReader, fetchCodexQuota, formatQuota } from "./quota.mjs";
 import { latestThroughput } from "./throughput.mjs";
+
+type QuotaReader = ReturnType<typeof createQuotaReader>;
 
 type FooterData = Parameters<
   NonNullable<Parameters<ExtensionContext["ui"]["setFooter"]>[0]>
@@ -37,6 +40,8 @@ export function renderStatusBar(
   width: number,
   throughput?: ReturnType<typeof latestThroughput>,
   usage = { input: 0, output: 0, cost: 0 },
+  quotaState?: ReturnType<QuotaReader["getState"]>,
+  now = Date.now(),
 ): string[] {
   const inner = Math.max(0, width - 2);
   const separator = theme.fg("dim", " · ");
@@ -88,6 +93,19 @@ export function renderStatusBar(
     pad(fitRow(modelLine, responseStats, inner)),
     pad(fitRow(sessionLine, contextLine, inner)),
   ];
+  if (quotaState) {
+    const remaining = quotaState.quota?.weekly.remainingPercent;
+    const tone = quotaState.error
+      ? "warning"
+      : remaining == null
+        ? "muted"
+        : remaining <= 10
+          ? "error"
+          : remaining <= 25
+            ? "warning"
+            : "accent";
+    lines.push(pad(theme.fg(tone, formatQuota(quotaState, now))));
+  }
   const statuses = [...footerData.getExtensionStatuses().values()].map((text) =>
     text.replace(/[\r\n\t]/g, " "),
   );
@@ -97,11 +115,23 @@ export function renderStatusBar(
 }
 
 export default function (pi: ExtensionAPI) {
+  let reader: QuotaReader | undefined;
   let disposeFooter = () => {};
   pi.on("session_start", (_event, ctx) => {
     if (ctx.mode !== "tui") return;
     ctx.ui.setFooter((tui, theme, footerData) => {
       disposeFooter();
+      const current = createQuotaReader(
+        (signal: AbortSignal) =>
+          fetchCodexQuota(
+            () => ctx.modelRegistry.getProviderAuth("openai-codex"),
+            signal,
+          ),
+        () => tui.requestRender(),
+      );
+      reader = current;
+      const timer = setInterval(() => void current.refresh(), 60000);
+      timer.unref();
       let lastLeaf: string | null | undefined;
       let throughput: ReturnType<typeof latestThroughput>;
       let usage = { input: 0, output: 0, cost: 0 };
@@ -110,9 +140,13 @@ export default function (pi: ExtensionAPI) {
       const dispose = () => {
         if (disposed) return;
         disposed = true;
+        clearInterval(timer);
+        current.stop();
+        if (reader === current) reader = undefined;
         unsubscribe();
       };
       disposeFooter = dispose;
+      void current.refresh();
       return {
         invalidate() {},
         dispose,
@@ -132,10 +166,29 @@ export default function (pi: ExtensionAPI) {
             width,
             throughput,
             usage,
+            current.getState(),
           );
         },
       };
     });
   });
+  pi.on("agent_end", () => void reader?.refresh());
   pi.on("session_shutdown", () => disposeFooter());
+  pi.registerCommand("quota", {
+    description: "Refresh the account-wide Codex weekly allowance",
+    handler: async (_args, ctx) => {
+      if (!reader) {
+        ctx.ui.notify("The quota bar is available in terminal mode.", "info");
+        return;
+      }
+      await reader.refresh(true);
+      const state = reader.getState();
+      ctx.ui.notify(
+        state.error === "login_required"
+          ? "Run /login and choose OpenAI Codex (legacy). This connects quota access without installing Codex CLI or changing your model. Then run /quota."
+          : formatQuota(state),
+        state.error ? "warning" : "info",
+      );
+    },
+  });
 }
