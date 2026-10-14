@@ -1,7 +1,7 @@
 # Рабочее окружение
 
 Dotfiles для macOS в стиле **Ayu Dark**: Ghostty, Nushell/zsh, Herdr/tmux,
-AeroSpace/Rift, Neovim, Yazi, LazyGit и CLI-агенты.
+AeroSpace/Rift, Neovim, Yazi, LazyGit и Pi Coding Agent.
 Пакеты — [`Brewfile`](Brewfile), настройки — [`config/`](config/).
 
 ## Установка и проверка
@@ -212,7 +212,7 @@ Paused Deployment и OnDelete workloads отклоняются до отправ
 если Tinycast уже запущен, перезапустите его после изменения.
 Автозапуск включается в Tinycast → Settings → General → Launch at login.
 
-## Управление Mac из Pi и Codex
+## Управление Mac из Pi
 
 Локальный MCP **Peekaboo** заменяет Orca для скриншотов, Accessibility, кликов,
 ввода и управления окнами/меню. Homebrew-пакет и настройки обоих агентов
@@ -220,9 +220,34 @@ Paused Deployment и OnDelete workloads отклоняются до отправ
 Общий skill `peekaboo` учит агентов проверять эффект действий новым снимком.
 
 [Выбор альтернативы, настройка и результаты проверки](docs/desktop-mcp.md).
-После применения настроек: `/reload` в Pi, перезапуск Codex.
+После применения настроек выполните `/reload` в Pi.
+
+## Excalidraw MCP в Pi
+
+`config/pi/mcp.json` подключает официальный удалённый сервер
+`https://mcp.excalidraw.com/mcp` через `codemode`, без локальной сборки и ключей.
+Применить: `./install -c steps/pi.yml`, затем `/reload` в Pi.
+Проверить соединение: `pi mcp list`.
+
+Pi не отображает интерактивный холст MCP Apps: доступны инструменты сервера,
+но не встроенный графический редактор. Диаграмму можно сохранить в `.excalidraw`
+и открыть в браузере. Содержимое диаграмм отправляется удалённому серверу;
+секреты и закрытые данные в него не передавать.
+
+`pi-apply` также исправляет манифест установленного `pi-supervisor@0.5.0`:
+`typebox` переносится из `dependencies` в `peerDependencies`, зависимости от
+модулей Pi получают диапазон `"*"`. Расширение остаётся включённым; исходный
+манифест сохраняется в backup. Другие версии и пакеты не меняются. После
+`pi update --extensions`, если предупреждение вернулось, повторить
+`build/bin/dots-tools setup pi-apply` и `/reload`. Общие физические зависимости
+npm не удаляются: ими могут пользоваться другие расширения.
 
 ## Прокси Pi и shell-команды
+
+`pi-proxy` управляет xray; приватные данные лежат в `~/.config/xray-pi/`.
+`config/shell/pi-proxy.sh` подключает Pi и `jg` без системных proxy-настроек.
+Строка Ayu показывает модель, TPS, контекст и расход текущей сессии Pi;
+внешние CLI для лимитов подписок не требуются.
 
 Pi использует локальный прокси для запросов моделей и MCP. Его proxy-переменные
 не должны наследоваться shell-командами: иначе `kubectl` и корпоративный `glab`
@@ -260,7 +285,7 @@ PYTEST_XDIST_AUTO_NUM_WORKERS=4 pytest-safe -- uv run pytest -n auto
 
 Используется официальный [dzhng/jevgrep](https://github.com/dzhng/jevgrep), CLI `jg` (Node.js 22+).
 `./install -c steps/jevgrep.yml` устанавливает версию из `config/jevgrep/version`,
-общий skill и инструкции Codex, Claude Code, Pi и OpenCode. Исходник skill взят
+общий skill и инструкции Pi. Исходник skill взят
 из тега `v0.8.0`; при обновлении CLI обновляйте и `config/jevgrep/skill/SKILL.md`.
 Единые правила поиска — `config/jevgrep/instructions.md`, без отдельных профилей проектов.
 
@@ -277,7 +302,7 @@ jg "Где проверяется авторизация запросов?" ./sr
 выбранному провайдеру: сужайте корень и используйте `--exclude` для закрытых путей.
 Стандартные `.gitignore` / `.ignore` сохраняются. Результат — исходники в stdout;
 индекс, Git-хуки, merge-драйверы и пересборка после редактирования не требуются.
-После изменения глобальных инструкций перезапустите Codex/Claude/OpenCode; в Pi — `/reload`.
+После изменения глобальных инструкций выполните `/reload` в Pi.
 
 ## Приватные настройки
 
@@ -286,7 +311,7 @@ dots private init                # создать только отсутств�
 dots private check               # проверить без вывода значений
 ```
 
-`init` готовит четыре файла: оболочка, Git и MCP-секреты Claude/Codex.
+`init` готовит два файла: приватные настройки оболочки и Git.
 Существующие файлы не перезаписываются. `check` проверяет их права и известные
 незаполненные шаблоны, не все внешние хранилища и не работоспособность ключей.
 Заполняйте файлы редактором, не командами с паролями в истории терминала.
@@ -295,22 +320,19 @@ dots private check               # проверить без вывода зна
 | --- | --- |
 | `~/.config/dots/private.zsh` | Личные алиасы, API-адреса и пути; пример — `config/zsh/private.example.zsh` |
 | `~/.config/git/private.inc` | Имя/email Git и личные `maintenance.repo`; include фиксирован в общем Git-конфиге |
-| `~/.claude/.mcp-secrets` | `Z_AI_API_KEY`, `MAGIC_API_KEY`, `KUBECONFIG_PATH`, необязательный `ANTHROPIC_BASE_URL` |
-| `~/.codex/.mcp-secrets` | `Z_AI_API_KEY`, необязательный `CF_OPENAI_BASE_URL` |
 | `~/.pi/agent/` | `auth.json` и приватная история `sessions/`; вход — `/login` |
 | `~/.config/jevgrep/credentials.json` | Провайдер и ключ Jevgrep; вход — `jg auth`, проверка — `jg doctor` |
 | `~/.kube/`, `~/.ssh/` | Kubeconfig, SSH-настройки и проверенные `known_hosts`; ключи предпочтительно через менеджер паролей/SSH-агент |
-| `~/.config/xray-codex/` | Приватная подписка и конфигурация прокси |
+| `~/.config/xray-pi/` | Приватная подписка и конфигурация прокси |
 
-Учитываются `DOTS_PRIVATE_ZSH`/`XDG_CONFIG_HOME`, `CLAUDE_CONFIG_DIR`,
-`CODEX_CONFIG_DIR`/`CODEX_HOME`, `PI_CODING_AGENT_DIR`.
+Учитываются `DOTS_PRIVATE_ZSH`/`XDG_CONFIG_HOME` и `PI_CODING_AGENT_DIR`.
 Файлы с секретами — `600`, приватные каталоги — `700`; необязательные интеграции
 можно не заполнять. Настройки телефона и других отдельных проектов ведутся в их репозиториях.
 
 На новом компьютере восстановите только нужные файлы из защищённого хранилища
 или через SSH с проверкой ключа, поправьте пути и выполните `dots private check`.
-После заполнения MCP: `bash scripts/claude-apply.sh` и/или `bash scripts/codex-apply.sh`;
-они делают бэкапы. В OAuth-сервисы войдите заново, не копируйте автоматически токены,
+MCP для Pi применяются через `./install -c steps/pi.yml`; личные серверы сохраняются.
+В OAuth-сервисы войдите заново, не копируйте автоматически токены,
 cookies и сессии. Выполните `dots projects refresh`, чтобы пересобрать пути проектов.
 Секреты и их бэкапы — вне Git; удаление из текущих файлов не очищает историю Git.
 

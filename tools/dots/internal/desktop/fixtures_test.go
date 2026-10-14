@@ -176,7 +176,7 @@ func (f *fixture) calls() []fakeCall {
 func (f *fixture) localEnv() {
 	f.t.Helper()
 	f.t.Setenv("DESKTOP_FAKE_DIR", f.bin)
-	for _, key := range []string{"HERDR_ENV", "HERDR_SOCKET_PATH", "DOTS_ROOT", "DOTS_PRIVATE_ZSH", "CODEX_HOME", "CODEX_CONFIG_DIR", "CLAUDE_CONFIG_DIR", "TMUX"} {
+	for _, key := range []string{"HERDR_ENV", "HERDR_SOCKET_PATH", "DOTS_ROOT", "DOTS_PRIVATE_ZSH", "TMUX"} {
 		f.t.Setenv(key, "")
 	}
 	for _, s := range f.env {

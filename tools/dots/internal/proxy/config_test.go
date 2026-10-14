@@ -14,7 +14,7 @@ import (
 func testController(t *testing.T) *controller {
 	t.Helper()
 	home := t.TempDir()
-	c := &controller{home: home, dir: filepath.Join(home, ".config", "xray-codex"), port: 10810, out: &bytes.Buffer{}, errOut: &bytes.Buffer{}}
+	c := &controller{home: home, dir: filepath.Join(home, ".config", "xray-pi"), port: 10810, out: &bytes.Buffer{}, errOut: &bytes.Buffer{}}
 	if err := c.harden(); err != nil {
 		t.Fatal(err)
 	}
@@ -105,17 +105,17 @@ func TestDecodeSubscription(t *testing.T) {
 func TestCLISetListSelectionAndPrivateModes(t *testing.T) {
 	home := t.TempDir()
 	t.Setenv("HOME", home)
-	t.Setenv("CODEX_PROXY_PORT", "10810")
+	t.Setenv("PI_PROXY_PORT", "10810")
 	var out, errs bytes.Buffer
 	invoke := func(args []string, input string) int {
 		out.Reset()
 		errs.Reset()
-		return run("", append([]string{"codex"}, args...), strings.NewReader(input), &out, &errs)
+		return run("", append([]string{"pi"}, args...), strings.NewReader(input), &out, &errs)
 	}
 	if code := invoke([]string{"--set-vless"}, "vless://secret-fixture@example.test:443?security=reality#Fixture\n"); code != 0 {
 		t.Fatalf("%d %s", code, &errs)
 	}
-	path := filepath.Join(home, ".config", "xray-codex", "servers.json")
+	path := filepath.Join(home, ".config", "xray-pi", "servers.json")
 	var data []object
 	b, err := os.ReadFile(path)
 	if err != nil || json.Unmarshal(b, &data) != nil || len(data) != 1 {
@@ -135,36 +135,6 @@ func TestCLISetListSelectionAndPrivateModes(t *testing.T) {
 	}
 	if code := invoke([]string{"--set-vless"}, "vless://secret-fixture@example.test:invalid\n"); code != 1 || strings.Contains(out.String()+errs.String(), "secret-fixture") {
 		t.Fatalf("bad secret output %d %s %s", code, &out, &errs)
-	}
-}
-func TestManagedEnvPreservesContent(t *testing.T) {
-	c := testController(t)
-	if err := atomicWrite(c.envPath(), []byte("EXISTING=fixture\n"), 0644); err != nil {
-		t.Fatal(err)
-	}
-	if err := c.installEnv(); err != nil {
-		t.Fatal(err)
-	}
-	first, _ := os.ReadFile(c.envPath())
-	if err := c.installEnv(); err != nil {
-		t.Fatal(err)
-	}
-	second, _ := os.ReadFile(c.envPath())
-	if !bytes.Equal(first, second) || !bytes.HasPrefix(second, []byte("EXISTING=fixture\n\n")) {
-		t.Fatalf("not idempotent: %q %q", first, second)
-	}
-	if strings.Count(string(second), "# >>> codex-proxy managed block >>>") != 1 {
-		t.Fatal(string(second))
-	}
-	for _, key := range []string{"NO_PROXY", "no_proxy"} {
-		want := key + "=\"127.0.0.1,localhost,::1,*.local,nebula-staging.x5.ru\"\n"
-		if !strings.Contains(string(second), want) {
-			t.Fatalf("managed env must bypass the proxy for Nebula: missing %s", key)
-		}
-	}
-	st, _ := os.Stat(c.envPath())
-	if st.Mode().Perm() != 0600 {
-		t.Fatal(st.Mode())
 	}
 }
 func TestAtomicWriteReplacesSymlinkAndIgnoresPredictableTemp(t *testing.T) {

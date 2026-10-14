@@ -1,5 +1,12 @@
 {
   "mcpServers": {
+    "excalidraw": {
+      "type": "http",
+      "url": "https://mcp.excalidraw.com/mcp",
+      "timeout": 60,
+      "exposure": "codemode",
+      "description": "Excalidraw diagrams: element format reference, drawing checkpoints and diagram creation. Pi does not render the interactive MCP Apps canvas."
+    },
     "peekaboo": {
       "type": "stdio",
       "command": "/opt/homebrew/bin/peekaboo",

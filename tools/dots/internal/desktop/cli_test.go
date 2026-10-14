@@ -107,14 +107,14 @@ func TestPortsExitAndArgv(t *testing.T) {
 }
 func TestPrivateInitCheckSafety(t *testing.T) {
 	f := newFixture(t)
-	for _, p := range []string{"config/zsh/private.example.zsh", "config/claude/mcp-secrets.example.sh", "config/codex/mcp-secrets.example.sh"} {
+	for _, p := range []string{"config/zsh/private.example.zsh"} {
 		f.write(filepath.Join(f.root, p), "export KEY=''\n", 0600)
 	}
 	out, err, code := f.run("", "private", "init")
 	if code != 0 {
 		t.Fatalf("init %s %s", out, err)
 	}
-	for _, p := range []string{".config/dots/private.zsh", ".config/git/private.inc", ".claude/.mcp-secrets", ".codex/.mcp-secrets"} {
+	for _, p := range []string{".config/dots/private.zsh", ".config/git/private.inc"} {
 		path := filepath.Join(f.home, p)
 		info, e := os.Stat(path)
 		if e != nil || info.Mode().Perm() != 0600 {

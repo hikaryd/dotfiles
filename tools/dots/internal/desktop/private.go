@@ -22,7 +22,7 @@ const gitTemplate = `# Личная Git-идентичность; раскомм
 type privateLocation struct{ label, path, template string }
 
 func privateLocations() []privateLocation {
-	return []privateLocation{{"shell", envOr("DOTS_PRIVATE_ZSH", filepath.Join(configHome(), "dots/private.zsh")), "config/zsh/private.example.zsh"}, {"git", filepath.Join(home(), ".config/git/private.inc"), ""}, {"claude", filepath.Join(envOr("CLAUDE_CONFIG_DIR", filepath.Join(home(), ".claude")), ".mcp-secrets"), "config/claude/mcp-secrets.example.sh"}, {"codex", filepath.Join(envOr("CODEX_CONFIG_DIR", envOr("CODEX_HOME", filepath.Join(home(), ".codex"))), ".mcp-secrets"), "config/codex/mcp-secrets.example.sh"}}
+	return []privateLocation{{"shell", envOr("DOTS_PRIVATE_ZSH", filepath.Join(configHome(), "dots/private.zsh")), "config/zsh/private.example.zsh"}, {"git", filepath.Join(home(), ".config/git/private.inc"), ""}}
 }
 func validatePrivatePath(root, path string) error {
 	if !filepath.IsAbs(path) {

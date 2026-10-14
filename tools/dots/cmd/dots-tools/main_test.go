@@ -34,7 +34,7 @@ func captureDispatch(t *testing.T, root, name string, args []string) (int, strin
 func TestNativeAliasesAndSetupHelpDoNotApply(t *testing.T) {
 	home, root := t.TempDir(), t.TempDir()
 	t.Setenv("HOME", home)
-	for _, command := range []string{"pi-install", "pi-apply", "jevgrep-apply", "codex-instructions-apply", "codex-task-title-apply", "waterfox-apply", "tinycast-hotkey", "claude-apply-json", "claude-sync-json", "codexbar-config", "managed-links", "json-keys"} {
+	for _, command := range []string{"pi-install", "pi-apply", "jevgrep-apply", "waterfox-apply", "tinycast-hotkey", "managed-links", "json-keys"} {
 		code, out, err := captureDispatch(t, root, "dots-tools", []string{"setup", command, "--help"})
 		if code != 0 || out == "" || err != "" {
 			t.Fatalf("help %s: %d %q %q", command, code, out, err)

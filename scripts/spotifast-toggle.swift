@@ -2,7 +2,7 @@ import AppKit
 import ApplicationServices
 import CoreGraphics
 
-guard let app = NSRunningApplication.runningApplications(withBundleIdentifier: "com.spotify.client").first else {
+guard let app = NSRunningApplication.runningApplications(withBundleIdentifier: "rocks.spotifast.Spotifast").first else {
     print("launch")
     exit(0)
 }
@@ -28,7 +28,7 @@ func waitForWindow(visible: Bool) -> Bool {
 if hasVisibleWindow() {
     app.hide()
     guard waitForWindow(visible: false) else {
-        fputs("spotify-toggle: Spotify did not hide\n", stderr)
+        fputs("spotifast-toggle: Spotifast did not hide\n", stderr)
         exit(1)
     }
     print("hidden")
@@ -44,7 +44,7 @@ if hasVisibleWindow() {
     app.unhide()
     app.activate(options: [.activateAllWindows])
     guard waitForWindow(visible: true) else {
-        fputs("spotify-toggle: could not show Spotify\n", stderr)
+        fputs("spotifast-toggle: could not show Spotifast\n", stderr)
         exit(1)
     }
     print("shown")

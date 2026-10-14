@@ -32,7 +32,7 @@ func fixtureHome(t *testing.T) string {
 	t.Helper()
 	h := t.TempDir()
 	t.Setenv("HOME", h)
-	for _, k := range []string{"CODEX_CONFIG_DIR", "CODEX_HOME", "CLAUDE_CONFIG_DIR", "CLAUDE_DIR", "SRC", "DST", "CODEXBAR_CONFIG", "XDG_CONFIG_HOME", "HAVE_CLAUDE", "ANTHROPIC_BASE_URL", "Z_AI_API_KEY", "MAGIC_API_KEY", "KUBECONFIG_PATH", "TYPESAFE_AI_API_KEY", "OPENROUTER_API_KEY", "AI_GATEWAY_API_KEY"} {
+	for _, k := range []string{"XDG_CONFIG_HOME", "PI_CODING_AGENT_DIR"} {
 		t.Setenv(k, "")
 	}
 	return h
@@ -67,80 +67,6 @@ func TestJSONKeysSafeAndOrdered(t *testing.T) {
 		if code != 1 || out != "" || strings.Contains(err, "fixture-token") {
 			t.Fatal(code, out, err)
 		}
-	}
-}
-func TestCodexbarResolution(t *testing.T) {
-	for _, variant := range []string{"default", "legacy", "current", "xdg", "relative-xdg", "override"} {
-		t.Run(variant, func(t *testing.T) {
-			h := fixtureHome(t)
-			current := filepath.Join(h, ".config/codexbar/config.json")
-			legacy := filepath.Join(h, ".codexbar/config.json")
-			want := current
-			if variant != "default" {
-				put(t, legacy, `{"version":1,"providers":[{"id":"other","enabled":false}],"account":"fixture-account"}`)
-				want = legacy
-			}
-			switch variant {
-			case "current":
-				put(t, current, `{"providers":[{"id":"codex","source":"web","extra":true}]}`)
-				want = current
-			case "xdg":
-				t.Setenv("XDG_CONFIG_HOME", filepath.Join(h, "xdg"))
-				want = filepath.Join(h, "xdg/codexbar/config.json")
-			case "relative-xdg":
-				t.Setenv("XDG_CONFIG_HOME", "relative")
-			case "override":
-				t.Setenv("XDG_CONFIG_HOME", filepath.Join(h, "xdg"))
-				t.Setenv("CODEXBAR_CONFIG", "  ~/custom.json  ")
-				want = filepath.Join(h, "custom.json")
-			}
-			code, out, err := runCaptured(t, "", "codexbar-config")
-			if code != 0 || strings.TrimSpace(out) != want {
-				t.Fatal(code, out, err)
-			}
-			d, e := readObject(want, false)
-			if e != nil {
-				t.Fatal(e)
-			}
-			providers := d["providers"].([]any)
-			found := false
-			for _, v := range providers {
-				m := v.(map[string]any)
-				if m["id"] == "codex" {
-					found = m["enabled"] == true && m["source"] == "cli"
-				}
-			}
-			if !found {
-				t.Fatal(d)
-			}
-			if variant == "legacy" && d["account"] != "fixture-account" {
-				t.Fatal(d)
-			}
-		})
-	}
-}
-func TestCodexbarMalformedAndSymlink(t *testing.T) {
-	h := fixtureHome(t)
-	p := filepath.Join(h, "config.json")
-	t.Setenv("CODEXBAR_CONFIG", p)
-	put(t, p, "")
-	code, _, _ := runCaptured(t, "", "codexbar-config")
-	if code != 1 || get(t, p) != "" {
-		t.Fatal("empty input mutated")
-	}
-	target := filepath.Join(h, "target.json")
-	put(t, target, `{"providers":[]}`)
-	os.Remove(p)
-	if e := os.Symlink(target, p); e != nil {
-		t.Fatal(e)
-	}
-	code, _, _ = runCaptured(t, "", "codexbar-config")
-	if code != 0 || get(t, target) != `{"providers":[]}` {
-		t.Fatal("target changed")
-	}
-	i, _ := os.Lstat(p)
-	if i.Mode()&os.ModeSymlink != 0 {
-		t.Fatal("expected atomic symlink replacement")
 	}
 }
 func fakeDefaults() int {
@@ -193,28 +119,6 @@ func TestTinycastHotkeyDefaultsFailure(t *testing.T) {
 				t.Fatal(code, out, diagnostic)
 			}
 		})
-	}
-}
-func TestInstructionsPreserveAndBackup(t *testing.T) {
-	h := fixtureHome(t)
-	root := filepath.Join(h, "root")
-	p := filepath.Join(h, "codex/AGENTS.md")
-	t.Setenv("CODEX_CONFIG_DIR", filepath.Dir(p))
-	put(t, filepath.Join(root, "config/jevgrep/instructions.md"), "new rules\n")
-	put(t, p, "mine\n<!-- BEGIN DOTS SEARCH -->\nold\n<!-- END DOTS SEARCH -->\nafter\n")
-	if Run(root, []string{"codex-instructions-apply"}) != 0 {
-		t.Fatal("apply")
-	}
-	if get(t, p) != "mine\n<!-- BEGIN DOTS SEARCH -->\nnew rules\n<!-- END DOTS SEARCH -->\nafter\n" {
-		t.Fatal(get(t, p))
-	}
-	before := tree(t, filepath.Dir(p))
-	if Run(root, []string{"codex-instructions-apply"}) != 0 || !reflect.DeepEqual(before, tree(t, filepath.Dir(p))) {
-		t.Fatal("not idempotent")
-	}
-	put(t, p, "<!-- BEGIN DOTS SEARCH -->\nno end")
-	if Run(root, []string{"codex-instructions-apply"}) != 1 {
-		t.Fatal("incomplete block")
 	}
 }
 func TestWaterfoxProfilesAndBlocks(t *testing.T) {

@@ -150,7 +150,7 @@ func TestProxyCheckForwardingAndHTTPStatuses(t *testing.T) {
 		mu.Lock()
 		uri, agent := gotURI, gotAgent
 		mu.Unlock()
-		if uri != targetURL || agent != "codex-proxy-check/1.0" {
+		if uri != targetURL || agent != "pi-proxy-check/1.0" {
 			t.Fatalf("request %s %s", uri, agent)
 		}
 	}

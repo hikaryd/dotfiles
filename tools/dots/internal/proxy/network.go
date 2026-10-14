@@ -63,7 +63,7 @@ func (c *controller) checkURL(target string) (bool, string) {
 	if err != nil {
 		return false, "invalid request"
 	}
-	req.Header.Set("User-Agent", "codex-proxy-check/1.0")
+	req.Header.Set("User-Agent", "pi-proxy-check/1.0")
 	resp, err := (&http.Client{Transport: tr, Timeout: 8 * time.Second}).Do(req)
 	if err != nil {
 		return false, "proxy connection or TLS error"
@@ -83,12 +83,12 @@ func (c *controller) processStatus() error {
 	}
 	running := pid > 0 && pidRunning(pid) && c.owned(pid)
 	if running {
-		fmt.Fprintf(c.out, "xray is running for Codex (PID %d)\n", pid)
+		fmt.Fprintf(c.out, "xray is running for Pi (PID %d)\n", pid)
 	} else {
-		fmt.Fprintln(c.out, "xray is NOT running for Codex")
+		fmt.Fprintln(c.out, "xray is NOT running for Pi")
 		if pid > 0 {
 			if pidRunning(pid) {
-				fmt.Fprintf(c.errOut, "PID file points to PID %d, but it is not this codex xray process.\n", pid)
+				fmt.Fprintf(c.errOut, "PID file points to PID %d, but it is not this pi xray process.\n", pid)
 			}
 			if err := c.removePID(); err != nil {
 				return err

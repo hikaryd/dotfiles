@@ -1,5 +1,5 @@
 - link:
-    # Shared desktop MCP workflow for Pi and Codex; preserve foreign skills.
+    # Shared desktop MCP workflow for Pi; preserve foreign skills.
     ~/.agents/skills/peekaboo:
       path: config/peekaboo/skill
       create: true

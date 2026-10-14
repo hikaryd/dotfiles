@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# Keep Spotify's floating window on the currently focused AeroSpace workspace.
+# Keep Spotifast's floating window on the currently focused AeroSpace workspace.
 set -euo pipefail
 
-pgrep -x Spotify >/dev/null || exit 0
+pgrep -x Spotifast >/dev/null || exit 0
 
 target="${AEROSPACE_FOCUSED_WORKSPACE:-}"
 if [[ -z "$target" ]]; then
@@ -12,7 +12,7 @@ fi
 
 aerospace list-windows --all --format '%{window-id}|%{app-bundle-id}|%{workspace}' |
   while IFS='|' read -r window_id app_id workspace; do
-    if [[ "$app_id" == 'com.spotify.client' && "$workspace" != "$target" ]]; then
+    if [[ "$app_id" == 'rocks.spotifast.Spotifast' && "$workspace" != "$target" ]]; then
       aerospace move-node-to-workspace --window-id "$window_id" "$target"
     fi
   done

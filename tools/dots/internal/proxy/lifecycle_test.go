@@ -8,7 +8,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"runtime"
 	"strconv"
 	"strings"
 	"syscall"
@@ -59,7 +58,7 @@ func TestMain(m *testing.M) {
 			}
 			fmt.Println(strings.Join(args, " "))
 			os.Exit(0)
-		case "codex":
+		case "pi":
 			env := map[string]string{}
 			for _, k := range proxyKeys {
 				env[k] = os.Getenv(k)
@@ -67,17 +66,6 @@ func TestMain(m *testing.M) {
 			in, _ := io.ReadAll(os.Stdin)
 			_ = json.NewEncoder(os.Stdout).Encode(object{"args": os.Args[1:], "env": env, "stdin": string(in)})
 			os.Exit(7)
-		case "launchctl", "open":
-			f, err := os.OpenFile(filepath.Join(fixture, "app-argv"), os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600)
-			if err != nil {
-				os.Exit(1)
-			}
-			_ = json.NewEncoder(f).Encode(os.Args)
-			f.Close()
-			if filepath.Base(os.Args[0]) == filepath.Base(os.Getenv("DOTS_PROXY_TEST_FAIL_COMMAND")) {
-				os.Exit(1)
-			}
-			os.Exit(0)
 		}
 	}
 	os.Exit(m.Run())
@@ -93,7 +81,7 @@ func fakeCommands(t *testing.T) string {
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, name := range []string{"xray", "ps", "codex", "launchctl", "open"} {
+	for _, name := range []string{"xray", "ps", "pi"} {
 		if err := os.Symlink(exe, filepath.Join(bin, name)); err != nil {
 			t.Fatal(err)
 		}
@@ -124,8 +112,8 @@ func cleanupChild(t *testing.T, c *controller, fixture string) {
 	})
 }
 func TestOwnedCommand(t *testing.T) {
-	cfg := "/fixture home/.config/xray-codex/config.json"
-	for _, command := range []string{`/bin/xray run -c "/fixture home/.config/xray-codex/config.json"`, `/bin/xray run -c /fixture\ home/.config/xray-codex/config.json`, `xray run -c /fixture home/.config/xray-codex/config.json`} {
+	cfg := "/fixture home/.config/xray-pi/config.json"
+	for _, command := range []string{`/bin/xray run -c "/fixture home/.config/xray-pi/config.json"`, `/bin/xray run -c /fixture\ home/.config/xray-pi/config.json`, `xray run -c /fixture home/.config/xray-pi/config.json`} {
 		if !ownsCommand(command, cfg) {
 			t.Fatalf("rejected %s", command)
 		}
@@ -263,46 +251,6 @@ func TestStaleAndUnownedPIDsNeverSignaled(t *testing.T) {
 		t.Fatal("missing ownership warning")
 	}
 }
-func TestRunAppFakeCommands(t *testing.T) {
-	if runtime.GOOS != "darwin" {
-		t.Skip("macOS launchctl/open CLI")
-	}
-	fixture := fakeCommands(t)
-	c := testController(t)
-	cleanupChild(t, c, fixture)
-	app := filepath.Join(c.home, "Apps", "Codex.app")
-	if err := os.MkdirAll(filepath.Join(app, "Contents", "MacOS"), 0700); err != nil {
-		t.Fatal(err)
-	}
-	t.Setenv("CODEX_APP_PATH", filepath.Join(app, "Contents", "MacOS", "Codex"))
-	if err := c.start(fixtureVLESS(t)); err != nil {
-		t.Fatal(err)
-	}
-	if code, err := c.runApp(); code != 0 || err != nil {
-		t.Fatalf("%d %v", code, err)
-	}
-	if err := c.unsetAppEnv(); err != nil {
-		t.Fatal(err)
-	}
-	data, err := os.ReadFile(filepath.Join(fixture, "app-argv"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	lines := strings.Split(strings.TrimSpace(string(data)), "\n")
-	if len(lines) != 25 {
-		t.Fatalf("calls %d: %s", len(lines), data)
-	}
-	var argv []string
-	if err := json.Unmarshal([]byte(lines[12]), &argv); err != nil {
-		t.Fatal(err)
-	}
-	if len(argv) != 3 || filepath.Base(argv[0]) != "open" || argv[1] != "-na" || argv[2] != app {
-		t.Fatalf("open argv %#v", argv)
-	}
-	if err := c.stop(); err != nil {
-		t.Fatal(err)
-	}
-}
 func TestMissingXray(t *testing.T) {
 	t.Setenv("PATH", t.TempDir())
 	c := testController(t)
@@ -317,7 +265,7 @@ func TestExportedRunInFixtureProcess(t *testing.T) {
 		t.Fatal(err)
 	}
 	cmd := exec.Command(exe, "-test.run=^TestPublicRunChild$")
-	cmd.Env = append(os.Environ(), "DOTS_PROXY_PUBLIC_CHILD=1", "HOME="+t.TempDir(), "CODEX_PROXY_PORT=10810")
+	cmd.Env = append(os.Environ(), "DOTS_PROXY_PUBLIC_CHILD=1", "HOME="+t.TempDir(), "PI_PROXY_PORT=10810")
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		t.Fatalf("%v %s", err, output)
@@ -330,7 +278,7 @@ func TestPublicRunChild(t *testing.T) {
 	if os.Getenv("DOTS_PROXY_PUBLIC_CHILD") != "1" {
 		return
 	}
-	os.Exit(Run("", []string{"codex", "--print-env"}))
+	os.Exit(Run("", []string{"pi", "--print-env"}))
 }
 func TestControllerLockBoundedAndReleased(t *testing.T) {
 	c := testController(t)
@@ -350,34 +298,4 @@ func TestControllerLockBoundedAndReleased(t *testing.T) {
 		t.Fatal(err)
 	}
 	unlock()
-}
-func TestFailedAppOpenCleansLaunchctl(t *testing.T) {
-	if runtime.GOOS != "darwin" {
-		t.Skip("macOS launchctl/open CLI")
-	}
-	fixture := fakeCommands(t)
-	c := testController(t)
-	cleanupChild(t, c, fixture)
-	app := filepath.Join(c.home, "Codex.app")
-	if err := os.Mkdir(app, 0700); err != nil {
-		t.Fatal(err)
-	}
-	t.Setenv("CODEX_APP_PATH", app)
-	t.Setenv("DOTS_PROXY_TEST_FAIL_COMMAND", filepath.Join(fixture, "fake commands", "open"))
-	if err := c.start(fixtureVLESS(t)); err != nil {
-		t.Fatal(err)
-	}
-	if code, err := c.runApp(); code == 0 || err == nil {
-		t.Fatalf("failed open returned %d %v", code, err)
-	}
-	b, err := os.ReadFile(filepath.Join(fixture, "app-argv"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	if strings.Count(string(b), `"unsetenv"`) != len(proxyKeys) {
-		t.Fatalf("missing rollback: %s", b)
-	}
-	if err := c.stop(); err != nil {
-		t.Fatal(err)
-	}
 }

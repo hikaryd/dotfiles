@@ -34,7 +34,7 @@ func fixturePi(t *testing.T) (string, string) {
 	t.Setenv("PI_CODING_AGENT_DIR", agent)
 	put(t, filepath.Join(root, "config/pi/settings.json"), `{"theme":"ayu","defaultProvider":"openai","defaultModel":"gpt-6.1-sol","modelThinkingLevels":{"openai/gpt-6.1-sol":"xhigh"},"httpProxy":"http://127.0.0.1:10810","terminal":{"showTerminalProgress":true},"hideThinkingBlock":true,"enableInstallTelemetry":false,"defaultProjectTrust":"always"}`)
 	put(t, filepath.Join(root, "config/pi/models.json"), `{"providers":{"openai":{"modelOverrides":{"gpt-6.1-sol":{"contextWindow":400000}}}}}`)
-	put(t, filepath.Join(root, "config/pi/mcp.json"), `{"mcpServers":{"peekaboo":{"command":"/opt/homebrew/bin/peekaboo","args":["mcp","--allow-foreground"],"exposure":"codemode","toolExposure":{"agent":"hidden","analyze":"hidden","browser":"hidden"}}}}`)
+	put(t, filepath.Join(root, "config/pi/mcp.json"), `{"mcpServers":{"excalidraw":{"type":"http","url":"https://mcp.excalidraw.com/mcp","timeout":60,"exposure":"codemode"},"peekaboo":{"command":"/opt/homebrew/bin/peekaboo","args":["mcp","--allow-foreground"],"exposure":"codemode","toolExposure":{"agent":"hidden","analyze":"hidden","browser":"hidden"}}}}`)
 	for _, r := range []string{"themes/ayu.json", "extensions/ayu-bar/index.ts", "extensions/task-titles/index.ts"} {
 		put(t, filepath.Join(root, "config/pi", r), "resource")
 	}
@@ -232,7 +232,7 @@ func TestPiInvalidNoMutation(t *testing.T) {
 func TestPiMCPPreservesLocalServers(t *testing.T) {
 	root, agent := fixturePi(t)
 	path := filepath.Join(agent, "mcp.json")
-	original := `{"autoEnableCodemode":false,"mcpServers":{"personal":{"url":"https://example.invalid/mcp","headers":{"Authorization":"fixture-private-token"}},"peekaboo":{"url":"https://old.invalid/mcp","headers":{"Authorization":"old-token"},"enabled":false}}}`
+	original := `{"autoEnableCodemode":false,"mcpServers":{"personal":{"url":"https://example.invalid/mcp","headers":{"Authorization":"fixture-private-token"}},"excalidraw":{"type":"stdio","command":"old-excalidraw","args":["--stdio"],"env":{"TOKEN":"old-token"},"enabled":false},"peekaboo":{"url":"https://old.invalid/mcp","headers":{"Authorization":"old-token"},"enabled":false}}}`
 	put(t, path, original)
 	if Run(root, []string{"pi-apply"}) != 0 {
 		t.Fatal("apply")
@@ -247,8 +247,10 @@ func TestPiMCPPreservesLocalServers(t *testing.T) {
 		t.Fatal("local MCP data changed")
 	}
 	template, _ := readObject(filepath.Join(root, "config/pi/mcp.json"), false)
-	if !reflect.DeepEqual(servers["peekaboo"], template["mcpServers"].(map[string]any)["peekaboo"]) {
-		t.Fatal("managed server retained stale transport, credentials or enabled state")
+	for _, name := range []string{"excalidraw", "peekaboo"} {
+		if !reflect.DeepEqual(servers[name], template["mcpServers"].(map[string]any)[name]) {
+			t.Fatal(name, "managed server retained stale transport, credentials or enabled state")
+		}
 	}
 	backups, _ := filepath.Glob(path + ".bak-*")
 	if len(backups) != 1 || get(t, backups[0]) != original {

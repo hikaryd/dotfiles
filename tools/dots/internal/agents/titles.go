@@ -41,13 +41,8 @@ func cleanText(s string) string {
 	}, s)
 	return strings.Join(strings.Fields(s), " ")
 }
-func taskTitle(s string, limit int, agent string) string {
+func taskTitle(s string, limit int) string {
 	s = cleanText(s)
-	if agent == "codex" {
-		if i := strings.LastIndex(s, " | "); i >= 0 {
-			s = strings.TrimSpace(s[:i])
-		}
-	}
 	return shorten(s, limit)
 }
 
@@ -101,7 +96,7 @@ type titleState struct {
 func newState() *titleState {
 	return &titleState{map[string]string{}, map[string]*tabRecord{}, map[string]*semanticRecord{}}
 }
-func isAgent(s string) bool { return s == "codex" || s == "pi" }
+func isAgent(s string) bool { return s == "pi" }
 func sessionIdentity(p *pane) string {
 	if p.Session != nil && p.Session.Agent == p.Agent {
 		return p.Session.Value
@@ -131,7 +126,7 @@ func nativeTitle(p *pane) string {
 			return ""
 		}
 	}
-	return taskTitle(s, 32, p.Agent)
+	return taskTitle(s, 32)
 }
 func setTitle(s snapshot, st *titleState, id, title, session, agent string) error {
 	var p *pane
@@ -152,7 +147,7 @@ func setTitle(s snapshot, st *titleState, id, title, session, agent string) erro
 		return fmt.Errorf("%s session does not match the target pane", agent)
 	}
 	emptyPi := agent == "pi" && title == ""
-	title = taskTitle(title, 32, agent)
+	title = taskTitle(title, 32)
 	if title == "" && !emptyPi {
 		return errors.New("task title must not be empty")
 	}
@@ -176,10 +171,7 @@ func semanticTitles(panes map[string]*pane, st *titleState) map[string]string {
 	for id, r := range st.Semantic {
 		p := panes[id]
 		a := r.Agent
-		if a == "" {
-			a = "codex"
-		}
-		if p == nil || p.Agent != a || p.Terminal != r.Terminal {
+		if !isAgent(a) || p == nil || p.Agent != a || p.Terminal != r.Terminal {
 			delete(st.Semantic, id)
 			continue
 		}
@@ -194,7 +186,7 @@ func semanticTitles(panes map[string]*pane, st *titleState) map[string]string {
 	for id, p := range panes {
 		if isAgent(p.Agent) {
 			if r, ok := st.Semantic[id]; ok {
-				out[id] = taskTitle(r.Title, 32, p.Agent)
+				out[id] = taskTitle(r.Title, 32)
 			} else {
 				out[id] = nativeTitle(p)
 			}
@@ -337,7 +329,7 @@ func synchronize(s snapshot, st *titleState, command herdrCommand, save func() e
 }
 func automaticLabel(s string) bool {
 	switch s {
-	case "zsh", "nu", "bash", "fish", "codex", "pi":
+	case "zsh", "nu", "bash", "fish", "pi":
 		return true
 	}
 	if s == "" {

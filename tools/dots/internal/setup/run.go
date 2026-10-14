@@ -13,7 +13,7 @@ func Run(root string, args []string) int {
 		return 2
 	}
 	if args[0] == "--help" || args[0] == "-h" || len(args) == 2 && (args[1] == "--help" || args[1] == "-h") {
-		fmt.Println("usage: dots-tools setup pi-install|pi-apply|jevgrep-apply|codex-instructions-apply|codex-task-title-apply|waterfox-apply|tinycast-hotkey|claude-apply-json|claude-sync-json|codexbar-config|managed-links|json-keys [args]")
+		fmt.Println("usage: dots-tools setup pi-install|pi-apply|jevgrep-apply|waterfox-apply|tinycast-hotkey|managed-links|json-keys [args]")
 		return 0
 	}
 	if args[0] == "json-keys" && len(args) != 2 {
@@ -34,20 +34,10 @@ func Run(root string, args []string) int {
 		err = piApply(root)
 	case "jevgrep-apply":
 		err = jevgrepApply(root)
-	case "codex-instructions-apply":
-		err = codexInstructions(root)
-	case "codex-task-title-apply":
-		err = taskTitleApply(root)
 	case "waterfox-apply":
 		err = waterfoxApply(root)
 	case "tinycast-hotkey":
 		err = tinycastHotkey()
-	case "claude-apply-json":
-		err = claudeApply(root)
-	case "claude-sync-json":
-		err = claudeSync(root)
-	case "codexbar-config":
-		err = codexbarConfig()
 	case "managed-links":
 		err = managedLinks(root, args[1:])
 	case "json-keys":

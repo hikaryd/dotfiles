@@ -8,7 +8,6 @@ import (
 
 	"dots/native/internal/agents"
 	"dots/native/internal/bootstrap"
-	"dots/native/internal/codexconfig"
 	"dots/native/internal/desktop"
 	"dots/native/internal/kube"
 	"dots/native/internal/palette"
@@ -57,7 +56,7 @@ func dispatch(root, name string, args []string) int {
 		return agents.Run(root, append([]string{"task-titles"}, args...))
 	}
 	if len(args) == 0 || args[0] == "-h" || args[0] == "--help" || args[0] == "help" {
-		fmt.Println("Usage: dots-tools desktop|setup|codexconfig|agents|proxy|palette|vpn|kube|ui <command> [args]")
+		fmt.Println("Usage: dots-tools desktop|setup|agents|proxy|palette|vpn|kube|ui <command> [args]")
 		fmt.Println("Aliases: dots, dots-nu, ai_helper, dots-vpn, dots-task-titles")
 		return 0
 	}
@@ -71,8 +70,6 @@ func dispatch(root, name string, args []string) int {
 			return bootstrap.Run(root, args[2:])
 		}
 		return setup.Run(root, args[1:])
-	case "codexconfig":
-		return codexconfig.Run(root, args[1:])
 	case "agents":
 		return agents.Run(root, args[1:])
 	case "proxy":

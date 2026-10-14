@@ -5,10 +5,9 @@ import type {
   Theme,
 } from "@earendil-works/pi-coding-agent";
 import { truncateToWidth, visibleWidth } from "@earendil-works/pi-tui";
-import { createQuotaReader, formatReset, formatTokens } from "./quota.mjs";
+import { formatTokens, sessionUsage } from "./status.mjs";
 import { latestThroughput } from "./throughput.mjs";
 
-type QuotaReader = ReturnType<typeof createQuotaReader>;
 type FooterData = Parameters<
   NonNullable<Parameters<ExtensionContext["ui"]["setFooter"]>[0]>
 >[2];
@@ -35,10 +34,9 @@ export function renderStatusBar(
   pi: ExtensionAPI,
   theme: Theme,
   footerData: FooterData,
-  state: ReturnType<QuotaReader["getState"]>,
   width: number,
-  now = Date.now(),
   throughput?: ReturnType<typeof latestThroughput>,
+  usage = { input: 0, output: 0, cost: 0 },
 ): string[] {
   const inner = Math.max(0, width - 2);
   const separator = theme.fg("dim", " · ");
@@ -81,52 +79,14 @@ export function renderStatusBar(
     theme.fg(tone, `ctx ${contextPercent}`) +
     (window ? theme.fg("dim", ` ${tokens}/${formatTokens(window)}`) : "");
 
-  const weekly = state.quota?.weekly;
-  let quotaLine: string;
-  if (!weekly) {
-    quotaLine = theme.fg(
-      "muted",
-      `Codex 7d ${state.loading ? "…" : "— unavailable"}`,
-    );
-  } else if (weekly.resetsAt !== undefined && weekly.resetsAt <= now) {
-    // An elapsed reset time is not proof the server has restored the allowance.
-    quotaLine = theme.fg("muted", "Codex 7d — resetting");
-  } else {
-    const remaining = Math.floor(weekly.remainingPercent);
-    const tone =
-      remaining <= 10 ? "error" : remaining <= 25 ? "warning" : "accent";
-    const count = Math.round((weekly.remainingPercent / 100) * 8);
-    const meter =
-      theme.fg(tone, "▰".repeat(count)) +
-      theme.fg("dim", "▱".repeat(8 - count));
-    const value = theme.fg(tone, `${remaining}% left`);
-    const reset = formatReset(weekly.resetsAt, now);
-    const stale =
-      state.error ||
-      (state.updatedAt !== undefined && now - state.updatedAt > 5 * 60000);
-    const suffix = stale
-      ? theme.fg("warning", " · stale")
-      : reset
-        ? theme.fg("dim", ` · ↻ ${reset}`)
-        : "";
-    const title = theme.fg("muted", "Codex 7d ");
-    const variants = [
-      title + meter + " " + value + suffix,
-      title + value + suffix,
-      title + value,
-    ];
-    quotaLine =
-      variants.find(
-        (text) => visibleWidth(text) + visibleWidth(contextLine) + 2 <= inner,
-      ) ?? variants[2];
-    if (stale && !quotaLine.includes("stale"))
-      quotaLine += theme.fg("warning", " ~");
-  }
-
+  const sessionLine = theme.fg(
+    "muted",
+    `↑${formatTokens(usage.input)} ↓${formatTokens(usage.output)} $${usage.cost.toFixed(3)}`,
+  );
   const pad = (line: string) => truncateToWidth(" " + line, width, "…");
   const lines = [
     pad(fitRow(modelLine, responseStats, inner)),
-    pad(fitRow(quotaLine, contextLine, inner)),
+    pad(fitRow(sessionLine, contextLine, inner)),
   ];
   const statuses = [...footerData.getExtensionStatuses().values()].map((text) =>
     text.replace(/[\r\n\t]/g, " "),
@@ -137,101 +97,45 @@ export function renderStatusBar(
 }
 
 export default function (pi: ExtensionAPI) {
-  let reader: QuotaReader | undefined;
   let disposeFooter = () => {};
-
   pi.on("session_start", (_event, ctx) => {
     if (ctx.mode !== "tui") return;
     ctx.ui.setFooter((tui, theme, footerData) => {
       disposeFooter();
-      const current = createQuotaReader(
-        (signal: AbortSignal) =>
-          pi.exec(
-            "codexbar",
-            [
-              "usage",
-              "--provider",
-              "codex",
-              "--source",
-              "cli",
-              "--format",
-              "json",
-              "--no-credits",
-              "--no-color",
-            ],
-            { signal, timeout: 15000 },
-          ),
-        () => tui.requestRender(),
-      );
-      reader = current;
       let lastLeaf: string | null | undefined;
       let throughput: ReturnType<typeof latestThroughput>;
-      const getThroughput = () => {
-        const leaf = ctx.sessionManager.getLeafId();
-        if (leaf !== lastLeaf) {
-          lastLeaf = leaf;
-          throughput = latestThroughput(ctx.sessionManager.getBranch());
-        }
-        return throughput;
-      };
+      let usage = { input: 0, output: 0, cost: 0 };
       const unsubscribe = footerData.onBranchChange(() => tui.requestRender());
-      const timer = setInterval(() => void current.refresh(), 60000);
-      timer.unref();
       let disposed = false;
       const dispose = () => {
         if (disposed) return;
         disposed = true;
-        clearInterval(timer);
         unsubscribe();
-        current.stop();
-        if (reader === current) reader = undefined;
       };
       disposeFooter = dispose;
-      void current.refresh();
       return {
         invalidate() {},
         dispose,
-        render: (width: number) =>
-          renderStatusBar(
+        render: (width: number) => {
+          const leaf = ctx.sessionManager.getLeafId();
+          if (leaf !== lastLeaf) {
+            lastLeaf = leaf;
+            const branch = ctx.sessionManager.getBranch();
+            throughput = latestThroughput(branch);
+            usage = sessionUsage(branch);
+          }
+          return renderStatusBar(
             ctx,
             pi,
             theme,
             footerData,
-            current.getState(),
             width,
-            undefined,
-            getThroughput(),
-          ),
+            throughput,
+            usage,
+          );
+        },
       };
     });
   });
-
-  pi.on("agent_end", () => {
-    void reader?.refresh();
-  });
   pi.on("session_shutdown", () => disposeFooter());
-  pi.registerCommand("quota", {
-    description:
-      "Refresh the account-wide Codex weekly quota shown in the Ayu bar",
-    handler: async (_args, ctx) => {
-      if (!reader) {
-        ctx.ui.notify("The quota bar is available in terminal mode.", "info");
-        return;
-      }
-      await reader.refresh(true);
-      const state = reader.getState();
-      const weekly = state.quota?.weekly;
-      if (state.error || !weekly) {
-        ctx.ui.notify(
-          "Codex quota unavailable. Check codexbar and Codex login; the last reading is marked stale.",
-          "warning",
-        );
-      } else {
-        ctx.ui.notify(
-          `Codex account-wide weekly quota: ${weekly.usedPercent}% used, ${Math.floor(weekly.remainingPercent)}% left.`,
-          "info",
-        );
-      }
-    },
-  });
 }

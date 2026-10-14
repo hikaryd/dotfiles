@@ -66,9 +66,14 @@ func piApply(root string) error {
 		p := filepath.Join(agent, r[0])
 		changes = append(changes, change{path: p, link: source, backup: filepath.Join(agent, "backups", filepath.Base(p)+".bak-"+stamp())})
 	}
+	if repair, e := piSupervisorRepair(agent); e != nil {
+		return e
+	} else if repair != nil {
+		changes = append(changes, *repair)
+	}
 	if e := commit(changes); e != nil {
 		return e
 	}
-	fmt.Printf("Pi: personal settings, MCP servers, Ayu theme, quota bar, Herdr titles and model overrides installed in %s\n", agent)
+	fmt.Printf("Pi: personal settings, MCP servers, Ayu theme, status bar, Herdr titles and model overrides installed in %s\n", agent)
 	return nil
 }

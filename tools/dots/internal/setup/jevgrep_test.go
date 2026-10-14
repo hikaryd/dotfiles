@@ -19,34 +19,31 @@ func jevgrepFixture(t *testing.T) (string, string) {
 
 func TestJevgrepGlobalInstructionsSkillAndIdempotence(t *testing.T) {
 	h, root := jevgrepFixture(t)
-	t.Setenv("CODEX_CONFIG_DIR", filepath.Join(h, "custom-codex"))
-	t.Setenv("CLAUDE_CONFIG_DIR", filepath.Join(h, "custom-claude"))
 	t.Setenv("PI_CODING_AGENT_DIR", filepath.Join(h, "custom-pi"))
 	t.Setenv("XDG_CONFIG_HOME", filepath.Join(h, "custom-config"))
-	docs := []string{"custom-codex/AGENTS.md", "custom-claude/CLAUDE.md", "custom-pi/AGENTS.md", "custom-config/opencode/AGENTS.md"}
-	for _, p := range docs {
-		put(t, filepath.Join(h, p), "personal rules\n<!-- BEGIN DOTS SEARCH -->\nold rules\n<!-- END DOTS SEARCH -->\ntrailing rules\n")
-	}
+	p := filepath.Join(h, "custom-pi/AGENTS.md")
+	put(t, p, "personal rules\n<!-- BEGIN DOTS SEARCH -->\nold rules\n<!-- END DOTS SEARCH -->\ntrailing rules\n")
 	credentials := filepath.Join(h, "custom-config/jevgrep/credentials.json")
 	put(t, credentials, "private fixture credentials")
 	if code, out, err := runCaptured(t, root, "jevgrep-apply"); code != 0 {
 		t.Fatal(code, out, err)
 	}
-	for _, p := range docs {
-		s := get(t, filepath.Join(h, p))
-		if !strings.Contains(s, "personal rules") || !strings.Contains(s, "trailing rules") ||
-			!strings.Contains(s, "shared search instructions") || strings.Contains(s, "old rules") {
-			t.Fatal(p, s)
-		}
+	s := get(t, p)
+	if !strings.Contains(s, "personal rules") || !strings.Contains(s, "trailing rules") ||
+		!strings.Contains(s, "shared search instructions") || strings.Contains(s, "old rules") {
+		t.Fatal(s)
 	}
-	for _, p := range []string{".agents/skills/jevgrep", "custom-codex/skills/jevgrep", "custom-claude/skills/jevgrep", "custom-config/opencode/skills/jevgrep"} {
-		target, err := os.Readlink(filepath.Join(h, p))
-		if err != nil || !sameSource(target, filepath.Join(root, "config/jevgrep/skill")) {
-			t.Fatal(p, target, err)
-		}
+	target, err := os.Readlink(filepath.Join(h, ".agents/skills/jevgrep"))
+	if err != nil || !sameSource(target, filepath.Join(root, "config/jevgrep/skill")) {
+		t.Fatal(target, err)
 	}
 	if get(t, credentials) != "private fixture credentials" {
 		t.Fatal("credentials changed")
+	}
+	for _, retired := range []string{".codex", ".claude", "custom-config/opencode"} {
+		if _, e := os.Lstat(filepath.Join(h, retired)); !os.IsNotExist(e) {
+			t.Fatalf("installer recreated retired agent directory %s: %v", retired, e)
+		}
 	}
 	before := tree(t, h)
 	if code, out, err := runCaptured(t, root, "jevgrep-apply"); code != 0 || !reflect.DeepEqual(before, tree(t, h)) {
@@ -60,9 +57,9 @@ func TestJevgrepRejectsInvalidInputBeforeMutation(t *testing.T) {
 			h, root := jevgrepFixture(t)
 			switch scenario {
 			case "incomplete block":
-				put(t, filepath.Join(h, ".claude/CLAUDE.md"), "<!-- BEGIN DOTS SEARCH -->\nno end")
+				put(t, filepath.Join(h, ".pi/agent/AGENTS.md"), "<!-- BEGIN DOTS SEARCH -->\nno end")
 			case "existing skill":
-				put(t, filepath.Join(h, ".claude/skills/jevgrep/SKILL.md"), "personal skill")
+				put(t, filepath.Join(h, ".agents/skills/jevgrep/SKILL.md"), "personal skill")
 			case "missing source":
 				if e := os.Remove(filepath.Join(root, "config/jevgrep/skill/SKILL.md")); e != nil {
 					t.Fatal(e)

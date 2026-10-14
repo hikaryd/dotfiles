@@ -1,18 +1,14 @@
 - link:
-    ~/.local/bin/codexbar-app:
-      path: scripts/codexbar-launch.sh
+    ~/.local/bin/spotifast-app:
+      path: scripts/spotifast-launch.sh
       create: true
       force: false
-    ~/.local/bin/spotify-app:
-      path: scripts/spotify-launch.sh
+    ~/.local/bin/spotifast-aerospace-follow:
+      path: scripts/spotifast-aerospace-follow.sh
       create: true
       force: false
-    ~/.local/bin/spotify-aerospace-follow:
-      path: scripts/spotify-aerospace-follow.sh
-      create: true
-      force: false
-    ~/.local/bin/spotify-toggle:
-      path: scripts/spotify-toggle.sh
+    ~/.local/bin/spotifast-toggle:
+      path: scripts/spotifast-toggle.sh
       create: true
       force: false
     ~/.local/bin/dots:
@@ -57,12 +53,12 @@
       path: config/bash/.profile
       create: true
       force: true
-    # Shared shell — Codex VLESS-прокси (общий для bash и zsh)
-    ~/.config/shell/codex-proxy.sh:
-      path: config/shell/codex-proxy.sh
+    # Shared shell — Pi VLESS-прокси (общий для bash и zsh)
+    ~/.config/shell/pi-proxy.sh:
+      path: config/shell/pi-proxy.sh
       create: true
       force: true
-    # Compiled helpers; secrets stay in ~/.config/xray-codex/.
+    # Compiled helpers; secrets stay in ~/.config/xray-pi/.
     ~/.local/bin/dots-tools:
       path: build/bin/dots-tools
       create: true
@@ -185,11 +181,11 @@
       stdout: true
       stderr: true
     - command: herdr plugin link "$HOME/dots/config/herdr/plugins/task-titles" --enabled
-      description: Linking automatic Codex and Pi task titles in Herdr
+      description: Linking automatic Pi task titles in Herdr
       stdout: true
       stderr: true
     - command: herdr plugin action invoke dots.task-titles.sync
-      description: Naming existing Codex and Pi panes and tabs
+      description: Naming existing Pi panes and tabs
       stdout: true
       stderr: true
     - command: chmod +x ~/.config/git/hooks/prepare-commit-msg

@@ -6,7 +6,6 @@ import (
 	"errors"
 	"net"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"syscall"
@@ -76,78 +75,6 @@ func TestStateFilesAndLock(t *testing.T) {
 	t.Setenv("HERDR_SOCKET_PATH", "")
 	if _, err := stateFile(); err == nil {
 		t.Fatal("socket required")
-	}
-}
-func TestHookStdinAndQuoting(t *testing.T) {
-	home := t.TempDir()
-	t.Setenv("HOME", home)
-	t.Setenv("HERDR_PANE_ID", "pane 'quoted'; $(nope)")
-	t.Setenv("HERDR_SOCKET_PATH", filepath.Join(home, "socket 'quoted'"))
-	transcript := filepath.Join(home, "transcript.jsonl")
-	payload := map[string]any{"session_id": "session 'quoted'; $(nope)", "hook_event_name": "UserPromptSubmit", "transcript_path": transcript}
-	invoke := func() (string, int) {
-		t.Helper()
-		b, _ := json.Marshal(payload)
-		var out, errout bytes.Buffer
-		code := run([]string{"codex-task-title", "hook"}, bytes.NewReader(b), &out, &errout)
-		if errout.Len() != 0 {
-			t.Fatal(errout.String())
-		}
-		return out.String(), code
-	}
-	output, code := invoke()
-	if code != 0 {
-		t.Fatal(code)
-	}
-	var result struct {
-		Output struct {
-			Event   string `json:"hookEventName"`
-			Context string `json:"additionalContext"`
-		} `json:"hookSpecificOutput"`
-	}
-	if err := json.Unmarshal([]byte(output), &result); err != nil {
-		t.Fatal(err)
-	}
-	if result.Output.Event != "UserPromptSubmit" || !strings.Contains(result.Output.Context, "agents task-titles set") || strings.Contains(result.Output.Context, "python") {
-		t.Fatal(output)
-	}
-	command := strings.Split(result.Output.Context, "\n")[1]
-	// Parse through a real shell with inert positional parameters, never execute the hook command.
-	shell := exec.Command("/bin/sh", "-c", "set -- "+command+"; printf '%s\\n' \"$@\"")
-	parsed, err := shell.Output()
-	if err != nil {
-		t.Fatal(err)
-	}
-	exe, _ := os.Executable()
-	want := strings.Join([]string{"env", "HERDR_SOCKET_PATH=" + os.Getenv("HERDR_SOCKET_PATH"), exe, "agents", "task-titles", "set", "--pane", os.Getenv("HERDR_PANE_ID"), "--session-id", payload["session_id"].(string), "--title", "Короткое название задачи", ""}, "\n")
-	if string(parsed) != want {
-		t.Fatalf("argv mismatch %q", parsed)
-	}
-	if err := os.WriteFile(transcript, []byte("{\"payload\":{\"source\":{\"subagent\":{}}}}\n"), 0600); err != nil {
-		t.Fatal(err)
-	}
-	if got, _ := invoke(); got != "" {
-		t.Fatal("subagent received context", got)
-	}
-	if err := os.WriteFile(transcript, []byte("broken"), 0600); err != nil {
-		t.Fatal(err)
-	}
-	if got, _ := invoke(); !strings.Contains(got, "systemMessage") {
-		t.Fatal(got)
-	}
-	payload["transcript_path"] = filepath.Join(home, "missing")
-	payload["hook_event_name"] = "Other"
-	if got, _ := invoke(); got != "" {
-		t.Fatal(got)
-	}
-	payload["hook_event_name"] = "UserPromptSubmit"
-	payload["session_id"] = 2
-	if got, _ := invoke(); got != "" {
-		t.Fatal(got)
-	}
-	var out bytes.Buffer
-	if code := runHook([]string{"hook"}, strings.NewReader("not JSON"), &out); code != 0 || !strings.Contains(out.String(), "systemMessage") {
-		t.Fatal(code, out.String())
 	}
 }
 func TestSetJSONStdin(t *testing.T) {

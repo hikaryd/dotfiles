@@ -11,9 +11,9 @@ import (
 func TestPrintEnv(t *testing.T) {
 	home := t.TempDir()
 	t.Setenv("HOME", home)
-	t.Setenv("CODEX_PROXY_PORT", "11810")
+	t.Setenv("PI_PROXY_PORT", "11810")
 	var out, errOut bytes.Buffer
-	if code := run("", []string{"codex", "--print-env"}, strings.NewReader(""), &out, &errOut); code != 0 {
+	if code := run("", []string{"pi", "--print-env"}, strings.NewReader(""), &out, &errOut); code != 0 {
 		t.Fatalf("exit %d: %s", code, &errOut)
 	}
 	want := ""
@@ -26,7 +26,7 @@ func TestPrintEnv(t *testing.T) {
 	if out.String() != want {
 		t.Fatalf("output: %q", out.String())
 	}
-	st, err := os.Stat(filepath.Join(home, ".config", "xray-codex"))
+	st, err := os.Stat(filepath.Join(home, ".config", "xray-pi"))
 	if err != nil || st.Mode().Perm() != 0700 {
 		t.Fatalf("private config directory: %v, %v", st, err)
 	}

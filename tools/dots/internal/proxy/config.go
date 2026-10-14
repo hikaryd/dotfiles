@@ -334,7 +334,7 @@ func (c *controller) selectAndStart() error {
 		return err
 	}
 	if len(servers) == 0 {
-		return errors.New("No servers found. Use codex-proxy --set-vless or codex-proxy --set-sub.")
+		return errors.New("No servers found. Use pi-proxy --set-vless or pi-proxy --set-sub.")
 	}
 	if c.interactive() {
 		rows := make([]string, len(servers))

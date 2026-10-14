@@ -1,32 +1,28 @@
-Codex Proxy — запускает xray-core как локальный HTTP-прокси для Codex
+Pi Proxy — запускает xray-core как локальный HTTP-прокси для Pi
 через VLESS-сервер на VPS или через VLESS-подписку.
 
 Зачем:
   - корпоративный VPN продолжает работать для корпоративных ресурсов;
-  - Codex ходит через локальный HTTP proxy 127.0.0.1:10810;
+  - Pi ходит через локальный HTTP proxy 127.0.0.1:10810;
   - xray запускается как обычный процесс, а не как системный VPN.
 
 Использование:
-  codex-proxy                    # выбрать сервер и запустить xray
-  codex-proxy --set-vless         # вставить один vless:// конфиг
-  codex-proxy --set-sub           # сохранить URL подписки и обновить серверы
-  codex-proxy --update            # обновить список серверов из подписки
-  codex-proxy --allow-insecure-sub --update
+  pi-proxy                    # выбрать сервер и запустить xray
+  pi-proxy --set-vless         # вставить один vless:// конфиг
+  pi-proxy --set-sub           # сохранить URL подписки и обновить серверы
+  pi-proxy --update            # обновить список серверов из подписки
+  pi-proxy --allow-insecure-sub --update
                                  # аварийно обновить подписку без TLS-проверки сертификата
-  codex-proxy --list              # показать все серверы
-  codex-proxy --status            # проверить процесс и OpenAI через proxy
-  codex-proxy --install-codex-env # записать proxy env в ~/.codex/.env
-  codex-proxy --print-env         # вывести export-команды для текущего shell
-  codex-proxy --run [args...]     # запустить codex CLI с proxy env
-  codex-proxy --run-app           # запустить Codex.app через macOS launchctl + open
-  codex-proxy --unset-app-env     # удалить proxy env из launchctl для GUI-приложений
-  codex-proxy --stop              # остановить xray
+  pi-proxy --list              # показать все серверы
+  pi-proxy --status            # проверить процесс и OpenAI через proxy
+  pi-proxy --print-env         # вывести export-команды для текущего shell
+  pi-proxy --run [args...]     # запустить pi CLI с proxy env
+  pi-proxy --stop              # остановить xray
 
 Примеры:
-  codex-proxy --set-vless
-  codex-proxy
-  codex-proxy --status
-  codex-proxy --allow-insecure-sub --update
-  codex-proxy --install-codex-env
-  codex-proxy --run
-  codex-proxy --run exec "ping"
+  pi-proxy --set-vless
+  pi-proxy
+  pi-proxy --status
+  pi-proxy --allow-insecure-sub --update
+  pi-proxy --run
+  pi-proxy --run -p "ping"

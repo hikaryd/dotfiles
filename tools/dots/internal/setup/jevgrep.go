@@ -19,17 +19,9 @@ func jevgrepApply(root string) error {
 	if _, e = os.ReadFile(filepath.Join(source, "SKILL.md")); e != nil {
 		return e
 	}
-	claude := expand(envDefault([]string{"CLAUDE_CONFIG_DIR"}, filepath.Join(home(), ".claude")))
 	pi := expand(envDefault([]string{"PI_CODING_AGENT_DIR"}, filepath.Join(home(), ".pi/agent")))
-	config := expand(envDefault([]string{"XDG_CONFIG_HOME"}, filepath.Join(home(), ".config")))
-	opencode := filepath.Join(config, "opencode")
 	var changes []change
-	for _, p := range []string{
-		filepath.Join(codexDir(), "AGENTS.md"),
-		filepath.Join(claude, "CLAUDE.md"),
-		filepath.Join(pi, "AGENTS.md"),
-		filepath.Join(opencode, "AGENTS.md"),
-	} {
+	for _, p := range []string{filepath.Join(pi, "AGENTS.md")} {
 		b, e := regularOptional(p)
 		if e != nil {
 			return e
@@ -41,12 +33,7 @@ func jevgrepApply(root string) error {
 		changes = append(changes, change{path: p, data: []byte(s), expect: true, expected: b,
 			backup: privateBackup("jevgrep", p), backupPrivate: true})
 	}
-	for _, base := range []string{
-		filepath.Join(home(), ".agents/skills"),
-		filepath.Join(codexDir(), "skills"),
-		filepath.Join(claude, "skills"),
-		filepath.Join(opencode, "skills"),
-	} {
+	for _, base := range []string{filepath.Join(home(), ".agents/skills")} {
 		p := filepath.Join(base, "jevgrep")
 		if _, e := os.Lstat(p); e == nil {
 			if !sameSource(p, source) {
@@ -60,6 +47,6 @@ func jevgrepApply(root string) error {
 	if e = commit(changes); e != nil {
 		return e
 	}
-	fmt.Println("Jevgrep: global skill and Codex/Claude/Pi/OpenCode instructions installed; credentials unchanged")
+	fmt.Println("Jevgrep: global skill and Pi instructions installed; credentials unchanged")
 	return nil
 }

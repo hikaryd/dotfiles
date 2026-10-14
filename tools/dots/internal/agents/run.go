@@ -1,7 +1,6 @@
 package agents
 
 import (
-	"bufio"
 	"crypto/sha256"
 	"encoding/json"
 	"errors"
@@ -20,14 +19,12 @@ import (
 func Run(root string, args []string) int { return run(args, os.Stdin, os.Stdout, os.Stderr) }
 func run(args []string, in io.Reader, out, errout io.Writer) int {
 	if len(args) == 0 {
-		fmt.Fprintln(errout, "usage: dots-tools agents task-titles|codex-task-title|ai")
+		fmt.Fprintln(errout, "usage: dots-tools agents task-titles|ai")
 		return 2
 	}
 	switch args[0] {
 	case "task-titles":
 		return runTitles(args[1:], in, out, errout)
-	case "codex-task-title":
-		return runHook(args[1:], in, out)
 	case "ai":
 		return runAI(args[1:], in, out, errout)
 	default:
@@ -145,12 +142,12 @@ func herdrRequest(method string, params map[string]any) (json.RawMessage, error)
 func runTitles(args []string, in io.Reader, out, errout io.Writer) int {
 	fail := func(err error) int { fmt.Fprintln(errout, "Herdr task titles:", err); return 1 }
 	if len(args) == 0 {
-		fmt.Fprintln(errout, "usage: task-titles sync|set --pane ID --title TITLE [--session-id ID] [--agent codex|pi]")
+		fmt.Fprintln(errout, "usage: task-titles sync|set --pane ID --title TITLE [--session-id ID] [--agent pi]")
 		return 2
 	}
 	action := args[0]
 	if action == "--help" || action == "-h" {
-		fmt.Fprintln(out, "usage: task-titles sync|set --pane ID --title TITLE [--session-id ID] [--agent codex|pi]")
+		fmt.Fprintln(out, "usage: task-titles sync|set --pane ID --title TITLE [--session-id ID] [--agent pi]")
 		return 0
 	}
 	if action != "set" && action != "sync" {
@@ -164,7 +161,7 @@ func runTitles(args []string, in io.Reader, out, errout io.Writer) int {
 		flags.StringVar(&paneID, "pane", "", "")
 		flags.StringVar(&title, "title", "", "")
 		flags.StringVar(&session, "session-id", "", "")
-		flags.StringVar(&agent, "agent", "codex", "")
+		flags.StringVar(&agent, "agent", "pi", "")
 		flags.BoolVar(&stdin, "stdin", false, "read JSON from stdin")
 		flags.BoolVar(&stdin, "json", false, "read JSON from stdin")
 	}
@@ -208,7 +205,7 @@ func runTitles(args []string, in io.Reader, out, errout io.Writer) int {
 		}
 	}
 	if action == "set" && (paneID == "" || !titlePresent || !isAgent(agent)) {
-		fmt.Fprintln(errout, "set requires --pane, --title and agent codex or pi")
+		fmt.Fprintln(errout, "set requires --pane, --title and agent pi")
 		return 2
 	}
 	path, err := stateFile()
@@ -247,72 +244,5 @@ func runTitles(args []string, in io.Reader, out, errout io.Writer) int {
 	if err != nil {
 		return fail(err)
 	}
-	return 0
-}
-func shellQuote(s string) string {
-	if s != "" && strings.IndexFunc(s, func(r rune) bool {
-		return !(r >= 'a' && r <= 'z' || r >= 'A' && r <= 'Z' || r >= '0' && r <= '9' || strings.ContainsRune("_@%+=:,./-", r))
-	}) < 0 {
-		return s
-	}
-	return "'" + strings.ReplaceAll(s, "'", "'\"'\"'") + "'"
-}
-
-const hookGuidance = "Herdr task title: after understanding the task, set a concise Russian title by running the command below with one shell-quoted title argument. Use the concrete subject/problem first, append a known ticket ID at the end if it fits; 2–6 words, at most 32 characters. Examples: 'Переоткрытие заявки · 3812844', 'НСИ · Ложное увольнение', 'СБ · Создание проверки'. Keep the established subject for follow-ups such as creating an MR, testing, or continuing work; update the title when you learn the actual problem or the user changes the subject. Generic task verbs alone do not identify a task. Use only information already in this conversation; omit personal data and secrets. This changes presentation only; a title failure must not block the user's work. Only the main agent sets this title; do not delegate it to subagents.\n"
-
-func runHook(args []string, in io.Reader, out io.Writer) int {
-	failure := func() int {
-		_ = json.NewEncoder(out).Encode(map[string]string{"systemMessage": "Herdr task title hook failed; title context was not added."})
-		return 0
-	}
-	if len(args) != 1 || args[0] != "hook" {
-		return failure()
-	}
-	var payload map[string]any
-	if json.NewDecoder(in).Decode(&payload) != nil {
-		return failure()
-	}
-	paneID, socket := os.Getenv("HERDR_PANE_ID"), os.Getenv("HERDR_SOCKET_PATH")
-	session, _ := payload["session_id"].(string)
-	if paneID == "" || socket == "" || session == "" || payload["hook_event_name"] != "UserPromptSubmit" {
-		return 0
-	}
-	if value, ok := payload["transcript_path"]; ok && value != nil && value != "" {
-		path, ok := value.(string)
-		if !ok {
-			return failure()
-		}
-		f, err := os.Open(path)
-		if err != nil && !errors.Is(err, os.ErrNotExist) {
-			return failure()
-		}
-		if err == nil {
-			line, _ := bufio.NewReader(io.LimitReader(f, 131072)).ReadBytes('\n')
-			f.Close()
-			var first struct {
-				Payload struct {
-					Source json.RawMessage `json:"source"`
-				} `json:"payload"`
-			}
-			if json.Unmarshal(line, &first) != nil {
-				return failure()
-			}
-			var source map[string]any
-			if json.Unmarshal(first.Payload.Source, &source) == nil {
-				if _, ok := source["subagent"]; ok {
-					return 0
-				}
-			}
-		}
-	}
-	exe, err := os.Executable()
-	if err != nil {
-		return failure()
-	}
-	argv := []string{"env", "HERDR_SOCKET_PATH=" + socket, exe, "agents", "task-titles", "set", "--pane", paneID, "--session-id", session, "--title"}
-	for i := range argv {
-		argv[i] = shellQuote(argv[i])
-	}
-	_ = json.NewEncoder(out).Encode(map[string]any{"hookSpecificOutput": map[string]string{"hookEventName": "UserPromptSubmit", "additionalContext": hookGuidance + strings.Join(argv, " ") + " 'Короткое название задачи'"}})
 	return 0
 }

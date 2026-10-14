@@ -1,4 +1,4 @@
-// Package proxy provides the Codex xray controller and Spotify preference helper.
+// Package proxy provides the Pi xray controller.
 package proxy
 
 import (
@@ -32,12 +32,12 @@ type controller struct {
 	out, errOut io.Writer
 }
 
-// Run dispatches codex followed by its original flags, or spotify --port/--check.
+// Run dispatches pi followed by its original flags.
 func Run(root string, args []string) int { return run(root, args, os.Stdin, os.Stdout, os.Stderr) }
 
 func run(_ string, args []string, in io.Reader, out, errOut io.Writer) int {
 	if len(args) == 0 {
-		fmt.Fprintln(errOut, "usage: dots-tools proxy {codex|spotify}")
+		fmt.Fprintln(errOut, "usage: dots-tools proxy pi")
 		return 2
 	}
 	home, err := os.UserHomeDir()
@@ -45,26 +45,23 @@ func run(_ string, args []string, in io.Reader, out, errOut io.Writer) int {
 		fmt.Fprintln(errOut, "proxy: HOME is not configured")
 		return 2
 	}
-	if args[0] == "spotify" {
-		return runSpotify(home, args[1:], out, errOut)
-	}
-	if args[0] != "codex" {
-		fmt.Fprintln(errOut, "usage: dots-tools proxy {codex|spotify}")
+	if args[0] != "pi" {
+		fmt.Fprintln(errOut, "usage: dots-tools proxy pi")
 		return 2
 	}
 	port := 10810
-	if s, ok := os.LookupEnv("CODEX_PROXY_PORT"); ok {
+	if s, ok := os.LookupEnv("PI_PROXY_PORT"); ok {
 		port, err = strconv.Atoi(s)
 	}
 	if err != nil || port < 1 || port > 65535 {
-		fmt.Fprintln(errOut, "CODEX_PROXY_PORT must be between 1 and 65535")
+		fmt.Fprintln(errOut, "PI_PROXY_PORT must be between 1 and 65535")
 		return 1
 	}
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
-	c := &controller{ctx: ctx, home: home, dir: filepath.Join(home, ".config", "xray-codex"), port: port, in: bufio.NewReader(in), rawIn: in, out: out, errOut: errOut}
+	c := &controller{ctx: ctx, home: home, dir: filepath.Join(home, ".config", "xray-pi"), port: port, in: bufio.NewReader(in), rawIn: in, out: out, errOut: errOut}
 	if err = c.harden(); err != nil {
-		fmt.Fprintln(errOut, "codex-proxy: could not secure configuration")
+		fmt.Fprintln(errOut, "pi-proxy: could not secure configuration")
 		return 1
 	}
 	code, err := c.dispatch(args[1:])
@@ -81,7 +78,6 @@ func run(_ string, args []string, in io.Reader, out, errOut io.Writer) int {
 }
 
 func (c *controller) path(name string) string { return filepath.Join(c.dir, name) }
-func (c *controller) envPath() string         { return filepath.Join(c.home, ".codex", ".env") }
 func (c *controller) proxyURL() string        { return fmt.Sprintf("http://127.0.0.1:%d", c.port) }
 func (c *controller) envValue(key string) string {
 	if key == "NO_PROXY" || key == "no_proxy" {
@@ -102,7 +98,7 @@ func (c *controller) harden() error {
 	if err := os.Chmod(c.dir, 0700); err != nil {
 		return err
 	}
-	for _, path := range []string{c.path("subscription_url.txt"), c.path("servers.json"), c.path("config.json"), c.path("xray.pid"), c.envPath()} {
+	for _, path := range []string{c.path("subscription_url.txt"), c.path("servers.json"), c.path("config.json"), c.path("xray.pid")} {
 		if err := os.Chmod(path, 0600); err != nil && !errors.Is(err, os.ErrNotExist) {
 			return err
 		}
@@ -167,34 +163,17 @@ func (c *controller) prompt(prompt string) (string, error) {
 	}
 	return strings.TrimSpace(s), err
 }
-func (c *controller) installEnv() error {
-	const start = "# >>> codex-proxy managed block >>>"
-	const end = "# <<< codex-proxy managed block <<<"
-	existing, err := optionalText(c.envPath())
-	if err != nil {
-		return errors.New("codex-proxy: could not read Codex env")
-	}
-	var block strings.Builder
-	block.WriteString(start + "\n")
-	for _, k := range proxyKeys {
-		fmt.Fprintf(&block, "%s=%q\n", k, c.envValue(k))
-	}
-	block.WriteString(end + "\n")
-	content := block.String()
-	if before, rest, ok := strings.Cut(existing, start); ok && strings.Contains(rest, end) {
-		_, after, _ := strings.Cut(rest, end)
-		content = strings.TrimRight(before, " \t\r\n") + "\n\n" + content + strings.TrimLeft(after, " \t\r\n")
-	} else if strings.TrimSpace(existing) != "" {
-		content = strings.TrimRight(existing, " \t\r\n") + "\n\n" + content
-	}
-	if err := atomicWrite(c.envPath(), []byte(content), 0600); err != nil {
-		return errors.New("codex-proxy: could not write Codex env")
-	}
-	fmt.Fprintf(c.out, "Codex env written: %s\nRestart Codex CLI/IDE extension after this change.\nIf Codex.app was opened from Finder and ignores .env, use: codex-proxy --run-app\n", c.envPath())
-	return nil
-}
-
 func (c *controller) dispatch(args []string) (int, error) {
+	for _, arg := range args {
+		if arg == "--run" {
+			break // All following words belong to Pi.
+		}
+		switch arg {
+		case "--help", "-h", "--set-vless", "--set-sub", "--update", "--allow-insecure-sub", "--stop", "--status", "--print-env", "--list":
+		default:
+			return 2, errors.New("unsupported proxy option; see pi-proxy --help")
+		}
+	}
 	has := func(flag string) bool {
 		for _, a := range args {
 			if a == flag {
@@ -216,17 +195,15 @@ func (c *controller) dispatch(args []string) (int, error) {
 		if err := c.saveSubscription(s); err != nil {
 			return 1, err
 		}
-		_, err = c.updateServers(has("--allow-insecure-sub") || truthy(os.Getenv("CODEX_PROXY_ALLOW_INSECURE_SUB")))
+		_, err = c.updateServers(has("--allow-insecure-sub") || truthy(os.Getenv("PI_PROXY_ALLOW_INSECURE_SUB")))
 		return 0, err
 	case has("--update"):
-		_, err := c.updateServers(has("--allow-insecure-sub") || truthy(os.Getenv("CODEX_PROXY_ALLOW_INSECURE_SUB")))
+		_, err := c.updateServers(has("--allow-insecure-sub") || truthy(os.Getenv("PI_PROXY_ALLOW_INSECURE_SUB")))
 		return 0, err
 	case has("--stop"):
 		return 0, c.stop()
 	case has("--status"):
 		return 0, c.status()
-	case has("--install-codex-env"):
-		return 0, c.installEnv()
 	case has("--print-env"):
 		c.printEnv()
 	case has("--list"):
@@ -235,10 +212,6 @@ func (c *controller) dispatch(args []string) (int, error) {
 			return 1, err
 		}
 		c.display(servers)
-	case has("--unset-app-env"):
-		return 0, c.unsetAppEnv()
-	case has("--run-app"):
-		return c.runApp()
 	case has("--run"):
 		for i, arg := range args {
 			if arg == "--run" {

@@ -80,7 +80,7 @@ export FZF_DEFAULT_OPTS=" \
   --border='rounded' --preview-window='border-rounded' \
   --prompt='> ' --marker='>' --pointer='›' --separator='─' --scrollbar='│'"
 
-# Codex через изолированный VLESS-прокси (xray).
-# Источник (общий для bash и zsh): ~/.config/shell/codex-proxy.sh
-[[ -f "$DOTS_ROOT/config/shell/codex-proxy.sh" ]] && source "$DOTS_ROOT/config/shell/codex-proxy.sh"
+# Pi через изолированный VLESS-прокси (xray).
+# Источник (общий для bash и zsh): ~/.config/shell/pi-proxy.sh
+[[ -f "$DOTS_ROOT/config/shell/pi-proxy.sh" ]] && source "$DOTS_ROOT/config/shell/pi-proxy.sh"
 

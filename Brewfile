@@ -8,6 +8,7 @@ tap "abue-ammar/tinycast"
 tap "homebrew-zathura/zathura"
 tap "ajrosen/tap"
 tap "openclaw/tap"
+tap "crmne/tap"
 
 # Основные системные пакеты
 brew "coreutils"
@@ -43,8 +44,8 @@ brew "uv"
 brew "poetry"
 brew "node"
 brew "yazi"
-brew "zathura"
-brew "zathura-pdf-poppler" # PDF-плагин; линкуется в steps/dependencies.yml
+brew "homebrew-zathura/zathura/zathura"
+brew "homebrew-zathura/zathura/zathura-pdf-poppler" # PDF-плагин; линкуется в steps/dependencies.yml
 brew "nolight132/tap/nls"
 brew "nklmilojevic/sofka/sofka"
 
@@ -84,8 +85,6 @@ brew "ruff"
 brew "rust"
 brew "rustup"
 brew "rust-analyzer"
-brew "rustfmt"
-brew "rustup-init"
 
 # Go
 brew "go"
@@ -121,22 +120,20 @@ brew "biome"
 brew "jq-lsp"
 
 # Другие инструменты разработки
-brew "openclaw/tap/peekaboo" # Локальный MCP для управления macOS в Pi и Codex
+brew "openclaw/tap/peekaboo" # Локальный MCP для управления macOS в Pi
 brew "sesh"    
-brew "rift", args: ["tap", "acsandmann/tap"]
+brew "acsandmann/tap/rift"
 brew "fastfetch"    
 brew "ffmpeg"    
-cask "rustdesk"    
 
 # Дополнения для bat
 brew "bat-extras" 
 
 # Приложения
-cask "codexbar" # Лимиты подписки Codex в строке меню macOS
 cask "vorssaint" # Батарея, системный монитор и управление звуком в одном menu bar app
 cask "waterfox"
 cask "telegram-desktop"
-cask "spotify"
+cask "crmne/tap/spotifast"
 brew "kcat"
 cask "1password"
 cask "1password-cli"
@@ -146,7 +143,6 @@ cask "mos"
 cask "karabiner-elements"
 cask "duongductrong/snapzy/snapzy"
 cask "abue-ammar/tinycast/tinycast" # Native launcher; Option+A
-cask "caffeine"
 cask "logi-options+"
 cask "logitech-options"
 

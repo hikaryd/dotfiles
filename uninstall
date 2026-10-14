@@ -6,7 +6,6 @@
 #   · снимает симлинки из steps/*.yml и native Kubernetes-команды
 #     (только те, что указывают в этот репозиторий);
 #   · скопированные конфиги и артефакты переносит в бэкап-каталог; смешанный
-#     Codex config сначала копирует, затем удаляет только управляемые ключи;
 #   · откатывает системные твики: git excludesFile, macOS defaults, шелл по
 #     умолчанию, запись в /etc/shells;
 #   · по флагу --packages дополнительно удаляет пакеты из Brewfile.
@@ -96,7 +95,7 @@ cd "$BASEDIR" || die "не удалось перейти в $BASEDIR"
 # ─── план ────────────────────────────────────────────────────────────
 step "План отката (репозиторий: $BASEDIR)"
 printf '   · симлинки из steps/*.yml и native Kubernetes-команды (только наши)\n'
-printf '   · Zen/Claude/Codex конфиги → бэкап\n'
+printf '   · Zen конфиги → бэкап\n'
 printf '   · TPM, yazi-плагины → бэкап\n'
 printf '   · git excludesFile, macOS defaults, шелл по умолчанию, /etc/shells\n'
 if [[ $REMOVE_PACKAGES -eq 1 ]]; then
@@ -158,63 +157,6 @@ if [[ -d $ZEN_PROFILES ]]; then
 else
   ok "Zen-профили не найдены"
 fi
-
-step "Claude Code"
-backup_move "$HOME/.claude/settings.json"
-backup_move "$HOME/.claude/.omc-config.json"
-if [[ -f $BASEDIR/config/claude/mcp-servers.json ]] && command -v claude >/dev/null 2>&1; then
-  while IFS= read -r name; do
-    [[ -n $name ]] || continue
-    if [[ $DRY -eq 1 ]]; then dry "claude mcp remove $name -s user"; else
-      claude mcp remove "$name" -s user >/dev/null 2>&1 \
-        && ok "MCP снят: $name" || warn "MCP не снят (не был зарегистрирован?): $name"
-    fi
-  done < <("$NATIVE" setup json-keys "$BASEDIR/config/claude/mcp-servers.json")
-else
-  warn "claude CLI или mcp-servers.json не найдены — MCP-регистрации не трогаю"
-fi
-ui_message info "Бэкапы claude-apply (~/.claude/*.bak-*) не трогаются — прежние настройки там"
-
-step "Codex"
-CODEX_DIR="${CODEX_CONFIG_DIR:-${CODEX_HOME:-$HOME/.codex}}"
-CODEX_CONFIG="$CODEX_DIR/config.toml"
-CODEX_RULES="$CODEX_DIR/rules/dots.rules"
-if [[ -L $CODEX_RULES ]]; then
-  RULES_DEST=$(readlink "$CODEX_RULES")
-  if [[ $RULES_DEST == "$BASEDIR/config/codex/rules/dots.rules" ]]; then
-    if [[ $DRY -eq 1 ]]; then
-      dry "rm Codex rules link: $CODEX_RULES → $RULES_DEST"
-    else
-      if rm "$CODEX_RULES"; then
-        ok "снят Codex rules link: $CODEX_RULES"
-        rmdir "$(dirname "$CODEX_RULES")" 2>/dev/null || true
-        manifest "UNLINKED: $CODEX_RULES -> $RULES_DEST"
-      else
-        warn "не удалось снять Codex rules link: $CODEX_RULES"
-      fi
-    fi
-  else
-    warn "Codex rules link указывает не в репозиторий, пропускаю: $CODEX_RULES → $RULES_DEST"
-  fi
-elif [[ -e $CODEX_RULES ]]; then
-  warn "Codex rules не являются нашим симлинком, не трогаю: $CODEX_RULES"
-fi
-if [[ -f $CODEX_CONFIG ]]; then
-  if [[ $DRY -eq 1 ]]; then
-    backup_copy "$CODEX_CONFIG"
-    dry "удалить из config.toml только настройки из config/codex/config.toml"
-  elif backup_copy "$CODEX_CONFIG" && "$NATIVE" codexconfig remove \
-      --template "$BASEDIR/config/codex/config.toml" \
-      --target "$CODEX_CONFIG"; then
-    ok "управляемые Codex-настройки сняты; локальный runtime сохранён"
-  else
-    warn "не удалось выборочно очистить Codex config; оригинал сохранён в бэкапе"
-  fi
-else
-  ok "Codex config не найден"
-fi
-ui_message info "Секреты, auth, projects, hooks, плагины, сессии и runtime $CODEX_DIR остаются на месте"
-ui_message info "Бэкапы codex-apply ($CODEX_DIR/config.toml.bak-*) не трогаются"
 
 step "TPM и yazi-плагины"
 backup_move "$HOME/.tmux/plugins"
@@ -320,7 +262,6 @@ cat <<EOF
 
    Оставлено как есть (удалять по желанию, вручную):
    · rustup/cargo:   cargo uninstall xtop; rustup self uninstall   (~/.rustup, ~/.cargo)
-   · rtk:            бинарник + ~/.rtk (см. установщик rtk)
    · PyYAML:         pip3 uninstall pyyaml --break-system-packages
    · Homebrew сам:   /opt/homebrew (см. официальный uninstall-скрипт brew)
    · сгенерированные palette-конфиги внутри репозитория

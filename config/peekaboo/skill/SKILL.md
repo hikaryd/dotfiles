@@ -5,7 +5,7 @@ description: Control macOS desktop apps through Peekaboo MCP. Use for screenshot
 
 # Peekaboo: observe → act → verify
 
-Use the `peekaboo` MCP server in Pi and Codex. In Pi, discover its tools with
+Use the `peekaboo` MCP server in Pi. Discover its tools with
 `searchTools(query, { namespace: "peekaboo" })`; inspect schemas before calling.
 Desktop tools are local. Built-in `agent`, `analyze` and `browser` tools are excluded;
 the calling agent supplies reasoning and vision without extra Peekaboo API keys.

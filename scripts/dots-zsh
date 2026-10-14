@@ -4,7 +4,7 @@ typeset -g DOTS_ROOT="${DOTS_ROOT:-${0:A:h:h}}"
 typeset _dots_bridge_name="${0:t}" _dots_bridge_cwd=''
 typeset -a _dots_bridge_args
 
-# Иначе alias вроде codex вызовет свою же ссылку из Nushell.
+# Иначе alias вроде pi вызовет свою же ссылку из Nushell.
 if [[ -n ${DOTS_ZSH_BIN-} ]]; then
   path=("${(@)path:#${DOTS_ZSH_BIN}}")
 fi

@@ -102,7 +102,7 @@ func prepareNu(root string, args []string) (string, []string, []string, error) {
 	if e != nil {
 		return "", nil, nil, e
 	}
-	inputs := []string{filepath.Join(root, "config/zsh/commands.zsh"), filepath.Join(root, "config/zsh/kube-tools.zsh"), filepath.Join(root, "config/shell/codex-proxy.sh"), exe, bridge, envOr("DOTS_PRIVATE_ZSH", filepath.Join(configHome(), "dots/private.zsh"))}
+	inputs := []string{filepath.Join(root, "config/zsh/commands.zsh"), filepath.Join(root, "config/zsh/kube-tools.zsh"), filepath.Join(root, "config/shell/pi-proxy.sh"), exe, bridge, envOr("DOTS_PRIVATE_ZSH", filepath.Join(configHome(), "dots/private.zsh"))}
 	functions, e := filepath.Glob(filepath.Join(root, "config/zsh/functions/*"))
 	if e != nil {
 		return "", nil, nil, e

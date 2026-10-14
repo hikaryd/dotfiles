@@ -20,11 +20,11 @@ func TestTitleSanitization(t *testing.T) {
 		limit int
 		want  string
 	}{
-		{"\x1b[31mПочинить\x1b[0m   поиск\u202e | podbor", 32, "Починить поиск"},
-		{"hello long world | repo", 13, "hello long…"},
-		{"Очень длинное название задачи которое нужно обрезать | repo", 32, "Очень длинное название задачи…"},
+		{"\x1b[31mПочинить\x1b[0m   поиск\u202e", 32, "Починить поиск"},
+		{"hello long world", 13, "hello long…"},
+		{"Очень длинное название задачи которое нужно обрезать", 32, "Очень длинное название задачи…"},
 	} {
-		if got := taskTitle(tt.in, tt.limit, "codex"); got != tt.want {
+		if got := taskTitle(tt.in, tt.limit); got != tt.want {
 			t.Errorf("got %q want %q", got, tt.want)
 		}
 	}
@@ -46,7 +46,7 @@ type titleCall struct {
 func titlesFixture(t *testing.T) *titleFixture {
 	t.Helper()
 	f := &titleFixture{t: t, dir: t.TempDir(), snapshot: snapshot{
-		Panes: []*pane{{ID: "w1:p1", Terminal: "terminal-one", Tab: "w1:t1", Agent: "codex", Native: "Исправить поиск статуса | podbor"}},
+		Panes: []*pane{{ID: "w1:p1", Terminal: "terminal-one", Tab: "w1:t1", Agent: "pi", Native: "π - Исправить поиск статуса - podbor"}},
 		Tabs:  []*tab{{ID: "w1:t1", Label: "nu"}}, Layouts: []layout{{Tab: "w1:t1", Focus: "w1:p1"}},
 	}}
 	// A short fixture-only socket path also works on Darwin's 104-byte sockaddr.
@@ -177,14 +177,14 @@ func TestTitleSocketOwnership(t *testing.T) {
 		f := titlesFixture(t)
 		f.sync()
 		f.want("Исправить поиск статуса", "Исправить поиск статуса")
-		if f.calls[0].Params["source"] != titleSource || f.calls[0].Params["agent"] != "codex" {
+		if f.calls[0].Params["source"] != titleSource || f.calls[0].Params["agent"] != "pi" {
 			t.Fatal(f.calls)
 		}
 		f.quiet()
 	})
 	t.Run("focus count and previous selected pane", func(t *testing.T) {
 		f := titlesFixture(t)
-		f.snapshot.Panes = append(f.snapshot.Panes, &pane{ID: "w1:p2", Tab: "w1:t1", Agent: "codex", Native: "Проверить API | podbor"})
+		f.snapshot.Panes = append(f.snapshot.Panes, &pane{ID: "w1:p2", Tab: "w1:t1", Agent: "pi", Native: "π - Проверить API - podbor"})
 		f.sync()
 		f.want("Исправить поиск статуса", "Исправить поиск статуса · 2")
 		f.snapshot.Layouts[0].Focus = "w1:p2"
@@ -198,7 +198,7 @@ func TestTitleSocketOwnership(t *testing.T) {
 		f.sync()
 		f.snapshot.Tabs[0].Label = "zsh"
 		f.sync()
-		f.snapshot.Panes[0].Native = "Другая задача | podbor"
+		f.snapshot.Panes[0].Native = "π - Другая задача - podbor"
 		f.sync()
 		f.want("Другая задача", "zsh")
 		if !f.state().Tabs["w1:t1"].Manual {
@@ -256,23 +256,23 @@ func TestTitleSocketOwnership(t *testing.T) {
 	t.Run("semantic overrides OSC and no loop", func(t *testing.T) {
 		f := titlesFixture(t)
 		f.sync()
-		f.set("Статусы заявок · поиск закрытых", "session-one", "codex")
-		f.snapshot.Panes[0].Native = "Исследовать баг | podbor"
+		f.set("Статусы заявок · поиск закрытых", "session-one", "pi")
+		f.snapshot.Panes[0].Native = "π - Исследовать баг - podbor"
 		f.sync()
 		f.want("Статусы заявок · поиск закрытых", "Статусы заявок · поиск закрытых")
 		f.quiet()
 	})
 	t.Run("semantic session and terminal replacement", func(t *testing.T) {
 		f := titlesFixture(t)
-		f.set("Точная задача", "session-one", "codex")
+		f.set("Точная задача", "session-one", "pi")
 		p := f.snapshot.Panes[0]
-		p.Session = &agentSession{"codex", "session-two"}
+		p.Session = &agentSession{"pi", "session-two"}
 		f.sync()
 		if len(f.state().Semantic) != 0 {
 			t.Fatal("stale session")
 		}
 		f.want("Исправить поиск статуса", "Исправить поиск статуса")
-		f.set("Новая задача", "session-two", "codex")
+		f.set("Новая задача", "session-two", "pi")
 		p.Terminal = "replacement"
 		f.sync()
 		if len(f.state().Semantic) != 0 {
@@ -281,9 +281,9 @@ func TestTitleSocketOwnership(t *testing.T) {
 	})
 	t.Run("late session binding and exit", func(t *testing.T) {
 		f := titlesFixture(t)
-		f.set("Точная задача", "", "codex")
+		f.set("Точная задача", "", "pi")
 		p := f.snapshot.Panes[0]
-		p.Session = &agentSession{"codex", "session-one"}
+		p.Session = &agentSession{"pi", "session-one"}
 		f.sync()
 		if *f.state().Semantic[p.ID].Session != "session-one" {
 			t.Fatal("not bound")
@@ -297,7 +297,7 @@ func TestTitleSocketOwnership(t *testing.T) {
 	t.Run("reject invalid semantic targets and preserve labels", func(t *testing.T) {
 		f := titlesFixture(t)
 		p := f.snapshot.Panes[0]
-		p.Session = &agentSession{"codex", "session-one"}
+		p.Session = &agentSession{"pi", "session-one"}
 		for _, args := range [][]string{{"--pane", "w1:p1", "--title", "Title", "--session-id", "other-session"}, {"--pane", "missing", "--title", "Title"}, {"--pane", "w1:p1", "--title", " \u202e "}} {
 			if code, _ := f.run(append([]string{"set"}, args...)...); code != 1 {
 				t.Fatal(code)
@@ -305,7 +305,7 @@ func TestTitleSocketOwnership(t *testing.T) {
 		}
 		p.Label = "Pinned pane"
 		f.snapshot.Tabs[0].Label = "Pinned tab"
-		f.set("Точная задача", "session-one", "codex")
+		f.set("Точная задача", "session-one", "pi")
 		if len(f.calls) != 0 {
 			t.Fatal(f.calls)
 		}
@@ -320,14 +320,14 @@ func TestTitleSocketOwnership(t *testing.T) {
 		if f.state().Panes["w1:p1"] != "Исправить поиск статуса" {
 			t.Fatal("no ownership")
 		}
-		f.set("3742879 · Создание вакансии", "", "codex")
+		f.set("3742879 · Создание вакансии", "", "pi")
 		if f.state().Panes["w1:p1"] != "3742879 · Создание вакансии" {
 			t.Fatal("no semantic ownership")
 		}
 	})
 	t.Run("dead pane and tab records pruned", func(t *testing.T) {
 		f := titlesFixture(t)
-		f.set("Title", "s", "codex")
+		f.set("Title", "s", "pi")
 		f.snapshot.Panes = []*pane{}
 		f.snapshot.Tabs = []*tab{}
 		f.sync()
@@ -381,25 +381,21 @@ func TestPiTitleSocket(t *testing.T) {
 			t.Fatal("whitespace accepted", code)
 		}
 	})
-	t.Run("agent replacement same terminal", func(t *testing.T) {
+	t.Run("other agent cannot inherit Pi state", func(t *testing.T) {
 		f := titlesFixture(t)
-		f.set("Codex задача", "same-id", "codex")
+		f.set("Pi задача", "same-id", "pi")
 		p := f.snapshot.Panes[0]
-		p.Agent = "pi"
-		p.Native = "π - Pi задача - repo"
+		p.Agent = "other"
+		p.Native = "Other task"
 		f.sync()
 		if len(f.state().Semantic) != 0 {
 			t.Fatal("old agent")
 		}
-		f.want("Pi задача", "Pi задача")
-		f.set("Pi имя", "pi-id", "pi")
-		p.Agent = "codex"
-		p.Native = "Codex снова | repo"
+		f.want("", "nu")
+		p.Agent = "pi"
+		p.Native = "π - Pi снова - repo"
 		f.sync()
-		if len(f.state().Semantic) != 0 {
-			t.Fatal("old pi")
-		}
-		f.want("Codex снова", "Codex снова")
+		f.want("Pi снова", "Pi снова")
 	})
 	t.Run("Pi identity terminal replacement and exit", func(t *testing.T) {
 		f := titlesFixture(t)
@@ -407,7 +403,7 @@ func TestPiTitleSocket(t *testing.T) {
 		p.Agent = "pi"
 		p.Native = "π - repo"
 		p.Session = &agentSession{"pi", "pi-one"}
-		for _, args := range [][]string{{"--agent", "pi", "--session-id", "pi-two"}, {"--session-id", "pi-one"}} {
+		for _, args := range [][]string{{"--agent", "pi", "--session-id", "pi-two"}, {"--session-id", "pi-two"}} {
 			if code, _ := f.run(append([]string{"set", "--pane", p.ID, "--title", "Title"}, args...)...); code != 1 {
 				t.Fatal(code)
 			}
@@ -432,16 +428,16 @@ func TestPiTitleSocket(t *testing.T) {
 		}
 		f.want("", "nu")
 	})
-	t.Run("legacy Codex state", func(t *testing.T) {
+	t.Run("untyped legacy state is discarded", func(t *testing.T) {
 		f := titlesFixture(t)
 		path, _ := stateFile()
 		if err := os.WriteFile(path, []byte(`{"panes":{},"tabs":{},"semantic":{"w1:p1":{"title":"Старое имя","terminal_id":"terminal-one","session_id":"session-one"}}}`), 0600); err != nil {
 			t.Fatal(err)
 		}
 		f.sync()
-		f.want("Старое имя", "Старое имя")
+		f.want("Исправить поиск статуса", "Исправить поиск статуса")
 	})
-	t.Run("mixed agents focus and manual names", func(t *testing.T) {
+	t.Run("multiple Pi panes focus and manual names", func(t *testing.T) {
 		f := titlesFixture(t)
 		p := &pane{ID: "w1:p2", Terminal: "terminal-two", Tab: "w1:t1", Agent: "pi", Native: "π - Проверить API - repo"}
 		f.snapshot.Panes = append(f.snapshot.Panes, p)
@@ -464,7 +460,7 @@ func TestPiTitleSocket(t *testing.T) {
 // These file-seam checks remain useful when the sandbox denies listening sockets.
 // Socket integration above is independently required and never substituted here.
 func TestPersistedSemanticIdentity(t *testing.T) {
-	for _, agent := range []string{"codex", "pi"} {
+	for _, agent := range []string{"pi"} {
 		t.Run(agent, func(t *testing.T) {
 			path := filepath.Join(t.TempDir(), "state.json")
 			st := newState()
@@ -540,11 +536,11 @@ func TestUnicodeTitleDetails(t *testing.T) {
 		strings.Repeat("😀", 40):                          strings.Repeat("😀", 31) + "…",
 	}
 	for input, want := range cases {
-		if got := taskTitle(input, 32, "pi"); got != want {
+		if got := taskTitle(input, 32); got != want {
 			t.Errorf("got %q want %q", got, want)
 		}
 	}
-	for _, label := range []string{"123", "١٢٣", "pi", "codex", "nu"} {
+	for _, label := range []string{"123", "١٢٣", "pi", "nu"} {
 		if !automaticLabel(label) {
 			t.Errorf("not automatic: %q", label)
 		}

@@ -59,6 +59,10 @@ haptic_pattern = "level_change"
 [settings.window_snapping]
 drag_swap_fraction = 0.1
 
+[settings.drag_drop]
+# Keep mouse dragging, but hide the blue drop-target overlay.
+preview = false
+
 [virtual_workspaces]
 enabled = true
 default_workspace_count = 9
@@ -76,7 +80,7 @@ app_rules = [
   # Floating: системные
   { app_name = "1Password", floating = true },
   # Unmanaged windows stay visible across Rift's virtual workspaces.
-  { app_id = "com.spotify.client", manage = false },
+  { app_id = "rocks.spotifast.Spotifast", manage = false },
   { app_name = "Typora", title_substring = "Открыть", floating = true, workspace = "4" },
   { app_id = "com.apple.finder", floating = true },
   { app_name = "Cisco Secure Client", floating = true },
@@ -185,7 +189,7 @@ comb1 = "Alt + Shift"
 "Alt + Space" = "toggle_window_floating"
 "Meta + Shift + F" = "toggle_window_floating" # cmd+shift+f
 "Alt + F" = "toggle_fullscreen"
-"Alt + Shift + Space" = { exec = ["/bin/bash", "-c", "exec \"$HOME/.local/bin/spotify-toggle\""] }
+"Alt + Shift + Space" = { exec = ["/bin/bash", "-c", "exec \"$HOME/.local/bin/spotifast-toggle\""] }
 
 "Alt + Ctrl + S" = "serialize"
 "Meta + Shift + Q" = "save_and_exit" # cmd+shift+q
