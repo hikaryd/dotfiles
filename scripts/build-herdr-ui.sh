@@ -20,10 +20,8 @@ case "$version" in
   0.9.1) expected_commit=065ef9d6a531c49fb8bee7e818ef837065b21ee9 ;;
   0.9.4) expected_commit=7e26bad94044eba205033111a0ce8033ede7e24f ;;
 esac
-patch="$root/patches/herdr/$version-centered-rounded-tabs.patch"
-# Future releases try the maintained rendering patch, but only with clean
-# applicability, a nonempty passing regression test and an exact binary version.
-[[ -f $patch ]] || patch="$root/patches/herdr/0.9.4-centered-rounded-tabs.patch"
+# One maintained patch; compatibility is checked against each exact release.
+patch="$root/patches/herdr/centered-rounded-tabs.patch"
 patch_hash=$(shasum -a 256 "$patch")
 patch_hash=${patch_hash%% *}
 data="${XDG_DATA_HOME:-$HOME/.local/share}/dots/herdr"

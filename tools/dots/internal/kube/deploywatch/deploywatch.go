@@ -32,7 +32,6 @@ const (
 	colorRed     = tui.Red
 	colorGreen   = tui.Green
 	colorYellow  = tui.Yellow
-	colorBlue    = tui.Accent
 	colorMagenta = tui.Purple
 	colorCyan    = tui.Accent
 )

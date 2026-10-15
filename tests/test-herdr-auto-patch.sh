@@ -6,7 +6,7 @@ work=$(mktemp -d "${TMPDIR:-/tmp}/dots-herdr-auto-test.XXXXXX")
 trap 'rm -rf "$work"' EXIT
 mkdir -p "$work/repo/scripts" "$work/repo/patches/herdr" "$work/bin" "$work/links"
 cp "$root/scripts/herdr" "$root/scripts/build-herdr-ui.sh" "$work/repo/scripts/"
-cp "$root/patches/herdr/"*-centered-rounded-tabs.patch "$work/repo/patches/herdr/"
+cp "$root/patches/herdr/centered-rounded-tabs.patch" "$work/repo/patches/herdr/"
 ln -s "$work/repo/scripts/herdr" "$work/links/herdr"
 cat > "$work/bin/base" <<'SH'
 #!/bin/sh
@@ -100,6 +100,11 @@ expect_output '^PATCHED '
 [[ $(count '^git clone') == 1 ]]
 printf 'PASS symlink launcher builds once and reuses a version-matched cache\n'
 reset
+export FAKE_BASE_VERSION=0.9.1 FAKE_COMMIT=065ef9d6a531c49fb8bee7e818ef837065b21ee9
+expect_output '^PATCHED '
+[[ $(count '^cargo build') == 1 && -x "$state/0.9.1/herdr" ]]
+printf 'PASS reviewed older releases use the same maintained rendering patch\n'
+reset
 for args in '--version' '--help' 'status client' 'server reload-config' 'update' '--session work status client' '--machine remote status'; do
   read -r -a argv <<< "$args"
   "$runner" "${argv[@]}" > "$work/output"
@@ -125,7 +130,7 @@ grep -q -- '--branch v0.9.5' "$TEST_LOG"
 printf 'PASS a new stable release tries the maintained patch rather than downgrading\n'
 reset
 expect_output '^PATCHED '
-printf '\n' >> "$work/repo/patches/herdr/0.9.4-centered-rounded-tabs.patch"
+printf '\n' >> "$work/repo/patches/herdr/centered-rounded-tabs.patch"
 expect_output '^PATCHED '
 [[ $(count '^cargo build') == 2 ]]
 printf 'PASS changing a patch invalidates the same-version cache\n'
@@ -156,7 +161,7 @@ printf 'PASS compilation, empty tests, binary version and reviewed-tag mismatche
 reset
 expect_output '^PATCHED '
 cp "$state/0.9.4/herdr" "$work/original"
-printf '\n' >> "$work/repo/patches/herdr/0.9.4-centered-rounded-tabs.patch"
+printf '\n' >> "$work/repo/patches/herdr/centered-rounded-tabs.patch"
 export FAKE_CARGO_FAIL=1
 expect_output '^PATCHED '
 cmp "$work/original" "$state/0.9.4/herdr"

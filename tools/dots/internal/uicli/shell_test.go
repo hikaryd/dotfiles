@@ -17,7 +17,7 @@ func shellFixture(t *testing.T) (string, []string) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	files := []string{"config/tmux/scripts/sesh-picker.sh", "config/ghostty/scripts/gtab-pick.sh", "config/zsh/functions/_dots-zi", "config/zsh/functions/_dots-zoxide-init", "scripts/terminal-ui.sh", "vpn/install.sh", "uninstall"}
+	files := []string{"config/tmux/scripts/sesh-picker.sh", "config/zsh/functions/_dots-zi", "config/zsh/functions/_dots-zoxide-init", "scripts/terminal-ui.sh", "vpn/install.sh", "uninstall"}
 	for _, file := range files {
 		b, err := os.ReadFile(filepath.Join(source, file))
 		if err != nil {
@@ -46,7 +46,7 @@ case "$(basename "$0"):$1" in
  *) printf '%s\n' "$@" > "$SHELL_CALLS" ;;
 esac
 `
-	for _, name := range []string{"sesh", "gtab", "zoxide", "ssh", "curl"} {
+	for _, name := range []string{"sesh", "zoxide", "ssh", "curl"} {
 		os.WriteFile(filepath.Join(bin, name), []byte(fake), 0700)
 	}
 	home := filepath.Join(root, "home")
@@ -55,7 +55,7 @@ esac
 	return root, env
 }
 func TestShellPickersUseNativeUIAndOriginalArgv(t *testing.T) {
-	for _, kind := range []string{"sesh", "gtab", "zi", "zi-echo"} {
+	for _, kind := range []string{"sesh", "zi", "zi-echo"} {
 		t.Run(kind, func(t *testing.T) {
 			root, env := shellFixture(t)
 			var cmd *exec.Cmd
@@ -66,14 +66,6 @@ func TestShellPickersUseNativeUIAndOriginalArgv(t *testing.T) {
 				cmd = exec.Command("/bin/bash", filepath.Join(root, "config/tmux/scripts/sesh-picker.sh"))
 				title = "Sesh"
 				selection = "second"
-			case "gtab":
-				dir := filepath.Join(root, "gtab")
-				os.MkdirAll(dir, 0700)
-				os.WriteFile(filepath.Join(dir, "space name.applescript"), nil, 0600)
-				env = append(env, "GTAB_DIR="+dir)
-				cmd = exec.Command("/bin/bash", filepath.Join(root, "config/ghostty/scripts/gtab-pick.sh"))
-				title = "Gtab"
-				selection = "space"
 			case "zi", "zi-echo":
 				if kind == "zi-echo" {
 					env = append(env, "_ZO_ECHO=1")
@@ -98,7 +90,7 @@ func TestShellPickersUseNativeUIAndOriginalArgv(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			want := map[string]string{"sesh": "connect\nsecond session\n", "gtab": "space name\n", "zi": filepath.Join(root, "home") + "\n", "zi-echo": filepath.Join(root, "home") + "\n"}[kind]
+			want := map[string]string{"sesh": "connect\nsecond session\n", "zi": filepath.Join(root, "home") + "\n", "zi-echo": filepath.Join(root, "home") + "\n"}[kind]
 			if string(b) != want {
 				t.Fatalf("argv/cwd %q want %q", b, want)
 			}
