@@ -81,7 +81,7 @@ func TestVPNInstallerHelpersDispatchThroughBothEntrypoints(t *testing.T) {
 
 func TestKubernetesAliasesAndGroupDispatchWithoutLoadingConfiguration(t *testing.T) {
 	t.Setenv("HOME", t.TempDir())
-	for _, name := range []string{"kpdev", "kpstage", "kppreprod", "kpprod", "kstage", "kprod-connect", "kpdev-logs", "kpstage-logs-save", "kppreprod-jobs", "kpprod-jobs-save", "kpdev-cron-run", "kpstage-exec", "kpprod-log-search", "kpdev-logs-multi", "kpstage-scale", "kppreprod-pod-restart", "kpprod-pod-analyze", "kpstage-deploy-watch", "kube-tools-help", "kube-log-watch", "kube-deploy-watch", "kube-pod-analyze"} {
+	for _, name := range []string{"kpdev", "kpstage", "kppreprod", "kpprod", "kstage", "kprod-connect", "kpdev-logs", "kpstage-logs-save", "kppreprod-jobs", "kpprod-jobs-save", "kpdev-cron-run", "kpstage-exec", "kpprod-log-search", "kpdev-logs-multi", "kpstage-scale", "kppreprod-pod-restart", "kpprod-pod-analyze", "kpstage-deploy-watch", "kube-tools-help", "kube-log-watch", "kube-deploy-watch", "kube-pod-analyze", "kube-metrics-watch", "km", "kma"} {
 		code, out, diagnostic := captureDispatch(t, "", name, []string{"--help"})
 		if code != 0 || out+diagnostic == "" {
 			t.Fatalf("alias %s: %d %q %q", name, code, out, diagnostic)

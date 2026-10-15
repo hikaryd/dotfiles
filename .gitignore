@@ -29,6 +29,11 @@ config/git/private.inc
 # Private Kubernetes watcher inventories live under ~/.config, never in dots.
 **/deploy-watch.resources
 
+# Defense in depth: metrics coordinates and token files belong outside Git.
+**/metrics.private.json
+**/metrics.json
+/config/**/metrics-token*
+
 # Private phone owner endpoints; optional local SSH include, never publish.
 /config/ssh/*owner*.conf
 

@@ -4,12 +4,13 @@ import (
 	"fmt"
 	"strings"
 
+	"dots/native/internal/kube/metrics"
 	"dots/native/internal/tui"
 )
 
 func (s *session) menu() error {
 	state, _ := s.configurationState()
-	rows := []string{"setup\tНастроить файлы и окружения", "config\tПоказать подключения — без ключей", "doctor\tЛокальная диагностика — без запросов к кластеру"}
+	rows := []string{"setup\tНастроить файлы и окружения", "config\tПоказать подключения — без ключей", "doctor\tЛокальная диагностика — без запросов к кластеру", "metrics\tVictoriaMetrics / Prometheus — приватные подключения"}
 	for _, environment := range state.Environments {
 		rows = append(rows, fmt.Sprintf("%s\t%s\t%s\t%s", environment.Environment, environment.Context, environment.Namespace, environment.Status))
 	}
@@ -22,6 +23,11 @@ func (s *session) menu() error {
 	}
 	entry := firstColumn(selected[0])
 	switch entry {
+	case "metrics":
+		if status := metrics.Run(nil); status != 0 {
+			return exitError(status)
+		}
+		return nil
 	case "setup":
 		s.action = "setup"
 		return s.setup(nil)

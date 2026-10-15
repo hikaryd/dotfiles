@@ -17,6 +17,7 @@ import (
 
 	"dots/native/internal/kube/deploywatch"
 	"dots/native/internal/kube/logwatch"
+	"dots/native/internal/kube/metrics"
 	"dots/native/internal/kube/podanalyze"
 	"dots/native/internal/tui"
 )
@@ -30,7 +31,7 @@ type invocation struct{ environment, scope, action string }
 
 // CommandNames is also used by the installer to publish the native aliases.
 func CommandNames() []string {
-	names := []string{"kube-tools-help", "kube-deploy-watch", "kube-log-watch", "kube-pod-analyze"}
+	names := []string{"kube-tools-help", "kube-deploy-watch", "kube-log-watch", "kube-pod-analyze", "kube-metrics-watch", "km", "kma"}
 	for _, env := range environments {
 		names = append(names, "k"+env, "k"+env+"-connect", "kp"+env)
 		for _, action := range actions {
@@ -60,7 +61,7 @@ func parseName(name string) (invocation, bool) {
 }
 func IsCommand(name string) bool {
 	_, ok := parseName(name)
-	return ok || name == "kube-tools-help" || name == "kube-deploy-watch" || name == "kube-log-watch" || name == "kube-pod-analyze"
+	return ok || name == "kube-tools-help" || name == "kube-deploy-watch" || name == "kube-log-watch" || name == "kube-pod-analyze" || name == "kube-metrics-watch" || name == "km" || name == "kma"
 }
 
 type target struct{ environment, kubeconfig, context, namespace string }
@@ -201,6 +202,10 @@ func Run(args []string) int {
 		}
 	}
 	switch args[0] {
+	case "km", "kma":
+		return metrics.RunAlias(args[0], args[1:])
+	case "metrics", "kube-metrics-watch":
+		return metrics.Run(args[1:])
 	case "kube-deploy-watch":
 		return deploywatch.Run(args[1:])
 	case "kube-log-watch":
@@ -390,6 +395,10 @@ namespace <environment>            read namespaces and choose the saved namespac
   --list [--json]                  read-only listing; no configuration changes
 install-aliases [--yes] [--bin-dir DIR]
 preview selector|logs|deploy|analyze [--plain] [--width N] [--height N]
+metrics [init|check|METRIC_ID] [flags]  VictoriaMetrics/Prometheus TUI; private local profiles
+km / kma [METRIC_ID]               quick overview/API; profile bindings in private config
+  --profile NAME --metric ID --range 1h --step 1m --refresh 30s
+  --once --json --list --preview --config FILE (see metrics --help)
 version                            print binary version and platform
 
 kdev/kstage/kpreprod/kprod       kubectl in the pinned context (supports -A)
