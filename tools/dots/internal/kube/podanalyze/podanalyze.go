@@ -1410,20 +1410,6 @@ func stateColor(state string) string {
 	}
 }
 
-func formatSampleCPU(item sample) string {
-	if item.CPU < 0 {
-		return "-"
-	}
-	return formatCPU(item.CPU)
-}
-
-func formatSampleRAM(item sample) string {
-	if item.RAM < 0 {
-		return "-"
-	}
-	return formatBytes(item.RAM)
-}
-
 func resourceUsageSummary(cfg config, cpu, ram float64, totals resourceTotals, metricsComplete bool) string {
 	if !metricsComplete {
 		cpu, ram = -1, -1
@@ -1746,16 +1732,6 @@ func compactProcessError(message string) string {
 	}
 }
 
-func formatProcessPercent(value float64, sampling bool) string {
-	if value < 0 {
-		if sampling {
-			return "sample"
-		}
-		return "-"
-	}
-	return fmt.Sprintf("%.1f", value)
-}
-
 func compactError(message string) string {
 	return truncate(strings.Join(strings.Fields(message), " "), 100)
 }
@@ -1885,18 +1861,6 @@ func containerDisplayState(status containerStatus) string {
 		return "Running/NotReady"
 	}
 	return "Unknown"
-}
-
-func resourceTriple(used float64, hasMetric bool, request, limit string, cpu bool) string {
-	usageText := "-"
-	if hasMetric {
-		if cpu {
-			usageText = formatCPU(used)
-		} else {
-			usageText = formatBytes(used)
-		}
-	}
-	return fmt.Sprintf("%s / %s / %s", usageText, dash(request), dash(limit))
 }
 
 func eventTime(item event) time.Time {

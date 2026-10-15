@@ -26,9 +26,8 @@ path=(
   /opt/homebrew/bin
   /opt/homebrew/sbin
   /usr/local/bin
-  $path
+  ${path:#"$HOME/.dual-graph"}
   /Applications
-  "$HOME/.dual-graph"
 )
 
 # Completion/function search path must be ready before compinit.

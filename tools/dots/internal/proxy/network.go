@@ -69,7 +69,7 @@ func (c *controller) checkURL(target string) (bool, string) {
 		return false, "proxy connection or TLS error"
 	}
 	defer resp.Body.Close()
-	return resp.StatusCode >= 100 && resp.StatusCode < 500, fmt.Sprintf("HTTP %d", resp.StatusCode)
+	return resp.StatusCode == http.StatusOK || resp.StatusCode == http.StatusUnauthorized, fmt.Sprintf("HTTP %d", resp.StatusCode)
 }
 func (c *controller) processStatus() error {
 	unlock, err := c.lock()

@@ -98,7 +98,7 @@ func (c *controller) harden() error {
 	if err := os.Chmod(c.dir, 0700); err != nil {
 		return err
 	}
-	for _, path := range []string{c.path("subscription_url.txt"), c.path("servers.json"), c.path("config.json"), c.path("xray.pid")} {
+	for _, path := range []string{c.path("subscription_url.txt"), c.path("servers.json"), c.path("config.json"), c.path("xray.pid"), c.path("selection.json")} {
 		if err := os.Chmod(path, 0600); err != nil && !errors.Is(err, os.ErrNotExist) {
 			return err
 		}
@@ -140,13 +140,6 @@ func readText(path string) (string, error) {
 	}
 	return strings.ReplaceAll(strings.ReplaceAll(string(b), "\r\n", "\n"), "\r", "\n"), nil
 }
-func optionalText(path string) (string, error) {
-	s, err := readText(path)
-	if errors.Is(err, os.ErrNotExist) {
-		return "", nil
-	}
-	return s, err
-}
 func (c *controller) interactive() bool {
 	file, ok := c.rawIn.(*os.File)
 	return ok && tui.IsTerminal(file)
@@ -169,7 +162,7 @@ func (c *controller) dispatch(args []string) (int, error) {
 			break // All following words belong to Pi.
 		}
 		switch arg {
-		case "--help", "-h", "--set-vless", "--set-sub", "--update", "--allow-insecure-sub", "--stop", "--status", "--print-env", "--list":
+		case "--help", "-h", "--set-vless", "--set-sub", "--update", "--allow-insecure-sub", "--stop", "--status", "--print-env", "--list", "--auto", "--ensure":
 		default:
 			return 2, errors.New("unsupported proxy option; see pi-proxy --help")
 		}
@@ -178,6 +171,9 @@ func (c *controller) dispatch(args []string) (int, error) {
 		for _, a := range args {
 			if a == flag {
 				return true
+			}
+			if a == "--run" {
+				break // Pi flags must not be interpreted as controller options.
 			}
 		}
 		return false
@@ -200,6 +196,10 @@ func (c *controller) dispatch(args []string) (int, error) {
 	case has("--update"):
 		_, err := c.updateServers(has("--allow-insecure-sub") || truthy(os.Getenv("PI_PROXY_ALLOW_INSECURE_SUB")))
 		return 0, err
+	case has("--auto"):
+		return 0, c.autoStart(true)
+	case has("--ensure"):
+		return 0, c.autoStart(false)
 	case has("--stop"):
 		return 0, c.stop()
 	case has("--status"):
@@ -218,6 +218,9 @@ func (c *controller) dispatch(args []string) (int, error) {
 				rest := args[i+1:]
 				if len(rest) > 0 && rest[0] == "--" {
 					rest = rest[1:]
+				}
+				if err := c.autoStart(false); err != nil {
+					return 1, err
 				}
 				return c.runCLI(rest)
 			}

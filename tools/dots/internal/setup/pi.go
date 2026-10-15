@@ -32,6 +32,10 @@ func piApply(root string) error {
 			return e
 		}
 		merged := merge(current, template)
+		// Supply the managed local proxy by default; keep explicit personal proxies.
+		if name == "settings.json" && current["httpProxy"] != nil && current["httpProxy"] != "http://127.0.0.1:10810" {
+			merged["httpProxy"] = current["httpProxy"]
+		}
 		if name == "mcp.json" {
 			servers := map[string]any{}
 			for _, config := range []map[string]any{current, template} {

@@ -913,6 +913,3 @@ func compact(value string, width int) string {
 	return runewidth.TruncateLeft(value, tui.Width(value)-width+1, "…")
 }
 func fit(value string, width int) string { return tui.Clip(value, width) }
-func visibleWidth(value string) int {
-	return tui.Width(value)
-}

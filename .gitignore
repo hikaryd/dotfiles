@@ -4,6 +4,8 @@
 # Temporary files
 *.swp
 *.swo
+*.profraw
+*.profdata
 *~
 __pycache__/
 *.py[cod]

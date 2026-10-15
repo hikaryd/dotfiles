@@ -1,49 +1,22 @@
 # shellcheck shell=bash
-# CLI-инструменты через локальный VLESS-прокси. Общий модуль bash/zsh.
+# Общий модуль bash/zsh: Pi, jg и Spotifast через VLESS-прокси вне РФ.
 # Прокси задаётся только дочерним процессам; системные настройки не меняются.
-# Управление: pi-proxy --status | --stop | --update | --list
+# Управление: pi-proxy --auto | --status | --stop | --update | --list
 
 alias pi-proxy='dots-tools proxy pi'
 
 _pi_proxy_ensure() {
   local client="${1:-pi}"
-  local dir="$HOME/.config/xray-pi"
-  local cfg="$dir/config.json"
-  local pidf="$dir/xray.pid"
-  local port="${PI_PROXY_PORT:-10810}"
-  local proxy="http://127.0.0.1:$port"
-
-  # Поднять xray, если локальный HTTP-прокси ещё не слушает порт.
-  if ! lsof -nP -iTCP:"$port" -sTCP:LISTEN >/dev/null 2>&1; then
-    if [ ! -f "$cfg" ]; then
-      echo "$client: нет $cfg — сначала настрой прокси: pi-proxy" >&2
-      return 1
-    fi
-    local xray_bin
-    xray_bin="$(command -v xray)" || {
-      echo "$client: xray не найден (brew install xray)" >&2
-      return 1
-    }
-    echo "$client: поднимаю VLESS-прокси на $proxy ..." >&2
-    nohup "$xray_bin" run -c "$cfg" >/dev/null 2>&1 &
-    printf '%s\n' "$!" > "$pidf"
-    disown 2>/dev/null || true
-    local i=0
-    while [ "$i" -lt 20 ]; do
-      lsof -nP -iTCP:"$port" -sTCP:LISTEN >/dev/null 2>&1 && break
-      sleep 0.2
-      i=$((i + 1))
-    done
-    if ! lsof -nP -iTCP:"$port" -sTCP:LISTEN >/dev/null 2>&1; then
-      echo "$client: не удалось поднять xray на :$port (диагностика: pi-proxy --status)" >&2
-      return 1
-    fi
+  # Контроллер проверяет реальный выход, выбирает быстрейший и кеширует выбор.
+  # Не трогаем stdin: там может быть prompt для pi -p или входные данные jg.
+  if ! command dots-tools proxy pi --ensure </dev/null >&2; then
+    echo "$client: нет проверенного прокси вне РФ (диагностика: pi-proxy --auto)" >&2
+    return 1
   fi
-
-  PI_PROXY_URL="$proxy"
+  PI_PROXY_URL="http://127.0.0.1:${PI_PROXY_PORT:-10810}"
 }
 
-# Pi использует proxy env для HTTP и WebSocket; xray поднимается до запуска CLI.
+# Proxy env только у Pi; shell-команды агента очищают его через shellCommandPrefix.
 unalias pi 2>/dev/null || true
 pi() {
   _pi_proxy_ensure pi || return

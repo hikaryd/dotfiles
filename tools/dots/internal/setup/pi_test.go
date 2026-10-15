@@ -54,7 +54,7 @@ func TestPiPreservesLocalData(t *testing.T) {
 	if e != nil {
 		t.Fatal(e)
 	}
-	for k, v := range map[string]any{"theme": "ayu", "deviceId": "local-device", "httpProxy": "http://127.0.0.1:10810", "lastChangelogVersion": "local-version"} {
+	for k, v := range map[string]any{"theme": "ayu", "httpProxy": "http://127.0.0.1:10810", "deviceId": "local-device", "lastChangelogVersion": "local-version"} {
 		if settings[k] != v {
 			t.Errorf("%s: %v", k, settings[k])
 		}
@@ -79,6 +79,30 @@ func TestPiPreservesLocalData(t *testing.T) {
 	backups, _ := filepath.Glob(filepath.Join(agent, "settings.json.bak-*"))
 	if len(backups) != 1 || !strings.Contains(get(t, backups[0]), `"dark"`) {
 		t.Fatal(backups)
+	}
+}
+
+func TestPiRestoresProxyForDirectConfig(t *testing.T) {
+	root, agent := fixturePi(t)
+	put(t, filepath.Join(agent, "settings.json"), `{"theme":"dark","shellCommandPrefix":"keep until managed apply"}`)
+	if Run(root, []string{"pi-apply"}) != 0 {
+		t.Fatal("apply")
+	}
+	settings, err := readObject(filepath.Join(agent, "settings.json"), false)
+	if err != nil || settings["httpProxy"] != "http://127.0.0.1:10810" {
+		t.Fatal("managed proxy not restored", err)
+	}
+}
+
+func TestPiPreservesUnmanagedProxy(t *testing.T) {
+	root, agent := fixturePi(t)
+	put(t, filepath.Join(agent, "settings.json"), `{"httpProxy":"http://corporate-proxy.invalid:3128"}`)
+	if Run(root, []string{"pi-apply"}) != 0 {
+		t.Fatal("apply")
+	}
+	settings, e := readObject(filepath.Join(agent, "settings.json"), false)
+	if e != nil || settings["httpProxy"] != "http://corporate-proxy.invalid:3128" {
+		t.Fatal("unrelated personal proxy changed", e)
 	}
 }
 

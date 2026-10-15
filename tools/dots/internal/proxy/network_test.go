@@ -141,10 +141,10 @@ func TestProxyCheckForwardingAndHTTPStatuses(t *testing.T) {
 	c.port, _ = strconv.Atoi(u.Port())
 	// Even an all-matching ambient NO_PROXY must not bypass this explicit proxy.
 	t.Setenv("NO_PROXY", "*")
-	for _, code := range []int{200, 401, 403, 404, 500, 503} {
+	for _, code := range []int{200, 301, 401, 403, 404, 429, 500, 503} {
 		targetURL := origin.URL + "/" + strconv.Itoa(code)
 		ok, result := c.checkURL(targetURL)
-		if ok != (code < 500) || result != fmt.Sprintf("HTTP %d", code) {
+		if ok != (code == 200 || code == 401) || result != fmt.Sprintf("HTTP %d", code) {
 			t.Fatalf("%d: %v %s", code, ok, result)
 		}
 		mu.Lock()

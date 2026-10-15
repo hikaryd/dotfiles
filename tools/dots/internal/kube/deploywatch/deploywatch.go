@@ -500,43 +500,6 @@ func contains(values []string, wanted string) bool {
 	return false
 }
 
-func labelSelector(labels map[string]string, expressions []labelSelectorRequirement) string {
-	keys := make([]string, 0, len(labels))
-	for key := range labels {
-		keys = append(keys, key)
-	}
-	sort.Strings(keys)
-
-	parts := make([]string, 0, len(keys))
-	for _, key := range keys {
-		parts = append(parts, key+"="+labels[key])
-	}
-	for _, expression := range expressions {
-		values := append([]string(nil), expression.Values...)
-		sort.Strings(values)
-		switch expression.Operator {
-		case "In":
-			parts = append(parts, expression.Key+" in ("+strings.Join(values, ",")+")")
-		case "NotIn":
-			parts = append(parts, expression.Key+" notin ("+strings.Join(values, ",")+")")
-		case "Exists":
-			parts = append(parts, expression.Key)
-		case "DoesNotExist":
-			parts = append(parts, "!"+expression.Key)
-		case "Gt":
-			if len(values) > 0 {
-				parts = append(parts, expression.Key+">"+values[0])
-			}
-		case "Lt":
-			if len(values) > 0 {
-				parts = append(parts, expression.Key+"<"+values[0])
-			}
-		}
-	}
-	sort.Strings(parts)
-	return strings.Join(parts, ",")
-}
-
 func summarize(w workload, pods []pod) rolloutSummary {
 	var result rolloutSummary
 	kind := strings.ToLower(w.Kind)

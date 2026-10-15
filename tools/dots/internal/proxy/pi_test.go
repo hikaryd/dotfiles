@@ -8,6 +8,20 @@ import (
 	"testing"
 )
 
+func TestRunDoesNotInterpretPiFlagsAsProxyOptions(t *testing.T) {
+	for _, flag := range []string{"--help", "--status", "--stop", "--auto", "--ensure"} {
+		t.Run(flag, func(t *testing.T) {
+			t.Setenv("HOME", t.TempDir())
+			t.Setenv("PATH", t.TempDir())
+			var out, diagnostic bytes.Buffer
+			code := run("", []string{"pi", "--run", flag}, strings.NewReader("prompt stdin"), &out, &diagnostic)
+			if code != 1 || !strings.Contains(diagnostic.String(), "No proxy servers configured") {
+				t.Fatalf("Pi flag interpreted as a controller option: %d %s %s", code, &out, &diagnostic)
+			}
+		})
+	}
+}
+
 func TestPiProxyRejectsRetiredInterfacesBeforeStartingAnything(t *testing.T) {
 	for _, args := range [][]string{{"codex", "--print-env"}, {"pi", "--run-app"}, {"pi", "--install-codex-env"}, {"pi", "--unset-app-env"}} {
 		t.Run(strings.Join(args, " "), func(t *testing.T) {

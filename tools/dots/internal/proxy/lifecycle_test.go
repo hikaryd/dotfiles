@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net"
+	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -25,6 +27,21 @@ func TestMain(m *testing.M) {
 			if os.Getenv("DOTS_PROXY_TEST_XRAY_FAIL") == "1" {
 				fmt.Fprintln(os.Stderr, "fixture-password-do-not-log")
 				os.Exit(23)
+			}
+			if len(os.Args) > 3 && strings.Contains(os.Args[3], ".probe-") {
+				data, _ := os.ReadFile(os.Args[3])
+				var cfg struct{ Inbounds []struct{ Port int } }
+				if json.Unmarshal(data, &cfg) != nil || len(cfg.Inbounds) == 0 {
+					os.Exit(2)
+				}
+				listener, err := net.Listen("tcp", "127.0.0.1:"+strconv.Itoa(cfg.Inbounds[0].Port))
+				if err != nil {
+					os.Exit(3)
+				}
+				_ = http.Serve(listener, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					fmt.Fprint(w, "isolated probe")
+				}))
+				os.Exit(0)
 			}
 			b, _ := json.Marshal(os.Args)
 			if os.WriteFile(filepath.Join(fixture, "xray-argv"), b, 0600) != nil {

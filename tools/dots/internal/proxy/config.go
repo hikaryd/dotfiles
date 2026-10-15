@@ -60,7 +60,7 @@ func parseVLESS(link string) (object, error) {
 		return nil, errors.New("Invalid VLESS URL. It must start with vless://")
 	}
 	base, name := link, "VLESS server"
-	if i := strings.LastIndex(base, "#"); i >= 0 {
+	if i := strings.IndexByte(base, '#'); i >= 0 {
 		n := unquoteComponent(base[i+1:], false)
 		if n != "" {
 			name = n

@@ -129,7 +129,10 @@ func (c *controller) owned(pid int) bool {
 
 // flock is released by the kernel on process exit; only the controller, never xray, inherits it.
 func (c *controller) lock() (func(), error) {
-	f, err := os.OpenFile(c.path("controller.lock"), os.O_CREATE|os.O_RDWR|syscall.O_NOFOLLOW, 0600)
+	return c.lockFile("controller.lock", 5*time.Second)
+}
+func (c *controller) lockFile(name string, timeout time.Duration) (func(), error) {
+	f, err := os.OpenFile(c.path(name), os.O_CREATE|os.O_RDWR|syscall.O_NOFOLLOW, 0600)
 	if err != nil {
 		return nil, errors.New("Could not open controller lock.")
 	}
@@ -137,7 +140,7 @@ func (c *controller) lock() (func(), error) {
 		f.Close()
 		return nil, errors.New("Could not secure controller lock.")
 	}
-	deadline := time.Now().Add(5 * time.Second)
+	deadline := time.Now().Add(timeout)
 	for {
 		err = syscall.Flock(int(f.Fd()), syscall.LOCK_EX|syscall.LOCK_NB)
 		if err == nil {
@@ -146,6 +149,10 @@ func (c *controller) lock() (func(), error) {
 		if !errors.Is(err, syscall.EWOULDBLOCK) && !errors.Is(err, syscall.EAGAIN) {
 			f.Close()
 			return nil, errors.New("Could not acquire controller lock.")
+		}
+		if c.ctx != nil && c.ctx.Err() != nil {
+			f.Close()
+			return nil, c.ctx.Err()
 		}
 		if time.Now().After(deadline) {
 			f.Close()

@@ -19,24 +19,33 @@ func managedLinks(root string, args []string) error {
 	if len(args) == 1 {
 		root = args[0]
 	}
-	files, e := filepath.Glob(filepath.Join(root, "steps/*.yml"))
+	targets, e := managedLinkTargets(root)
 	if e != nil {
 		return e
+	}
+	fmt.Println(strings.Join(targets, "\n"))
+	return nil
+}
+
+func managedLinkTargets(root string) ([]string, error) {
+	files, e := filepath.Glob(filepath.Join(root, "steps/*.yml"))
+	if e != nil {
+		return nil, e
 	}
 	var targets []string
 	for _, p := range files {
 		b, e := os.ReadFile(p)
 		if e != nil {
-			return errors.New("cannot read link inventory")
+			return nil, errors.New("cannot read link inventory")
 		}
 		var doc yaml.Node
 		decoder := yaml.NewDecoder(bytes.NewReader(b))
 		if e = decoder.Decode(&doc); e != nil && !errors.Is(e, io.EOF) {
-			return errors.New("invalid YAML in link inventory")
+			return nil, errors.New("invalid YAML in link inventory")
 		}
 		var extra yaml.Node
 		if e = decoder.Decode(&extra); !errors.Is(e, io.EOF) {
-			return errors.New("expected a single YAML document in link inventory")
+			return nil, errors.New("expected a single YAML document in link inventory")
 		}
 		if len(doc.Content) == 0 {
 			continue
@@ -46,7 +55,7 @@ func managedLinks(root string, args []string) error {
 			continue
 		}
 		if seq.Kind != yaml.SequenceNode {
-			return errors.New("expected a YAML sequence in link inventory")
+			return nil, errors.New("expected a YAML sequence in link inventory")
 		}
 		for _, item := range seq.Content {
 			if item.Kind == yaml.AliasNode {
@@ -65,10 +74,10 @@ func managedLinks(root string, args []string) error {
 				}
 				var resolved map[string]any
 				if e = node.Decode(&resolved); e != nil {
-					return errors.New("invalid YAML link mapping")
+					return nil, errors.New("invalid YAML link mapping")
 				}
 				if node.Kind != yaml.MappingNode {
-					return errors.New("invalid YAML link mapping")
+					return nil, errors.New("invalid YAML link mapping")
 				}
 				seen := map[string]bool{}
 				var keys func(*yaml.Node)
@@ -102,12 +111,7 @@ func managedLinks(root string, args []string) error {
 			}
 		}
 	}
-	if len(targets) > 0 {
-		fmt.Println(strings.Join(targets, "\n"))
-	} else {
-		fmt.Println()
-	}
-	return nil
+	return targets, nil
 }
 func jsonKeys(args []string) error {
 	if len(args) != 1 {
