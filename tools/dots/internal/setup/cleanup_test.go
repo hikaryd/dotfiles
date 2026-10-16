@@ -22,7 +22,7 @@ func fixtureCleanup(t *testing.T) (string, string) {
 	t.Setenv("HOME", h)
 	t.Setenv("XDG_CACHE_HOME", filepath.Join(h, "cache"))
 	put(t, filepath.Join(root, "steps/terminal.yml"), "- link:\n    ~/.config/current:\n      path: config/not-created-yet\n")
-	put(t, filepath.Join(root, "scripts/spotifast-toggle.sh"), "current launcher")
+	put(t, filepath.Join(root, "scripts/spotifast-launch.sh"), "current launcher")
 	return root, h
 }
 
@@ -53,6 +53,7 @@ func TestCleanupPreviewApplyAndIdempotence(t *testing.T) {
 		filepath.Join(root, "scripts/tests/__pycache__/test_old.cpython-314.pyc"),
 		filepath.Join(h, ".config/xray-pi/__pycache__/codex-proxy.cpython-314.pyc"),
 		filepath.Join(h, "cache/dots/spotify-toggle"),
+		filepath.Join(h, "cache/dots/spotifast-toggle"),
 	}
 	for _, p := range paths {
 		put(t, p, "obsolete generated artifact")
@@ -68,7 +69,7 @@ func TestCleanupPreviewApplyAndIdempotence(t *testing.T) {
 		paths = append(paths, p)
 	}
 	keep := []string{
-		filepath.Join(root, "scripts/spotifast-toggle.sh"),
+		filepath.Join(root, "scripts/spotifast-launch.sh"),
 		filepath.Join(root, "scripts/active.py"),
 		filepath.Join(root, "scripts/__pycache__/active.cpython-314.pyc"),
 		filepath.Join(root, "config/pi/auth.json"),
@@ -77,7 +78,6 @@ func TestCleanupPreviewApplyAndIdempotence(t *testing.T) {
 		filepath.Join(h, ".config/xray-pi/config.json"),
 		filepath.Join(h, ".config/xray-pi/selection.json"),
 		filepath.Join(h, ".config/xray-pi/subscription_url.txt"),
-		filepath.Join(h, "cache/dots/spotifast-toggle"),
 		filepath.Join(h, "cache/dots/atuin-init.zsh"),
 		filepath.Join(h, ".config/dots-backups/old.pyc"),
 	}
@@ -108,6 +108,36 @@ func TestCleanupPreviewApplyAndIdempotence(t *testing.T) {
 	plan, err := cleanupPlan(root, time.Now())
 	if err != nil || len(plan) != 0 {
 		t.Fatalf("not idempotent: %+v %v", plan, err)
+	}
+}
+
+func TestCleanupToggleCachesRequireRetiredSources(t *testing.T) {
+	for _, name := range []string{"spotify-toggle", "spotifast-toggle"} {
+		t.Run(name, func(t *testing.T) {
+			root, h := fixtureCleanup(t)
+			source := filepath.Join(root, "scripts", name+".sh")
+			cache := filepath.Join(h, "cache/dots", name)
+			put(t, source, "active source")
+			put(t, cache, "compiled toggle")
+			plan, err := cleanupPlan(root, time.Now())
+			if err != nil || cleanupPaths(plan)[cache] {
+				t.Fatal("active toggle cache was not preserved", plan, err)
+			}
+			if err := os.Remove(source); err != nil {
+				t.Fatal(err)
+			}
+			plan, err = cleanupPlan(root, time.Now())
+			if err != nil || !cleanupPaths(plan)[cache] {
+				t.Fatal("retired toggle cache was not selected", plan, err)
+			}
+			put(t, source, "restored source")
+			if err := applyCleanup(plan); err == nil {
+				t.Fatal("cache of a restored source was removed")
+			}
+			if get(t, cache) != "compiled toggle" {
+				t.Fatal("cache changed after its source was restored")
+			}
+		})
 	}
 }
 

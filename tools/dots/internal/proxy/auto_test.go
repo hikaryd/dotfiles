@@ -66,26 +66,24 @@ func TestBenchmarkBoundedParallelismAndCancellation(t *testing.T) {
 		t.Error("probe started after cancellation")
 		return measurement{}, nil
 	})
-	for _, result := range results {
-		if !errors.Is(result.err, context.Canceled) {
-			t.Fatal(result.err)
-		}
+	if len(results) != 0 {
+		t.Fatal("results returned after cancellation", results)
 	}
 }
 
-func TestSelectionCacheExpiresAndInvalidates(t *testing.T) {
+func TestSelectionCacheRetainsHintsButRejectsInvalidRoutes(t *testing.T) {
 	now := time.Now()
-	servers := []object{{}, {}}
 	keys := []string{"a", "b"}
-	good := selection{Version: 1, Servers: digest(keys), Server: "b", Checked: now.Add(-time.Minute), measurement: measurement{"DE", time.Millisecond}}
-	if cachedSelection(good, servers, keys, now) != 1 {
-		t.Fatal("fresh selection not reused")
+	good := selection{Version: 1, Servers: digest(keys), Server: "b", Checked: now.Add(-24 * time.Hour), measurement: measurement{"DE", time.Millisecond}}
+	if cachedSelection(good, keys, now) != 1 {
+		t.Fatal("old selection not retained for a live recheck")
+	}
+	if cachedSelection(good, []string{"b", "new"}, now) != 0 {
+		t.Fatal("changes to other routes invalidated the selected route")
 	}
 	for _, change := range []func(*selection){
 		func(s *selection) { s.Version = 0 },
-		func(s *selection) { s.Servers = digest([]string{"changed"}) },
 		func(s *selection) { s.Server = "removed" },
-		func(s *selection) { s.Checked = now.Add(-selectionTTL) },
 		func(s *selection) { s.Checked = now.Add(time.Minute) },
 		func(s *selection) { s.Country = "RU" },
 		func(s *selection) { s.Country = "" },
@@ -93,7 +91,7 @@ func TestSelectionCacheExpiresAndInvalidates(t *testing.T) {
 	} {
 		bad := good
 		change(&bad)
-		if cachedSelection(bad, servers, keys, now) != -1 {
+		if cachedSelection(bad, keys, now) != -1 {
 			t.Fatalf("invalid cache accepted: %+v", bad)
 		}
 	}

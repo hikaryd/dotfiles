@@ -172,13 +172,15 @@ func cleanupPlan(root string, now time.Time) ([]cleanupItem, error) {
 		}
 	}
 	cache := absolute(envDefault([]string{"XDG_CACHE_HOME"}, "~/.cache"))
-	oldToggle := filepath.Join(cache, "dots/spotify-toggle")
-	add(oldToggle, cache, "compiled cache of the retired Spotify launcher", func() bool {
-		_, oldErr := os.Stat(filepath.Join(root, "scripts/spotify-toggle.sh"))
-		_, replacementErr := os.Stat(filepath.Join(root, "scripts/spotifast-toggle.sh"))
-		info, err := os.Lstat(oldToggle)
-		return errors.Is(oldErr, os.ErrNotExist) && replacementErr == nil && err == nil && info.Mode().IsRegular()
-	})
+	for _, name := range []string{"spotify-toggle", "spotifast-toggle"} {
+		oldToggle := filepath.Join(cache, "dots", name)
+		add(oldToggle, cache, "compiled cache of a retired music-player toggle", func() bool {
+			_, sourceErr := os.Stat(filepath.Join(root, "scripts", name+".sh"))
+			_, launcherErr := os.Stat(filepath.Join(root, "scripts/spotifast-launch.sh"))
+			info, err := os.Lstat(oldToggle)
+			return errors.Is(sourceErr, os.ErrNotExist) && launcherErr == nil && err == nil && info.Mode().IsRegular()
+		})
+	}
 	temps, err := filepath.Glob(filepath.Join(cache, "dots/atuin-init.zsh.*.tmp"))
 	if err != nil {
 		return nil, err

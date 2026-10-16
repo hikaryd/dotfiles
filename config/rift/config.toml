@@ -79,8 +79,6 @@ app_rules = [
 
   # Floating: системные
   { app_name = "1Password", floating = true },
-  # Unmanaged windows stay visible across Rift's virtual workspaces.
-  { app_id = "rocks.spotifast.Spotifast", manage = false },
   { app_name = "Typora", title_substring = "Открыть", floating = true, workspace = "4" },
   { app_id = "com.apple.finder", floating = true },
   { app_name = "Cisco Secure Client", floating = true },
@@ -95,7 +93,8 @@ app_rules = [
   { app_name = "Comet", workspace = "1" },
   { app_name = "Thorium", workspace = "1" },
 
-  # "2": Misc
+  # "2": Misc / музыка
+  { app_id = "rocks.spotifast.Spotifast", workspace = "2" },
   { app_name = "V2BOX", workspace = "2" },
   { app_name = "Keet", workspace = "2" },
 
@@ -189,7 +188,6 @@ comb1 = "Alt + Shift"
 "Alt + Space" = "toggle_window_floating"
 "Meta + Shift + F" = "toggle_window_floating" # cmd+shift+f
 "Alt + F" = "toggle_fullscreen"
-"Alt + Shift + Space" = { exec = ["/bin/bash", "-c", "exec \"$HOME/.local/bin/spotifast-toggle\""] }
 
 "Alt + Ctrl + S" = "serialize"
 "Meta + Shift + Q" = "save_and_exit" # cmd+shift+q

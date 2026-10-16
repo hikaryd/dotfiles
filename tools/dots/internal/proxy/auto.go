@@ -14,8 +14,6 @@ import (
 	"dots/native/internal/tui"
 )
 
-const selectionTTL = 30 * time.Minute
-
 type selection struct {
 	Version int       `json:"version"`
 	Servers string    `json:"servers"`
@@ -79,13 +77,14 @@ func (c *controller) candidates() ([]object, error) {
 	return unique, nil
 }
 
-func cachedSelection(cache selection, servers []object, keys []string, now time.Time) int {
-	age := now.Sub(cache.Checked)
-	if cache.Version != 1 || cache.Servers != digest(keys) || age < 0 || age >= selectionTTL ||
+// A previous selection is a hint, not proof of availability. Recheck it live
+// even after a long idle period or changes to other subscription entries.
+func cachedSelection(cache selection, keys []string, now time.Time) int {
+	if cache.Version != 1 || now.Before(cache.Checked) ||
 		!allowedCountry(cache.Country) || cache.Latency <= 0 {
 		return -1
 	}
-	for i := range servers {
+	for i := range keys {
 		if cache.Server == keys[i] {
 			return i
 		}
@@ -99,37 +98,59 @@ type probeResult struct {
 	err error
 }
 
-// The worker limit bounds xray processes, open sockets and load on the upstream.
-// Results are reported by the caller, never concurrently into CLI writers.
-func benchmark(ctx context.Context, servers []object, workers int, probe func(context.Context, object) (measurement, error)) []probeResult {
-	results := make([]probeResult, len(servers))
+// Stream completed checks so startup need not wait for every route. The caller
+// must cancel and drain results when it stops early, reaping all probe children.
+// The worker limit bounds xray processes, sockets and upstream load.
+func probeRoutes(ctx context.Context, servers []object, workers int, probe func(context.Context, object) (measurement, error)) <-chan probeResult {
+	results := make(chan probeResult)
 	jobs := make(chan int)
+	go func() {
+		defer close(jobs)
+		for i := range servers {
+			select {
+			case jobs <- i:
+			case <-ctx.Done():
+				return
+			}
+		}
+	}()
 	var wg sync.WaitGroup
 	for worker := 0; worker < workers; worker++ {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
 			for i := range jobs {
-				results[i].index = i
 				if ctx.Err() != nil {
-					results[i].err = ctx.Err()
-					continue
+					return
 				}
-				results[i].measurement, results[i].err = probe(ctx, servers[i])
-				if results[i].err == nil && (!allowedCountry(results[i].Country) || results[i].Latency <= 0) {
-					results[i].err = errors.New("exit is RU or measurement is invalid")
+				m, err := probe(ctx, servers[i])
+				if err == nil && (!allowedCountry(m.Country) || m.Latency <= 0) {
+					err = errors.New("exit is RU or measurement is invalid")
+				}
+				select {
+				case results <- probeResult{index: i, measurement: m, err: err}:
+				case <-ctx.Done():
+					return
 				}
 			}
 		}()
 	}
-	for i := range servers {
-		jobs <- i
+	go func() { wg.Wait(); close(results) }()
+	return results
+}
+
+// Exhaustive ranking is reserved for an explicit --auto, not startup.
+func benchmark(ctx context.Context, servers []object, workers int, probe func(context.Context, object) (measurement, error)) []probeResult {
+	var results []probeResult
+	for result := range probeRoutes(ctx, servers, workers, probe) {
+		results = append(results, result)
 	}
-	close(jobs)
-	wg.Wait()
-	sort.SliceStable(results, func(i, j int) bool {
+	sort.Slice(results, func(i, j int) bool {
 		if (results[i].err == nil) != (results[j].err == nil) {
 			return results[i].err == nil
+		}
+		if results[i].Latency == results[j].Latency {
+			return results[i].index < results[j].index
 		}
 		return results[i].Latency < results[j].Latency
 	})
@@ -160,7 +181,7 @@ func (c *controller) autoStart(force bool) error {
 	if ctx == nil {
 		ctx = context.Background()
 	}
-	// Serialize full selections independently of the short process-control lock.
+	// Serialize selections independently of the short process-control lock.
 	unlock, err := c.lockFile("selection.lock", 6*time.Minute)
 	if err != nil {
 		return err
@@ -178,73 +199,102 @@ func (c *controller) autoStart(force bool) error {
 		var cached selection
 		data, _ := os.ReadFile(c.path("selection.json"))
 		if json.Unmarshal(data, &cached) == nil {
-			if i := cachedSelection(cached, servers, keys, time.Now()); i >= 0 {
+			if i := cachedSelection(cached, keys, time.Now()); i >= 0 {
 				var m measurement
 				running := c.matchesRunning(servers[i])
 				if running {
-					m, err = measureRoute(ctx, c.proxyURL(), countryURL, openAIURL, 1)
+					m, err = c.measureRoute(ctx, c.proxyURL(), 1)
 				} else {
-					m, err = c.probeServer(ctx, servers[i])
+					m, err = c.probeServer(ctx, servers[i], 1)
 				}
 				if err == nil && allowedCountry(m.Country) {
-					if running {
-						return nil
+					if !running {
+						if err := c.activate(servers[i]); err != nil {
+							return err
+						}
+						// Validate the restarted listener, not just the temporary tunnel.
+						m, err = c.measureRoute(ctx, c.proxyURL(), 1)
 					}
-					if err := c.activate(servers[i]); err != nil {
-						return err
-					}
-					// Recheck a restarted listener, not just the temporary tunnel.
-					if !c.matchesRunning(servers[i]) {
-						return errors.New("Selected proxy is not running; Pi was not started.")
-					}
-					_, err = measureRoute(ctx, c.proxyURL(), countryURL, openAIURL, 1)
-					if err == nil {
-						return nil
+					if err == nil && c.matchesRunning(servers[i]) {
+						return c.saveSelection(keys, i, m)
 					}
 				}
 			}
 		}
 	}
-	fmt.Fprintf(c.out, "Checking %d unique routes: non-RU exit + OpenAI, 4 parallel probes, median of 3 requests...\n", len(servers))
-	results := benchmark(ctx, servers, 4, c.probeServer)
-	if ctx.Err() != nil {
-		return ctx.Err()
-	}
-	for _, result := range results {
-		name := tui.Clean(value(servers[result.index], "name", "VLESS server"))
-		if result.err != nil {
-			fmt.Fprintf(c.out, "  SKIP %s: %s\n", name, result.err)
-		} else {
-			fmt.Fprintf(c.out, "  %s %4d ms  %s\n", result.Country, result.Latency.Milliseconds(), name)
+	probeCtx, cancel := context.WithCancel(ctx)
+	defer cancel()
+	var results <-chan probeResult
+	if force {
+		fmt.Fprintf(c.out, "Checking %d unique routes: non-RU exit + OpenAI, 4 parallel probes, median of 3 requests...\n", len(servers))
+		ranked := benchmark(probeCtx, servers, 4, func(ctx context.Context, server object) (measurement, error) {
+			return c.probeServer(ctx, server, 3)
+		})
+		// Feed the same activation/fallback loop in latency order for --auto.
+		ready := make(chan probeResult, len(ranked))
+		for _, result := range ranked {
+			c.reportProbe(servers[result.index], result)
+			ready <- result
 		}
+		close(ready)
+		results = ready
+	} else {
+		fmt.Fprintf(c.out, "Finding a verified non-RU route to OpenAI: %d routes, 4 parallel checks, stop on first working route...\n", len(servers))
+		results = probeRoutes(probeCtx, servers, 4, func(ctx context.Context, server object) (measurement, error) {
+			return c.probeServer(ctx, server, 1)
+		})
 	}
-	if len(results) == 0 || results[0].err != nil {
-		return errors.New("No verified non-RU route can reach OpenAI. Pi was not started; direct/RU fallback is disabled.")
-	}
-	for _, best := range results {
-		if best.err != nil {
-			break
+	defer func() {
+		cancel()
+		for range results {
 		}
+	}()
+	for best := range results {
 		if ctx.Err() != nil {
 			return ctx.Err()
 		}
+		if !force {
+			c.reportProbe(servers[best.index], best)
+		}
+		if best.err != nil {
+			continue
+		}
+		name := tui.Clean(value(servers[best.index], "name", "VLESS server"))
 		if err := c.activate(servers[best.index]); err != nil {
 			fmt.Fprintln(c.out, "Candidate could not start; trying the next verified route.")
 			continue
 		}
 		// Validate the real listener too, not just the isolated benchmark tunnel.
-		live, err := measureRoute(ctx, c.proxyURL(), countryURL, openAIURL, 1)
+		live, err := c.measureRoute(ctx, c.proxyURL(), 1)
 		if err != nil || !c.matchesRunning(servers[best.index]) {
 			fmt.Fprintln(c.out, "Candidate failed its final exit/OpenAI check; trying the next verified route.")
 			continue
 		}
-		cached := selection{Version: 1, Servers: digest(keys), Server: keys[best.index], Checked: time.Now(), measurement: best.measurement}
-		cached.Country = live.Country
-		if err := writeJSON(c.path("selection.json"), cached); err != nil {
-			return errors.New("Could not save proxy selection cache.")
+		if err := c.saveSelection(keys, best.index, live); err != nil {
+			return err
 		}
-		fmt.Fprintf(c.out, "Selected: %s, exit %s, median %d ms (cached for 30 min).\n", tui.Clean(value(servers[best.index], "name", "")), live.Country, best.Latency.Milliseconds())
+		fmt.Fprintf(c.out, "Selected: %s, exit %s, %d ms (rechecked on each launch).\n", name, live.Country, live.Latency.Milliseconds())
 		return nil
 	}
-	return errors.New("All candidates failed their final check; Pi was not started. Direct/RU fallback is disabled.")
+	if ctx.Err() != nil {
+		return ctx.Err()
+	}
+	return errors.New("No verified non-RU route can reach OpenAI. Pi was not started; direct/RU fallback is disabled.")
+}
+
+func (c *controller) reportProbe(server object, result probeResult) {
+	name := tui.Clean(value(server, "name", "VLESS server"))
+	if result.err != nil {
+		fmt.Fprintf(c.out, "  SKIP %s: %s\n", name, result.err)
+	} else {
+		fmt.Fprintf(c.out, "  %s %4d ms  %s\n", result.Country, result.Latency.Milliseconds(), name)
+	}
+}
+
+func (c *controller) saveSelection(keys []string, index int, m measurement) error {
+	cached := selection{Version: 1, Servers: digest(keys), Server: keys[index], Checked: time.Now(), measurement: m}
+	if err := writeJSON(c.path("selection.json"), cached); err != nil {
+		return errors.New("Could not save proxy selection cache.")
+	}
+	return nil
 }

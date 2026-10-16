@@ -3,14 +3,6 @@
       path: scripts/spotifast-launch.sh
       create: true
       force: false
-    ~/.local/bin/spotifast-aerospace-follow:
-      path: scripts/spotifast-aerospace-follow.sh
-      create: true
-      force: false
-    ~/.local/bin/spotifast-toggle:
-      path: scripts/spotifast-toggle.sh
-      create: true
-      force: false
     ~/.local/bin/dots:
       path: scripts/dots
       create: true

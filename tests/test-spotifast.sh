@@ -5,7 +5,7 @@ root=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 work=$(mktemp -d "${TMPDIR:-/tmp}/dots-spotifast-test.XXXXXX")
 trap 'rm -rf "$work"' EXIT
 export HOME="$work/home with spaces" PATH="$work/bin:$PATH" TEST_LOG="$work/calls"
-mkdir -p "$work/bin" "$work/Spotifast.app" "$HOME/.config/shell" "$HOME/.local/bin" "$HOME/.cache/dots"
+mkdir -p "$work/bin" "$work/Spotifast.app" "$HOME/.config/shell"
 
 # Replace only the installed bundle location and PATH prefix in the fixture.
 awk -v app="$work/Spotifast.app" '
@@ -31,28 +31,7 @@ cat > "$work/bin/open" <<'SH'
 printf 'open\n' >> "$TEST_LOG"
 printf '%s\n' "$@" >> "$TEST_LOG"
 SH
-cat > "$work/bin/aerospace" <<'SH'
-#!/bin/sh
-printf 'aerospace %s\n' "$*" >> "$TEST_LOG"
-case "$1" in
-  list-workspaces) printf '%s\n' "${FAKE_WORKSPACE:-w}" ;;
-  list-windows)
-    printf '%s\n' '41|rocks.spotifast.Spotifast|1' '42|rocks.spotifast.Spotifast|w' \
-      '43|other.client|1' '44|rocks.spotifast.Spotifast|2' ;;
-esac
-SH
-cat > "$HOME/.local/bin/spotifast-app" <<'SH'
-#!/bin/sh
-printf 'launcher\n' >> "$TEST_LOG"
-SH
-cp "$root/scripts/spotifast-toggle.sh" "$root/scripts/spotifast-toggle.swift" "$work/"
-cat > "$HOME/.cache/dots/spotifast-toggle" <<'SH'
-#!/bin/sh
-printf '%s\n' "$FAKE_ACTION"
-SH
-chmod +x "$work/bin/"* "$HOME/.local/bin/spotifast-app" "$HOME/.cache/dots/spotifast-toggle"
-# The cached fixture must be newer than the source so the test never runs swiftc.
-touch -t 203001010000 "$HOME/.cache/dots/spotifast-toggle"
+chmod +x "$work/bin/"*
 
 check() {
   if ! "$@"; then printf 'Spotifast assertion failed: %s\n' "$*" >&2; exit 1; fi
@@ -99,43 +78,25 @@ check grep -Fq 'brew install --cask crmne/tap/spotifast' "$work/output"
 check test ! -s "$TEST_LOG"
 printf 'PASS missing apps and proxy failures do not launch anything\n'
 
-: > "$TEST_LOG"
-export AEROSPACE_FOCUSED_WORKSPACE=w
-bash "$root/scripts/spotifast-aerospace-follow.sh"
-check grep -Fxq 'aerospace move-node-to-workspace --window-id 41 w' "$TEST_LOG"
-check grep -Fxq 'aerospace move-node-to-workspace --window-id 44 w' "$TEST_LOG"
-check test "$(grep -c '^aerospace move-node' "$TEST_LOG")" -eq 2
-: > "$TEST_LOG"
-unset AEROSPACE_FOCUSED_WORKSPACE
-bash "$root/scripts/spotifast-aerospace-follow.sh"
-check grep -Fxq 'aerospace list-workspaces --focused' "$TEST_LOG"
-: > "$TEST_LOG"
-export FAKE_RUNNING=0
-bash "$root/scripts/spotifast-aerospace-follow.sh"
-check test "$(grep -c '^aerospace' "$TEST_LOG")" -eq 0
-printf 'PASS only Spotifast windows follow the focused AeroSpace workspace\n'
-
-for action in launch shown hidden; do
-  : > "$TEST_LOG"
-  export FAKE_ACTION="$action"
-  bash "$work/spotifast-toggle.sh" --locked
-  if [[ "$action" == hidden ]]; then
-    check test ! -s "$TEST_LOG"
-  else
-    check grep -Fxq launcher "$TEST_LOG"
-  fi
-done
-printf 'PASS the toggle launches or restores Spotifast, but keeps it hidden on hide\n'
-
-for name in spotifast-app spotifast-aerospace-follow spotifast-toggle; do
-  check grep -Fq "    ~/.local/bin/$name:" "$root/steps/terminal.yml"
-done
-for script in launch aerospace-follow toggle; do
-  check test -x "$root/scripts/spotifast-$script.sh"
-  check grep -Fq "path: scripts/spotifast-$script.sh" "$root/steps/terminal.yml"
-done
+check grep -Fq '    ~/.local/bin/spotifast-app:' "$root/steps/terminal.yml"
+check test -x "$root/scripts/spotifast-launch.sh"
+check grep -Fq 'path: scripts/spotifast-launch.sh' "$root/steps/terminal.yml"
 check grep -Fq 'cask "crmne/tap/spotifast"' "$root/Brewfile"
-for config in config/aerospace/aerospace.toml config/rift/config.toml scripts/spotifast-toggle.swift; do
-  check grep -Fq 'rocks.spotifast.Spotifast' "$root/$config"
+printf 'PASS package and launcher link consistently target Spotifast\n'
+
+check grep -Fxq '  { app_id = "rocks.spotifast.Spotifast", workspace = "2" },' "$root/config/rift/config.toml"
+aerospace_rule=$(awk '/^if.app-id = '\''rocks.spotifast.Spotifast'\''$/ { getline; print }' "$root/config/aerospace/aerospace.toml")
+check test "$aerospace_rule" = "run = 'move-node-to-workspace 2'"
+for config in config/aerospace/aerospace.toml config/rift/config.toml; do
+  check test "$(grep -c 'rocks.spotifast.Spotifast' "$root/$config")" -eq 1
+  check test "$(grep -Ec '^[^#]*(alt-shift-space|Alt \+ Shift \+ Space)' "$root/$config" || true)" -eq 0
 done
-printf 'PASS package, links, and window rules consistently target Spotifast\n'
+printf 'PASS Spotifast is managed on workspace 2 in both window managers\n'
+
+for path in scripts/spotifast-toggle.sh scripts/spotifast-toggle.swift scripts/spotifast-aerospace-follow.sh tests/test-spotifast-toggle-live.sh; do
+  check test ! -e "$root/$path"
+done
+for config in config/aerospace/aerospace.toml config/rift/config.toml steps/terminal.yml; do
+  check test "$(grep -Ec 'spotifast-(toggle|aerospace-follow)' "$root/$config" || true)" -eq 0
+done
+printf 'PASS retired hide/show and workspace-follow helpers have no scripts, links, or hooks\n'

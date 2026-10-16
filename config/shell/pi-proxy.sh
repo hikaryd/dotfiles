@@ -7,7 +7,7 @@ alias pi-proxy='dots-tools proxy pi'
 
 _pi_proxy_ensure() {
   local client="${1:-pi}"
-  # Контроллер проверяет реальный выход, выбирает быстрейший и кеширует выбор.
+  # Перепроверяем прошлый выход; без него ищем первый рабочий, не полный рейтинг.
   # Не трогаем stdin: там может быть prompt для pi -p или входные данные jg.
   if ! command dots-tools proxy pi --ensure </dev/null >&2; then
     echo "$client: нет проверенного прокси вне РФ (диагностика: pi-proxy --auto)" >&2

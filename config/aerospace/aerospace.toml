@@ -4,7 +4,6 @@
 start-at-login = false
 enable-normalization-flatten-containers = true
 enable-normalization-opposite-orientation-for-nested-containers = true
-exec-on-workspace-change = ['/bin/bash', '-c', 'exec "$HOME/.local/bin/spotifast-aerospace-follow"']
 
 # Rift: focus_follows_mouse=true, mouse_follows_focus=false.
 # AeroSpace не поддерживает focus-follows-mouse, поэтому курсор при смене
@@ -81,7 +80,6 @@ alt-shift-minus = 'resize smart -50'
 alt-space = 'layout floating tiling'   # Alt+Space
 cmd-shift-f = 'layout floating tiling' # Meta+Shift+F
 alt-f = 'fullscreen'                   # Alt+F
-alt-shift-space = 'exec-and-forget exec "$HOME/.local/bin/spotifast-toggle"'
 
 # Rift-команды serialize/save_and_exit не имеют прямых аналогов в AeroSpace.
 
@@ -113,10 +111,6 @@ run = ['layout floating', 'move-node-to-workspace 1']
 # --- Floating: системные/служебные (rift: floating без workspace) ---
 [[on-window-detected]]
 if.app-id = 'com.1password.1password'
-run = 'layout floating'
-
-[[on-window-detected]]
-if.app-id = 'rocks.spotifast.Spotifast'
 run = 'layout floating'
 
 [[on-window-detected]]
@@ -170,7 +164,11 @@ run = 'move-node-to-workspace 1'
 if.app-id = 'org.chromium.Thorium'
 run = 'move-node-to-workspace 1'
 
-# --- "2": Misc / VPN GUI ---
+# --- "2": Misc / VPN GUI / музыка ---
+[[on-window-detected]]
+if.app-id = 'rocks.spotifast.Spotifast'
+run = 'move-node-to-workspace 2'
+
 [[on-window-detected]]
 if.app-name-regex-substring = 'V2BOX'
 run = 'move-node-to-workspace 2'

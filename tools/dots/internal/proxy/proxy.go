@@ -24,12 +24,13 @@ const noProxy = "127.0.0.1,localhost,::1,*.local,nebula-staging.x5.ru"
 var proxyKeys = []string{"HTTP_PROXY", "HTTPS_PROXY", "ALL_PROXY", "http_proxy", "https_proxy", "all_proxy", "WS_PROXY", "WSS_PROXY", "ws_proxy", "wss_proxy", "NO_PROXY", "no_proxy"}
 
 type controller struct {
-	home, dir   string
-	port        int
-	in          *bufio.Reader
-	rawIn       io.Reader
-	ctx         context.Context
-	out, errOut io.Writer
+	home, dir                string
+	countryTarget, apiTarget string
+	port                     int
+	in                       *bufio.Reader
+	rawIn                    io.Reader
+	ctx                      context.Context
+	out, errOut              io.Writer
 }
 
 // Run dispatches pi followed by its original flags.

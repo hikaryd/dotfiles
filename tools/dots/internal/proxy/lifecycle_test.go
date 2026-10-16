@@ -28,6 +28,10 @@ func TestMain(m *testing.M) {
 				fmt.Fprintln(os.Stderr, "fixture-password-do-not-log")
 				os.Exit(23)
 			}
+			if os.Getenv("DOTS_PROXY_TEST_ROUTES") == "1" {
+				serveFixtureRoute(fixture)
+				os.Exit(0)
+			}
 			if len(os.Args) > 3 && strings.Contains(os.Args[3], ".probe-") {
 				data, _ := os.ReadFile(os.Args[3])
 				var cfg struct{ Inbounds []struct{ Port int } }

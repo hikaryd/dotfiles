@@ -101,9 +101,20 @@ func measureRoute(ctx context.Context, proxy, countryTarget, apiTarget string, s
 	return result, nil
 }
 
-func (c *controller) probeServer(ctx context.Context, server object) (measurement, error) {
+func (c *controller) measureRoute(ctx context.Context, proxy string, samples int) (measurement, error) {
+	country, api := c.countryTarget, c.apiTarget
+	if country == "" {
+		country = countryURL
+	}
+	if api == "" {
+		api = openAIURL
+	}
+	return measureRoute(ctx, proxy, country, api, samples)
+}
+
+func (c *controller) probeServer(ctx context.Context, server object, samples int) (measurement, error) {
 	return c.withProbe(ctx, server, func(ctx context.Context, proxy string) (measurement, error) {
-		return measureRoute(ctx, proxy, countryURL, openAIURL, 3)
+		return c.measureRoute(ctx, proxy, samples)
 	})
 }
 
