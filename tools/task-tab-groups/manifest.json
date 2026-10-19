@@ -1,13 +1,15 @@
 {
   "manifest_version": 3,
   "name": "Задачи · Группы вкладок",
-  "version": "0.1.2",
-  "description": "ATS-номер и название задачи для групп Kaiten + GitLab. Только в выбранном окне.",
+  "version": "0.2.0",
+  "description": "Группы задач и единый обзор Kaiten, MR и CI. Только в выбранном окне.",
   "permissions": [
     "tabs",
     "tabGroups",
     "storage"
   ],
+  "optional_permissions": ["scripting"],
+  "optional_host_permissions": ["https://kaiten.x5.ru/*", "https://scm.x5.ru/*"],
   "background": {
     "service_worker": "background.js",
     "type": "module"
@@ -17,6 +19,9 @@
     "default_popup": "popup.html"
   },
   "commands": {
+    "open-overview": {
+      "description": "Открыть обзор задач, MR и CI"
+    },
     "refresh-groups": {
       "description": "Обновить названия групп в выбранном окне"
     }

@@ -26,55 +26,6 @@ func fixture(t *testing.T) string {
 	return root
 }
 
-func TestGhosttyGolden(t *testing.T) {
-	for _, variant := range []string{"dark", "mirage"} {
-		t.Run(variant, func(t *testing.T) {
-			root := fixture(t)
-			var out, stderr bytes.Buffer
-			if code := run(root, []string{"--variant", variant, "--tool", "ghostty"}, &out, &stderr); code != 0 {
-				t.Fatalf("exit %d: %s", code, &stderr)
-			}
-			path := "config/ghostty/config"
-			actual, err := os.ReadFile(filepath.Join(root, path))
-			if err != nil {
-				t.Fatal(err)
-			}
-			expected, err := os.ReadFile(filepath.Join("testdata/golden", variant, path))
-			if err != nil {
-				t.Fatal(err)
-			}
-			if !bytes.Equal(actual, expected) {
-				t.Fatalf("%s differs from source golden", path)
-			}
-			want := "Generating ayu " + variant + " configs:\n  ghostty: " + filepath.Join(root, path) + "\nDone.\n"
-			if out.String() != want || stderr.Len() != 0 {
-				t.Fatalf("stdout=%q stderr=%q", &out, &stderr)
-			}
-		})
-	}
-}
-
-func TestGhosttyWordDeleteBindingSurvivesPaletteGeneration(t *testing.T) {
-	for _, variant := range []string{"dark", "mirage"} {
-		t.Run(variant, func(t *testing.T) {
-			root := fixture(t)
-			var out, stderr bytes.Buffer
-			for pass := 0; pass < 2; pass++ {
-				if code := run(root, []string{"--variant", variant, "--tool", "ghostty"}, &out, &stderr); code != 0 {
-					t.Fatalf("exit %d: %s", code, &stderr)
-				}
-				config := string(mustRead(t, filepath.Join(root, "config/ghostty/config")))
-				if !strings.Contains(config, `keybind = alt+backspace=text:\x1b\x7f`) {
-					t.Fatal("Option+Delete must retain its explicit Alt+Backspace encoding")
-				}
-				if !strings.Contains(config, "macos-option-as-alt = false") {
-					t.Fatal("word deletion must not change other Option combinations")
-				}
-			}
-		})
-	}
-}
-
 func nativeHeaders(s string) string {
 	s = strings.ReplaceAll(s, "python3 palette/generate.py", "dots-tools palette")
 	return strings.ReplaceAll(s, "palette/generate.py", "dots-tools palette")

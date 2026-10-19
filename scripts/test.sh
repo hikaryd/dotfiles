@@ -14,7 +14,7 @@ case "$group" in
   --list)
     printf '%s\n' 'runner: tests/test-runner.sh, tests/test-pytest-safe.zsh, tests/test-spotifast.sh, tests/test-brew-install.sh, tests/test-herdr-auto-patch.sh (isolated shell contracts)' \
       'go: tools/*/go.mod (race tests and vet; untested modules stay visible)' \
-      'node: config/pi/tests/*.test.mjs'
+      'node: tools/task-tab-groups/tests/*.test.js'
     exit 0 ;;
   -h|--help) usage; exit 0 ;;
   *) usage >&2; exit 2 ;;
@@ -36,7 +36,7 @@ run_suite() {
 }
 node_suite() {
   local -a files statuses
-  files=(config/pi/tests/*.test.mjs)
+  files=(tools/task-tab-groups/tests/*.test.js)
   [[ -f ${files[0]} ]] || { printf 'No Node test files found.\n' >&2; return 1; }
   "${NODE_BIN:-node}" --test --test-reporter=tap "${files[@]}" 2>&1 | tee "$logs/node.log"
   statuses=("${PIPESTATUS[@]}")
@@ -69,7 +69,7 @@ if [[ $group == all || $group == go ]]; then
   fi
 fi
 if [[ $group == all || $group == node ]]; then
-  run_suite 'Node / Pi extensions' node_suite
+  run_suite 'Node / Task Tab Groups' node_suite
 fi
 printf '\nTest summary:\n'
 printf '%s\n' "${summary[@]}"

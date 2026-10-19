@@ -3,7 +3,7 @@
     "openai": {
       "modelOverrides": {
         "gpt-6.1-sol": {
-          "contextWindow": 400000
+          "contextWindow": 200000
         }
       }
     }

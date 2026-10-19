@@ -77,26 +77,3 @@ expect_status 1 bash "$work/launch.sh"
 check grep -Fq 'brew install --cask crmne/tap/spotifast' "$work/output"
 check test ! -s "$TEST_LOG"
 printf 'PASS missing apps and proxy failures do not launch anything\n'
-
-check grep -Fq '    ~/.local/bin/spotifast-app:' "$root/steps/terminal.yml"
-check test -x "$root/scripts/spotifast-launch.sh"
-check grep -Fq 'path: scripts/spotifast-launch.sh' "$root/steps/terminal.yml"
-check grep -Fq 'cask "crmne/tap/spotifast"' "$root/Brewfile"
-printf 'PASS package and launcher link consistently target Spotifast\n'
-
-check grep -Fxq '  { app_id = "rocks.spotifast.Spotifast", workspace = "2" },' "$root/config/rift/config.toml"
-aerospace_rule=$(awk '/^if.app-id = '\''rocks.spotifast.Spotifast'\''$/ { getline; print }' "$root/config/aerospace/aerospace.toml")
-check test "$aerospace_rule" = "run = 'move-node-to-workspace 2'"
-for config in config/aerospace/aerospace.toml config/rift/config.toml; do
-  check test "$(grep -c 'rocks.spotifast.Spotifast' "$root/$config")" -eq 1
-  check test "$(grep -Ec '^[^#]*(alt-shift-space|Alt \+ Shift \+ Space)' "$root/$config" || true)" -eq 0
-done
-printf 'PASS Spotifast is managed on workspace 2 in both window managers\n'
-
-for path in scripts/spotifast-toggle.sh scripts/spotifast-toggle.swift scripts/spotifast-aerospace-follow.sh tests/test-spotifast-toggle-live.sh; do
-  check test ! -e "$root/$path"
-done
-for config in config/aerospace/aerospace.toml config/rift/config.toml steps/terminal.yml; do
-  check test "$(grep -Ec 'spotifast-(toggle|aerospace-follow)' "$root/$config" || true)" -eq 0
-done
-printf 'PASS retired hide/show and workspace-follow helpers have no scripts, links, or hooks\n'

@@ -33,7 +33,7 @@ func fixturePi(t *testing.T) (string, string) {
 	t.Setenv("HOME", base)
 	t.Setenv("PI_CODING_AGENT_DIR", agent)
 	put(t, filepath.Join(root, "config/pi/settings.json"), `{"theme":"ayu","defaultProvider":"openai","defaultModel":"gpt-6.1-sol","modelThinkingLevels":{"openai/gpt-6.1-sol":"xhigh"},"httpProxy":"http://127.0.0.1:10810","terminal":{"showTerminalProgress":true},"hideThinkingBlock":true,"enableInstallTelemetry":false,"defaultProjectTrust":"always"}`)
-	put(t, filepath.Join(root, "config/pi/models.json"), `{"providers":{"openai":{"modelOverrides":{"gpt-6.1-sol":{"contextWindow":400000}}}}}`)
+	put(t, filepath.Join(root, "config/pi/models.json"), `{"providers":{"openai":{"modelOverrides":{"gpt-6.1-sol":{"contextWindow":200000}}}}}`)
 	put(t, filepath.Join(root, "config/pi/mcp.json"), `{"mcpServers":{"excalidraw":{"type":"http","url":"https://mcp.excalidraw.com/mcp","timeout":60,"exposure":"codemode"},"peekaboo":{"command":"/opt/homebrew/bin/peekaboo","args":["mcp","--allow-foreground"],"exposure":"codemode","toolExposure":{"agent":"hidden","analyze":"hidden","browser":"hidden"}}}}`)
 	for _, r := range []string{"themes/ayu.json", "extensions/ayu-bar/index.ts", "extensions/task-titles/index.ts"} {
 		put(t, filepath.Join(root, "config/pi", r), "resource")
@@ -63,7 +63,7 @@ func TestPiPreservesLocalData(t *testing.T) {
 		t.Fatal(settings)
 	}
 	models := get(t, filepath.Join(agent, "models.json"))
-	for _, s := range []string{"400000", "16384", "123456", "X-Test", "localhost"} {
+	for _, s := range []string{"200000", "16384", "123456", "X-Test", "localhost"} {
 		if !strings.Contains(models, s) {
 			t.Fatal(models)
 		}

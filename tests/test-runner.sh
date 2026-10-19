@@ -8,11 +8,11 @@ trap 'rm -rf "$work"' EXIT
 # all real modules gain tests or standalone helpers are merged into dots-tools.
 mkdir -p "$work/bin" "$work/repo/scripts" "$work/repo/tools/dots" \
   "$work/repo/tools/herdr-last-workspace" "$work/repo/tools/untested" \
-  "$work/repo/config/pi/tests"
+  "$work/repo/tools/task-tab-groups/tests"
 cp "$root/scripts/test.sh" "$work/repo/scripts/test.sh"
 touch "$work/repo/tools/dots/go.mod" "$work/repo/tools/dots/main_test.go" \
   "$work/repo/tools/herdr-last-workspace/go.mod" "$work/repo/tools/herdr-last-workspace/main_test.go" \
-  "$work/repo/tools/untested/go.mod" "$work/repo/config/pi/tests/fixture.test.mjs"
+  "$work/repo/tools/untested/go.mod" "$work/repo/tools/task-tab-groups/tests/fixture.test.js"
 runner="$work/repo/scripts/test.sh"
 cat > "$work/bin/node" <<'SH'
 #!/bin/sh

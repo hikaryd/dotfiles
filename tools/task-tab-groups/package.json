@@ -1,10 +1,10 @@
 {
   "name": "task-tab-groups",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "scripts": {
     "test": "node --test tests/*.test.js",
-    "check": "node --check background.js && node --check controller.js && node --check naming.js && node --check popup.js"
+    "check": "node --check background.js && node --check controller.js && node --check naming.js && node --check popup.js && node --check overview-model.js && node --check status-reader.js && node --check overview-controller.js && node --check overview.js"
   }
 }

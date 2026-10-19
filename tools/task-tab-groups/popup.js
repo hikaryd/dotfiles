@@ -54,4 +54,11 @@ function render(view) {
 $("select").addEventListener("click", () => send({ type: "select", windowId: Number($("window").value) }));
 $("refresh").addEventListener("click", () => send({ type: "refresh" }));
 $("auto").addEventListener("change", () => send({ type: "auto", enabled: $("auto").checked }));
+$("overview").addEventListener("click", async () => {
+  try {
+    const response = await chrome.runtime.sendMessage({ type: "overview-open" });
+    if (!response?.ok) throw new Error(response?.error || "Не удалось открыть обзор.");
+    window.close();
+  } catch (error) { $("status").textContent = error.message; $("status").className = "error"; }
+});
 send({ type: "view" });

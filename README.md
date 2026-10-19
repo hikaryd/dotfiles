@@ -185,7 +185,8 @@ dots-tools setup cleanup --apply   # применить план
 
 Уборка не удаляет действующие managed links, приватные настройки, бэкапы,
 релизы и зависимости, не обходит чужие каталоги. `make test-go`,
-`make test-node`, `make test-runner` запускают отдельные группы проверок.
+`make test-node`, `make test-runner` запускают отдельные группы проверок:
+Go-утилиты, браузерные группы задач и изолированные shell-сценарии соответственно.
 
 Дополнительно: [VPN](vpn/README.md) и
 [браузерные группы задач](tools/task-tab-groups/README.md).
