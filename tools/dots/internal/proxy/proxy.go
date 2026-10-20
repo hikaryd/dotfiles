@@ -61,6 +61,14 @@ func run(_ string, args []string, in io.Reader, out, errOut io.Writer) int {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 	c := &controller{ctx: ctx, home: home, dir: filepath.Join(home, ".config", "xray-pi"), port: port, in: bufio.NewReader(in), rawIn: in, out: out, errOut: errOut}
+	// The consumer readiness path must not create/chmod state or acquire locks.
+	if len(args) == 2 && (args[1] == "--require-ready" || args[1] == "--ensure") {
+		if err := c.requireReady(); err != nil {
+			fmt.Fprintln(errOut, err)
+			return 1
+		}
+		return 0
+	}
 	if err = c.harden(); err != nil {
 		fmt.Fprintln(errOut, "pi-proxy: could not secure configuration")
 		return 1
@@ -163,7 +171,7 @@ func (c *controller) dispatch(args []string) (int, error) {
 			break // All following words belong to Pi.
 		}
 		switch arg {
-		case "--help", "-h", "--set-vless", "--set-sub", "--update", "--allow-insecure-sub", "--stop", "--status", "--print-env", "--list", "--auto", "--ensure":
+		case "--help", "-h", "--set-vless", "--set-sub", "--update", "--allow-insecure-sub", "--stop", "--status", "--print-env", "--list", "--auto", "--ensure", "--daemon", "--require-ready", "--install-service", "--uninstall-service":
 		default:
 			return 2, errors.New("unsupported proxy option; see pi-proxy --help")
 		}
@@ -197,11 +205,22 @@ func (c *controller) dispatch(args []string) (int, error) {
 	case has("--update"):
 		_, err := c.updateServers(has("--allow-insecure-sub") || truthy(os.Getenv("PI_PROXY_ALLOW_INSECURE_SUB")))
 		return 0, err
+	case has("--daemon"):
+		return 0, c.daemon()
+	case has("--require-ready"):
+		return 0, c.requireReady()
+	case has("--install-service"):
+		return 0, c.installService()
+	case has("--uninstall-service"):
+		return 0, c.uninstallService()
 	case has("--auto"):
 		return 0, c.autoStart(true)
 	case has("--ensure"):
-		return 0, c.autoStart(false)
+		return 0, c.requireReady()
 	case has("--stop"):
+		if err := c.uninstallService(); err != nil {
+			return 1, err
+		}
 		return 0, c.stop()
 	case has("--status"):
 		return 0, c.status()
@@ -220,7 +239,7 @@ func (c *controller) dispatch(args []string) (int, error) {
 				if len(rest) > 0 && rest[0] == "--" {
 					rest = rest[1:]
 				}
-				if err := c.autoStart(false); err != nil {
+				if err := c.requireReady(); err != nil {
 					return 1, err
 				}
 				return c.runCLI(rest)

@@ -9,13 +9,13 @@ import (
 )
 
 func TestRunDoesNotInterpretPiFlagsAsProxyOptions(t *testing.T) {
-	for _, flag := range []string{"--help", "--status", "--stop", "--auto", "--ensure"} {
+	for _, flag := range []string{"--help", "--status", "--stop", "--auto", "--ensure", "--daemon", "--install-service", "--uninstall-service", "--require-ready"} {
 		t.Run(flag, func(t *testing.T) {
 			t.Setenv("HOME", t.TempDir())
 			t.Setenv("PATH", t.TempDir())
 			var out, diagnostic bytes.Buffer
 			code := run("", []string{"pi", "--run", flag}, strings.NewReader("prompt stdin"), &out, &diagnostic)
-			if code != 1 || !strings.Contains(diagnostic.String(), "No proxy servers configured") {
+			if code != 1 || !strings.Contains(diagnostic.String(), "Proxy is not ready") {
 				t.Fatalf("Pi flag interpreted as a controller option: %d %s %s", code, &out, &diagnostic)
 			}
 		})

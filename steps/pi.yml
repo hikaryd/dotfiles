@@ -4,6 +4,6 @@
       stdout: true
       stderr: true
     - command: build/bin/dots-tools setup pi-apply
-      description: Apply personal Pi settings, desktop MCP, Ayu theme, status bar, Herdr titles and model overrides
+      description: Apply Pi settings, desktop MCP, Lens, free web search, Powerline, Ayu theme, Herdr titles and model overrides
       stdout: true
       stderr: true

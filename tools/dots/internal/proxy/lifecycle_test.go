@@ -23,6 +23,9 @@ func TestMain(m *testing.M) {
 	}
 	if fixture := os.Getenv("DOTS_PROXY_TEST_FIXTURE"); fixture != "" {
 		switch filepath.Base(os.Args[0]) {
+		case "launchctl":
+			fakeLaunchctl(fixture)
+			os.Exit(0)
 		case "xray":
 			if os.Getenv("DOTS_PROXY_TEST_XRAY_FAIL") == "1" {
 				fmt.Fprintln(os.Stderr, "fixture-password-do-not-log")
@@ -93,6 +96,10 @@ func TestMain(m *testing.M) {
 }
 func fakeCommands(t *testing.T) string {
 	t.Helper()
+	lsof, err := exec.LookPath("lsof")
+	if err != nil {
+		t.Skip("socket-ownership fixtures require lsof")
+	}
 	fixture := t.TempDir()
 	bin := filepath.Join(fixture, "fake commands")
 	if err := os.MkdirAll(bin, 0700); err != nil {
@@ -102,10 +109,14 @@ func fakeCommands(t *testing.T) string {
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, name := range []string{"xray", "ps", "pi"} {
+	for _, name := range []string{"xray", "ps", "pi", "launchctl"} {
 		if err := os.Symlink(exe, filepath.Join(bin, name)); err != nil {
 			t.Fatal(err)
 		}
+	}
+	// Socket ownership is checked against real fixture sockets, not mocked PIDs.
+	if err := os.Symlink(lsof, filepath.Join(bin, "lsof")); err != nil {
+		t.Fatal(err)
 	}
 	t.Setenv("PATH", bin)
 	t.Setenv("DOTS_PROXY_TEST_FIXTURE", fixture)

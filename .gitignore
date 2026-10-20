@@ -48,3 +48,6 @@ config/git/private.inc
 
 # Compiled native runtime aliases and cross-builds.
 /build/
+/docs/superpowers
+/node_modules
+/package.json

@@ -172,3 +172,6 @@ if [[ -o interactive && -t 0 && -t 1 ]]; then
   [[ -f /opt/homebrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ]] && \
     source /opt/homebrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
 fi
+
+# opencode
+export PATH=/Users/tronin.egor/.opencode/bin:$PATH

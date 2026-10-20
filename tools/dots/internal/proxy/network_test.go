@@ -117,6 +117,31 @@ func TestSubscriptionHTTPFailurePreservesCache(t *testing.T) {
 		t.Fatal("failed subscription destroyed cache")
 	}
 }
+func TestStatusDoesNotProbeBrowserChallenges(t *testing.T) {
+	c := testController(t)
+	var mu sync.Mutex
+	var destinations []string
+	proxy := fixtureServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		mu.Lock()
+		destinations = append(destinations, r.Host)
+		mu.Unlock()
+		// A browser challenge must not cause status to try other web endpoints.
+		w.WriteHeader(http.StatusForbidden)
+	}))
+	u, _ := url.Parse(proxy.URL)
+	c.port, _ = strconv.Atoi(u.Port())
+	if err := c.status(); err != nil {
+		t.Fatal(err)
+	}
+	mu.Lock()
+	defer mu.Unlock()
+	if len(destinations) != 1 || destinations[0] != "api.openai.com:443" {
+		t.Fatalf("status must check only the API, got %v", destinations)
+	}
+	if !strings.Contains(c.out.(*bytes.Buffer).String(), "Proxy check FAIL: https://api.openai.com/v1/models") {
+		t.Fatal("API failure was not reported")
+	}
+}
 func TestProxyCheckForwardingAndHTTPStatuses(t *testing.T) {
 	c := testController(t)
 	var mu sync.Mutex

@@ -15,6 +15,7 @@ import (
 )
 
 type selection struct {
+	PID     int       `json:"pid,omitempty"`
 	Version int       `json:"version"`
 	Servers string    `json:"servers"`
 	Server  string    `json:"server"`
@@ -167,6 +168,9 @@ func (c *controller) matchesRunning(server object) bool {
 }
 
 func (c *controller) activate(server object) error {
+	if err := c.noForeignListener(); err != nil {
+		return err
+	}
 	if c.matchesRunning(server) {
 		return nil
 	}
@@ -219,6 +223,11 @@ func (c *controller) autoStart(force bool) error {
 						return c.saveSelection(keys, i, m)
 					}
 				}
+				if m.Country == "RU" && c.matchesRunning(servers[i]) {
+					if err := c.rejectRU(); err != nil {
+						return err
+					}
+				}
 			}
 		}
 	}
@@ -267,19 +276,24 @@ func (c *controller) autoStart(force bool) error {
 		// Validate the real listener too, not just the isolated benchmark tunnel.
 		live, err := c.measureRoute(ctx, c.proxyURL(), 1)
 		if err != nil || !c.matchesRunning(servers[best.index]) {
+			if live.Country == "RU" && c.matchesRunning(servers[best.index]) {
+				if err := c.rejectRU(); err != nil {
+					return err
+				}
+			}
 			fmt.Fprintln(c.out, "Candidate failed its final exit/OpenAI check; trying the next verified route.")
 			continue
 		}
 		if err := c.saveSelection(keys, best.index, live); err != nil {
 			return err
 		}
-		fmt.Fprintf(c.out, "Selected: %s, exit %s, %d ms (rechecked on each launch).\n", name, live.Country, live.Latency.Milliseconds())
+		fmt.Fprintf(c.out, "Selected: %s, exit %s, %d ms (verified on the live listener).\n", name, live.Country, live.Latency.Milliseconds())
 		return nil
 	}
 	if ctx.Err() != nil {
 		return ctx.Err()
 	}
-	return errors.New("No verified non-RU route can reach OpenAI. Pi was not started; direct/RU fallback is disabled.")
+	return errors.New("No verified non-RU route can reach OpenAI; direct/RU fallback is disabled.")
 }
 
 func (c *controller) reportProbe(server object, result probeResult) {
@@ -292,7 +306,14 @@ func (c *controller) reportProbe(server object, result probeResult) {
 }
 
 func (c *controller) saveSelection(keys []string, index int, m measurement) error {
-	cached := selection{Version: 1, Servers: digest(keys), Server: keys[index], Checked: time.Now(), measurement: m}
+	pid, key, err := c.liveRoute()
+	if err != nil || index < 0 || index >= len(keys) || key != keys[index] || !allowedCountry(m.Country) || m.Latency <= 0 {
+		return errors.New("Could not certify the live proxy selection.")
+	}
+	if err := c.listenerOwned(pid); err != nil {
+		return errors.New("Could not certify proxy listener ownership.")
+	}
+	cached := selection{PID: pid, Version: 1, Servers: digest(keys), Server: keys[index], Checked: time.Now(), measurement: m}
 	if err := writeJSON(c.path("selection.json"), cached); err != nil {
 		return errors.New("Could not save proxy selection cache.")
 	}

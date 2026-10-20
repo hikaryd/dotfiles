@@ -1,6 +1,7 @@
 package proxy
 
 import (
+	"bufio"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -46,6 +47,32 @@ func serveFixtureRoute(fixture string) {
 		}
 		fmt.Fprintf(f, "%s %t %s\n", address, probe, r.URL.Path)
 		f.Close()
+		if r.URL.Path == "/stream" {
+			conn, rw, err := w.(http.Hijacker).Hijack()
+			if err != nil {
+				return
+			}
+			defer conn.Close()
+			fmt.Fprint(rw, "HTTP/1.1 200 OK\r\n\r\n")
+			rw.Flush()
+			scanner := bufio.NewScanner(rw)
+			for scanner.Scan() {
+				fmt.Fprintln(rw, scanner.Text())
+				rw.Flush()
+			}
+			return
+		}
+		if !probe {
+			health, _ := os.ReadFile(filepath.Join(fixture, "health"))
+			switch string(health) {
+			case "fail":
+				w.WriteHeader(http.StatusServiceUnavailable)
+				return
+			case "RU":
+				fmt.Fprintln(w, "loc=RU")
+				return
+			}
+		}
 		if strings.HasPrefix(address, "slow-") {
 			<-r.Context().Done()
 			return

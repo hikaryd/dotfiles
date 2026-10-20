@@ -32,10 +32,14 @@ func fixturePi(t *testing.T) (string, string) {
 	agent := filepath.Join(base, "agent")
 	t.Setenv("HOME", base)
 	t.Setenv("PI_CODING_AGENT_DIR", agent)
+	t.Setenv("PI_LENS_HOME", "")
+	t.Setenv("PI_LENS_CONFIG_PATH", "")
+	put(t, filepath.Join(root, "config/pi/web-search.json"), `{"proxy":"http://127.0.0.1:10810","webSearch":{"allowedProviders":["exa","duckduckgo"]}}`)
+	put(t, filepath.Join(root, "config/pi/lens.json"), `{"autofix":{"enabled":false}}`)
 	put(t, filepath.Join(root, "config/pi/settings.json"), `{"theme":"ayu","defaultProvider":"openai","defaultModel":"gpt-6.1-sol","modelThinkingLevels":{"openai/gpt-6.1-sol":"xhigh"},"httpProxy":"http://127.0.0.1:10810","terminal":{"showTerminalProgress":true},"hideThinkingBlock":true,"enableInstallTelemetry":false,"defaultProjectTrust":"always"}`)
 	put(t, filepath.Join(root, "config/pi/models.json"), `{"providers":{"openai":{"modelOverrides":{"gpt-6.1-sol":{"contextWindow":200000}}}}}`)
 	put(t, filepath.Join(root, "config/pi/mcp.json"), `{"mcpServers":{"excalidraw":{"type":"http","url":"https://mcp.excalidraw.com/mcp","timeout":60,"exposure":"codemode"},"peekaboo":{"command":"/opt/homebrew/bin/peekaboo","args":["mcp","--allow-foreground"],"exposure":"codemode","toolExposure":{"agent":"hidden","analyze":"hidden","browser":"hidden"}}}}`)
-	for _, r := range []string{"themes/ayu.json", "extensions/ayu-bar/index.ts", "extensions/task-titles/index.ts"} {
+	for _, r := range []string{"themes/ayu.json", "extensions/ayu-bar/index.ts", "extensions/task-titles/index.ts", "extensions/powerline-footer/theme.json"} {
 		put(t, filepath.Join(root, "config/pi", r), "resource")
 	}
 	return root, agent
@@ -188,7 +192,7 @@ func TestPiResourceBackupsOutsideDiscovery(t *testing.T) {
 		}
 	}
 	entries, e := os.ReadDir(filepath.Join(agent, "extensions"))
-	if e != nil || len(entries) != 2 {
+	if e != nil || len(entries) != 3 {
 		t.Fatal(entries, e)
 	}
 }

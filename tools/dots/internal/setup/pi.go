@@ -9,9 +9,17 @@ import (
 
 func piApply(root string) error {
 	agent := absolute(envDefault([]string{"PI_CODING_AGENT_DIR"}, "~/.pi/agent"))
+	lensHome := absolute(envDefault([]string{"PI_LENS_HOME"}, "~/.pi-lens"))
+	lensConfig := absolute(envDefault([]string{"PI_LENS_CONFIG_PATH"}, filepath.Join(lensHome, "config.json")))
 	var changes []change
-	for _, name := range []string{"settings.json", "models.json", "mcp.json"} {
-		p := filepath.Join(agent, name)
+	for _, config := range [][2]string{
+		{"settings.json", filepath.Join(agent, "settings.json")},
+		{"models.json", filepath.Join(agent, "models.json")},
+		{"mcp.json", filepath.Join(agent, "mcp.json")},
+		{"web-search.json", filepath.Join(agent, "web-search.json")},
+		{"lens.json", lensConfig},
+	} {
+		name, p := config[0], config[1]
 		original, e := readOptional(p)
 		if e != nil {
 			return e
@@ -35,6 +43,37 @@ func piApply(root string) error {
 		// Supply the managed local proxy by default; keep explicit personal proxies.
 		if name == "settings.json" && current["httpProxy"] != nil && current["httpProxy"] != "http://127.0.0.1:10810" {
 			merged["httpProxy"] = current["httpProxy"]
+		}
+		if name == "web-search.json" && current["proxy"] != nil && current["proxy"] != "http://127.0.0.1:10810" {
+			merged["proxy"] = current["proxy"]
+		}
+		if name == "settings.json" {
+			// Add managed references without dropping personal packages/extensions
+			// or replacing package objects carrying local resource filters.
+			for _, key := range []string{"packages", "extensions"} {
+				managed, ok := template[key].([]any)
+				if !ok {
+					continue
+				}
+				local, _ := current[key].([]any)
+				entries := append([]any{}, local...)
+				for _, wanted := range managed {
+					found := false
+					for _, entry := range entries {
+						if pkg, ok := entry.(map[string]any); ok && key == "packages" {
+							entry = pkg["source"]
+						}
+						if reflect.DeepEqual(entry, wanted) {
+							found = true
+							break
+						}
+					}
+					if !found {
+						entries = append(entries, wanted)
+					}
+				}
+				merged[key] = entries
+			}
 		}
 		if name == "mcp.json" {
 			servers := map[string]any{}
@@ -62,7 +101,12 @@ func piApply(root string) error {
 		c := change{path: target, data: updated, backup: target + ".bak-" + stamp(), expect: true, expected: original}
 		changes = append(changes, c)
 	}
-	for _, r := range [][2]string{{"themes/ayu.json", "themes/ayu.json"}, {"extensions/dots-ayu-bar", "extensions/ayu-bar"}, {"extensions/dots-task-titles", "extensions/task-titles"}} {
+	for _, r := range [][2]string{
+		{"themes/ayu.json", "themes/ayu.json"},
+		{"extensions/dots-ayu-bar", "extensions/ayu-bar"},
+		{"extensions/dots-task-titles", "extensions/task-titles"},
+		{"extensions/powerline-footer/theme.json", "extensions/powerline-footer/theme.json"},
+	} {
 		source := absolute(filepath.Join(root, "config/pi", r[1]))
 		if _, e := os.Stat(source); e != nil {
 			return fmt.Errorf("missing Pi resource: %s", r[1])
@@ -78,6 +122,6 @@ func piApply(root string) error {
 	if e := commit(changes); e != nil {
 		return e
 	}
-	fmt.Printf("Pi: personal settings, MCP servers, Ayu theme, status bar, Herdr titles and model overrides installed in %s\n", agent)
+	fmt.Printf("Pi: personal settings, MCP servers, Lens, free web search, Powerline, Ayu theme, Herdr titles and model overrides installed in %s\n", agent)
 	return nil
 }

@@ -1,16 +1,16 @@
 # shellcheck shell=bash
 # Общий модуль bash/zsh: Pi, jg и Spotifast через VLESS-прокси вне РФ.
 # Прокси задаётся только дочерним процессам; системные настройки не меняются.
-# Управление: pi-proxy --auto | --status | --stop | --update | --list
+# Фоновая служба: pi-proxy --install-service | --status | --uninstall-service | --stop
 
 alias pi-proxy='dots-tools proxy pi'
 
 _pi_proxy_ensure() {
   local client="${1:-pi}"
-  # Перепроверяем прошлый выход; без него ищем первый рабочий, не полный рейтинг.
+  # Только локальная готовность фоновой службы: без сети, запуска и смены xray.
   # Не трогаем stdin: там может быть prompt для pi -p или входные данные jg.
   if ! command dots-tools proxy pi --ensure </dev/null >&2; then
-    echo "$client: нет проверенного прокси вне РФ (диагностика: pi-proxy --auto)" >&2
+    echo "$client: прокси не готов (pi-proxy --install-service; pi-proxy --status)" >&2
     return 1
   fi
   PI_PROXY_URL="http://127.0.0.1:${PI_PROXY_PORT:-10810}"

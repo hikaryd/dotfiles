@@ -101,14 +101,12 @@ func (c *controller) status() error {
 	if err := c.processStatus(); err != nil {
 		return err
 	}
-	for _, u := range []string{"https://api.openai.com/v1/models", "https://auth.openai.com/", "https://chatgpt.com/"} {
-		ok, result := c.checkURL(u)
-		label := "FAIL"
-		if ok {
-			label = "OK"
-		}
-		fmt.Fprintf(c.out, "Proxy check %s: %s -> %s\n", label, u, result)
+	ok, result := c.checkURL(openAIURL)
+	label := "FAIL"
+	if ok {
+		label = "OK"
 	}
+	fmt.Fprintf(c.out, "Proxy check %s: %s -> %s\n", label, openAIURL, result)
 	data, err := os.ReadFile(c.path("config.json"))
 	if errors.Is(err, os.ErrNotExist) {
 		return nil

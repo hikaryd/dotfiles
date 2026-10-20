@@ -1,0 +1,73 @@
+{
+  "proxy": "http://127.0.0.1:10810",
+  "ssrf": { "trustEnvProxy": true },
+  "searchRouting": {
+    "providers": [
+      "exa",
+      "duckduckgo"
+    ],
+    "useCurrentModel": false,
+    "fallbackOn": [
+      "transient",
+      "quota",
+      "network",
+      "invalid-response"
+    ]
+  },
+  "webSearch": {
+    "enabled": true,
+    "allowedProviders": [
+      "exa",
+      "duckduckgo"
+    ]
+  },
+  "fetchRouting": {
+    "providers": [
+      "http",
+      "jina"
+    ],
+    "allowRemoteHostedProviders": true
+  },
+  "fetch": {
+    "timeout": 20,
+    "defaultMode": "readable",
+    "allowedModes": [
+      "readable",
+      "raw"
+    ]
+  },
+  "toolActivation": "auto",
+  "workflow": "none",
+  "allowBrowserCookies": false,
+  "autoOpenBrowser": false,
+  "curatorRemote": false,
+  "commands": {
+    "curator": {
+      "enabled": false
+    }
+  },
+  "pdf": {
+    "enabled": true,
+    "provider": "unpdf",
+    "maxSizeMB": 20,
+    "maxPages": 100
+  },
+  "image": {
+    "enabled": true
+  },
+  "githubClone": {
+    "enabled": true,
+    "maxRepoSizeMB": 100,
+    "cloneTimeoutSeconds": 30
+  },
+  "githubPrIssue": {
+    "enabled": true
+  },
+  "youtube": {
+    "enabled": false
+  },
+  "video": {
+    "enabled": false
+  },
+  "maxInlineContentChars": 20000
+}
