@@ -7,31 +7,39 @@
 <body>
 <main>
   <header>
-    <div><p class="eyebrow">TASK GROUPS / РАБОЧИЙ ОБЗОР</p><h1>Задачи на одном экране<span class="accent">.</span></h1><p class="muted">Карточки, ревью и CI из ваших групп. Без переключения между десятками вкладок.</p></div>
-    <button id="refresh" class="primary">↻ Обновить</button>
+    <h1>Обзор задач</h1>
+    <div id="search-line" class="search-line" hidden><label for="search" class="sr-only">Поиск задач</label><input id="search" type="search" placeholder="Поиск задач, проектов, исполнителей" autocomplete="off"><kbd>/</kbd></div>
+    <button id="refresh">↻ Обновить</button>
   </header>
   <section class="toolbar" aria-label="Настройки обзора">
-    <label for="window">Окно с задачами</label><select id="window"></select><button id="select">Выбрать</button>
-    <label class="auto"><input id="auto" type="checkbox" checked> Обновлять раз в минуту</label>
+    <label for="window" class="sr-only">Источник</label><select id="window" aria-describedby="scope-note"><option value="">Загружаем окна…</option></select>
+    <label class="auto"><input id="auto" type="checkbox" checked> Автообновление</label>
+    <details id="access" class="access" hidden>
+      <summary id="access-title">Доступ к статусам</summary>
+      <div class="access-body"><p id="access-description"></p><button id="enable">Включить статусы</button><button id="disable" hidden>Отключить</button><button id="diagnose">Скопировать диагностику</button><pre id="diagnostics" tabindex="0" hidden></pre></div>
+    </details>
+    <span id="freshness"></span>
   </section>
-  <section id="access" class="access" aria-label="Доступ к статусам">
-    <div><strong id="access-title">Статусы подключаются отдельно</strong><p id="access-description">Только чтение Kaiten и GitLab через ваш вход в открытых вкладках. Без токенов, изменений карточек и отдельного сервера.</p></div>
-    <button id="enable">Включить статусы</button><button id="disable" hidden>Отключить</button>
+  <p id="scope-note" class="sr-only">Выбор окна применяется сразу. Именование и обзор используют одно окно.</p>
+  <p id="error" role="alert" hidden></p>
+  <section id="onboarding" class="onboarding" hidden>
+    <h2>Подключите окно с задачами</h2>
+    <p class="muted">Выберите окно — его группы появятся здесь. Карточки и MR останутся в своих вкладках.</p>
+    <div id="window-choices"></div>
+    <p class="hint">После перезапуска браузера источник нужно выбрать заново.</p>
   </section>
-  <div class="search-line"><label for="search" class="sr-only">Поиск задач</label><input id="search" type="search" placeholder="Поиск по номеру, названию, проекту или исполнителю…" autocomplete="off"><kbd>/</kbd></div>
-  <nav id="filters" aria-label="Фильтры задач">
+  <nav id="filters" aria-label="Фильтры задач" hidden>
     <button data-filter="all" aria-pressed="true">Все</button>
     <button data-filter="attention" aria-pressed="false">Требуют внимания</button>
-    <button data-filter="active" aria-pressed="false">Не завершены</button>
+    <button data-filter="active" aria-pressed="false">В работе</button>
     <button data-filter="done" aria-pressed="false">Готово</button>
-    <button data-filter="unknown" aria-pressed="false">Нет полных данных</button>
+    <button data-filter="unknown" aria-pressed="false">Нет данных</button>
   </nav>
-  <div class="list-meta"><p id="status" role="status">Загружаем группы…</p><span id="freshness"></span></div>
-  <p id="error" role="alert" hidden></p>
-  <div class="column-head" aria-hidden="true"><span>Задача / группа</span><span>Kaiten</span><span>Merge requests / CI</span></div>
-  <section id="groups" aria-label="Задачи"></section>
-  <p id="empty" hidden></p>
-  <footer><span><kbd>↑</kbd> <kbd>↓</kbd> выбор · <kbd>Enter</kbd> открыть карточку · <kbd>/</kbd> поиск</span><span>Только выбранное окно · данные не отправляются третьим сторонам</span></footer>
+  <div id="column-head" class="column-head" aria-hidden="true" hidden><span>Задача</span><span>Kaiten</span><span>Merge requests</span><span>Ревью</span><span>CI</span></div>
+  <section id="groups" aria-label="Задачи" aria-busy="false"></section>
+  <section id="empty" hidden><p id="empty-message"></p><button id="clear-filters" hidden>Сбросить поиск и фильтр</button></section>
+  <div class="list-meta"><p id="status" role="status">Загружаем группы…</p><span id="data-health"></span></div>
+  <footer><span><kbd>↑</kbd> <kbd>↓</kbd> выбор · <kbd>Enter</kbd> открыть · <kbd>/</kbd> поиск</span><span>Только чтение · подробности по ▸</span></footer>
 </main>
 <script type="module" src="overview.js"></script>
 </body>

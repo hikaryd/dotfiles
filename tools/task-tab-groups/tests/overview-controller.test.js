@@ -46,7 +46,12 @@ function fixture() {
   let now = 1_000_000;
   const namer = new GroupNamer(browser);
   const overview = new GroupOverview(browser, namer, () => now);
-  return { browser, namer, overview, groups, tabs, session, granted, calls, mutations, advance: ms => { now += ms; } };
+  const backgroundCalls = [];
+  overview.readInBackground = async resource => {
+    backgroundCalls.push(resource);
+    return { data: resource.kind === "kaiten" ? { state: 2, assignees: [] } : { state: "opened", pipeline: "success", reviewers: [] } };
+  };
+  return { browser, namer, overview, groups, tabs, session, granted, calls, backgroundCalls, mutations, advance: ms => { now += ms; } };
 }
 test("overview is selected-window-only, read-only, and keeps browser tab order", async () => {
   const f = fixture();
@@ -55,6 +60,65 @@ test("overview is selected-window-only, read-only, and keeps browser tab order",
   assert.deepEqual(view.groups[0].tabs.map(t => t.id), [100, 101]);
   assert.equal(f.calls.length, 2); assert.deepEqual(f.mutations, []);
   assert.equal(view.groups[0].resources[0].data.state, 2);
+});
+test("MR-only cards read through the worker without creating or waking a tab", async () => {
+  const f = fixture(); f.tabs.shift();
+  const view = await f.overview.snapshot();
+  const card = view.groups[0].resources.find(r => r.kind === "kaiten");
+  assert.equal(card.id, "123"); assert.equal(card.data.state, 2);
+  assert.deepEqual(card.tabIds, []); assert.deepEqual(card.sourceTabIds, [101]);
+  assert.equal(f.calls.length, 1); assert.equal(f.backgroundCalls.length, 1);
+  assert.deepEqual(f.mutations, []);
+});
+test("derived card reads revalidate source identity, window, group and host permission", async () => {
+  for (const reason of ["number", "window", "group", "permission", "closed"]) {
+    const f = fixture(); f.tabs.shift();
+    const get = f.browser.tabs.get;
+    f.browser.tabs.get = async id => {
+      const tab = await get(id);
+      if (id === 101) {
+        if (reason === "closed") throw Error("gone");
+        if (reason === "permission") f.granted.delete(STATUS_ORIGINS[0]);
+        if (reason === "number") tab.title = "ATS-124 other";
+        if (reason === "window") tab.windowId = 2;
+        if (reason === "group") tab.groupId = 20;
+      }
+      return tab;
+    };
+    await f.overview.snapshot();
+    assert.equal(f.backgroundCalls.length, 0, reason); assert.deepEqual(f.mutations, []);
+  }
+});
+test("derived card navigation reuses an existing card in another window without moving it", async () => {
+  const f = fixture(); f.tabs.shift();
+  f.tabs.push({id:201,windowId:2,groupId:20,index:1,url:"https://kaiten.x5.ru/space/1/card/123"});
+  await f.overview.activateResource(10, "https://kaiten.x5.ru/cards/123");
+  assert.deepEqual(f.mutations, [
+    {kind:"group",id:20,patch:{collapsed:false}},
+    {kind:"tab",id:201,patch:{active:true}},
+    {kind:"window",id:2,patch:{focused:true}},
+  ]);
+  assert.equal(f.groups[0].collapsed,true);
+  assert.equal(f.backgroundCalls.length,0);
+});
+test("explicit card click creates and groups just one tab, even on double click", async () => {
+  const f = fixture(); f.tabs.shift();
+  f.browser.tabs.create = async properties => {
+    f.mutations.push({kind:"create",properties});
+    const tab={id:300,groupId:-1,...properties}; f.tabs.push(tab); return {...tab};
+  };
+  f.browser.tabs.group = async ({tabIds,groupId}) => {
+    assert.deepEqual(tabIds,[300]); assert.equal(groupId,10);
+    f.tabs.find(t=>t.id===300).groupId=groupId;
+  };
+  const key="https://kaiten.x5.ru/cards/123";
+  await Promise.all([f.overview.activateResource(10,key), f.overview.activateResource(10,key)]);
+  assert.equal(f.mutations.filter(m=>m.kind==="create").length,1);
+  assert.deepEqual(f.mutations[0].properties,{windowId:1,url:"https://kaiten.x5.ru/space/18571/boards/card/123",active:true});
+  assert.equal(f.tabs.find(t=>t.id===300).groupId,10);
+  await f.overview.activateResource(10,key);
+  assert.equal(f.mutations.filter(m=>m.kind==="create").length,1);
+  await assert.rejects(f.overview.activateResource(10,"https://kaiten.x5.ru/cards/999"));
 });
 test("no chosen window means no site reads and no fallback to another window", async () => {
   const f = fixture(); await f.namer.ready; f.namer.state.windowId = null;
@@ -104,7 +168,35 @@ test("discarded or navigated tabs are not reloaded and cannot supply another res
   f.browser.tabs.get = async id => id === 101 ? { ...(await original(id)), url: "https://scm.x5.ru/team/other/-/merge_requests/42" } : original(id);
   const view = await f.overview.snapshot();
   assert.equal(f.calls.length, 0); assert.deepEqual(f.mutations, []);
-  assert.ok(view.groups[0].resources.every(r => r.error.code === "tab"));
+  assert.equal(view.groups[0].resources[0].data.state, 2);
+  assert.equal(view.groups[0].resources[1].error.code, "tab");
+  assert.equal(f.backgroundCalls.length, 1, "navigated MR must not authorize background fetch");
+});
+test("discarded Kaiten card is read in background without waking or injecting into its tab", async () => {
+  const f = fixture(); f.tabs[0].discarded = true;
+  const fallback = [];
+  f.overview.readInBackground = async resource => { fallback.push(resource); return { data: { state: 2, column: "Разработка" } }; };
+  const view = await f.overview.snapshot();
+  assert.equal(view.groups[0].resources[0].data?.column, "Разработка");
+  assert.equal(fallback.length, 1);
+  assert.equal(fallback[0].id, "99");
+  assert.equal(f.calls.length, 1, "only GitLab should use injection");
+  assert.deepEqual(f.mutations, []);
+});
+test("sleeping tabs cannot bypass revoked permissions or a moved/closed resource", async () => {
+  for (const reason of ["permission", "moved", "closed"]) {
+    const f = fixture(); f.tabs[0].discarded = true;
+    const get = f.browser.tabs.get;
+    f.browser.tabs.get = async id => {
+      if (id !== 100) return get(id);
+      if (reason === "closed") throw Error("gone");
+      if (reason === "permission") f.granted.clear();
+      return { ...await get(id), ...(reason === "moved" ? { windowId: 2 } : {}) };
+    };
+    await f.overview.snapshot();
+    assert.equal(f.backgroundCalls.length, 0, reason);
+    assert.deepEqual(f.mutations, []);
+  }
 });
 test("navigation selects the existing Kaiten tab and expands only the requested group", async () => {
   const f = fixture(); await f.overview.activate(10);
@@ -140,6 +232,88 @@ test("concurrent dashboard readers coalesce and limit in-flight site requests to
   };
   await Promise.all([f.overview.snapshot(), f.overview.snapshot()]);
   assert.equal(maximum, 3); assert.equal(calls, 10);
+});
+test("inventory shows groups without site reads, even while status API calls are blocked", async () => {
+  const f = fixture(); let release; let entered;
+  const started = new Promise(resolve => { entered = resolve; });
+  const gate = new Promise(resolve => { release = resolve; });
+  f.browser.scripting.executeScript = async () => { entered(); await gate; return [{ result: { data: { state: 2 } } }]; };
+  const inventory = await f.overview.snapshot(false, false);
+  assert.equal(inventory.groups.length, 1);
+  assert.ok(inventory.groups[0].resources.every(r => r.error.code === "pending"));
+  assert.equal(f.calls.length, 0);
+  assert.deepEqual(inventory.windows.map(w => w.groupCount), [1, 1]);
+  const loading = f.overview.snapshot(); await started;
+  try {
+    const quick = await f.overview.snapshot(false, false);
+    assert.equal(quick.groups[0].id, 10);
+    assert.deepEqual(f.mutations, []);
+  } finally { release(); }
+  await loading;
+  const cached = await f.overview.snapshot(false, false);
+  assert.equal(cached.groups[0].resources[0].data.state, 2);
+});
+test("a suspended renderer cannot leave every resource pending forever", async t => {
+  const f = fixture();
+  t.mock.timers.enable({ apis: ["setTimeout"] });
+  let entered;
+  const started = new Promise(resolve => { entered = resolve; });
+  f.browser.scripting.executeScript = async () => { entered(); return new Promise(() => {}); };
+  let result;
+  const reading = f.overview.snapshot().then(view => { result = view; });
+  await started;
+  t.mock.timers.tick(20_000);
+  await new Promise(resolve => setImmediate(resolve));
+  assert.ok(result, "an unresponsive tab left the entire overview stuck on Проверяем статус…");
+  await reading;
+  assert.ok(result.groups[0].resources.every(r => r.error.code === "timeout"));
+  assert.equal(f.overview.running, null);
+});
+test("timed-out injections are reused, and late replies cannot silently overwrite cache", async t => {
+  const f = fixture();
+  t.mock.timers.enable({ apis: ["setTimeout"] });
+  let release;
+  const gate = new Promise(resolve => { release = resolve; });
+  let calls = 0;
+  f.browser.scripting.executeScript = async () => { calls++; await gate; return [{ result: { data: { state: 3 } } }]; };
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const reading = f.overview.snapshot();
+    await new Promise(resolve => setImmediate(resolve));
+    t.mock.timers.tick(20_000);
+    const view = await reading;
+    assert.ok(view.groups[0].resources.every(r => r.error.code === "timeout"));
+    f.advance(REFRESH_MS);
+  }
+  assert.equal(calls, 2, "retry must not inject again into a still-paused tab");
+  release(); await new Promise(resolve => setImmediate(resolve));
+  const inventory = await f.overview.snapshot(false, false);
+  assert.ok(inventory.groups[0].resources.every(r => r.error.code === "timeout" && !r.data));
+  const retried = await f.overview.snapshot();
+  assert.ok(retried.groups[0].resources.every(r => r.data.state === 3));
+  assert.equal(calls, 4);
+});
+test("an injection failing after its deadline cannot start a late background request", async t => {
+  const f = fixture();
+  let reject;
+  f.browser.scripting.executeScript = () => new Promise((_, fail) => { reject = fail; });
+  t.mock.timers.enable({ apis: ["setTimeout"] });
+  const resource = { kind: "kaiten", origin: "https://kaiten.x5.ru", key: "https://kaiten.x5.ru/cards/99", id: "99", tabIds: [100] };
+  const result = f.overview.readResource(resource, 1, new Set([10]));
+  await Promise.resolve();
+  t.mock.timers.tick(20_000);
+  assert.equal((await result).error.code, "timeout");
+  reject(Error("renderer finally failed"));
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(f.backgroundCalls.length, 0);
+});
+test("a frozen tab is read through the worker without injecting into a paused renderer", async () => {
+  const f = fixture(); f.tabs[0].frozen = true;
+  const view = await f.overview.snapshot();
+  assert.equal(view.groups[0].resources[0].data.state, 2);
+  assert.equal(f.backgroundCalls.length, 1);
+  assert.equal(view.groups[0].resources[1].data.state, "opened");
+  assert.equal(f.calls.length, 1);
+  assert.deepEqual(f.mutations, []);
 });
 test("changing selected window during a site read cannot publish old results", async () => {
   const f = fixture(); let release; let entered;

@@ -12,8 +12,9 @@ async function schedule(windowId) {
 }
 
 async function dispatch(message) {
-  if (message.type === "overview") return overview.snapshot(message.force === true);
+  if (message.type === "overview") return overview.snapshot(message.force === true, message.readStatuses !== false);
   if (message.type === "overview-open") { await overview.open(); return null; }
+  if (message.type === "overview-activate-resource") { await overview.activateResource(message.groupId, message.resourceKey); return null; }
   if (message.type === "overview-activate") { await overview.activate(message.groupId, message.tabId); return null; }
   return namer.dispatch(message);
 }

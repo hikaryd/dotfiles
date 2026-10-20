@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { resourceForTab, resourcesForTabs, groupCategory, isStale, matchesSearch, STALE_MS } from "../overview-model.js";
+import { resourceForTab, resourcesForTabs, groupCategory, isStale, matchesSearch, STALE_MS, summarizeGroup, statusDiagnostics } from "../overview-model.js";
 
 const card = path => ({ url: "https://kaiten.x5.ru" + path });
 const mr = (project, id = 42) => ({ url: `https://scm.x5.ru/${project}/-/merge_requests/${id}` });
@@ -45,6 +45,64 @@ test("conflicts, blocked cards, failed CI and unresolved discussions draw attent
   for (const data of [{ blocked: true }, { hasConflicts: true }, { pipeline: "failed" }, { discussionsResolved: false }]) assert.equal(groupCategory(group(resource("gitlab", data)), now), "attention");
   assert.equal(groupCategory({ ...group(), state: "conflict" }, now), "attention");
 });
+test("summary separates MR count from CI and exposes conflicts beyond the first MR", () => {
+  const summary = summarizeGroup(group(
+    resource("kaiten", { state: 2, column: "Разработка", assignees: ["Исполнитель"] }),
+    resource("gitlab", { state: "opened", pipeline: "success" }),
+    resource("gitlab", { state: "merged", pipeline: "success" }),
+    resource("gitlab", { state: "opened", draft: true, pipeline: "failed", hasConflicts: true }),
+  ), now);
+  assert.equal(summary.kaiten.label, "Разработка");
+  assert.equal(summary.mr.label, "1 открыт · 1 Draft · 1 Merged");
+  assert.equal(summary.mr.detail, "Конфликты");
+  assert.equal(summary.ci.label, "✕ CI упал · 1");
+  assert.equal(summary.ci.tone, "bad");
+});
+test("a summary never treats missing, old, or failed data as successful CI", () => {
+  const success = resource("gitlab", { state: "merged", pipeline: "success" });
+  assert.equal(summarizeGroup(group(success), now).ci.tone, "good");
+  for (const extra of [{ data: null, error: { code: "timeout" } }, { checkedAt: now - STALE_MS }, { error: { code: "auth" } }]) {
+    const summary = summarizeGroup(group(success, { ...success, ...extra }), now);
+    assert.notEqual(summary.ci.tone, "good");
+  }
+  assert.equal(summarizeGroup(group(resource("gitlab", { state: "merged", pipeline: "none" })), now).ci.label, "Нет pipeline");
+  assert.equal(summarizeGroup(group(resource("gitlab", { state: "merged", pipeline: null })), now).ci.label, "CI неизвестен");
+});
+test("summary distinguishes sleep, denied access, pending and absent resources", () => {
+  for (const [code, label] of [["frozen", "Вкладка спит"], ["auth", "API: 401"], ["schema", "Ошибка формата"], ["pending", "Не проверено"]]) {
+    const summary = summarizeGroup(group(resource("kaiten", null, { error: { code } })), now);
+    assert.equal(summary.kaiten.label, label);
+    assert.equal(summary.mr.label, "—");
+  }
+  const pending = group(resource("kaiten", null, { error: { code: "pending" } }));
+  assert.equal(groupCategory(pending, now), "unknown");
+});
+test("multiple cards cannot hide a block or turn archive into completed green", () => {
+  const done = resource("kaiten", { state: 3 });
+  const summary = summarizeGroup(group(done, resource("kaiten", { state: 2, blocked: true })), now);
+  assert.equal(summary.kaiten.detail, "Заблокирована");
+  assert.equal(summary.kaiten.tone, "bad");
+  assert.equal(summarizeGroup(group(resource("kaiten", { state: 3, archived: true })), now).kaiten.tone, "neutral");
+});
+test("shareable diagnostics contain counts/codes only, deduplicating resources", () => {
+  const r = resource("kaiten", { title: "PRIVATE", assignees: ["PRIVATE"] }, {
+    key: "PRIVATE", id: "PRIVATE", url: "PRIVATE", error: { code: "auth", message: "PRIVATE" },
+  });
+  const report = statusDiagnostics({ groups: [group(r), group(r)] }, "0.2.2", now);
+  assert.deepEqual(report.sources.kaiten, { total: 1, fresh: 0, errors: { auth: 1 } });
+  assert.equal(report.groups, 2);
+  assert.equal(JSON.stringify(report).includes("PRIVATE"), false);
+});
+
+test("diagnostic CI counters distinguish absent, unknown, stale and successful without raw fields", () => {
+  const values = ["success", "none", "skipped", "PRIVATE"];
+  const resources = values.map((pipeline, i) => resource("gitlab", { pipeline, title: "PRIVATE" }, { key: String(i) }));
+  resources.push(resource("gitlab", { pipeline: "success" }, { key: "old", checkedAt: 1 }));
+  const report = statusDiagnostics({ groups: [group(...resources)] }, "0.2.3", now);
+  assert.deepEqual(report.ci, { success: 1, none: 1, skipped: 1, unknown: 1, stale: 1 });
+  assert.equal(JSON.stringify(report).includes("PRIVATE"), false);
+});
+
 test("search combines task, project, API title and responsible person without HTML", () => {
   const g = group(resource("gitlab", { title: "Контракт", assignees: ["Тестовый Автор"] }, { project: "team/docs" }));
   assert.equal(matchesSearch(g, "ATS-123 контракт docs автор"), true);

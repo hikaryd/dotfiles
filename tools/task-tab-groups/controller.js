@@ -108,7 +108,10 @@ export class GroupNamer {
     await this.ready;
     const windows = await this.browser.windows.getAll({ populate: true, windowTypes: ["normal"] });
     const choices = windows.filter(window => !window.tabs?.every(tab => tab.url?.startsWith(this.browser.runtime.getURL(""))))
-      .map(window => ({ id: window.id, count: window.tabs?.length ?? 0, focused: window.focused }));
+      .map(window => ({ id: window.id, count: window.tabs?.length ?? 0, focused: window.focused,
+        groupCount: new Set((window.tabs || []).filter(tab => tab.groupId >= 0).map(tab => tab.groupId)).size,
+        sample: (window.tabs || []).filter(tab => tab.groupId >= 0 && tab.title).slice(0, 3).map(tab => tab.title).join(" · ").slice(0, 180),
+      }));
     return { ...this.state, windows: choices };
   }
 

@@ -11,7 +11,7 @@ function fixture(t, resource, responses) {
   const requests = [];
   t.mock.method(globalThis, "fetch", async (path, options) => {
     requests.push({ path, options });
-    const next = responses.shift();
+    const next = path.endsWith("/approvals") ? { body: { approved: true, approved_by: [] } } : responses.shift();
     if (next instanceof Error) throw next;
     return new Response(typeof next.body === "string" ? next.body : JSON.stringify(next.body), { status: next.status || 200, headers: { "content-type": next.type || "application/json" } });
   });
@@ -23,16 +23,16 @@ test("Kaiten returns only overview fields, with responsible members distinct fro
   assert.equal(data.column, "Разработка"); assert.equal(data.blocked, true);
   assert.deepEqual(data.assignees, ["Исполнитель"]); assert.equal(data.owner, "Автор");
   assert.equal("description" in data, false); assert.equal("secret" in data, false);
-  assert.equal(requests[0].path, "/api/v1/cards/99");
+  assert.equal(requests[0].path, "/api/cards/99");
   assert.equal(requests[0].options.method, "GET");
   assert.equal(requests[0].options.credentials, "same-origin");
   assert.equal(requests[0].options.redirect, "error");
   assert.equal("Authorization" in requests[0].options.headers, false);
 });
-test("documented Kaiten endpoint is a bounded fallback, not a search for guessed IDs", async t => {
-  const requests = fixture(t, kaiten, [{ status: 404, body: {} }, { body: { id: 99, state: 3 } }]);
-  assert.equal((await readStatusInTab(kaiten)).data.state, 3);
-  assert.deepEqual(requests.map(r => r.path), ["/api/v1/cards/99", "/api/latest/cards/99"]);
+test("Kaiten web API failures do not fall through to a differently authenticated public API", async t => {
+  const requests = fixture(t, kaiten, [{ status: 404, body: {} }]);
+  assert.equal((await readStatusInTab(kaiten)).error.code, "missing");
+  assert.deepEqual(requests.map(r => r.path), ["/api/cards/99"]);
 });
 test("GitLab project namespace is encoded, with MR/CI/review statuses retained", async t => {
   const requests = fixture(t, gitlab, [{ body: { iid: 42, state: "opened", draft: true, head_pipeline: { status: "failed" }, has_conflicts: true, blocking_discussions_resolved: false, detailed_merge_status: "not_approved", reviewers: [{ name: "Ревьюер" }], description: "not returned" } }]);
@@ -47,11 +47,11 @@ test("no pipeline and an unavailable pipeline field remain distinct", async t =>
   assert.equal((await readStatusInTab(gitlab)).data.pipeline, "none");
   assert.equal((await readStatusInTab(gitlab)).data.pipeline, null);
 });
-test("API auth failures and HTML login responses are explicit, not empty successful states", async t => {
+test("HTTP auth failures and non-JSON responses remain distinct", async t => {
   fixture(t, gitlab, [{ status: 401, body: {} }, { status: 403, body: {} }, { type: "text/html", body: "<html>Sign in</html>" }]);
   assert.equal((await readStatusInTab(gitlab)).error.code, "auth");
   assert.equal((await readStatusInTab(gitlab)).error.code, "forbidden");
-  assert.equal((await readStatusInTab(gitlab)).error.code, "auth");
+  assert.equal((await readStatusInTab(gitlab)).error.code, "schema");
 });
 test("rate limits do not trigger fallback/retry storms", async t => {
   const requests = fixture(t, kaiten, [{ status: 429, body: {} }]);
@@ -67,6 +67,23 @@ test("timeouts and redirects/network errors have bounded, non-sensitive messages
   assert.equal((await readStatusInTab(gitlab)).error.code, "timeout");
   const result = await readStatusInTab(gitlab);
   assert.equal(result.error.code, "network"); assert.ok(!result.error.message.includes("secret"));
+});
+test("background mode uses allowlisted absolute GET and browser cookies, not extracted credentials", async t => {
+  const requests = fixture(t, kaiten, [{ body: { id: 99, state: 2 } }]);
+  Object.defineProperty(globalThis, "location", { configurable: true, value: { protocol: "chrome-extension:", origin: "chrome-extension://test" } });
+  assert.equal((await readStatusInTab(kaiten, true)).data.state, 2);
+  assert.equal(requests[0].path, "https://kaiten.x5.ru/api/cards/99");
+  assert.equal(requests[0].options.credentials, "include");
+  assert.equal(requests[0].options.method, "GET");
+  assert.equal(requests[0].options.redirect, "error");
+  assert.deepEqual(requests[0].options.headers, { Accept: "application/json" });
+  assert.equal((await readStatusInTab({ ...kaiten, origin: "https://evil.test" }, true)).error.code, "navigation");
+  assert.equal(requests.length, 1);
+});
+test("site context cannot opt into privileged background transport", async t => {
+  const requests = fixture(t, kaiten, []);
+  assert.equal((await readStatusInTab(kaiten, true)).error.code, "navigation");
+  assert.equal(requests.length, 0);
 });
 test("navigation to a different origin refuses to issue a request", async t => {
   const requests = fixture(t, kaiten, []);

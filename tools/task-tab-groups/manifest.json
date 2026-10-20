@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Задачи · Группы вкладок",
-  "version": "0.2.0",
+  "version": "0.2.6",
   "description": "Группы задач и единый обзор Kaiten, MR и CI. Только в выбранном окне.",
   "permissions": [
     "tabs",
