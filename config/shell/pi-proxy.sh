@@ -18,15 +18,17 @@ _pi_proxy_ensure() {
 
 # Proxy env только у Pi; shell-команды агента очищают его через shellCommandPrefix.
 unalias pi 2>/dev/null || true
-pi() {
+pi() (
   _pi_proxy_ensure pi || return
   local proxy="$PI_PROXY_URL"
-  HTTP_PROXY="$proxy" HTTPS_PROXY="$proxy" ALL_PROXY="$proxy" \
+  export HTTP_PROXY="$proxy" HTTPS_PROXY="$proxy" ALL_PROXY="$proxy" \
   http_proxy="$proxy" https_proxy="$proxy" all_proxy="$proxy" \
   WS_PROXY="$proxy" WSS_PROXY="$proxy" ws_proxy="$proxy" wss_proxy="$proxy" \
-  NO_PROXY="127.0.0.1,localhost,::1,*.local,nebula-staging.x5.ru" no_proxy="127.0.0.1,localhost,::1,*.local,nebula-staging.x5.ru" \
+  NO_PROXY="127.0.0.1,localhost,::1,*.local,nebula-staging.x5.ru" no_proxy="127.0.0.1,localhost,::1,*.local,nebula-staging.x5.ru"
+  # Отдельный процесс: не ждём обновления и не отдаём ему терминал или prompt.
+  (nohup pi update --extensions </dev/null >/dev/null 2>&1 &)
   command pi "$@"
-}
+)
 
 # Jevgrep (jg) использует Node fetch: proxy env задаётся только этому процессу.
 unalias jg 2>/dev/null || true

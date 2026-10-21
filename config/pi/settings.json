@@ -24,7 +24,8 @@
     "npm:pi-powerline-footer"
   ],
   "extensions": [
-    "-extensions/dots-ayu-bar/index.ts"
+    "-extensions/dots-ayu-bar/index.ts",
+    "extensions/dots-ayu-bar/quota-status.ts"
   ],
   "powerline": {
     "preset": "default",
@@ -57,10 +58,19 @@
         "time_spent"
       ],
       "secondary": [
+        "custom:codex-quota",
         "subagents",
         "extension_statuses"
       ]
     },
+    "customItems": [
+      {
+        "id": "codex-quota",
+        "statusKey": "codex-quota",
+        "color": "accent"
+      }
+    ],
+    "secondaryOverflow": "wrap",
     "autoFollowUp": false,
     "sendDelayMs": 0,
     "queue": {

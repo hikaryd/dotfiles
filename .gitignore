@@ -51,3 +51,5 @@ config/git/private.inc
 /docs/superpowers
 /node_modules
 /package.json
+/docs
+/tests
