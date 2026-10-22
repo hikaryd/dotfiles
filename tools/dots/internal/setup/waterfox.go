@@ -167,7 +167,7 @@ func waterfoxApply(root string) error {
 			return e
 		}
 		changed = append(changed, string(b) != string(updated))
-		changes = append(changes, change{path: p, data: updated, backup: filepath.Join(profile, "user.js.dots-backup-"+stamp()), backupPrivate: true})
+		changes = append(changes, change{path: p, data: updated, expect: true, expected: b, backup: filepath.Join(profile, "user.js.dots-backup-"+stamp()), backupPrivate: true})
 	}
 	if e = commit(changes); e != nil {
 		return e

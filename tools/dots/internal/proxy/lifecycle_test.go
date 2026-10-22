@@ -83,6 +83,12 @@ func TestMain(m *testing.M) {
 			fmt.Println(strings.Join(args, " "))
 			os.Exit(0)
 		case "pi":
+			if os.Getenv("DOTS_PROXY_PI_BLOCK") == "1" {
+				os.WriteFile(filepath.Join(fixture, "pi-pid"), []byte(strconv.Itoa(os.Getpid())), 0600)
+				for {
+					time.Sleep(time.Hour)
+				}
+			}
 			env := map[string]string{}
 			for _, k := range proxyKeys {
 				env[k] = os.Getenv(k)

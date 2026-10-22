@@ -122,10 +122,18 @@ func prepareNu(root string, args []string) (string, []string, []string, error) {
 	sig, _ := json.Marshal(signature)
 	var state struct {
 		Signature json.RawMessage `json:"signature"`
+		Bridge    string          `json:"bridge"`
 	}
 	statePath := filepath.Join(cache, "commands.json")
 	b, _ := os.ReadFile(statePath)
 	_ = json.Unmarshal(b, &state)
+	if state.Bridge == "" {
+		// Earlier cache records already included the absolute bridge path.
+		var previous [][]json.RawMessage
+		if json.Unmarshal(state.Signature, &previous) == nil && len(previous) > 4 && len(previous[4]) > 0 {
+			_ = json.Unmarshal(previous[4][0], &state.Bridge)
+		}
+	}
 	var compact bytes.Buffer
 	if state.Signature != nil {
 		_ = json.Compact(&compact, state.Signature)
@@ -148,7 +156,7 @@ func prepareNu(root string, args []string) (string, []string, []string, error) {
 		}
 		for _, entry := range entries {
 			p := filepath.Join(bin, entry.Name())
-			if entry.Type()&os.ModeSymlink != 0 && resolve(p) == resolve(bridge) && !names[entry.Name()] {
+			if entry.Type()&os.ModeSymlink != 0 && ownedBridgeLink(p, bridge, state.Bridge) && (!names[entry.Name()] || state.Bridge != "" && state.Bridge != bridge) {
 				if e = os.Remove(p); e != nil {
 					return "", nil, nil, e
 				}
@@ -167,7 +175,7 @@ func prepareNu(root string, args []string) (string, []string, []string, error) {
 				}
 			}
 		}
-		b, e = json.Marshal(map[string]any{"signature": signature})
+		b, e = json.Marshal(map[string]any{"signature": signature, "bridge": bridge})
 		if e != nil {
 			return "", nil, nil, e
 		}

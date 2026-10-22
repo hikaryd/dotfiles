@@ -1,10 +1,13 @@
 package proxy
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"os"
 	"os/exec"
+	"syscall"
+	"time"
 )
 
 func exitStatus(err error) int {
@@ -27,7 +30,15 @@ func (c *controller) runCLI(args []string) (int, error) {
 	if err != nil {
 		return 1, errors.New("Pi CLI not found. Run dots-tools setup pi-install first.")
 	}
-	cmd := exec.Command(bin, args...)
+	ctx := c.ctx
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	cmd := exec.CommandContext(ctx, bin, args...)
+	// Keep the foreground process group for Pi terminal input. Only this owned
+	// direct child is signalled; the independent xray service is untouched.
+	cmd.Cancel = func() error { return cmd.Process.Signal(syscall.SIGTERM) }
+	cmd.WaitDelay = 2 * time.Second
 	cmd.Env = os.Environ()
 	// exec.Cmd resolves duplicate environment entries to the last value.
 	for _, k := range proxyKeys {

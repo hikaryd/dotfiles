@@ -139,7 +139,19 @@ func tinycastHotkey() error {
 }
 func instructionBlock(original, settings, begin, end string) (string, error) {
 	block := begin + "\n" + strings.TrimRight(settings, " \t\r\n") + "\n" + end
-	if strings.Contains(original, begin) {
+	if strings.Contains(original, begin) || strings.Contains(original, end) {
+		if strings.Count(original, begin) != 1 || strings.Count(original, end) != 1 {
+			return "", errors.New("ambiguous managed instruction block")
+		}
+		start, finish := strings.Index(original, begin), strings.Index(original, end)
+		lineMarker := func(index int, marker string) bool {
+			after := index + len(marker)
+			return (index == 0 || original[index-1] == '\n') &&
+				(after == len(original) || original[after] == '\n' || strings.HasPrefix(original[after:], "\r\n"))
+		}
+		if finish < start || !lineMarker(start, begin) || !lineMarker(finish, end) {
+			return "", errors.New("invalid managed instruction block")
+		}
 		parts := strings.SplitN(original, begin, 2)
 		rest := strings.SplitN(parts[1], end, 2)
 		if len(rest) != 2 {

@@ -4,7 +4,6 @@ package tui
 
 import (
 	"os"
-	"regexp"
 	"strings"
 	"unicode"
 
@@ -28,9 +27,7 @@ const (
 	Highlight = "\x1b[30;48;2;230;180;80m"
 )
 
-var ansi = regexp.MustCompile("\x1b\\[[0-9;?]*[ -/]*[@-~]")
-
-func Plain(value string) string { return ansi.ReplaceAllString(value, "") }
+func Plain(value string) string { return terminalText(value, false) }
 func Clean(value string) string {
 	return strings.Map(func(r rune) rune {
 		if unicode.IsControl(r) || r == 127 {
@@ -137,9 +134,7 @@ func (f Frame) Render() string {
 		lines = append(lines[:max(0, budget-1)], Paint("… More details are available in a larger terminal", Dim, f.Color))
 	}
 	for _, line := range lines {
-		if !f.Color {
-			line = Plain(line)
-		}
+		line = terminalText(line, f.Color)
 		out += Clip(line, width) + "\n"
 	}
 	if f.Footer != "" {

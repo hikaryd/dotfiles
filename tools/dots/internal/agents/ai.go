@@ -18,6 +18,7 @@ import (
 	"regexp"
 	"runtime"
 	"strings"
+	"syscall"
 	"time"
 
 	"dots/native/internal/tui"
@@ -225,7 +226,7 @@ func truncateDiff(diff string, limit int) string {
 	return fmt.Sprintf("%s\n...\n[diff обрезан: %d символов пропущено]\n...\n%s", string(r[:limit/2]), len(r)-limit, string(r[len(r)-(limit+1)/2:]))
 }
 func runAI(args []string, in io.Reader, out, errout io.Writer) int {
-	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 	code := runAIContext(ctx, args, in, out, errout)
 	if ctx.Err() != nil {

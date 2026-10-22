@@ -172,6 +172,12 @@ func livePanesContext(ctx context.Context) ([]pane, error) {
 	if e != nil {
 		return nil, e
 	}
+	if r.code != 0 {
+		if r.code == 1 && strings.HasPrefix(strings.TrimSpace(r.err), "no server running on ") {
+			return panes, nil
+		}
+		return nil, errors.New("tmux pane inventory failed")
+	}
 	for _, line := range strings.Split(r.out, "\n") {
 		f := strings.SplitN(line, "\t", 8)
 		if len(f) == 8 {
@@ -294,6 +300,9 @@ func inventoryContext(ctx context.Context, worktrees bool) ([]project, error) {
 			r, e := captureCommandContext(ctx, 5*time.Second, 16*maxBytes, "", nil, "git", "-C", repositories[c], "worktree", "list", "--porcelain", "-z")
 			if e != nil {
 				return nil, e
+			}
+			if r.code != 0 {
+				return nil, errors.New("git worktree inventory failed")
 			}
 			for _, f := range strings.Split(r.out, "\x00") {
 				if strings.HasPrefix(f, "worktree ") {

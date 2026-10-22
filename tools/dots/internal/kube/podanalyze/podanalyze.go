@@ -3,6 +3,7 @@ package podanalyze
 import (
 	"bytes"
 	"context"
+	"crypto/sha256"
 	"encoding/csv"
 	"encoding/json"
 	"errors"
@@ -236,6 +237,7 @@ type snapshot struct {
 	Pod           pod
 	Metrics       map[string]usage
 	MetricsError  string
+	HistoryError  string
 	Events        []event
 	Sample        sample
 	Processes     map[string][]processInfo
@@ -281,7 +283,7 @@ type analyzer struct {
 	processErrors map[string]string
 	procSnapshots map[string]procSnapshot
 	processesNext time.Time
-	lastError     string
+	historyPruned time.Time
 }
 
 type refreshResult struct {
@@ -428,19 +430,17 @@ func newAnalyzer(ctx context.Context, cfg config) (*analyzer, error) {
 	historyPath := historyFile(cfg, series)
 	var history []sample
 	if !cfg.multi {
-		history, err = loadHistory(historyPath, time.Now().Add(-cfg.retention))
+		history, err = updateHistory(historyPath, time.Now().Add(-cfg.retention), nil, true)
 		if err != nil {
 			return nil, fmt.Errorf("load metrics history: %w", err)
 		}
-		if err := rewriteHistory(historyPath, history); err != nil {
-			return nil, fmt.Errorf("prune metrics history: %w", err)
-		}
 	}
 	return &analyzer{
-		cfg:         cfg,
-		series:      series,
-		historyPath: historyPath,
-		history:     history,
+		cfg:           cfg,
+		series:        series,
+		historyPath:   historyPath,
+		history:       history,
+		historyPruned: time.Now(),
 	}, nil
 }
 
@@ -508,7 +508,6 @@ func parseConfig(args []string) (config, error) {
 func (a *analyzer) collect(ctx context.Context) (snapshot, error) {
 	item, err := fetchPod(ctx, a.cfg)
 	if err != nil {
-		a.lastError = err.Error()
 		return snapshot{}, err
 	}
 
@@ -532,17 +531,29 @@ func (a *analyzer) collect(ctx context.Context) (snapshot, error) {
 	}
 
 	s := makeSample(item, metrics)
+	historyError := ""
 	if !a.cfg.multi {
-		if err := appendHistory(a.historyPath, s); err != nil {
-			a.lastError = "history: " + err.Error()
+		prune := time.Since(a.historyPruned) >= 5*time.Minute
+		retained, err := updateHistory(a.historyPath, time.Now().Add(-a.cfg.retention), &s, prune)
+		if err != nil {
+			historyError = "history: " + err.Error()
+		}
+		if err == nil && prune {
+			a.history = retained
+			a.historyPruned = time.Now()
 		} else {
+			// Persistence is best-effort: a disk or lock failure must not
+			// freeze valid in-memory samples on a running dashboard.
 			a.history = append(a.history, s)
 		}
 		a.history = trimSamples(a.history, time.Now().Add(-a.cfg.retention))
+		if len(a.history) > maxHistorySamples {
+			a.history = append([]sample(nil), a.history[len(a.history)-maxHistorySamples:]...)
+		}
 	}
 
 	snap := snapshot{
-		Pod: item, Metrics: metrics, Events: a.events, Sample: s,
+		Pod: item, Metrics: metrics, Events: a.events, Sample: s, HistoryError: historyError,
 		Processes: a.processes, ProcessErrors: a.processErrors,
 	}
 	if metricsErr != nil {
@@ -817,11 +828,12 @@ func parseCPU(value string) (float64, error) {
 func parseBytes(value string) (float64, error) {
 	factors := map[string]float64{
 		"Ki": 1024, "Mi": 1024 * 1024, "Gi": 1024 * 1024 * 1024, "Ti": 1024 * 1024 * 1024 * 1024,
-		"K": 1e3, "M": 1e6, "G": 1e9, "T": 1e12,
+		"Pi": math.Pow(1024, 5), "Ei": math.Pow(1024, 6),
+		"n": 1e-9, "u": 1e-6, "m": 1e-3, "k": 1e3, "K": 1e3, "M": 1e6, "G": 1e9, "T": 1e12, "P": 1e15, "E": 1e18,
 	}
 	suffix := ""
 	factor := 1.0
-	for _, candidate := range []string{"Ki", "Mi", "Gi", "Ti", "K", "M", "G", "T"} {
+	for _, candidate := range []string{"Ki", "Mi", "Gi", "Ti", "Pi", "Ei", "n", "u", "m", "k", "K", "M", "G", "T", "P", "E"} {
 		if strings.HasSuffix(value, candidate) {
 			suffix = candidate
 			factor = factors[candidate]
@@ -856,8 +868,30 @@ func makeSample(item pod, metrics map[string]usage) sample {
 }
 
 func historyFile(cfg config, series string) string {
+	// Helpers pin a multi-file chain through the environment, not --kubeconfig
+	// (kubectl treats that flag as a single filename).
+	sources := []string{cfg.kubeconfig}
+	if cfg.kubeconfig == "" {
+		sources = filepath.SplitList(os.Getenv("KUBECONFIG"))
+		if len(sources) == 0 {
+			home, _ := os.UserHomeDir()
+			sources = []string{filepath.Join(home, ".kube", "config")}
+		}
+	}
+	var identityParts []string
+	for _, source := range sources {
+		if source == "" {
+			continue
+		}
+		if absolute, err := filepath.Abs(source); err == nil {
+			source = absolute
+		}
+		identityParts = append(identityParts, source)
+	}
+	identity := sha256.Sum256([]byte(strings.Join(identityParts, "\x00") + "\x00" + cfg.context))
 	return filepath.Join(
 		cfg.historyDir,
+		fmt.Sprintf("%x", identity[:16]),
 		safePathPart(cfg.environment),
 		safePathPart(cfg.namespace),
 		safePathPart(strings.ReplaceAll(series, "/", "-"))+".csv",
@@ -873,7 +907,7 @@ func safePathPart(value string) string {
 			builder.WriteByte('_')
 		}
 	}
-	if builder.Len() == 0 {
+	if builder.Len() == 0 || builder.String() == "." || builder.String() == ".." {
 		return "unknown"
 	}
 	return builder.String()
@@ -915,11 +949,12 @@ func rewriteHistory(path string, samples []sample) error {
 	if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
 		return err
 	}
-	temporary := path + ".tmp"
-	file, err := os.OpenFile(temporary, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0o600)
+	file, err := os.CreateTemp(filepath.Dir(path), ".pod-history-*")
 	if err != nil {
 		return err
 	}
+	temporary := file.Name()
+	defer os.Remove(temporary)
 	writer := csv.NewWriter(file)
 	writeErr := writer.Write(historyHeader)
 	for _, item := range samples {
@@ -977,8 +1012,15 @@ func loadHistory(path string, cutoff time.Time) ([]sample, error) {
 		}
 		if !item.At.Before(cutoff) {
 			samples = append(samples, item)
+			if len(samples) >= 2*maxHistorySamples {
+				samples = append([]sample(nil), samples[len(samples)-maxHistorySamples:]...)
+			}
 		}
 	}
+	if len(samples) > maxHistorySamples {
+		samples = samples[len(samples)-maxHistorySamples:]
+	}
+	sort.Slice(samples, func(i, j int) bool { return samples[i].At.Before(samples[j].At) })
 	return samples, nil
 }
 
@@ -1362,7 +1404,15 @@ func groupAnalyzers(analyzers []*analyzer) []multiGroup {
 }
 
 func podSnapshotReady(snap snapshot) bool {
-	return snap.Pod.Status.Phase == "Running" && snap.Sample.Total > 0 && snap.Sample.Ready == snap.Sample.Total
+	if snap.Pod.Status.Phase != "Running" || snap.Sample.Total == 0 || snap.Sample.Ready != snap.Sample.Total {
+		return false
+	}
+	for _, condition := range snap.Pod.Status.Conditions {
+		if condition.Type == "Ready" {
+			return condition.Status == "True"
+		}
+	}
+	return false
 }
 
 func podSnapshotState(snap snapshot, err error) string {
@@ -1595,7 +1645,7 @@ func renderMultiWarningEvents(out *strings.Builder, cfg config, results []refres
 }
 
 func compactEventMessage(message string) string {
-	message = strings.Join(strings.Fields(message), " ")
+	message = strings.Join(strings.Fields(tui.Plain(message)), " ")
 	for _, scheme := range []string{"http://", "https://"} {
 		start := strings.Index(message, scheme)
 		if start < 0 {
@@ -1819,6 +1869,9 @@ func analyze(snap snapshot) []finding {
 	}
 	if snap.MetricsError != "" {
 		findings = append(findings, finding{"WARN", "CPU/RAM analysis is incomplete because metrics-server data is unavailable"})
+	}
+	if snap.HistoryError != "" {
+		findings = append(findings, finding{"WARN", tui.Clean(snap.HistoryError)})
 	}
 	if len(findings) == 0 {
 		findings = append(findings, finding{"OK", "No readiness, restart, OOM, event or resource-pressure warning detected in the available data"})

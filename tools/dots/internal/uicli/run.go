@@ -7,7 +7,6 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"io"
 	"os"
 	"os/signal"
 	"strings"
@@ -52,7 +51,10 @@ func Run(args []string) int {
 	var err error
 	switch args[0] {
 	case "select", "snapshot", "message":
-		data, readErr := io.ReadAll(io.LimitReader(os.Stdin, 1024*1024+1))
+		data, readErr := readInput(ctx)
+		if ctx.Err() != nil {
+			return 130
+		}
 		if readErr != nil || len(data) > 1024*1024 {
 			fmt.Fprintln(os.Stderr, "ui: input exceeds 1 MiB or cannot be read")
 			return 1

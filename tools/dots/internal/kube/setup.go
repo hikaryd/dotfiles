@@ -289,6 +289,36 @@ func rootNode(file *configFile) *yaml.Node {
 	return dereference(file.node.Content[0])
 }
 
+// configDestination resolves directory aliases as well as final symlinks. For
+// new outputs it resolves the nearest existing ancestor before appending names.
+func configDestination(path string) (string, error) {
+	path, err := filepath.Abs(path)
+	if err != nil {
+		return "", err
+	}
+	resolved, err := filepath.EvalSymlinks(path)
+	if err == nil {
+		return resolved, nil
+	}
+	if !os.IsNotExist(err) {
+		return "", err
+	}
+	if info, statErr := os.Lstat(path); statErr == nil && info.Mode()&os.ModeSymlink != 0 {
+		return "", fmt.Errorf("Cannot update a dangling kubeconfig symlink: %s", path)
+	} else if statErr != nil && !os.IsNotExist(statErr) {
+		return "", statErr
+	}
+	parent := filepath.Dir(path)
+	if parent == path {
+		return "", err
+	}
+	resolved, err = configDestination(parent)
+	if err != nil {
+		return "", err
+	}
+	return filepath.Join(resolved, filepath.Base(path)), nil
+}
+
 type stagedConfig struct {
 	file            *configFile
 	path, temporary string
@@ -298,6 +328,7 @@ type stagedConfig struct {
 // refuses to overwrite a file edited since the setup inventory was read.
 func saveConfigs(files []*configFile, changed map[*configFile]bool) error {
 	staged := []stagedConfig{}
+	seen := map[string]bool{}
 	defer func() {
 		for _, entry := range staged {
 			os.Remove(entry.temporary)
@@ -315,19 +346,19 @@ func saveConfigs(files []*configFile, changed map[*configFile]bool) error {
 		} else if !os.IsNotExist(err) {
 			return fmt.Errorf("Kubeconfig appeared during setup: %s; rerun setup", file.path)
 		}
-		path := file.path
-		if info, err := os.Lstat(path); err == nil {
-			if info.Mode()&os.ModeSymlink != 0 {
-				path, err = filepath.EvalSymlinks(path)
-				if err != nil {
-					return errors.New("Cannot update a dangling kubeconfig symlink")
-				}
-			}
-			info, err = os.Stat(path)
-			if err != nil || info.Mode().Perm()&0200 == 0 {
-				return fmt.Errorf("Kubeconfig is read-only: %s", file.path)
-			}
+		path, err := configDestination(file.path)
+		if err != nil {
+			return err
 		}
+		if info, err := os.Stat(path); err == nil && info.Mode().Perm()&0200 == 0 {
+			return fmt.Errorf("Kubeconfig is read-only: %s", file.path)
+		} else if err != nil && !os.IsNotExist(err) {
+			return err
+		}
+		if seen[path] {
+			return fmt.Errorf("Duplicate kubeconfig destination: %s", file.path)
+		}
+		seen[path] = true
 		if err := os.MkdirAll(filepath.Dir(path), 0700); err != nil {
 			return err
 		}
@@ -348,6 +379,10 @@ func saveConfigs(files []*configFile, changed map[*configFile]bool) error {
 		}
 	}
 	for _, entry := range staged {
+		path, err := configDestination(entry.file.path)
+		if err != nil || path != entry.path {
+			return fmt.Errorf("Kubeconfig destination changed during setup: %s", entry.file.path)
+		}
 		data, err := os.ReadFile(entry.file.path)
 		if entry.file.exists {
 			if err != nil || !bytes.Equal(data, entry.file.data) {

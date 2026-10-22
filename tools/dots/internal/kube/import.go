@@ -98,7 +98,30 @@ func (s *session) importInventory(base *inventory, paths []string) (*inventory, 
 	return config, nil
 }
 func (s *session) prepareImport(base, config *inventory, plans []bindingPlan) (*configFile, error) {
-	targetPath := destination(base).path
+	// Generated environment overlays only contain bindings. Flattening credentials
+	// into one would be overwritten by saveEnvironmentPlans in the same transaction.
+	generated := map[string]bool{}
+	for _, environment := range environments {
+		path, err := configDestination(s.contextFilePath(environment))
+		if err != nil {
+			return nil, err
+		}
+		generated[path] = true
+	}
+	candidates := &inventory{}
+	for _, file := range base.files {
+		path, err := configDestination(file.path)
+		if err != nil {
+			return nil, err
+		}
+		if !generated[path] {
+			candidates.files = append(candidates.files, file)
+		}
+	}
+	if len(candidates.files) == 0 {
+		return nil, errors.New("Import needs a non-generated destination kubeconfig")
+	}
+	targetPath := destination(candidates).path
 	var target *configFile
 	for _, file := range config.files {
 		if file.path == targetPath {

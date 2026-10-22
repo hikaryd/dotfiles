@@ -127,6 +127,9 @@ func TestXHTTPCurlStdinRemoteDNSDeadline(t *testing.T) {
 	}
 	a := rows[0]["args"].([]any)
 	equal(t, a[0], "--disable")
+	if !slices.Contains(a, any("--globoff")) {
+		t.Fatal("curl URL expansion is enabled")
+	}
 	equal(t, a[slices.Index(a, any("--noproxy"))+1], "")
 	equal(t, a[slices.Index(a, any("--socks5-hostname"))+1], "127.0.0.1:12345")
 	if strings.Contains(string(jsonBytes(a)), "fake-password") {

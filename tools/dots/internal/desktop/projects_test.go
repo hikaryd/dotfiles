@@ -135,7 +135,7 @@ func TestProjectRefreshUsesOneGitQueryPerCommonDir(t *testing.T) {
 	f := newFixture(t)
 	p := f.repo("main")
 	f.registry(p)
-	f.fake("tmux", allRule("", 1))
+	f.fake("tmux", fakeRule{Args: []string{}, Prefix: true, Code: 1, Stderr: "no server running on /fixture/tmux\n"})
 	f.fake("git", fakeRule{Args: []string{"-C", p, "worktree", "list", "--porcelain", "-z"}, Output: "worktree " + p + "\x00\x00"})
 	_, err, code := f.run("", "projects", "refresh")
 	if code != 0 {

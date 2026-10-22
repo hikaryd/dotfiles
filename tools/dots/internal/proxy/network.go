@@ -41,8 +41,9 @@ func (c *controller) fetchSubscription(rawURL string, insecure bool) ([]string, 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		return nil, fmt.Errorf("Subscription download failed: HTTP %d.", resp.StatusCode)
 	}
-	raw, err := io.ReadAll(resp.Body)
-	if err != nil {
+	const maxSubscription = 8 << 20
+	raw, err := io.ReadAll(io.LimitReader(resp.Body, maxSubscription+1))
+	if err != nil || len(raw) > maxSubscription {
 		return nil, errors.New("Subscription download failed: could not read response.")
 	}
 	var links []string

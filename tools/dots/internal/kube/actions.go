@@ -231,6 +231,9 @@ func (s *session) restartOne(name string, timeout, poll time.Duration) (string, 
 	if owner.UID != "" && controller.Metadata.UID != owner.UID {
 		return "", errors.New("Controller changed; pod was not deleted")
 	}
+	if owner.Kind == "DaemonSet" && pod.Spec.NodeName == "" {
+		return "", errors.New("DaemonSet pod has no node; pod was not deleted")
+	}
 	selector, err := selectorFor(controller.Spec.Selector)
 	if err != nil {
 		return "", err
@@ -282,7 +285,15 @@ func (s *session) restartOne(name string, timeout, poll time.Duration) (string, 
 					managed = true
 				}
 			}
-			if !managed {
+			if !managed || item.Status.Phase != "Running" {
+				continue
+			}
+			// Controller membership alone is not a replacement identity for
+			// ordinal-bound StatefulSets or node-bound DaemonSets.
+			if owner.Kind == "StatefulSet" && item.Metadata.Name != name {
+				continue
+			}
+			if owner.Kind == "DaemonSet" && item.Spec.NodeName != pod.Spec.NodeName {
 				continue
 			}
 			for _, condition := range item.Status.Conditions {

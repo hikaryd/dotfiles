@@ -1,7 +1,6 @@
 package logwatch
 
 import (
-	"bufio"
 	"context"
 	"errors"
 	"flag"
@@ -20,6 +19,7 @@ import (
 	"unicode"
 
 	"dots/native/internal/kube/kubeui"
+	"dots/native/internal/kube/logstream"
 	"dots/native/internal/tui"
 	"github.com/mattn/go-runewidth"
 )
@@ -296,6 +296,8 @@ func parseConfig(args []string) (config, error) {
 }
 
 func followPodLogs(ctx context.Context, cfg config, pod string, output chan<- logLine) {
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
 	args := logArgs(cfg, pod)
 	cmd := exec.CommandContext(ctx, cfg.kubectl, args...)
 	stdout, err := cmd.StdoutPipe()
@@ -313,15 +315,21 @@ func followPodLogs(ctx context.Context, cfg config, pod string, output chan<- lo
 		return
 	}
 
+	stopClose := context.AfterFunc(ctx, func() { _ = stdout.Close(); _ = stderr.Close() })
+	defer stopClose()
 	var readers sync.WaitGroup
 	readers.Add(2)
 	go func() {
 		defer readers.Done()
-		scanLogs(ctx, output, pod, stdout, false)
+		if scanLogs(ctx, output, pod, stdout, false) != nil {
+			cancel()
+		}
 	}()
 	go func() {
 		defer readers.Done()
-		scanLogs(ctx, output, pod, stderr, true)
+		if scanLogs(ctx, output, pod, stderr, true) != nil {
+			cancel()
+		}
 	}()
 	readers.Wait()
 	err = cmd.Wait()
@@ -351,23 +359,21 @@ func scanLogs(
 	pod string,
 	reader io.Reader,
 	stderr bool,
-) {
-	scanner := bufio.NewScanner(reader)
-	scanner.Buffer(make([]byte, 64*1024), 16*1024*1024)
-	for scanner.Scan() {
-		line := scanner.Text()
+) error {
+	err := logstream.Scan(reader, func(line string) {
 		if stderr {
 			line = "! " + line
 		}
 		sendLog(ctx, output, pod, line)
-	}
-	if err := scanner.Err(); err != nil && ctx.Err() == nil {
+	})
+	if err != nil && ctx.Err() == nil {
 		sendLog(ctx, output, pod, "log read error: "+err.Error())
 	}
+	return err
 }
 
 func sendLog(ctx context.Context, output chan<- logLine, pod, text string) {
-	container, body := normalizeKubectlLine(pod, sanitize(text))
+	container, body := normalizeKubectlLine(pod, logstream.Text(text))
 	select {
 	case output <- logLine{
 		pod:       pod,
@@ -847,19 +853,6 @@ func contains(values []string, wanted string) bool {
 		}
 	}
 	return false
-}
-
-func sanitize(text string) string {
-	return strings.Map(func(value rune) rune {
-		switch {
-		case value == '\t':
-			return ' '
-		case unicode.IsControl(value):
-			return -1
-		default:
-			return value
-		}
-	}, text)
 }
 
 func normalizeKubectlLine(pod, text string) (string, string) {

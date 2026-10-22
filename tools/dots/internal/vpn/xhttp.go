@@ -365,7 +365,7 @@ func xhttpTrial(ctx context.Context, port int, auth [2]string, url string, a xht
 		return nil, errors.New("curl_process_failed")
 	}
 	defer log.Close()
-	cmd := exec.Command("curl", "--disable", "--config", "-", "--silent", "--show-error", "--fail", "--retry", "0", "--noproxy", "", "--socks5-hostname", fmt.Sprintf("127.0.0.1:%d", port), "--proto", "=https", "--proto-redir", "=https", "--connect-timeout", seconds(min(10*time.Second, timeout)), "--max-time", seconds(timeout), "--output", "/dev/null", "--write-out", "%{http_code}\t%{size_download}\t%{time_total}\t%{speed_download}\n")
+	cmd := exec.Command("curl", "--disable", "--globoff", "--config", "-", "--silent", "--show-error", "--fail", "--retry", "0", "--noproxy", "", "--socks5-hostname", fmt.Sprintf("127.0.0.1:%d", port), "--proto", "=https", "--proto-redir", "=https", "--connect-timeout", seconds(min(10*time.Second, timeout)), "--max-time", seconds(timeout), "--output", "/dev/null", "--write-out", "%{http_code}\t%{size_download}\t%{time_total}\t%{speed_download}\n")
 	cmd.Stdin = strings.NewReader(fmt.Sprintf("proxy-user = %q\nurl = %q\n", auth[0]+":"+auth[1], url))
 	var output bytes.Buffer
 	cmd.Stdout = &output

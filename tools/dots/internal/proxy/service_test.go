@@ -31,11 +31,22 @@ func fakeLaunchctl(fixture string) {
 	loaded := filepath.Join(fixture, "loaded")
 	switch os.Args[1] {
 	case "print":
-		if _, err := os.Stat(loaded); err != nil {
+		data, err := os.ReadFile(loaded)
+		if err != nil {
 			os.Exit(113)
 		}
+		os.Stdout.Write(data)
 	case "bootstrap":
-		os.WriteFile(loaded, []byte("guardian-123"), 0600)
+		data, _ := os.ReadFile(os.Args[3])
+		var plist struct {
+			Args []string `xml:"dict>array>string"`
+		}
+		xml.Unmarshal(data, &plist)
+		if len(plist.Args) == 0 {
+			os.Exit(2)
+		}
+		job := "job = {\npath = " + os.Args[3] + "\nprogram = " + plist.Args[0] + "\narguments = {\n" + strings.Join(plist.Args, "\n") + "\n}\n}\n"
+		os.WriteFile(loaded, []byte(job), 0600)
 	case "bootout":
 		os.Remove(loaded)
 	default:

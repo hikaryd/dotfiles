@@ -135,8 +135,21 @@ func parseVless(rest string, idx int) (object, error) {
 	if !strings.Contains("|chrome|firefox|edge|safari|360|qq|ios|android|random|randomized|", "|"+fp+"|") {
 		fp = "chrome"
 	}
-	tls := object{"enabled": true, "server_name": q["sni"], "utls": object{"enabled": true, "fingerprint": fp}, "reality": object{"enabled": true, "public_key": q["pbk"], "short_id": q["sid"]}}
-	n := object{"type": "vless", "tag": nameTag(frag, idx), "server": host, "server_port": p, "uuid": auth, "tls": tls}
+	security := value(q, "security", "none")
+	if security != "none" && security != "tls" && security != "reality" {
+		return nil, errors.New("unsupported VLESS transport security")
+	}
+	tls := object{"enabled": true, "server_name": q["sni"], "utls": object{"enabled": true, "fingerprint": fp}}
+	if security == "reality" {
+		if q["pbk"] == "" || q["sni"] == "" {
+			return nil, errors.New("missing VLESS Reality public key or server name")
+		}
+		tls["reality"] = object{"enabled": true, "public_key": q["pbk"], "short_id": q["sid"]}
+	}
+	n := object{"type": "vless", "tag": nameTag(frag, idx), "server": host, "server_port": p, "uuid": auth}
+	if security != "none" {
+		n["tls"] = tls
+	}
 	if q["flow"] != "" {
 		n["flow"] = q["flow"]
 	}

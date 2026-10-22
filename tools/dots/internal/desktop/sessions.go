@@ -192,8 +192,36 @@ func ptrText(p *string) string {
 	}
 	return *p
 }
+func workspaceLayoutMatches(snapshot map[string]any, workspace string, windows []layoutWindow) bool {
+	tabs := []map[string]any{}
+	for _, v := range array(snapshot["tabs"]) {
+		tab := object(v)
+		if str(tab["workspace_id"]) == workspace {
+			tabs = append(tabs, tab)
+		}
+	}
+	sort.SliceStable(tabs, func(i, j int) bool { return number(tabs[i]["number"]) < number(tabs[j]["number"]) })
+	if len(tabs) != len(windows) {
+		return false
+	}
+	for i, tab := range tabs {
+		if str(tab["label"]) != windows[i].label || number(tab["pane_count"]) != len(windows[i].panes) {
+			return false
+		}
+	}
+	return true
+}
 func existingWorkspace(entry session, snapshot map[string]any, windows []layoutWindow) (string, error) {
 	workspaces := liveWorkspaces(snapshot)
+	for _, w := range workspaces {
+		if len(windows) > 0 && w.ImportKey == nil && w.Name == entry.Name && !workspaceLayoutMatches(snapshot, w.Workspace, windows) {
+			return "", errors.New("Неполное или отличающееся рабочее пространство Herdr; выберите Herdr id для восстановления")
+		}
+		if w.ImportKey != nil && strings.HasPrefix(*w.ImportKey, "pending:") &&
+			(strings.TrimPrefix(*w.ImportKey, "pending:") == ptrText(entry.ImportKey) || w.Name == entry.Name && ptrText(w.Path) == ptrText(entry.Path)) {
+			return "", errors.New("Незавершённый импорт Herdr; удалите неполное рабочее пространство перед повтором")
+		}
+	}
 	matches := []session{}
 	for _, w := range workspaces {
 		if w.ImportKey != nil && entry.ImportKey != nil && *w.ImportKey == *entry.ImportKey {
@@ -219,23 +247,7 @@ func existingWorkspace(entry session, snapshot map[string]any, windows []layoutW
 			if w.Name != entry.Name {
 				continue
 			}
-			tabs := []map[string]any{}
-			for _, v := range array(snapshot["tabs"]) {
-				tab := object(v)
-				if str(tab["workspace_id"]) == w.Workspace {
-					tabs = append(tabs, tab)
-				}
-			}
-			sort.SliceStable(tabs, func(i, j int) bool { return number(tabs[i]["number"]) < number(tabs[j]["number"]) })
-			same := len(tabs) == len(windows)
-			if same {
-				for i, tab := range tabs {
-					if str(tab["label"]) != windows[i].label || number(tab["pane_count"]) != len(windows[i].panes) {
-						same = false
-						break
-					}
-				}
-			}
+			same := workspaceLayoutMatches(snapshot, w.Workspace, windows)
 			if same {
 				matches = append(matches, w)
 			}
@@ -288,8 +300,11 @@ func openEntry(entry session) error {
 	if e != nil {
 		return e
 	}
-	_, e = herdrCall("workspace.report_metadata", map[string]any{"workspace_id": workspace, "source": "dots-sessions", "tokens": map[string]string{"dots_session_id": ptrText(entry.ImportKey)}}, "workspace", "report-metadata", workspace, "--source", "dots-sessions", "--token", "dots_session_id="+ptrText(entry.ImportKey))
-	if e != nil {
+	mark := func(key string) error {
+		_, err := herdrCall("workspace.report_metadata", map[string]any{"workspace_id": workspace, "source": "dots-sessions", "tokens": map[string]string{"dots_session_id": key}}, "workspace", "report-metadata", workspace, "--source", "dots-sessions", "--token", "dots_session_id="+key)
+		return err
+	}
+	if e = mark("pending:" + ptrText(entry.ImportKey)); e != nil {
 		return e
 	}
 	if len(windows) > 0 {
@@ -332,6 +347,9 @@ func openEntry(entry session) error {
 				}
 			}
 		}
+	}
+	if e = mark(ptrText(entry.ImportKey)); e != nil {
+		return e
 	}
 	if e = herdrFocus(workspace); e != nil {
 		return e

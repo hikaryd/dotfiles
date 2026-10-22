@@ -1,7 +1,6 @@
 package deploywatch
 
 import (
-	"bufio"
 	"bytes"
 	"context"
 	"encoding/json"
@@ -21,6 +20,7 @@ import (
 	"unicode/utf8"
 
 	"dots/native/internal/kube/kubeui"
+	"dots/native/internal/kube/logstream"
 	"dots/native/internal/tui"
 )
 
@@ -199,6 +199,7 @@ type logLine struct {
 
 type logStream struct {
 	cancel context.CancelFunc
+	done   <-chan struct{}
 }
 
 type dashboard struct {
@@ -213,7 +214,6 @@ type dashboard struct {
 	previousPods map[string]string
 	streams      map[string]logStream
 	logLines     chan logLine
-	streamDone   chan string
 	width        int
 	height       int
 	painter      *tui.Painter
@@ -235,7 +235,7 @@ func Run(args []string) int {
 	defer cancel()
 	live := !cfg.once && tui.IsTerminal(os.Stdout) && tui.IsTerminal(os.Stdin)
 	cfg.once = !live
-	d := &dashboard{cfg: cfg, previousPods: map[string]string{}, streams: map[string]logStream{}, logLines: make(chan logLine, 256), streamDone: make(chan string, 32)}
+	d := &dashboard{cfg: cfg, previousPods: map[string]string{}, streams: map[string]logStream{}, logLines: make(chan logLine, 256)}
 	d.width, d.height = terminalSize()
 	if !live {
 		err := d.poll(ctx)
@@ -297,8 +297,6 @@ func Run(args []string) int {
 		case line := <-d.logLines:
 			d.logs = appendBounded(d.logs, line, 1000)
 			dirty = true
-		case podName := <-d.streamDone:
-			delete(d.streams, podName)
 		case <-resize:
 			d.width, d.height = terminalSize()
 			dirty = true
@@ -683,12 +681,18 @@ func (d *dashboard) syncLogStreams(ctx context.Context, pods []pod) {
 		if item.Metadata.DeletionTimestamp != nil {
 			continue
 		}
-		if _, running := d.streams[name]; running {
-			continue
+		if stream, running := d.streams[name]; running {
+			select {
+			case <-stream.done:
+				stream.cancel()
+			default:
+				continue
+			}
 		}
 		streamCtx, cancel := context.WithCancel(ctx)
-		d.streams[name] = logStream{cancel: cancel}
-		go d.followLogs(streamCtx, name)
+		done := make(chan struct{})
+		d.streams[name] = logStream{cancel: cancel, done: done}
+		go func() { defer close(done); d.followLogs(streamCtx, name) }()
 	}
 
 	for name, stream := range d.streams {
@@ -700,12 +704,8 @@ func (d *dashboard) syncLogStreams(ctx context.Context, pods []pod) {
 }
 
 func (d *dashboard) followLogs(ctx context.Context, podName string) {
-	defer func() {
-		select {
-		case d.streamDone <- podName:
-		default:
-		}
-	}()
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
 
 	args := d.kubectlArgs(
 		"logs", "-f", "pod/"+podName,
@@ -729,15 +729,21 @@ func (d *dashboard) followLogs(ctx context.Context, podName string) {
 		return
 	}
 
+	stopClose := context.AfterFunc(ctx, func() { _ = stdout.Close(); _ = stderr.Close() })
+	defer stopClose()
 	var readers sync.WaitGroup
 	readers.Add(2)
 	go func() {
 		defer readers.Done()
-		d.scanLogs(ctx, podName, stdout, false)
+		if d.scanLogs(ctx, podName, stdout, false) != nil {
+			cancel()
+		}
 	}()
 	go func() {
 		defer readers.Done()
-		d.scanLogs(ctx, podName, stderr, true)
+		if d.scanLogs(ctx, podName, stderr, true) != nil {
+			cancel()
+		}
 	}()
 	readers.Wait()
 	err = cmd.Wait()
@@ -746,24 +752,22 @@ func (d *dashboard) followLogs(ctx context.Context, podName string) {
 	}
 }
 
-func (d *dashboard) scanLogs(ctx context.Context, podName string, reader io.Reader, stderr bool) {
-	scanner := bufio.NewScanner(reader)
-	scanner.Buffer(make([]byte, 64*1024), 16*1024*1024)
-	for scanner.Scan() {
-		line := scanner.Text()
+func (d *dashboard) scanLogs(ctx context.Context, podName string, reader io.Reader, stderr bool) error {
+	err := logstream.Scan(reader, func(line string) {
 		if stderr {
 			line = "! " + line
 		}
 		d.sendLog(ctx, podName, line)
-	}
-	if err := scanner.Err(); err != nil && ctx.Err() == nil {
+	})
+	if err != nil && ctx.Err() == nil {
 		d.sendLog(ctx, podName, "log read error: "+err.Error())
 	}
+	return err
 }
 
 func (d *dashboard) sendLog(ctx context.Context, podName, text string) {
 	select {
-	case d.logLines <- logLine{pod: podName, text: oneLine(text), at: time.Now()}:
+	case d.logLines <- logLine{pod: podName, text: oneLine(logstream.Text(text)), at: time.Now()}:
 	case <-ctx.Done():
 	}
 }

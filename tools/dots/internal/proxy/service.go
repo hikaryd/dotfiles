@@ -3,6 +3,7 @@ package proxy
 import (
 	"bytes"
 	"context"
+	"dots/native/internal/launchd"
 	"encoding/xml"
 	"errors"
 	"fmt"
@@ -59,8 +60,18 @@ func (c *controller) launchctl(args ...string) error {
 	return exec.CommandContext(ctx, "launchctl", args...).Run()
 }
 func (c *controller) serviceLoaded() (bool, error) {
-	err := c.launchctl("print", serviceDomain()+"/"+serviceLabel)
+	ctx := c.ctx
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+	output, err := exec.CommandContext(ctx, "launchctl", "print", serviceDomain()+"/"+serviceLabel).Output()
 	if err == nil {
+		argv, ownErr := c.ownedService()
+		if ownErr != nil || !launchd.Matches(output, c.servicePath(), argv) {
+			return false, errors.New("Loaded proxy job differs; no service changed.")
+		}
 		return true, nil
 	}
 	var exit *exec.ExitError
@@ -85,6 +96,9 @@ func (c *controller) installService() error {
 }
 func (c *controller) installServiceAt(executable string) error {
 	if err := servicePlatform(runtime.GOOS); err != nil {
+		return err
+	}
+	if _, err := c.ownedService(); err != nil {
 		return err
 	}
 	data, err := c.servicePlist(executable)
@@ -143,6 +157,9 @@ func (c *controller) uninstallService() error {
 	defer unlock()
 	loaded, err := c.serviceLoaded()
 	if err != nil {
+		return err
+	}
+	if _, err := c.ownedService(); err != nil {
 		return err
 	}
 	if loaded {

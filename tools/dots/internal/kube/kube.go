@@ -226,12 +226,6 @@ func Run(args []string) int {
 	if inv.action == "connect" {
 		args = append([]string{"cluster-info"}, args...)
 	}
-	if inv.action == "kubectl" || inv.action == "connect" {
-		if err := validateArgs(inv.scope == "namespace", args); err != nil {
-			fmt.Fprintln(os.Stderr, err)
-			return 2
-		}
-	}
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 	s := &session{ctx: ctx, env: os.Environ()}
@@ -245,6 +239,12 @@ func Run(args []string) int {
 			return code(s.setup(append([]string{inv.environment}, args[1:]...)))
 		}
 		return code(s.configuration(args[1:], args[0] == "doctor"))
+	}
+	if inv.action == "kubectl" || inv.action == "connect" {
+		if err := validateArgs(inv.scope == "namespace", args); err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			return 2
+		}
 	}
 	if err := s.configure(inv); err != nil {
 		return code(err)

@@ -328,7 +328,7 @@ func (r *router) install() error {
 		for _, v := range a {
 			m := obj(v)
 			d := str(m["destination"])
-			if strings.HasPrefix(d, "8.8.8.8") || strings.HasPrefix(d, "77.88.8.8") {
+			if d == "8.8.8.8" || d == "8.8.8.8/32" || d == "77.88.8.8" || d == "77.88.8.8/32" {
 				e = r.run([]string{"no ip route " + d + " " + str(m["interface"])}, "Удаление WAN-маршрута "+d)
 				if e != nil {
 					break

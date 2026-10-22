@@ -347,6 +347,9 @@ func collectStatus(ctx context.Context, all bool) (statusReport, error) {
 		}(i)
 	}
 	wg.Wait()
+	if err := ctx.Err(); err != nil {
+		return statusReport{}, err
+	}
 	sort.SliceStable(report.Projects, func(i, j int) bool {
 		a, b := report.Projects[i], report.Projects[j]
 		if (len(a.Panes) > 0) != (len(b.Panes) > 0) {
@@ -360,7 +363,7 @@ func collectStatus(ctx context.Context, all bool) (statusReport, error) {
 	return report, nil
 }
 func gitSummary(g gitState) string {
-	if g.State == "unknown" {
+	if g.State == "unknown" || g.Staged == nil || g.Unstaged == nil || g.Untracked == nil || g.Conflicts == nil {
 		return "? unknown"
 	}
 	if g.State == "clean" {

@@ -214,7 +214,7 @@ func TestRouterInstallPolicyPeersDNSAndSave(t *testing.T) {
 		case "/rci/show/interface":
 			return response(200, object{"one": object{"id": "ISP", "global": true}, "two": object{"id": "Wireguard0", "global": true}, "three": object{"id": "Bridge0", "global": false}}), nil
 		case "/rci/show/ip/route":
-			return response(200, []object{{"destination": "8.8.8.8/32", "interface": "ISP"}, {"destination": "1.2.3.4/32", "interface": "ISP"}}), nil
+			return response(200, []object{{"destination": "8.8.8.8/32", "interface": "ISP"}, {"destination": "1.2.3.4/32", "interface": "ISP"}, {"destination": "8.8.8.80/32", "interface": "ISP"}, {"destination": "77.88.8.80/32", "interface": "ISP"}, {"destination": "77.88.8.8/24", "interface": "ISP"}}), nil
 		case "/rci/":
 			var body []object
 			json.NewDecoder(req.Body).Decode(&body)
@@ -245,7 +245,7 @@ func TestRouterInstallPolicyPeersDNSAndSave(t *testing.T) {
 		}
 	}
 	equal(t, commands[len(commands)-1], "system configuration save")
-	for _, c := range []string{"no permit global Wireguard0", "no permit global Bridge0", "no ip route 1.2.3.4", "no wireguard peer server-public-key"} {
+	for _, c := range []string{"no permit global Wireguard0", "no permit global Bridge0", "no ip route 1.2.3.4", "no ip route 8.8.8.80", "no ip route 77.88.8.80", "no ip route 77.88.8.8/24", "no wireguard peer server-public-key"} {
 		if strings.Contains(all, c) {
 			t.Fatalf("unexpected command %s", c)
 		}

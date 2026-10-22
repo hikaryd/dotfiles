@@ -2,8 +2,6 @@ package palette
 
 import (
 	"fmt"
-	"regexp"
-	"strings"
 )
 
 func (g generator) generateTool(name string) error {
@@ -22,7 +20,7 @@ func (g generator) generateTool(name string) error {
 			return err
 		}
 		text = replace(text, `(?m)^palette\s*=\s*".*"`, `palette = "ayu_`+g.variant+`"`)
-		text = replace(text, `(?s)#\s*Палитра.*\n\[palettes\..*?\].*`, content)
+		text = replaceStarshipPalette(text, content)
 		if err := g.write(relative, text, false); err != nil {
 			return err
 		}
@@ -55,19 +53,9 @@ func (g generator) generateTool(name string) error {
 		if err != nil {
 			return err
 		}
-		gui := regexp.MustCompile(`(?m)^gui:[ \t]*(?:#[^\n]*)?\n(?:^[ \t]+\S[^\n]*(?:\n|$)|^[ \t]*\n)*`).FindStringIndex(text)
-		if gui == nil {
-			text = "gui:\n" + themeBlock + "\n" + text
-		} else {
-			block := text[gui[0]:gui[1]]
-			theme := regexp.MustCompile(`(?m)^  theme:[ \t]*\n(?:^[ \t]{4,}\S[^\n]*(?:\n|$)|^[ \t]*\n)*`).FindStringIndex(block)
-			if theme == nil {
-				end := strings.IndexByte(block, '\n') + 1
-				block = block[:end] + themeBlock + block[end:]
-			} else {
-				block = block[:theme[0]] + themeBlock + block[theme[1]:]
-			}
-			text = text[:gui[0]] + block + text[gui[1]:]
+		text, err = replaceLazygitTheme(text, themeBlock)
+		if err != nil {
+			return err
 		}
 		if err := g.write(relative, text, false); err != nil {
 			return err

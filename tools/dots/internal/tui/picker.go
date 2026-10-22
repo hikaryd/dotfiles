@@ -23,6 +23,7 @@ func table(rows []string) []string {
 	widths := []int{}
 	for _, row := range rows {
 		for column, value := range strings.Split(row, "\t") {
+			value = Clean(value)
 			for column >= len(widths) {
 				widths = append(widths, 0)
 			}
@@ -34,6 +35,7 @@ func table(rows []string) []string {
 		var cells []string
 		values := strings.Split(row, "\t")
 		for column, value := range values {
+			value = Clean(value)
 			if column < len(values)-1 {
 				value = Pad(value, min(48, widths[column]))
 			}

@@ -52,6 +52,7 @@ type resource struct {
 	Metadata metadata
 	Spec     struct {
 		Replicas       *int
+		NodeName       string
 		Selector       json.RawMessage
 		Paused         bool
 		Strategy       struct{ Type string }

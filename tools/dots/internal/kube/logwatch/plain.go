@@ -3,11 +3,13 @@ package logwatch
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"os"
 	"os/exec"
 	"sync"
+	"time"
 )
 
 // Piped logs bypass the presentation module. Preserve kubectl bytes, separate
@@ -19,8 +21,11 @@ func streamPlain(ctx context.Context, cfg config) int {
 	results := make(chan error, len(cfg.pods))
 	for _, pod := range cfg.pods {
 		go func(pod string) {
-			command := exec.CommandContext(ctx, cfg.kubectl, logArgs(cfg, pod)...)
-			writer := &plainFilter{output: output}
+			childCtx, cancel := context.WithCancel(ctx)
+			defer cancel()
+			command := exec.CommandContext(childCtx, cfg.kubectl, logArgs(cfg, pod)...)
+			command.WaitDelay = 2 * time.Second
+			writer := &plainFilter{output: output, cancel: cancel}
 			if cfg.filter {
 				writer.terms = queryTerms(cfg.query)
 			}
@@ -71,26 +76,39 @@ type plainFilter struct {
 	output  io.Writer
 	terms   []string
 	pending []byte
+	cancel  context.CancelFunc
 }
 
-func (w *plainFilter) Write(data []byte) (int, error) {
+func (w *plainFilter) Write(data []byte) (n int, err error) {
+	defer func() {
+		if err != nil && w.cancel != nil {
+			w.cancel()
+		}
+	}()
 	if len(w.terms) == 0 {
 		return w.output.Write(data)
 	}
 	size := len(data)
-	w.pending = append(w.pending, data...)
-	for {
-		end := bytes.IndexByte(w.pending, '\n')
+	for len(data) > 0 {
+		end := bytes.IndexByte(data, '\n')
+		take := len(data)
+		if end >= 0 {
+			take = end + 1
+		}
+		if len(w.pending)+take > 16<<20 {
+			return 0, errors.New("filtered log record exceeds 16 MiB")
+		}
+		w.pending = append(w.pending, data[:take]...)
+		data = data[take:]
 		if end < 0 {
 			break
 		}
-		line := w.pending[:end+1]
-		if matchesAll(string(line), w.terms) {
-			if _, err := w.output.Write(line); err != nil {
+		if matchesAll(string(w.pending), w.terms) {
+			if _, err := w.output.Write(w.pending); err != nil {
 				return 0, err
 			}
 		}
-		w.pending = w.pending[end+1:]
+		w.pending = w.pending[:0]
 	}
 	return size, nil
 }
