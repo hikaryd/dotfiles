@@ -1,4 +1,4 @@
-package opencode
+package beatapi
 
 import (
 	"bytes"
@@ -25,17 +25,17 @@ func serviceDomain() string   { return "gui/" + strconv.Itoa(os.Getuid()) }
 func xmlText(s string) string { var b bytes.Buffer; xml.EscapeText(&b, []byte(s)); return b.String() }
 func (c *cli) servicePlist() ([]byte, error) {
 	if !filepath.IsAbs(c.binary) || filepath.Base(c.binary) != "dots-tools" || strings.Contains(c.binary, "go-build") || !filepath.IsAbs(c.config) {
-		return nil, errors.New("opencode: build/install dots-tools using scripts/build-go-tools.sh before setup")
+		return nil, errors.New("beatapi: build/install dots-tools using scripts/build-go-tools.sh before setup")
 	}
 	st, err := os.Stat(c.binary)
 	if err != nil || !st.Mode().IsRegular() || st.Mode().Perm()&0111 == 0 {
-		return nil, errors.New("opencode: installed dots-tools executable is unavailable")
+		return nil, errors.New("beatapi: installed dots-tools executable is unavailable")
 	}
 	return []byte(fmt.Sprintf(`<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0"><dict>
 <key>Label</key><string>%s</string>
-<key>ProgramArguments</key><array><string>%s</string><string>proxy</string><string>opencode</string><string>serve</string><string>--config</string><string>%s</string></array>
+<key>ProgramArguments</key><array><string>%s</string><string>proxy</string><string>beatapi</string><string>serve</string><string>--config</string><string>%s</string></array>
 <key>EnvironmentVariables</key><dict><key>HOME</key><string>%s</string><key>XDG_CONFIG_HOME</key><string>%s</string></dict>
 <key>RunAtLoad</key><true/>
 <key>KeepAlive</key><true/>
@@ -47,7 +47,7 @@ func (c *cli) servicePlist() ([]byte, error) {
 }
 func (c *cli) launchctl(args ...string) ([]byte, error) {
 	if runtime.GOOS != "darwin" {
-		return nil, errors.New("opencode: launchd requires macOS")
+		return nil, errors.New("beatapi: launchd requires macOS")
 	}
 	ctx, cancel := context.WithTimeout(c.ctx, 10*time.Second)
 	defer cancel()
@@ -57,7 +57,7 @@ func (c *cli) serviceLoaded() (bool, error) {
 	output, err := c.launchctl("print", serviceDomain()+"/"+label)
 	if err == nil {
 		if !c.matchesLoadedJob(output) {
-			return false, errors.New("opencode: loaded job definition differs; no service changed")
+			return false, errors.New("beatapi: loaded job definition differs; no service changed")
 		}
 		return true, nil
 	}
@@ -65,27 +65,27 @@ func (c *cli) serviceLoaded() (bool, error) {
 	if errors.As(err, &exit) && exit.ExitCode() == 113 {
 		return false, nil
 	}
-	return false, errors.New("opencode: cannot inspect own LaunchAgent; no service changed")
+	return false, errors.New("beatapi: cannot inspect own LaunchAgent; no service changed")
 }
 
 // A matching file on disk alone cannot prove ownership of a loaded label.
 func (c *cli) matchesLoadedJob(output []byte) bool {
-	return launchd.Matches(output, c.servicePath(), []string{c.binary, "proxy", "opencode", "serve", "--config", c.config})
+	return launchd.Matches(output, c.servicePath(), []string{c.binary, "proxy", "beatapi", "serve", "--config", c.config})
 }
 func (c *cli) ownedPlist(expected []byte) (bool, error) {
 	if err := checkPath(c.servicePath()); err != nil {
 		if errors.Is(err, os.ErrNotExist) {
 			return false, nil
 		}
-		return false, errors.New("opencode: unsafe LaunchAgent file; refusing to replace it")
+		return false, errors.New("beatapi: unsafe LaunchAgent file; refusing to replace it")
 	}
 	st, err := os.Lstat(c.servicePath())
 	if err != nil || !st.Mode().IsRegular() {
-		return false, errors.New("opencode: unsafe LaunchAgent file")
+		return false, errors.New("beatapi: unsafe LaunchAgent file")
 	}
 	b, err := os.ReadFile(c.servicePath())
 	if err != nil || !bytes.Equal(b, expected) {
-		return false, errors.New("opencode: existing LaunchAgent definition differs; refusing to replace or stop it")
+		return false, errors.New("beatapi: existing LaunchAgent definition differs; refusing to replace or stop it")
 	}
 	return true, nil
 }
@@ -104,29 +104,29 @@ func (c *cli) installService(cfg Config) error {
 	}
 	if loaded {
 		if !exists {
-			return errors.New("opencode: loaded service has no matching plist; no service changed")
+			return errors.New("beatapi: loaded service has no matching plist; no service changed")
 		}
 		return nil
 	}
 	listener, err := net.Listen("tcp4", cfg.address())
 	if err != nil {
-		return errors.New("opencode: API port is occupied; no existing process was stopped")
+		return errors.New("beatapi: API port is occupied; no existing process was stopped")
 	}
 	listener.Close()
 	dir := filepath.Dir(c.servicePath())
 	if err := checkPath(dir); err != nil && !errors.Is(err, os.ErrNotExist) {
-		return errors.New("opencode: unsafe LaunchAgents directory")
+		return errors.New("beatapi: unsafe LaunchAgents directory")
 	}
 	if err := os.MkdirAll(dir, 0700); err != nil {
-		return errors.New("opencode: cannot create LaunchAgents directory")
+		return errors.New("beatapi: cannot create LaunchAgents directory")
 	}
 	if !exists {
 		if err := atomicPrivate(c.servicePath(), data); err != nil {
-			return errors.New("opencode: cannot write own LaunchAgent")
+			return errors.New("beatapi: cannot write own LaunchAgent")
 		}
 	}
 	if _, err := c.launchctl("bootstrap", serviceDomain(), c.servicePath()); err != nil {
-		return errors.New("opencode: cannot bootstrap LaunchAgent; key retained, jg unchanged")
+		return errors.New("beatapi: cannot bootstrap LaunchAgent; key retained, jg unchanged")
 	}
 	return nil
 }
@@ -145,18 +145,18 @@ func (c *cli) stopService() error {
 	}
 	if loaded {
 		if !exists {
-			return errors.New("opencode: loaded service has no matching plist; refusing to stop it")
+			return errors.New("beatapi: loaded service has no matching plist; refusing to stop it")
 		}
 		if _, err := c.launchctl("bootout", serviceDomain()+"/"+label); err != nil {
-			return errors.New("opencode: cannot unload own LaunchAgent")
+			return errors.New("beatapi: cannot unload own LaunchAgent")
 		}
 	}
 	if exists {
 		if os.Remove(c.servicePath()) != nil {
-			return errors.New("opencode: cannot remove own LaunchAgent")
+			return errors.New("beatapi: cannot remove own LaunchAgent")
 		}
 	}
-	fmt.Fprintln(c.out, "OpenCode LaunchAgent stopped; configuration and jg credentials retained.")
+	fmt.Fprintln(c.out, "BeatAPI LaunchAgent stopped; configuration and jg credentials retained.")
 	return nil
 }
 func (c *cli) restartService() error {
@@ -166,35 +166,35 @@ func (c *cli) restartService() error {
 	}
 	exists, err := c.ownedPlist(data)
 	if err != nil || !exists {
-		return errors.New("opencode: matching LaunchAgent required; run setup")
+		return errors.New("beatapi: matching LaunchAgent required; run setup")
 	}
 	loaded, err := c.serviceLoaded()
 	if err != nil {
 		return err
 	}
 	if !loaded {
-		return errors.New("opencode: LaunchAgent is not loaded; run setup")
+		return errors.New("beatapi: LaunchAgent is not loaded; run setup")
 	}
 	if _, err := c.launchctl("kickstart", "-k", serviceDomain()+"/"+label); err != nil {
-		return errors.New("opencode: cannot restart own LaunchAgent")
+		return errors.New("beatapi: cannot restart own LaunchAgent")
 	}
-	fmt.Fprintln(c.out, "OpenCode LaunchAgent restarted.")
+	fmt.Fprintln(c.out, "BeatAPI LaunchAgent restarted.")
 	return nil
 }
 func (c *cli) lock() (func(), error) {
 	dir := filepath.Dir(c.config)
 	if privateDir(dir) != nil {
-		return nil, errors.New("opencode: cannot secure state directory")
+		return nil, errors.New("beatapi: cannot secure state directory")
 	}
 	path := filepath.Join(dir, "service.lock")
 	f, err := os.OpenFile(path, os.O_CREATE|os.O_RDWR|syscall.O_NOFOLLOW, 0600)
 	if err != nil {
-		return nil, errors.New("opencode: cannot open private lock")
+		return nil, errors.New("beatapi: cannot open private lock")
 	}
 	st, err := f.Stat()
 	if err != nil || !st.Mode().IsRegular() || st.Mode().Perm()&0077 != 0 {
 		f.Close()
-		return nil, errors.New("opencode: unsafe lock file")
+		return nil, errors.New("beatapi: unsafe lock file")
 	}
 	deadline := time.Now().Add(5 * time.Second)
 	for {
@@ -204,7 +204,7 @@ func (c *cli) lock() (func(), error) {
 		}
 		if !errors.Is(err, syscall.EWOULDBLOCK) || time.Now().After(deadline) {
 			f.Close()
-			return nil, errors.New("opencode: another configuration command is busy")
+			return nil, errors.New("beatapi: another configuration command is busy")
 		}
 		select {
 		case <-c.ctx.Done():

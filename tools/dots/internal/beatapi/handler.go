@@ -1,4 +1,4 @@
-package opencode
+package beatapi
 
 import (
 	"bytes"
@@ -11,51 +11,36 @@ import (
 	"net"
 	"net/http"
 	"net/url"
-	"slices"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 )
 
-const upstreamURL = "https://opencode.ai/zen/v1"
+const upstreamURL = "https://api.beatapi.io/v1"
 const maxBody = 10 << 20
 
-var chatModels = []string{"deepseek-v4-flash-free", "big-pickle", "minimax-m2.5-free", "nemotron-3-super-free", "qwen3.6-plus-free"}
-
 type handler struct {
-	load      func() (Config, error)
-	client    *http.Client
-	upstream  string
-	mu        sync.Mutex
-	session   string
-	sessionAt time.Time
+	load     func() (Config, error)
+	client   *http.Client
+	upstream string
+	inflight chan struct{}
 }
 
 func newHandler(load func() (Config, error), client *http.Client, upstream string) http.Handler {
-	return &handler{load: load, client: client, upstream: strings.TrimRight(upstream, "/")}
+	return &handler{load: load, client: client, upstream: strings.TrimRight(upstream, "/"), inflight: make(chan struct{}, 8)}
 }
 func upstreamClient(proxy string) (*http.Client, error) {
 	u, err := url.Parse(proxy)
 	if err != nil {
-		return nil, errors.New("opencode: invalid outgoing proxy")
+		return nil, errors.New("beatapi: invalid outgoing proxy")
 	}
 	tr := &http.Transport{Proxy: http.ProxyURL(u), DialContext: (&net.Dialer{Timeout: 15 * time.Second, KeepAlive: 30 * time.Second}).DialContext, TLSHandshakeTimeout: 15 * time.Second, ResponseHeaderTimeout: 30 * time.Second, IdleConnTimeout: 60 * time.Second, MaxIdleConns: 16, MaxIdleConnsPerHost: 8, ForceAttemptHTTP2: true}
 	return &http.Client{Transport: tr, Timeout: 10 * time.Minute, CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }}, nil
 }
-func ocID(prefix string) string {
+func newID(prefix string) string {
 	var b [16]byte
 	rand.Read(b[:])
 	return prefix + "_" + hex.EncodeToString(b[:])
-}
-func (h *handler) sessionID() string {
-	h.mu.Lock()
-	defer h.mu.Unlock()
-	if h.session == "" || time.Since(h.sessionAt) >= 30*time.Minute {
-		h.session = ocID("ses")
-		h.sessionAt = time.Now()
-	}
-	return h.session
 }
 func localRequest(r *http.Request) bool {
 	host := r.Host
@@ -97,12 +82,6 @@ func apiError(w http.ResponseWriter, anthropic bool, status int, message string)
 	}
 	writeJSON(w, status, e)
 }
-func allowedModel(model string, systemone bool) bool {
-	if systemone {
-		return model == jevModel
-	}
-	return slices.Contains(chatModels, model)
-}
 func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	anthropic := r.URL.Path == "/v1/messages"
 	if !localRequest(r) {
@@ -132,20 +111,23 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if path == "/health" {
-		writeJSON(w, 200, map[string]any{"service": label, "version": "1", "configured": true, "endpoints": []string{"/v1/models", "/v1/chat/completions", "/v1/messages", "/v1/systemone"}})
+		writeJSON(w, 200, map[string]any{"service": label, "version": "1", "configured": true, "capabilities": []string{"beatapi"}, "endpoints": []string{"/v1/models", "/v1/chat/completions", "/v1/messages", "/v1/systemone"}})
 		return
 	}
 	if path == "/v1/models" {
-		models := []map[string]string{}
-		for _, id := range append(append([]string{}, chatModels...), jevModel) {
-			models = append(models, map[string]string{"id": id, "object": "model", "owned_by": "opencode"})
-		}
-		writeJSON(w, 200, map[string]any{"object": "list", "data": models})
+		writeJSON(w, 200, map[string]any{"object": "list", "data": listedModels()})
 		return
 	}
 	ct, _, err := mime.ParseMediaType(r.Header.Get("Content-Type"))
 	if err != nil || ct != "application/json" {
 		apiError(w, anthropic, 415, "Content-Type must be application/json")
+		return
+	}
+	select {
+	case h.inflight <- struct{}{}:
+		defer func() { <-h.inflight }()
+	default:
+		apiError(w, anthropic, 429, "Local inference capacity reached; try later")
 		return
 	}
 	body, err := io.ReadAll(http.MaxBytesReader(w, r.Body, maxBody))
@@ -164,12 +146,17 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var model string
-	if json.Unmarshal(fields["model"], &model) != nil || !allowedModel(model, path == "/v1/systemone") {
-		apiError(w, anthropic, 400, "Unsupported model for this endpoint; only listed free models are allowed")
+	if json.Unmarshal(fields["model"], &model) != nil {
+		apiError(w, anthropic, 400, errModel.Error())
 		return
 	}
-	if model == "big-pickle" {
-		fields["model"] = json.RawMessage(`"deepseek-v4-flash-free"`)
+	resolved, err := resolveModel(model, path == "/v1/systemone")
+	if err != nil {
+		apiError(w, anthropic, 400, err.Error())
+		return
+	}
+	if resolved != model {
+		fields["model"], _ = json.Marshal(resolved)
 		body, _ = json.Marshal(fields)
 	}
 	if anthropic {
@@ -190,11 +177,6 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", "Bearer "+c.APIKey)
-	req.Header.Set("User-Agent", "opencode/1.15.0 ai-sdk/provider-utils/4.0.23 runtime/bun/1.3.13")
-	req.Header.Set("X-Opencode-Client", "cli")
-	req.Header.Set("X-Opencode-Project", "global")
-	req.Header.Set("X-Opencode-Request", ocID("msg"))
-	req.Header.Set("X-Opencode-Session", h.sessionID())
 	res, err := h.client.Do(req)
 	if err != nil {
 		status := 502
@@ -202,7 +184,7 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		if errors.As(err, &timeout) && timeout.Timeout() {
 			status = 504
 		}
-		apiError(w, anthropic, status, "OpenCode transport unavailable or timed out; check the outgoing proxy")
+		apiError(w, anthropic, status, "BeatAPI transport unavailable or timed out; check the outgoing proxy")
 		return
 	}
 	defer res.Body.Close()
@@ -214,7 +196,7 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				w.Header().Set("Retry-After", date.UTC().Format(http.TimeFormat))
 			}
 		}
-		apiError(w, anthropic, res.StatusCode, "OpenCode rejected the request; check model availability, key and quota")
+		apiError(w, anthropic, res.StatusCode, upstreamRejection(res.StatusCode))
 		return
 	}
 	if anthropic {
@@ -222,22 +204,22 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		json.Unmarshal(fields["stream"], &streaming)
 		if streaming {
 			if !strings.HasPrefix(res.Header.Get("Content-Type"), "text/event-stream") {
-				apiError(w, true, 502, "OpenCode did not return a stream")
+				apiError(w, true, 502, "BeatAPI did not return a stream")
 				return
 			}
 			if err := streamAnthropic(w, res.Body, model); err != nil {
-				sseEvent(w, "error", map[string]any{"type": "error", "error": map[string]string{"type": "api_error", "message": "OpenCode stream interrupted"}})
+				sseEvent(w, "error", map[string]any{"type": "error", "error": map[string]string{"type": "api_error", "message": "BeatAPI stream interrupted"}})
 			}
 			return
 		}
 		b, readErr := io.ReadAll(io.LimitReader(res.Body, maxBody+1))
 		if readErr != nil || len(b) > maxBody {
-			apiError(w, true, 502, "OpenCode response unreadable or too large")
+			apiError(w, true, 502, "BeatAPI response unreadable or too large")
 			return
 		}
 		b, err = anthropicResponse(b, model)
 		if err != nil {
-			apiError(w, true, 502, "Invalid OpenCode completion")
+			apiError(w, true, 502, "Invalid BeatAPI completion")
 			return
 		}
 		w.Header().Set("Content-Type", "application/json")
@@ -252,7 +234,7 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		content, parseErr = "application/json", nil
 	}
 	if parseErr != nil || (content != "application/json" && content != "text/event-stream") {
-		apiError(w, false, 502, "Unsupported OpenCode response content type")
+		apiError(w, false, 502, "Unsupported BeatAPI response content type")
 		return
 	}
 	w.Header().Set("Content-Type", content)
@@ -268,7 +250,7 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	b, readErr := io.ReadAll(io.LimitReader(res.Body, maxBody+1))
 	var payload struct{ Error json.RawMessage }
 	if readErr != nil || len(b) > maxBody || json.Unmarshal(b, &payload) != nil || len(payload.Error) > 0 {
-		apiError(w, false, 502, "Invalid or interrupted OpenCode JSON response")
+		apiError(w, false, 502, "Invalid or interrupted BeatAPI JSON response")
 		return
 	}
 	w.WriteHeader(res.StatusCode)

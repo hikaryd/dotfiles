@@ -1,5 +1,5 @@
-// Package opencode provides a single-user loopback API backed by OpenCode.
-package opencode
+// Package beatapi provides a single-user loopback API for free BeatAPI models.
+package beatapi
 
 import (
 	"encoding/json"
@@ -17,8 +17,8 @@ import (
 
 const defaultPort = 6446
 const maxConfig = 64 << 10 // Covers JSON escaping of an accepted 8 KiB key.
-const label = "local.dots.opencode-proxy"
-const jevModel = "jev-1.13-free"
+const label = "local.dots.beatapi-proxy"
+const jevModel = "jev-1.14-free"
 
 // Config is private on disk; never format it in diagnostics.
 type Config struct {
@@ -27,25 +27,25 @@ type Config struct {
 	ProxyURL string `json:"proxy_url"`
 }
 
-var errConfig = errors.New("opencode: cannot read secure configuration; run setup or key")
+var errConfig = errors.New("beatapi: cannot read secure configuration; run setup or key")
 
 func (c Config) validate() error {
 	if c.APIKey == "" || c.APIKey == "public" || len(c.APIKey) > 8192 || strings.IndexFunc(c.APIKey, func(r rune) bool { return unicode.IsSpace(r) || unicode.IsControl(r) }) >= 0 {
-		return errors.New("opencode: provide a non-public API key without whitespace (maximum 8 KiB)")
+		return errors.New("beatapi: provide a non-public API key without whitespace (maximum 8 KiB)")
 	}
 	if c.Port < 1 || c.Port > 65535 {
-		return errors.New("opencode: local port must be between 1 and 65535")
+		return errors.New("beatapi: local port must be between 1 and 65535")
 	}
 	u, err := url.Parse(c.ProxyURL)
 	if err != nil || u.Scheme != "http" || u.Hostname() != "127.0.0.1" || u.User != nil || u.Path != "" || u.RawQuery != "" || u.Fragment != "" {
-		return errors.New("opencode: outgoing proxy must be http://127.0.0.1:PORT")
+		return errors.New("beatapi: outgoing proxy must be http://127.0.0.1:PORT")
 	}
 	p, err := strconv.Atoi(u.Port())
 	if err != nil || p < 1 || p > 65535 {
-		return errors.New("opencode: invalid outgoing proxy port")
+		return errors.New("beatapi: invalid outgoing proxy port")
 	}
 	if p == c.Port {
-		return errors.New("opencode: API and outgoing proxy ports must differ")
+		return errors.New("beatapi: API and outgoing proxy ports must differ")
 	}
 	return nil
 }
@@ -94,7 +94,7 @@ func checkPath(path string) error {
 			return err
 		}
 		if st.Mode()&os.ModeSymlink != 0 {
-			return errors.New("opencode: refusing symbolic link")
+			return errors.New("beatapi: refusing symbolic link")
 		}
 	}
 	return nil
@@ -110,7 +110,7 @@ func privateDir(path string) error {
 	}
 	st, err := os.Lstat(path)
 	if err != nil || !st.IsDir() {
-		return errors.New("opencode: invalid private directory")
+		return errors.New("beatapi: invalid private directory")
 	}
 	return os.Chmod(path, 0700)
 }
@@ -150,13 +150,13 @@ func saveConfig(path string, c Config) error {
 	}
 	b, err := json.MarshalIndent(c, "", "  ")
 	if err != nil {
-		return errors.New("opencode: cannot encode configuration")
+		return errors.New("beatapi: cannot encode configuration")
 	}
 	if err := privateDir(filepath.Dir(path)); err != nil {
-		return errors.New("opencode: cannot secure configuration directory")
+		return errors.New("beatapi: cannot secure configuration directory")
 	}
 	if err := atomicPrivate(path, append(b, '\n')); err != nil {
-		return errors.New("opencode: cannot save configuration safely")
+		return errors.New("beatapi: cannot save configuration safely")
 	}
 	return nil
 }
@@ -165,9 +165,9 @@ func atomicPrivate(path string, b []byte) error {
 		return err
 	}
 	if st, err := os.Lstat(path); err == nil && !st.Mode().IsRegular() {
-		return errors.New("opencode: not a regular file")
+		return errors.New("beatapi: not a regular file")
 	}
-	f, err := os.CreateTemp(filepath.Dir(path), ".opencode-*")
+	f, err := os.CreateTemp(filepath.Dir(path), ".beatapi-*")
 	if err != nil {
 		return err
 	}

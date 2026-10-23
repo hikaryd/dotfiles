@@ -1,4 +1,4 @@
-package opencode
+package beatapi
 
 import (
 	"encoding/json"
@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-var errAnthropic = errors.New("opencode: unsupported or malformed Anthropic content; only text and tools are supported")
+var errAnthropic = errors.New("beatapi: unsupported or malformed Anthropic content; only text and tools are supported")
 
 type block struct {
 	Type      string          `json:"type"`
@@ -210,14 +210,14 @@ func anthropicResponse(body []byte, model string) ([]byte, error) {
 		Usage chatUsage
 	}
 	if json.Unmarshal(body, &input) != nil || len(input.Choices) == 0 {
-		return nil, errors.New("opencode: invalid upstream completion")
+		return nil, errors.New("beatapi: invalid upstream completion")
 	}
 	choice := input.Choices[0]
 	content := []block{}
 	if len(choice.Message.Content) > 0 && string(choice.Message.Content) != "null" {
 		text, err := textContent(choice.Message.Content)
 		if err != nil {
-			return nil, errors.New("opencode: unsupported upstream content")
+			return nil, errors.New("beatapi: unsupported upstream content")
 		}
 		if text != "" {
 			content = append(content, block{Type: "text", Text: text})
@@ -226,9 +226,9 @@ func anthropicResponse(body []byte, model string) ([]byte, error) {
 	for _, tool := range choice.Message.ToolCalls {
 		var obj map[string]json.RawMessage
 		if tool.ID == "" || tool.Function.Name == "" || json.Unmarshal([]byte(tool.Function.Arguments), &obj) != nil || obj == nil {
-			return nil, errors.New("opencode: invalid upstream tool call")
+			return nil, errors.New("beatapi: invalid upstream tool call")
 		}
 		content = append(content, block{Type: "tool_use", ID: tool.ID, Name: tool.Function.Name, Input: json.RawMessage(tool.Function.Arguments)})
 	}
-	return json.Marshal(map[string]any{"id": ocID("msg"), "type": "message", "role": "assistant", "model": model, "content": content, "stop_reason": stopReason(choice.Finish), "stop_sequence": nil, "usage": map[string]int{"input_tokens": input.Usage.Input, "output_tokens": input.Usage.Output}})
+	return json.Marshal(map[string]any{"id": newID("msg"), "type": "message", "role": "assistant", "model": model, "content": content, "stop_reason": stopReason(choice.Finish), "stop_sequence": nil, "usage": map[string]int{"input_tokens": input.Usage.Input, "output_tokens": input.Usage.Output}})
 }

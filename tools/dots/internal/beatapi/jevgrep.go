@@ -1,8 +1,7 @@
-package opencode
+package beatapi
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -14,43 +13,35 @@ import (
 )
 
 func (c *cli) backupPath() string {
-	return filepath.Join(filepath.Dir(c.config), "jevgrep-credentials.before-opencode.json")
+	return filepath.Join(filepath.Dir(c.config), "jevgrep-credentials.before-beatapi.json")
 }
 func (c *cli) connectJevgrep(cfg Config) error {
 	binary, err := exec.LookPath("jg")
 	if err != nil {
-		return errors.New("opencode: official jevgrep (jg) is unavailable; client unchanged")
+		return errors.New("beatapi: official jevgrep (jg) is unavailable; client unchanged")
 	}
 	path := filepath.Join(c.base, "jevgrep/credentials.json")
 	if err := privateDir(filepath.Dir(path)); err != nil {
-		return errors.New("opencode: cannot secure jevgrep directory; client unchanged")
+		return errors.New("beatapi: cannot secure jevgrep directory; client unchanged")
 	}
 	var before []byte
 	existed := false
 	if err := privateFile(path); err == nil {
 		f, e := os.Open(path)
 		if e != nil {
-			return errors.New("opencode: cannot read jevgrep credentials")
+			return errors.New("beatapi: cannot read jevgrep credentials")
 		}
 		before, err = io.ReadAll(io.LimitReader(f, 1<<20+1))
 		f.Close()
 		if err != nil || len(before) > 1<<20 {
-			return errors.New("opencode: jevgrep credentials unreadable or too large")
+			return errors.New("beatapi: jevgrep credentials unreadable or too large")
 		}
 		existed = true
 	} else if !errors.Is(err, os.ErrNotExist) {
-		return errors.New("opencode: unsafe jevgrep credentials; client unchanged")
+		return errors.New("beatapi: unsafe jevgrep credentials; client unchanged")
 	}
 	baseURL := fmt.Sprintf("http://%s/v1", cfg.address())
-	matches := func(b []byte) bool {
-		var current struct {
-			Provider string
-			BaseURL  string
-			Model    string
-			APIKey   string
-		}
-		return json.Unmarshal(b, &current) == nil && current.Provider == "custom" && current.BaseURL == baseURL && current.Model == jevModel && current.APIKey == "local"
-	}
+	matches := func(b []byte) bool { return jevgrepMatches(b, cfg) }
 	if matches(before) {
 		return nil
 	}
@@ -68,17 +59,17 @@ func (c *cli) connectJevgrep(cfg Config) error {
 			}
 			if e != nil {
 				os.Remove(backup)
-				return errors.New("opencode: cannot back up jevgrep credentials; client unchanged")
+				return errors.New("beatapi: cannot back up jevgrep credentials; client unchanged")
 			}
 		} else if !errors.Is(e, os.ErrExist) || privateFile(backup) != nil {
-			return errors.New("opencode: unsafe jevgrep backup; client unchanged")
+			return errors.New("beatapi: unsafe jevgrep backup; client unchanged")
 		}
 	}
 	ctx, cancel := context.WithTimeout(c.ctx, 30*time.Second)
 	defer cancel()
 	cmd := exec.CommandContext(ctx, binary, "auth", "--provider", "custom", "--base-url", baseURL, "--model", jevModel, "--stdin")
 	cmd.Stdin = strings.NewReader("local\n")
-	// The real OpenCode key never enters jg argv, environment or stdin.
+	// Real provider keys never enter jg argv, environment or stdin.
 	runErr := cmd.Run()
 	after, readErr := os.ReadFile(path)
 	if runErr == nil && readErr == nil && privateFile(path) == nil && matches(after) {
@@ -97,7 +88,7 @@ func (c *cli) connectJevgrep(cfg Config) error {
 		}
 	}
 	if rollback != nil {
-		return errors.New("opencode: jg auth failed and credentials restoration failed; recover the private backup before retrying")
+		return errors.New("beatapi: jg auth failed and credentials restoration failed; recover the private backup before retrying")
 	}
-	return errors.New("opencode: jg auth failed or wrote incompatible credentials; previous client configuration restored")
+	return errors.New("beatapi: jg auth failed or wrote incompatible credentials; previous client configuration restored")
 }

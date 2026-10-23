@@ -15,7 +15,7 @@ import (
 	"syscall"
 	"unicode/utf8"
 
-	"dots/native/internal/opencode"
+	"dots/native/internal/beatapi"
 	"dots/native/internal/tui"
 )
 
@@ -34,15 +34,15 @@ type controller struct {
 	out, errOut              io.Writer
 }
 
-// Run dispatches independent opencode and Pi xray controllers.
+// Run dispatches independent beatapi and Pi xray controllers.
 func Run(root string, args []string) int { return run(root, args, os.Stdin, os.Stdout, os.Stderr) }
 
 func run(_ string, args []string, in io.Reader, out, errOut io.Writer) int {
-	if len(args) > 0 && args[0] == "opencode" {
-		return opencode.Run(args[1:], in, out, errOut)
+	if len(args) > 0 && args[0] == "beatapi" {
+		return beatapi.Run(args[1:], in, out, errOut)
 	}
 	if len(args) == 0 {
-		fmt.Fprintln(errOut, "usage: dots-tools proxy pi|opencode")
+		fmt.Fprintln(errOut, "usage: dots-tools proxy pi|beatapi")
 		return 2
 	}
 	home, err := os.UserHomeDir()
@@ -51,7 +51,7 @@ func run(_ string, args []string, in io.Reader, out, errOut io.Writer) int {
 		return 2
 	}
 	if args[0] != "pi" {
-		fmt.Fprintln(errOut, "usage: dots-tools proxy pi|opencode")
+		fmt.Fprintln(errOut, "usage: dots-tools proxy pi|beatapi")
 		return 2
 	}
 	port := 10810

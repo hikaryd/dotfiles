@@ -1,4 +1,4 @@
-package opencode
+package beatapi
 
 import (
 	"os"
@@ -55,14 +55,14 @@ func TestConfigRefusesIntermediateSymlink(t *testing.T) {
 	base := t.TempDir()
 	t.Setenv("XDG_CONFIG_HOME", base)
 	target := t.TempDir()
-	realPath := filepath.Join(target, "opencode-proxy/config.json")
+	realPath := filepath.Join(target, "beatapi-proxy/config.json")
 	if err := saveConfig(realPath, testConfig()); err != nil {
 		t.Fatal(err)
 	}
 	if err := os.Symlink(target, filepath.Join(base, "dots")); err != nil {
 		t.Fatal(err)
 	}
-	path := filepath.Join(base, "dots/opencode-proxy/config.json")
+	path := filepath.Join(base, "dots/beatapi-proxy/config.json")
 	if _, err := loadConfig(path); err == nil {
 		t.Error("read secret through intermediate symlink")
 	}
@@ -82,7 +82,7 @@ func TestConfigAcceptsTrustedBaseSymlink(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Setenv("XDG_CONFIG_HOME", base)
-	path := filepath.Join(base, "dots/opencode-proxy/config.json")
+	path := filepath.Join(base, "dots/beatapi-proxy/config.json")
 	if err := saveConfig(path, testConfig()); err != nil {
 		t.Fatal(err)
 	}

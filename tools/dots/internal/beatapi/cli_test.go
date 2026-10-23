@@ -1,4 +1,4 @@
-package opencode
+package beatapi
 
 import (
 	"bytes"
@@ -18,7 +18,7 @@ func testCLI(t *testing.T) *cli {
 	t.Setenv("HOME", home)
 	t.Setenv("XDG_CONFIG_HOME", filepath.Join(home, ".config"))
 	t.Setenv("PI_PROXY_PORT", "10810")
-	return &cli{ctx: context.Background(), home: home, config: filepath.Join(home, ".config/dots/opencode-proxy/config.json"), base: filepath.Join(home, ".config"), binary: filepath.Join(home, "installed/dots-tools"), in: strings.NewReader(""), out: &bytes.Buffer{}, errOut: &bytes.Buffer{}}
+	return &cli{ctx: context.Background(), home: home, config: filepath.Join(home, ".config/dots/beatapi-proxy/config.json"), base: filepath.Join(home, ".config"), binary: filepath.Join(home, "installed/dots-tools"), in: strings.NewReader(""), out: &bytes.Buffer{}, errOut: &bytes.Buffer{}}
 }
 func fakeCommand(t *testing.T, name, body string) {
 	t.Helper()
@@ -153,7 +153,7 @@ func TestJevgrepBackupAndRollback(t *testing.T) {
 	fakeCommand(t, "jg", `printf '%s\n' "$@" > "$JG_ARGS"
 read key
 [ "$key" = local ] || exit 3
-printf '%s' '{"provider":"custom","apiKey":"local","baseURL":"http://127.0.0.1:6446/v1","model":"jev-1.13-free"}' > "$JG_CREDS"
+printf '%s' '{"provider":"custom","apiKey":"local","baseURL":"http://127.0.0.1:6446/v1","model":"jev-1.14-free"}' > "$JG_CREDS"
 `)
 	if err := c.connectJevgrep(testConfig()); err != nil {
 		t.Fatal(err)

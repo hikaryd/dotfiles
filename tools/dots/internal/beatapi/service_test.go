@@ -1,4 +1,4 @@
-package opencode
+package beatapi
 
 import (
 	"bytes"
@@ -18,7 +18,7 @@ func serviceFixture(t *testing.T) *cli {
 	os.WriteFile(c.binary, []byte("#!/bin/sh\n"), 0700)
 	t.Setenv("LAUNCH_STATE", filepath.Join(c.home, "loaded"))
 	t.Setenv("LAUNCH_ARGS", filepath.Join(c.home, "launch-args"))
-	t.Setenv("LAUNCH_JOB", "gui/503/local.dots.opencode-proxy = {\n\tpath = "+c.servicePath()+"\n\tprogram = "+c.binary+"\n\targuments = {\n\t\t"+strings.Join([]string{c.binary, "proxy", "opencode", "serve", "--config", c.config}, "\n\t\t")+"\n\t}\n}\n")
+	t.Setenv("LAUNCH_JOB", "gui/503/local.dots.beatapi-proxy = {\n\tpath = "+c.servicePath()+"\n\tprogram = "+c.binary+"\n\targuments = {\n\t\t"+strings.Join([]string{c.binary, "proxy", "beatapi", "serve", "--config", c.config}, "\n\t\t")+"\n\t}\n}\n")
 	fakeCommand(t, "launchctl", `printf '%s\n' "$*" >> "$LAUNCH_ARGS"
 case "$1" in
 print) [ -f "$LAUNCH_STATE" ] || exit 113; printf '%s' "$LAUNCH_JOB" ;;
@@ -47,7 +47,7 @@ func TestServicePlistIdempotentAndOwnLifecycle(t *testing.T) {
 	if xml.Unmarshal(b, &doc) != nil {
 		t.Fatal("invalid plist XML")
 	}
-	if !bytes.Contains(b, []byte("local.dots.opencode-proxy")) || !bytes.Contains(b, []byte("--config")) || bytes.Contains(b, []byte("test-secret")) || bytes.Contains(b, []byte("xray")) {
+	if !bytes.Contains(b, []byte("local.dots.beatapi-proxy")) || !bytes.Contains(b, []byte("--config")) || bytes.Contains(b, []byte("test-secret")) || bytes.Contains(b, []byte("xray")) {
 		t.Fatal("unsafe service definition")
 	}
 	if err := c.installService(cfg); err != nil {
@@ -76,7 +76,7 @@ func TestServicePlistIdempotentAndOwnLifecycle(t *testing.T) {
 		t.Fatal("stop deleted key")
 	}
 	calls, _ = os.ReadFile(os.Getenv("LAUNCH_ARGS"))
-	if strings.Contains(string(calls), "pi-proxy") || strings.Contains(string(calls), "kill") {
+	if strings.Contains(string(calls), "local.dots.pi-proxy") || strings.Contains(string(calls), "kill") {
 		t.Fatal("touched another service")
 	}
 }
@@ -104,7 +104,7 @@ func TestServiceRefusesSameLabelForeignJob(t *testing.T) {
 			case "program":
 				job = strings.Replace(job, "program = "+c.binary, "program = /tmp/foreign", 1)
 			case "arguments":
-				job = strings.Replace(job, "\t\topencode\n", "\t\tforeign\n", 1)
+				job = strings.Replace(job, "\t\tbeatapi\n", "\t\tforeign\n", 1)
 			}
 			t.Setenv("LAUNCH_JOB", job)
 			if c.restartService() == nil || c.stopService() == nil {
@@ -129,7 +129,7 @@ func TestServicePreservesTrustedXDGBase(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Setenv("XDG_CONFIG_HOME", c.base)
-	c.config = filepath.Join(c.base, "dots/opencode-proxy/config.json")
+	c.config = filepath.Join(c.base, "dots/beatapi-proxy/config.json")
 	if err := saveConfig(c.config, testConfig()); err != nil {
 		t.Fatal(err)
 	}

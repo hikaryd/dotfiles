@@ -1,4 +1,4 @@
-package opencode
+package beatapi
 
 import (
 	"context"
@@ -62,7 +62,7 @@ func TestServeWaitsForShutdown(t *testing.T) {
 			go func() {
 				client := &http.Client{Transport: &http.Transport{Proxy: nil}, Timeout: 10 * time.Second}
 				defer client.CloseIdleConnections()
-				res, err := client.Post("http://127.0.0.1:"+strconv.Itoa(cfg.Port)+"/v1/chat/completions", "application/json", strings.NewReader(`{"model":"big-pickle"}`))
+				res, err := client.Post("http://127.0.0.1:"+strconv.Itoa(cfg.Port)+"/v1/chat/completions", "application/json", strings.NewReader(`{"model":"glm-5.3-free"}`))
 				if err != nil {
 					response <- result{err: err}
 					return

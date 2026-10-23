@@ -1,4 +1,4 @@
-package opencode
+package beatapi
 
 import (
 	"encoding/json"
@@ -10,7 +10,7 @@ import (
 	"strings"
 )
 
-var errStream = errors.New("opencode: invalid or interrupted upstream stream")
+var errStream = errors.New("beatapi: invalid or interrupted upstream stream")
 
 func sseEvent(w http.ResponseWriter, event string, v any) error {
 	b, err := json.Marshal(v)
@@ -30,7 +30,7 @@ func streamAnthropic(w http.ResponseWriter, r io.Reader, model string) error {
 	w.Header().Set("Cache-Control", "no-cache, no-transform")
 	w.Header().Set("X-Accel-Buffering", "no")
 	emit := func(event string, v map[string]any) error { v["type"] = event; return sseEvent(w, event, v) }
-	if err := emit("message_start", map[string]any{"message": map[string]any{"id": ocID("msg"), "type": "message", "role": "assistant", "model": model, "content": []any{}, "stop_reason": nil, "stop_sequence": nil, "usage": map[string]int{"input_tokens": 0, "output_tokens": 0}}}); err != nil {
+	if err := emit("message_start", map[string]any{"message": map[string]any{"id": newID("msg"), "type": "message", "role": "assistant", "model": model, "content": []any{}, "stop_reason": nil, "stop_sequence": nil, "usage": map[string]int{"input_tokens": 0, "output_tokens": 0}}}); err != nil {
 		return err
 	}
 	tools := map[int]*streamTool{}

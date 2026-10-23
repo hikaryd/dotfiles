@@ -1,4 +1,4 @@
-package opencode
+package beatapi
 
 import (
 	"encoding/json"
@@ -8,7 +8,7 @@ import (
 )
 
 func TestTranslatedStreamRequestsUsage(t *testing.T) {
-	raw, err := anthropicRequest([]byte(`{"stream":true,"model":"big-pickle","messages":[{"role":"user","content":"hello"}]}`))
+	raw, err := anthropicRequest([]byte(`{"stream":true,"model":"glm-5.3-free","messages":[{"role":"user","content":"hello"}]}`))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -37,7 +37,7 @@ func TestToolStreamAggregateBound(t *testing.T) {
 			args = args[n:]
 		}
 		input.WriteString("data: {\"choices\":[{\"finish_reason\":\"tool_calls\"}]}\n\ndata: [DONE]\n\n")
-		err := streamAnthropic(httptest.NewRecorder(), strings.NewReader(input.String()), "big-pickle")
+		err := streamAnthropic(httptest.NewRecorder(), strings.NewReader(input.String()), "glm-5.3-free")
 		if (err != nil) != (size > maxBody) {
 			t.Fatalf("size %d: %v", size, err)
 		}

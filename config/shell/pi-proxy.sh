@@ -33,6 +33,13 @@ pi() (
 # Jevgrep (jg) использует Node fetch: proxy env задаётся только этому процессу.
 unalias jg 2>/dev/null || true
 jg() {
+  if [ "$#" -eq 1 ] && [ "$1" = doctor ]; then
+    # Локальный BeatAPI: одна проверка, без многочасовых retry в jg 0.8.
+    # Код 3 означает другой provider: сохраняем официальный doctor.
+    local result=0
+    command dots-tools proxy beatapi doctor --if-connected </dev/null || result=$?
+    [ "$result" -eq 3 ] || return "$result"
+  fi
   _pi_proxy_ensure jg || return
   local proxy="$PI_PROXY_URL"
   HTTP_PROXY="$proxy" HTTPS_PROXY="$proxy" ALL_PROXY="$proxy" \

@@ -1,7 +1,8 @@
-package opencode
+package beatapi
 
 import (
 	"bufio"
+	"bytes"
 	"encoding/json"
 	"errors"
 	"io"
@@ -9,11 +10,35 @@ import (
 	"strings"
 )
 
+// SSE permits CR, LF and CRLF, including a CRLF split across reader chunks.
+func splitSSE() bufio.SplitFunc {
+	skipLF := false
+	return func(data []byte, atEOF bool) (int, []byte, error) {
+		skipped := 0
+		if skipLF && len(data) > 0 {
+			skipLF = false
+			if data[0] == '\n' {
+				skipped, data = 1, data[1:]
+			}
+		}
+		if i := bytes.IndexAny(data, "\r\n"); i >= 0 {
+			skipLF = data[i] == '\r'
+			return skipped + i + 1, data[:i], nil
+		}
+		if atEOF && len(data) > 0 {
+			return skipped + len(data), data, nil
+		}
+		return skipped, nil, nil
+	}
+}
+
 // readSSE bounds one event, not the entire long-lived response. raw preserves
 // successful events (including id/retry/comments); errors never escape upstream.
 func readSSE(r io.Reader, consume func(event, data, raw string) error) error {
 	scanner := bufio.NewScanner(r)
 	scanner.Buffer(make([]byte, 4096), 1<<20)
+	scanner.Split(splitSSE())
+	first := true
 	var lines, data []string
 	event, size := "", 0
 	dispatch := func() error {
@@ -26,6 +51,10 @@ func readSSE(r io.Reader, consume func(event, data, raw string) error) error {
 	}
 	for scanner.Scan() {
 		line := scanner.Text()
+		if first {
+			line = strings.TrimPrefix(line, "\ufeff")
+			first = false
+		}
 		if line == "" {
 			if err := dispatch(); errors.Is(err, io.EOF) {
 				return nil

@@ -1,4 +1,4 @@
-package opencode
+package beatapi
 
 import (
 	"encoding/json"
@@ -202,7 +202,7 @@ func TestMessagesRouteIntegration(t *testing.T) {
 	}))
 	defer u.Close()
 	h := newHandler(func() (Config, error) { return testConfig(), nil }, u.Client(), u.URL)
-	w := request(h, "POST", "/v1/messages", `{"model":"big-pickle","system":"test","messages":[{"role":"user","content":"hi"}]}`)
+	w := request(h, "POST", "/v1/messages", `{"model":"glm-5.3-free","system":"test","messages":[{"role":"user","content":"hi"}]}`)
 	if w.Code != 200 || !strings.Contains(w.Body.String(), `"type":"message"`) || !strings.Contains(w.Body.String(), `"text":"hello"`) {
 		t.Fatalf("bad messages response: %d %s", w.Code, w.Body)
 	}

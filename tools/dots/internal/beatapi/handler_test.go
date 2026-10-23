@@ -1,4 +1,4 @@
-package opencode
+package beatapi
 
 import (
 	"bufio"
@@ -22,33 +22,22 @@ func request(h http.Handler, method, path, body string) *httptest.ResponseRecord
 	return w
 }
 func TestSystemoneTransparentWithoutLocalAuth(t *testing.T) {
-	body := `{"model":"jev-1.13-free","state":"sample","questions":{"q":{"type":"noul","instructions":"relevant?"}}}`
+	body := `{"model":"jev-1.14-free","state":"sample","questions":{"q":{"type":"noul","instructions":"relevant?"}}}`
 	var count atomic.Int32
-	var session string
-	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	u := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		count.Add(1)
 		b, _ := io.ReadAll(r.Body)
-		if r.URL.Path != "/zen/v1/systemone" || string(b) != body {
+		if r.URL.Path != "/v1/systemone" || string(b) != body {
 			t.Error("changed systemone protocol")
 		}
-		if r.Header.Get("Authorization") != "Bearer test-secret" {
-			t.Error("wrong upstream key")
+		if r.Header.Get("Authorization") != "Bearer test-secret" || r.Header.Get("Cookie") != "" || r.Header.Get("X-Api-Key") != "" || r.Header.Get("X-Opencode-Session") != "" {
+			t.Error("incorrect credential boundary")
 		}
-		if r.Header.Get("Cookie") != "" || r.Header.Get("X-Api-Key") != "" {
-			t.Error("leaked client credentials")
-		}
-		if r.Header.Get("X-Opencode-Request") == "" || r.Header.Get("X-Opencode-Session") == "spoofed" {
-			t.Error("untrusted metadata")
-		}
-		if session != "" && session != r.Header.Get("X-Opencode-Session") {
-			t.Error("session changed prematurely")
-		}
-		session = r.Header.Get("X-Opencode-Session")
 		w.Header().Set("Content-Type", "application/json")
 		io.WriteString(w, `{"answers":{"q":{"type":"noul","noul":0.9}}}`)
 	}))
-	defer upstream.Close()
-	h := newHandler(func() (Config, error) { return testConfig(), nil }, upstream.Client(), upstream.URL+"/zen/v1")
+	defer u.Close()
+	h := newHandler(func() (Config, error) { return testConfig(), nil }, u.Client(), u.URL+"/v1")
 	for i := 0; i < 2; i++ {
 		r := httptest.NewRequest("POST", "http://127.0.0.1:6446/v1/systemone", strings.NewReader(body))
 		r.Header.Set("Content-Type", "application/json")
@@ -68,6 +57,7 @@ func TestSystemoneTransparentWithoutLocalAuth(t *testing.T) {
 		t.Fatal("wrong request count")
 	}
 }
+
 func TestHandlerGuards(t *testing.T) {
 	var calls atomic.Int32
 	u := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { calls.Add(1) }))
@@ -78,7 +68,7 @@ func TestHandlerGuards(t *testing.T) {
 		code                                      int
 	}{
 		{"POST", "/v1/systemone", `{"model":"jev-1.13"}`, "", "", "application/json", 400},
-		{"POST", "/v1/chat/completions", `{"model":"jev-1.13-free"}`, "", "", "application/json", 400},
+		{"POST", "/v1/chat/completions", `{"model":"jev-1.14-free"}`, "", "", "application/json", 400},
 		{"POST", "/v1/chat/completions", `{"model":"paid-model"}`, "", "", "application/json", 400},
 		{"GET", "/v1/systemone", "", "", "", "application/json", 405},
 		{"POST", "/arbitrary", `{}`, "", "", "application/json", 404},
@@ -116,7 +106,7 @@ func TestHandlerAliasErrorsAndKeyReload(t *testing.T) {
 	status := 200
 	u := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		b, _ := io.ReadAll(r.Body)
-		if !strings.Contains(string(b), `"deepseek-v4-flash-free"`) {
+		if !strings.Contains(string(b), `"deepseek-v4.1-flash-free"`) {
 			t.Error("missing alias")
 		}
 		if r.Header.Get("Authorization") != "Bearer "+c.APIKey {
@@ -137,7 +127,7 @@ func TestHandlerAliasErrorsAndKeyReload(t *testing.T) {
 	for _, s := range []int{200, 401, 403, 429, 500} {
 		status = s
 		c.APIKey = "changed-key"
-		w := request(h, "POST", "/v1/chat/completions", `{"model":"big-pickle","messages":[]}`)
+		w := request(h, "POST", "/v1/chat/completions", `{"model":"beatapi/deepseek-v4.1-flash-free","messages":[]}`)
 		if w.Code != s {
 			t.Fatalf("lost status %d", s)
 		}
@@ -146,7 +136,7 @@ func TestHandlerAliasErrorsAndKeyReload(t *testing.T) {
 		}
 	}
 	fail = true
-	w := request(h, "POST", "/v1/chat/completions", `{"model":"big-pickle"}`)
+	w := request(h, "POST", "/v1/chat/completions", `{"model":"glm-5.3-free"}`)
 	if w.Code != 503 || strings.Contains(w.Body.String(), "test-secret") {
 		t.Fatal("unsafe reload failure")
 	}
@@ -165,7 +155,7 @@ func TestStreamingFlushAndCancellation(t *testing.T) {
 	defer h.Close()
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
-	r, _ := http.NewRequestWithContext(ctx, "POST", h.URL+"/v1/chat/completions", strings.NewReader(`{"model":"big-pickle","stream":true}`))
+	r, _ := http.NewRequestWithContext(ctx, "POST", h.URL+"/v1/chat/completions", strings.NewReader(`{"model":"glm-5.3-free","stream":true}`))
 	r.Header.Set("Content-Type", "application/json")
 	res, err := h.Client().Do(r)
 	if err != nil {
@@ -191,7 +181,7 @@ func TestProductionTransportNoRedirectOrDirectFallback(t *testing.T) {
 	if c.CheckRedirect == nil {
 		t.Fatal("redirects enabled")
 	}
-	req, _ := http.NewRequest("GET", "https://opencode.ai/zen/v1/models", nil)
+	req, _ := http.NewRequest("GET", "https://api.beatapi.io/v1/models", nil)
 	if c.CheckRedirect(req, nil) != http.ErrUseLastResponse {
 		t.Fatal("redirect allowed")
 	}
@@ -225,7 +215,7 @@ func TestInterruptedUpstreamAbortsResponse(t *testing.T) {
 			defer u.Close()
 			h := httptest.NewServer(newHandler(func() (Config, error) { return testConfig(), nil }, u.Client(), u.URL))
 			defer h.Close()
-			res, err := h.Client().Post(h.URL+"/v1/chat/completions", "application/json", strings.NewReader(`{"model":"big-pickle","stream":true}`))
+			res, err := h.Client().Post(h.URL+"/v1/chat/completions", "application/json", strings.NewReader(`{"model":"glm-5.3-free","stream":true}`))
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -246,7 +236,7 @@ func TestResponseHeadersCannotReflectKey(t *testing.T) {
 			io.WriteString(w, `{}`)
 		}))
 		h := newHandler(func() (Config, error) { return testConfig(), nil }, u.Client(), u.URL)
-		w := request(h, "POST", "/v1/chat/completions", `{"model":"big-pickle"}`)
+		w := request(h, "POST", "/v1/chat/completions", `{"model":"glm-5.3-free"}`)
 		u.Close()
 		if w.Code != status {
 			t.Fatalf("wrong status: %d", w.Code)
@@ -272,7 +262,7 @@ func TestOpenAIStreamErrorIsSanitized(t *testing.T) {
 			defer u.Close()
 			h := httptest.NewServer(newHandler(func() (Config, error) { return testConfig(), nil }, u.Client(), u.URL))
 			defer h.Close()
-			res, err := h.Client().Post(h.URL+"/v1/chat/completions", "application/json", strings.NewReader(`{"model":"big-pickle","stream":true}`))
+			res, err := h.Client().Post(h.URL+"/v1/chat/completions", "application/json", strings.NewReader(`{"model":"glm-5.3-free","stream":true}`))
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -301,7 +291,7 @@ func TestSSEPassthroughFramingAndCompletion(t *testing.T) {
 }
 
 func TestJSONErrorSanitizedAndSuccessPreserved(t *testing.T) {
-	for _, route := range []struct{ path, model string }{{"/v1/chat/completions", "big-pickle"}, {"/v1/systemone", jevModel}} {
+	for _, route := range []struct{ path, model string }{{"/v1/chat/completions", "glm-5.3-free"}, {"/v1/systemone", jevModel}} {
 		t.Run(route.path, func(t *testing.T) {
 			body := `{"error":{"message":"test-secret"}}`
 			u := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -338,7 +328,7 @@ func TestAnthropicJSONWriteIsBounded(t *testing.T) {
 	}))
 	defer u.Close()
 	h := newHandler(func() (Config, error) { return testConfig(), nil }, u.Client(), u.URL)
-	r := httptest.NewRequest("POST", "http://127.0.0.1:6446/v1/messages", strings.NewReader(`{"model":"big-pickle","messages":[{"role":"user","content":"hi"}]}`))
+	r := httptest.NewRequest("POST", "http://127.0.0.1:6446/v1/messages", strings.NewReader(`{"model":"glm-5.3-free","messages":[{"role":"user","content":"hi"}]}`))
 	r.Header.Set("Content-Type", "application/json")
 	w := &deadlineRecorder{ResponseRecorder: httptest.NewRecorder()}
 	h.ServeHTTP(w, r)
@@ -356,7 +346,7 @@ func TestTransportTimeoutStatus(t *testing.T) {
 	c := u.Client()
 	c.Timeout = 30 * time.Millisecond
 	h := newHandler(func() (Config, error) { return testConfig(), nil }, c, u.URL)
-	w := request(h, "POST", "/v1/chat/completions", `{"model":"big-pickle"}`)
+	w := request(h, "POST", "/v1/chat/completions", `{"model":"glm-5.3-free"}`)
 	if w.Code != 504 {
 		t.Fatal(fmt.Sprint("timeout status ", w.Code))
 	}
