@@ -1,0 +1,28 @@
+name: jcode-neo4j
+services:
+  neo4j:
+    image: "neo4j:5.26.32-community@sha256:\
+      adaa077a3ab023015143b8f73f7076a7d053f12985f5b06f4c6a128c3a2f7240"
+    container_name: jcode-neo4j
+    restart: unless-stopped
+    ports:
+      - '127.0.0.1:7474:7474'
+      - '127.0.0.1:7687:7687'
+    environment:
+      NEO4J_AUTH: neo4j/${NEO4J_PASSWORD:?private credential required}
+      NEO4J_PLUGINS: '["apoc"]'
+      NEO4J_dbms_security_procedures_allowlist: apoc.meta.*
+      NEO4J_server_memory_heap_initial__size: 256m
+      NEO4J_server_memory_heap_max__size: 512m
+      NEO4J_server_memory_pagecache_size: 256m
+    volumes:
+      - graph:/data
+    healthcheck:
+      test: ['CMD-SHELL', "bash -c 'echo > /dev/tcp/127.0.0.1/7687'"]
+      interval: 5s
+      timeout: 3s
+      retries: 24
+      start_period: 20s
+volumes:
+  graph:
+    name: jcode-neo4j-data

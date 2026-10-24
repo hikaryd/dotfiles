@@ -1,0 +1,79 @@
+# macOS
+.DS_Store
+
+# Local AI tools and graph indexes (unanchored: apply at any depth).
+.serena/
+.codegraphcontext/
+.jcode/
+.neo4j/
+*.cgc
+index.scip
+node_modules/
+.venv/
+__pycache__/
+
+# Temporary files
+*.swp
+*.swo
+*.profraw
+*.profdata
+*~
+__pycache__/
+*.py[cod]
+.dual-graph/
+/CLAUDE.md
+
+/.playwright-mcp
+
+# Pi credentials and machine-local runtime must never enter the portable config.
+config/pi/auth.json
+config/pi/models-store.json
+config/pi/sessions/
+config/pi/install/
+config/pi/backups/
+config/pi/*.bak-*
+
+# jcode integrations: only source, templates and dependency locks are portable.
+/config/jcode/**/node_modules/
+/config/jcode/**/dist/
+/config/jcode/**/config/
+/config/jcode/**/results/
+/config/jcode/**/state/
+/config/jcode/**/test/tool-schemas.json
+/config/jcode/auth.json
+/config/jcode/**/web-search.json
+/config/jcode/**/.env*
+# These reproducibility inputs override the personal global package-lock ignore.
+!/config/jcode/package-lock.json
+
+# Machine-local identity, endpoints, and cluster coordinates.
+config/zsh/private.zsh
+config/git/private.inc
+
+# Private Kubernetes watcher inventories live under ~/.config, never in dots.
+**/deploy-watch.resources
+
+# Defense in depth: metrics coordinates and token files belong outside Git.
+**/metrics.private.json
+**/metrics.json
+/config/**/metrics-token*
+
+# Private phone owner endpoints; optional local SSH include, never publish.
+/config/ssh/*owner*.conf
+
+# Локальные отчёты, состояние агентов и кэши.
+/.omx/
+/.omc/
+/.venv/
+/.mypy_cache/
+/.pytest_cache/
+/.ruff_cache/
+/docs/private/
+
+# Compiled native runtime aliases and cross-builds.
+/build/
+/docs/superpowers
+/node_modules
+/package.json
+/docs
+/tests

@@ -1,0 +1,19 @@
+- link:
+    # Neovim
+    ~/.config/nvim:
+      path: config/nvim
+      create: true
+      force: true
+    # Fresh
+    ~/.config/fresh/config.json:
+      path: config/fresh/config.json
+      create: true
+      force: true
+    ~/.config/fresh/themes/ayu-dark.json:
+      path: config/fresh/themes/ayu-dark.json
+      create: true
+      force: true
+    ~/.config/fresh/plugins/auto_vi_mode.ts:
+      path: config/fresh/plugins/auto_vi_mode.ts
+      create: true
+      force: true

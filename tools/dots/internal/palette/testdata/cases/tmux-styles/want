@@ -1,0 +1,5 @@
+set -g pane-border-style 'fg=#414d60'
+set -g pane-active-border-style 'fg=#73d0ff'
+set -g pane-border-style 'fg=#ffffff,bg=default'
+set -g pane-border-style "fg=#ffffff"
+set -g status-right '#[fg=#fff] keep'

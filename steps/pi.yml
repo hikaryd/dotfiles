@@ -1,0 +1,9 @@
+- shell:
+    - command: build/bin/dots-tools setup pi-install
+      description: Install Pi Coding Agent CLI if missing
+      stdout: true
+      stderr: true
+    - command: build/bin/dots-tools setup pi-apply
+      description: Apply Pi settings, desktop MCP, Lens, free web search, Powerline, Ayu theme, Herdr titles and model overrides
+      stdout: true
+      stderr: true

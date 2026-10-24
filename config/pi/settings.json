@@ -1,0 +1,84 @@
+{
+  "defaultProvider": "openai",
+  "defaultModel": "gpt-6.1-sol",
+  "modelThinkingLevels": {
+    "openai/gpt-6.1-sol": "xhigh"
+  },
+  "httpProxy": "http://127.0.0.1:10810",
+  "shellCommandPrefix": "unset HTTP_PROXY HTTPS_PROXY ALL_PROXY http_proxy https_proxy all_proxy WS_PROXY WSS_PROXY ws_proxy wss_proxy",
+  "terminal": {
+    "showTerminalProgress": true,
+    "imageWidthCells": 60
+  },
+  "enableInstallTelemetry": false,
+  "defaultProjectTrust": "always",
+  "theme": "ayu",
+  "hideThinkingBlock": true,
+  "packages": [
+    "npm:pi-supervisor",
+    "npm:pi-subagents",
+    "npm:billion-context",
+    "git:github.com/obra/superpowers",
+    "npm:pi-web-access",
+    "npm:pi-lens",
+    "npm:pi-powerline-footer"
+  ],
+  "extensions": [
+    "-extensions/dots-ayu-bar/index.ts",
+    "extensions/dots-ayu-bar/quota-status.ts"
+  ],
+  "powerline": {
+    "preset": "default",
+    "placement": "below",
+    "welcome": false,
+    "separator": "chevron",
+    "path": {
+      "mode": "basename"
+    },
+    "model": {
+      "display": "name"
+    },
+    "cost": {
+      "subscriptionDisplay": "both",
+      "currency": "USD"
+    },
+    "git": {
+      "hostIcon": true
+    },
+    "layout": {
+      "left": [
+        "model",
+        "thinking",
+        "path",
+        "git"
+      ],
+      "right": [
+        "context_pct",
+        "cost",
+        "time_spent"
+      ],
+      "secondary": [
+        "custom:codex-quota",
+        "subagents",
+        "extension_statuses"
+      ]
+    },
+    "customItems": [
+      {
+        "id": "codex-quota",
+        "statusKey": "codex-quota",
+        "color": "accent"
+      }
+    ],
+    "secondaryOverflow": "wrap",
+    "autoFollowUp": false,
+    "sendDelayMs": 0,
+    "queue": {
+      "compactPromptMode": "native"
+    }
+  },
+  "workingVibe": "off",
+  "bashMode": {
+    "completions": false
+  }
+}

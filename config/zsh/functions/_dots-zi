@@ -1,0 +1,14 @@
+# zoxide owns ranking; dots owns the selector. Do not invoke zoxide's fzf UI.
+emulate -L zsh
+setopt pipefail
+local native="${DOTS_ROOT:-$HOME/dots}/build/bin/dots-tools"
+local selected code
+selected=$(command zoxide query --list --exclude "$PWD" -- "$@" |
+  "$native" ui select --title "Каталог · zoxide" --mode LOCAL)
+code=$?
+(( code == 130 )) && return 0
+(( code == 0 )) || return "$code"
+[[ -n "$selected" ]] || return 0
+builtin cd -- "$selected" || return
+[[ -n ${_ZO_ECHO:-} ]] && print -r -- "$PWD"
+return 0

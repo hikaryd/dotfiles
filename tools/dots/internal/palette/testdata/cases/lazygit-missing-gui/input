@@ -1,0 +1,6 @@
+# Preserve custom commands and unrelated YAML.
+customCommands:
+  - key: "x"
+    command: 'printf "%s" "$HOME"'
+git:
+  autoFetch: false

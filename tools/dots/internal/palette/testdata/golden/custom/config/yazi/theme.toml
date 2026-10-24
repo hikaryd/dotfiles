@@ -1,0 +1,163 @@
+#:schema https://yazi-rs.github.io/schemas/theme.json
+# Generated from palette/ayu.toml.
+# Цвета заданы и здесь: tmux может не ответить на запрос цветовой схемы.
+# Оба режима используют выбранный вариант; меняйте его через generator.
+
+[flavor]
+dark  = "ayu-dark"
+light = "ayu-dark"
+
+#:schema https://yazi-rs.github.io/schemas/theme.json
+# Ayu Dark flavor for Yazi — generated from palette/ayu.toml.
+# Edit the palette and run `python3 palette/generate.py`, not this file.
+
+[mgr]
+cwd = { fg = "#887058" }
+
+find_keyword  = { fg = "#887058", bold = true, italic = true, underline = true }
+find_position = { fg = "#494643", bold = true, italic = true }
+
+symlink_target = { fg = "#1f2a35", italic = true }
+
+marker_copied   = { fg = "#373a3d", bg = "#373a3d" }
+marker_cut      = { fg = "#8e745a", bg = "#8e745a" }
+marker_marked   = { fg = "#2e343a", bg = "#2e343a" }
+marker_selected = { fg = "#887058", bg = "#887058" }
+marker_symbol   = "▏"
+
+count_copied   = { fg = "#132231", bg = "#373a3d" }
+count_cut      = { fg = "#132231", bg = "#8e745a" }
+count_selected = { fg = "#132231", bg = "#887058" }
+
+border_symbol = "│"
+border_style  = { fg = "#2b3239" }
+
+syntect_theme = ""
+
+[tabs]
+active   = { fg = "#887058", bg = "#132231", bold = true }
+inactive = { fg = "#1f2a35", bg = "#192633" }
+sep_inner = { open = "", close = "" }
+sep_outer = { open = "", close = "" }
+
+[mode]
+normal_main = { fg = "#887058", bg = "#132231", bold = true }
+normal_alt  = { fg = "#887058", bg = "#192633" }
+select_main = { fg = "#2e343a", bg = "#132231", bold = true }
+select_alt  = { fg = "#2e343a", bg = "#192633" }
+unset_main  = { fg = "#3d3e3f", bg = "#132231", bold = true }
+unset_alt   = { fg = "#3d3e3f", bg = "#192633" }
+
+[indicator]
+parent  = { fg = "#162432", bg = "#283038" }
+current = { fg = "#162432", bg = "#283038" }
+preview = { underline = true }
+padding = { open = "", close = "" }
+
+[status]
+overall   = {}
+sep_left  = { open = "", close = "" }
+sep_right = { open = "", close = "" }
+perm_sep   = { fg = "#1f2a35" }
+perm_type  = { fg = "#373a3d" }
+perm_read  = { fg = "#887058" }
+perm_write = { fg = "#3d3e3f" }
+perm_exec  = { fg = "#3a3c3e" }
+progress_label  = { fg = "#162432", bold = true }
+progress_normal = { fg = "#887058", bg = "#192633" }
+progress_error  = { fg = "#132231", bg = "#8e745a" }
+
+[which]
+cols            = 3
+mask            = { bg = "#1c2834" }
+cand            = { fg = "#3a3c3e" }
+rest            = { fg = "#1f2a35" }
+desc            = { fg = "#162432" }
+separator       = "  "
+separator_style = { fg = "#1f2a35" }
+
+[confirm]
+border  = { fg = "#887058" }
+title   = { fg = "#887058", bold = true }
+body    = { fg = "#162432" }
+list    = { fg = "#2e343a" }
+btn_yes = { fg = "#887058", bg = "#132231", bold = true }
+btn_no  = { fg = "#162432", bg = "#192633" }
+btn_labels = [ "  [Y]es  ", "  (N)o  " ]
+
+[spot]
+border   = { fg = "#887058" }
+title    = { fg = "#887058", bold = true }
+tbl_col  = { fg = "#2e343a" }
+tbl_cell = { fg = "#887058", bg = "#283038" }
+
+[notify]
+title_info  = { fg = "#373a3d" }
+title_warn  = { fg = "#8b7259" }
+title_error = { fg = "#8e745a" }
+icon_info  = ""
+icon_warn  = ""
+icon_error = ""
+
+[pick]
+border   = { fg = "#887058" }
+active   = { fg = "#887058", bold = true }
+inactive = { fg = "#162432" }
+
+[input]
+border   = { fg = "#887058" }
+title    = { fg = "#162432" }
+value    = { fg = "#162432" }
+selected = { fg = "#162432", bg = "#283038" }
+
+[cmp]
+border   = { fg = "#887058" }
+active   = { fg = "#162432", bg = "#283038" }
+inactive = { fg = "#162432" }
+icon_file    = ""
+icon_folder  = ""
+icon_command = ""
+
+[tasks]
+border  = { fg = "#887058" }
+title   = { fg = "#887058", bold = true }
+hovered = { fg = "#2e343a", underline = true }
+
+[help]
+on      = { fg = "#3a3c3e" }
+run     = { fg = "#404040" }
+desc    = { fg = "#162432" }
+hovered = { fg = "#162432", bg = "#283038", bold = true }
+footer  = { fg = "#887058", bg = "#132231" }
+
+[filetype]
+rules = [
+	{ mime = "image/*", fg = "#887058" },
+	{ mime = "{audio,video}/*", fg = "#494643" },
+	{ mime = "application/{zip,rar,7z*,tar,gzip,xz,zstd,bzip*,lzma,compress,archive,cpio,arj,xar,ms-cab*}", fg = "#3d3e3f" },
+	{ mime = "application/{pdf,doc,rtf}", fg = "#2e343a" },
+	{ mime = "vfs/{absent,stale}", fg = "#1f2a35" },
+	{ url = "*", is = "orphan", bg = "#8e745a" },
+	{ url = "*", is = "exec", fg = "#373a3d" },
+	{ url = "*", is = "dummy", bg = "#8e745a" },
+	{ url = "*/", is = "dummy", bg = "#8e745a" },
+	{ url = "*/", fg = "#34383c" }
+]
+
+[git]
+modified  = { fg = "#826c56" }
+added     = { fg = "#7f6a55" }
+untracked = { fg = "#1f2a35" }
+ignored   = { fg = "#1f2a35" }
+deleted   = { fg = "#856e57" }
+updated   = { fg = "#887058" }
+unknown   = { fg = "#1f2a35" }
+clean     = { fg = "#373a3d" }
+modified_sign  = "•"
+added_sign     = "✚"
+untracked_sign = "?"
+ignored_sign   = ""
+deleted_sign   = "✗"
+updated_sign   = "↑"
+unknown_sign   = ""
+clean_sign     = ""

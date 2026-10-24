@@ -1,0 +1,99 @@
+/* Zen Browser Chrome CSS */
+/* Based on: https://github.com/sobolevn/dotfiles/blob/master/firefox/userChrome.css */
+/* Docs: https://www.userchrome.org */
+/* cmd + alt + shift + I to open debug */
+
+/* Hide "search tabs" button */
+#alltabs-button { display: none !important; }
+
+/* Hide "unified extensions" button */
+#unified-extensions-button { display: none !important; }
+
+/* Hide main settings button */
+#PanelUI-menu-button { display: none !important; }
+
+/* Hide page info from the left of address box */
+#identity-permission-box,
+#tracking-protection-icon-container { display: none !important; }
+
+/* Hide page actions from the right of address box */
+hbox.urlbar-page-action { display: none !important; }
+
+/*
+ * Zen browser specific
+ */
+
+/* Hide workspaces */
+#zen-current-workspace-indicator-container,
+#zen-workspaces-button,
+vbox.zen-current-workspace-indicator { display: none !important; }
+
+/* Hide shadow from navbar */
+#zen-appcontent-navbar-container { box-shadow: none !important; }
+
+/* Add extra space for tabbar, so navbar fits */
+#navigator-toolbox { top: 45px !important; }
+
+/* Disable Zen toasts */
+#zen-toast-container .zen-toast {
+  display: none !important;
+}
+
+/* Disable media toolbox in sidebar */
+#zen-media-controls-toolbar {
+  display: none !important;
+}
+
+/* Transparent new tab page */
+@-moz-document url("about:blank"), url("about:newtab"), url("about:home") {
+  body, html, #root {
+    background: transparent !important;
+  }
+}
+
+/* Transparent browser content area for new tab */
+browser[type="content-primary"],
+#tabbrowser-tabpanels {
+  background: transparent !important;
+}
+
+/* Quiet Ayu: только интерфейс браузера, не стили веб-страниц.
+ * Токены согласованы с palette/ayu.toml; UI использует системный sans-serif,
+ * SF Mono остаётся шрифтом кода/терминалов, не текстом всех приложений. */
+:root {
+  color-scheme: dark;
+  --toolbar-bgcolor: #0d1017 !important;
+  --toolbar-color: #bfbdb6 !important;
+  --lwt-accent-color: #0d1017 !important;
+  --lwt-text-color: #bfbdb6 !important;
+  --toolbar-field-background-color: #141821 !important;
+  --toolbar-field-color: #bfbdb6 !important;
+  --toolbar-field-focus-background-color: #141821 !important;
+  --toolbar-field-focus-color: #bfbdb6 !important;
+  --toolbar-field-focus-border-color: #73d0ff !important;
+  --toolbarbutton-icon-fill: #858d9c !important;
+  --tab-selected-bgcolor: #273747 !important;
+  --tab-selected-textcolor: #bfbdb6 !important;
+  --tab-line-color: #73d0ff !important;
+  --chrome-content-separator-color: #303847 !important;
+}
+
+#navigator-toolbox {
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif !important;
+  color: #bfbdb6 !important;
+  background-color: #0d1017 !important;
+}
+
+.tabbrowser-tab[selected] .tab-background {
+  background-color: #273747 !important;
+  border-radius: 8px !important;
+}
+
+#urlbar-background {
+  background-color: #141821 !important;
+  border-color: #303847 !important;
+}
+
+#urlbar[focused] #urlbar-background {
+  border-color: #73d0ff !important;
+}

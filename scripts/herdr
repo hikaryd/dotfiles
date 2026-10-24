@@ -1,0 +1,64 @@
+#!/bin/sh
+set -eu
+
+# Build local chrome only when attaching a UI. Management/update commands must
+# use the original installation, never overwrite the patched client.
+if [ -n "${HERDR_DOTS_BASE:-}" ]; then
+  base=$HERDR_DOTS_BASE
+elif [ -x /opt/homebrew/bin/herdr ]; then
+  base=/opt/homebrew/bin/herdr
+else
+  base=/usr/local/bin/herdr
+fi
+needs_ui() {
+  while [ "$#" -gt 0 ]; do
+    case "$1" in
+      --session|--remote|--remote-keybindings)
+        [ "$#" -ge 2 ] || return 1
+        shift 2 ;;
+      --handoff) shift ;;
+      session) [ "${2:-}" = attach ] && [ "$#" -ge 3 ]; return $? ;;
+      *) return 1 ;;
+    esac
+  done
+  return 0
+}
+if [ "${HERDR_DOTS_NO_PATCH:-}" = 1 ] || ! needs_ui "$@"; then
+  exec "$base" "$@"
+fi
+base_version=$("$base" --version)
+case "$base_version" in
+  'herdr '*) version=${base_version#herdr } ;;
+  *) exec "$base" "$@" ;;
+esac
+# Reject path separators/preview labels before creating any cache paths.
+case "$version" in
+  ''|*[!0-9.]*|.*|*..*) exec "$base" "$@" ;;
+esac
+
+# ~/.local/bin/herdr is a symlink; find the checkout rather than its link folder.
+script=$0
+while [ -L "$script" ]; do
+  directory=$(cd -P "$(dirname "$script")" && pwd)
+  link=$(readlink "$script")
+  case "$link" in
+    /*) script=$link ;;
+    *) script=$directory/$link ;;
+  esac
+done
+root=$(cd -P "$(dirname "$script")/.." && pwd)
+destination="${XDG_DATA_HOME:-$HOME/.local/share}/dots/herdr/$version"
+patched="$destination/herdr"
+log="$destination/build.log"
+# FD 3 carries just the build progress notice; compiler/download details stay
+# in the log. A failed rebuild cannot prevent attaching to the existing server.
+if mkdir -p "$destination" &&
+   "$root/scripts/build-herdr-ui.sh" --ensure "$version" 3>&2 >> "$log" 2>&1; then
+  :
+else
+  printf 'Herdr: UI patch unavailable; using the last good or standard client. Details: %s\n' "$log" >&2
+fi
+if [ -x "$patched" ] && [ "$base_version" = "$("$patched" --version)" ]; then
+  exec "$patched" "$@"
+fi
+exec "$base" "$@"

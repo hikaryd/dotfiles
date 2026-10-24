@@ -1,0 +1,7 @@
+# Preserve CRLF semantics
+theme = Ayu Mirage
+background = 1f2430
+foreground = untouched
+ theme = untouched
+theme = Ayu Mirage
+background = 1f2430

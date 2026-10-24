@@ -1,0 +1,31 @@
+# Low-priority test runner; does not add pytest flags or require pytest-xdist.
+# Usage: pytest-safe [PYTEST_ARGS...] | pytest-safe -- COMMAND [ARGS...]
+
+local -a test_command
+case "${1-}" in
+  -h|--help)
+    print -r -- 'Usage: pytest-safe [PYTEST_ARGS...] | pytest-safe -- COMMAND [ARGS...]' \
+      '  pytest-safe -q' \
+      '  pytest-safe -- uv run pytest -n auto' \
+      '  pytest-safe -- python -m pytest -q' \
+      'Uses background policy (macOS) and nice +10, not a hard CPU quota.'
+    return 0
+    ;;
+  --)
+    shift
+    if (( $# == 0 )); then
+      print -u2 -- 'pytest-safe: expected a command after --'
+      return 2
+    fi
+    test_command=("$@")
+    ;;
+  *) test_command=(pytest "$@") ;;
+esac
+
+# Also works via dots-zsh, which skips .zshenv with zsh -f.
+local -x PYTEST_XDIST_AUTO_NUM_WORKERS="${PYTEST_XDIST_AUTO_NUM_WORKERS:-2}"
+if (( $+commands[taskpolicy] )); then
+  command taskpolicy -b nice -n 10 "${test_command[@]}"
+else
+  command nice -n 10 "${test_command[@]}"
+fi

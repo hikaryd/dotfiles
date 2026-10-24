@@ -1,0 +1,258 @@
+{
+  "name": "ayu-dark",
+  "editor": {
+    "bg": [
+      13,
+      16,
+      23
+    ],
+    "fg": [
+      191,
+      189,
+      182
+    ],
+    "cursor": [
+      115,
+      208,
+      255
+    ],
+    "selection_bg": [
+      39,
+      55,
+      71
+    ],
+    "current_line_bg": [
+      22,
+      26,
+      36
+    ],
+    "line_number_fg": [
+      133,
+      141,
+      156
+    ],
+    "line_number_bg": [
+      13,
+      16,
+      23
+    ]
+  },
+  "ui": {
+    "tab_active_fg": [
+      115,
+      208,
+      255
+    ],
+    "tab_active_bg": [
+      39,
+      55,
+      71
+    ],
+    "tab_inactive_fg": [
+      133,
+      141,
+      156
+    ],
+    "tab_inactive_bg": [
+      13,
+      16,
+      23
+    ],
+    "tab_separator_bg": [
+      13,
+      16,
+      23
+    ],
+    "status_bar_fg": [
+      191,
+      189,
+      182
+    ],
+    "status_bar_bg": [
+      13,
+      16,
+      23
+    ],
+    "prompt_fg": [
+      115,
+      208,
+      255
+    ],
+    "prompt_bg": [
+      13,
+      16,
+      23
+    ],
+    "prompt_selection_fg": [
+      191,
+      189,
+      182
+    ],
+    "prompt_selection_bg": [
+      39,
+      55,
+      71
+    ],
+    "popup_border_fg": [
+      48,
+      56,
+      71
+    ],
+    "popup_bg": [
+      13,
+      16,
+      23
+    ],
+    "popup_selection_bg": [
+      39,
+      55,
+      71
+    ],
+    "popup_text_fg": [
+      191,
+      189,
+      182
+    ],
+    "suggestion_bg": [
+      13,
+      16,
+      23
+    ],
+    "suggestion_selected_bg": [
+      39,
+      55,
+      71
+    ],
+    "help_bg": [
+      13,
+      16,
+      23
+    ],
+    "help_fg": [
+      191,
+      189,
+      182
+    ],
+    "help_key_fg": [
+      149,
+      230,
+      203
+    ],
+    "help_separator_fg": [
+      48,
+      56,
+      71
+    ],
+    "help_indicator_fg": [
+      240,
+      113,
+      120
+    ],
+    "help_indicator_bg": [
+      13,
+      16,
+      23
+    ],
+    "split_separator_fg": [
+      48,
+      56,
+      71
+    ]
+  },
+  "search": {
+    "match_bg": [
+      39,
+      55,
+      71
+    ],
+    "match_fg": [
+      115,
+      208,
+      255
+    ]
+  },
+  "diagnostic": {
+    "error_fg": [
+      240,
+      113,
+      120
+    ],
+    "error_bg": [
+      13,
+      16,
+      23
+    ],
+    "warning_fg": [
+      230,
+      180,
+      80
+    ],
+    "warning_bg": [
+      13,
+      16,
+      23
+    ],
+    "info_fg": [
+      57,
+      186,
+      230
+    ],
+    "info_bg": [
+      13,
+      16,
+      23
+    ],
+    "hint_fg": [
+      133,
+      141,
+      156
+    ],
+    "hint_bg": [
+      13,
+      16,
+      23
+    ]
+  },
+  "syntax": {
+    "keyword": [
+      255,
+      143,
+      64
+    ],
+    "string": [
+      170,
+      217,
+      76
+    ],
+    "comment": [
+      84,
+      97,
+      120
+    ],
+    "function": [
+      255,
+      180,
+      84
+    ],
+    "type": [
+      89,
+      194,
+      255
+    ],
+    "variable": [
+      191,
+      189,
+      182
+    ],
+    "constant": [
+      210,
+      166,
+      255
+    ],
+    "operator": [
+      242,
+      150,
+      104
+    ]
+  }
+}

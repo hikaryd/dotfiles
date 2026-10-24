@@ -1,0 +1,5 @@
+blacklist = ["^scratch$", "^_"]
+
+[[session]]
+name = "dots"
+path = "~/dots"

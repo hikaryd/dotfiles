@@ -1,0 +1,7 @@
+#!/bin/sh
+# Shared Ayu TUI, with the original client retained as an explicit fallback.
+if [ "${1-}" = "--legacy" ]; then
+	shift
+	exec anicli-ru cli -s anilibria "$@"
+fi
+exec dots-tools anime "$@"

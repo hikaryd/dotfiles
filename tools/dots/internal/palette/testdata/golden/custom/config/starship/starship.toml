@@ -1,0 +1,35 @@
+# Fixture for the still-supported Starship generator.
+palette = "ayu_dark" # preserve this comment
+format = "$directory$character"
+
+[directory]
+style = "color_blue"
+
+# Палитра Ayu Dark
+[palettes.ayu_dark]
+color_rosewater = "#3d3e3f"
+color_flamingo = "#4c4844"
+color_pink = "#3d3e3f"
+color_mauve = "#404040"
+color_red = "#524c46"
+color_maroon = "#3d3e3f"
+color_peach = "#4c4844"
+color_yellow = "#585048"
+color_green = "#554e47"
+color_teal = "#61564b"
+color_sky = "#2e343a"
+color_sapphire = "#34383c"
+color_blue = "#2e343a"
+color_lavender = "#494643"
+color_text = "#162432"
+color_subtext1 = "#162432"
+color_subtext0 = "#1f2a35"
+color_overlay2 = "#1f2a35"
+color_overlay1 = "#1f2a35"
+color_overlay0 = "#1f2a35"
+color_surface2 = "#675a4d"
+color_surface1 = "#4f4a45"
+color_surface0 = "#252e37"
+color_base = "#132231"
+color_mantle = "#132231"
+color_crust = "#132231"

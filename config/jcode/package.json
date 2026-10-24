@@ -1,0 +1,15 @@
+{
+  "name": "jcode-mcp",
+  "private": true,
+  "engines": {
+    "node": ">=22.19.0"
+  },
+  "dependencies": {
+    "@earendil-works/pi-tui": "1.4.0",
+    "@modelcontextprotocol/sdk": "1.32.1",
+    "@upstash/context7-mcp": "4.4.4",
+    "mcp-remote": "0.15.2",
+    "pi-web-access": "0.44.0",
+    "typebox": "1.4.3"
+  }
+}

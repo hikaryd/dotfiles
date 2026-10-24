@@ -1,0 +1,5 @@
+- shell:
+    - command: scripts/jcode-install.sh
+      description: Set up Codex-only jcode and local Neo4j
+      stdout: true
+      stderr: true

@@ -1,0 +1,20 @@
+# Resolve .git without spawning git. Supports normal repositories and worktrees.
+local dir="$PWD" marker
+REPLY=
+
+while [[ "$dir" != / ]]; do
+  if [[ -d "$dir/.git" ]]; then
+    REPLY="$dir/.git"
+    return
+  fi
+
+  if [[ -r "$dir/.git" ]]; then
+    IFS= read -r marker < "$dir/.git"
+    marker="${marker#gitdir: }"
+    [[ "$marker" == /* ]] || marker="$dir/$marker"
+    REPLY="${marker:A}"
+    return
+  fi
+
+  dir="${dir:h}"
+done

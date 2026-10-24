@@ -1,0 +1,20 @@
+local branch="$1"
+[[ -z "$branch" ]] && { echo "Usage: tp <branch-name>"; return 1; }
+
+local base=$(git branch --show-current 2>/dev/null)
+[[ -z "$base" ]] && { echo "Not in a git repo"; return 1; }
+
+local repo_root=$(git rev-parse --show-toplevel 2>/dev/null)
+local repo_name=$(basename "$repo_root")
+local path_safe=$(echo "$branch" | tr '/' '-')
+local wt_path="$HOME/Workspace/worktrees/${repo_name}-${path_safe}"
+
+git worktree add "$wt_path" -b "$branch" "$base" || return 1
+cd "$wt_path" || return 1
+
+# Линк .venv для Python-проекта
+if [[ -f "pyproject.toml" && ! -e ".venv" && -d "$repo_root/.venv" ]]; then
+  ln -s "$repo_root/.venv" .venv
+  echo "→ linked .venv"
+fi
+echo "→ cd $wt_path"

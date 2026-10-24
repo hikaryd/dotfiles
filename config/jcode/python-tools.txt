@@ -1,0 +1,4 @@
+serena-agent==2.1.0
+codegraphcontext==0.6.13
+mcp-neo4j-cypher==0.6.0
+mcp-neo4j-memory==0.4.5

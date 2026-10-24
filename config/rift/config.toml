@@ -1,0 +1,200 @@
+[settings]
+animate = true
+animation_duration = 0.3
+animation_fps = 100.0
+animation_easing = "ease_in_out"
+default_disable = false
+
+focus_follows_mouse = true
+mouse_follows_focus = false
+mouse_hides_on_focus = true
+auto_focus_blacklist = []
+
+run_on_start = []
+hot_reload = true
+
+[settings.layout]
+mode = "traditional"
+
+[settings.layout.stack]
+stack_offset = 0.0
+default_orientation = "horizontal"
+
+[settings.layout.gaps.outer]
+top = 0
+left = 0
+bottom = 0
+right = 0
+
+[settings.layout.gaps.inner]
+horizontal = 0
+vertical = 0
+
+[settings.ui.menu_bar]
+enabled = false
+show_empty = true
+
+[settings.ui.stack_line]
+enabled = true
+horiz_placement = "bottom"
+vert_placement = "left"
+thickness = 4.0
+spacing = 1.0
+
+[settings.ui.mission_control]
+enabled = true
+fade_enabled = true
+fade_duration_ms = 180.0
+
+[settings.gestures]
+enabled = true
+invert_horizontal_swipe = false
+swipe_vertical_tolerance = 0.4
+skip_empty = true
+fingers = 4
+distance_pct = 0.12
+haptics_enabled = true
+haptic_pattern = "level_change"
+
+[settings.window_snapping]
+drag_swap_fraction = 0.1
+
+[settings.drag_drop]
+# Keep mouse dragging, but hide the blue drop-target overlay.
+preview = false
+
+[virtual_workspaces]
+enabled = true
+default_workspace_count = 9
+auto_assign_windows = true
+preserve_focus_per_workspace = true
+workspace_names = ["1", "2", "3", "4", "e", "q", "t", "w", "d"]
+
+app_rules = [
+  # Floating: настройки браузеров (объединённые regex + workspace)
+  { app_name = "Safari", title_regex = "^(General|(Tab|Password|Website|Extension)s|AutoFill|Se(arch|curity)|Privacy|Advance|Preferences|Настройки)$", floating = true, workspace = "1" },
+  { app_name = "Brave", title_regex = "^(General|Tabs?|Passwords?|Websites?|Extensions?|AutoFill|Search|Security|Privacy|Advance|Preferences|Settings)$", floating = true, workspace = "1" },
+  { app_name = "Arc", title_regex = "^(General|(Tab|Password|Website|Extension)s|AutoFill|Se(arch|curity)|Privacy|Advance|Preferences|Settings)$", floating = true, workspace = "1" },
+  { app_name = "Helium", title_regex = "^(General|(Tab|Password|Website|Extension)s|AutoFill|Se(arch|security)|Privacy|Advance)$", floating = true, workspace = "1" },
+
+  # Floating: системные
+  { app_name = "1Password", floating = true },
+  { app_name = "Typora", title_substring = "Открыть", floating = true, workspace = "4" },
+  { app_id = "com.apple.finder", floating = true },
+  { app_name = "Cisco Secure Client", floating = true },
+  { app_name = "v2RayTun", floating = true },
+  { app_name = "Tinycast", floating = true },
+  { app_name = "Пункт управления", floating = true },
+  { app_name = "Control Center", floating = true },
+
+  # "1": браузеры и Comet
+  { app_id = "net.waterfox.waterfox", workspace = "1" },
+  { app_name = "Ora", workspace = "1" },
+  { app_name = "Comet", workspace = "1" },
+  { app_name = "Thorium", workspace = "1" },
+
+  # "2": Misc / музыка
+  { app_id = "rocks.spotifast.Spotifast", workspace = "2" },
+  { app_name = "V2BOX", workspace = "2" },
+  { app_name = "Keet", workspace = "2" },
+
+  # "3": мессенджер/почта/музыка/видео-комнаты
+  { app_id = "com.tdesktop.Telegram", workspace = "3" },
+  { app_id = "ru.keepcoder.Telegram", workspace = "3" },
+  { app_id = "ru.unlimitedtech.express.desktop", workspace = "3" },
+  { app_name = "Proton Mail", workspace = "3" },
+  { app_name = "Psst", workspace = "3" },
+  # "4": документы/ноуты
+  { app_name = "Pages", workspace = "4" },
+  { app_name = "UpNote", workspace = "4" },
+
+  # "e": системные
+  { app_name = "System Settings", workspace = "e" },
+  { app_name = "System Preferences", workspace = "e" },
+  { app_name = "Системные настройки", workspace = "e" },
+  { app_name = "App Store", workspace = "e" },
+
+  # "q": дев-инструменты
+  { app_name = "Docker Desktop", workspace = "q" },
+  { app_name = "DBeaver Community", workspace = "q" },
+  { app_name = "Lens", workspace = "q" },
+  { app_name = "Beekeeper Studio", workspace = "q" },
+  { app_name = "Postico", workspace = "q" },
+
+  # "t": Толк
+  { app_name = "Толк", workspace = "t" },
+  { app_name = "Музыка", workspace = "t" },
+
+  # "w": Просмотр/Outlook
+  { app_name = "Просмотр", workspace = "w" },
+  { app_name = "Preview", workspace = "w" },
+  { app_name = "Outlook", workspace = "w" },
+
+  # "d": терминал
+  { app_name = "Ghostty", workspace = "d" },
+]
+
+[modifier_combinations]
+comb1 = "Alt + Shift"
+
+[keys]
+# --- Переключение воркспейсов  ---
+"Alt + 1" = { switch_to_workspace = "1" }
+"Alt + 2" = { switch_to_workspace = "2" }
+"Alt + 3" = { switch_to_workspace = "3" }
+"Alt + 4" = { switch_to_workspace = "4" }
+
+"Alt + D" = { switch_to_workspace = "d" }
+"Alt + E" = { switch_to_workspace = "e" }
+"Alt + Q" = { switch_to_workspace = "q" }
+"Alt + T" = { switch_to_workspace = "t" }
+"Alt + W" = { switch_to_workspace = "w" }
+
+"Alt + Tab" = "switch_to_last_workspace"
+
+# --- Отправка окна на воркспейс  ---
+"comb1 + 1" = { move_window_to_workspace = "1" }
+"comb1 + 2" = { move_window_to_workspace = "2" }
+"comb1 + 3" = { move_window_to_workspace = "3" }
+"comb1 + 4" = { move_window_to_workspace = "4" }
+
+"comb1 + D" = { move_window_to_workspace = "d" }
+"comb1 + E" = { move_window_to_workspace = "e" }
+"comb1 + Q" = { move_window_to_workspace = "q" }
+"comb1 + T" = { move_window_to_workspace = "t" }
+"comb1 + W" = { move_window_to_workspace = "w" }
+
+"Alt + H" = { move_focus = "left" }
+"Alt + J" = { move_focus = "down" }
+"Alt + K" = { move_focus = "up" }
+"Alt + L" = { move_focus = "right" }
+
+"comb1 + H" = { move_node = "left" }
+"comb1 + J" = { move_node = "down" }
+"comb1 + K" = { move_node = "up" }
+"comb1 + L" = { move_node = "right" }
+
+# --- Стек/джойн ---
+"Meta + Shift + J" = "toggle_stack"
+"Meta + Shift + H" = { join_window = "left" }
+"Meta + Shift + L" = { join_window = "right" }
+# "Meta + Shift + R" = "toggle_orientation"
+
+# --- Ресайз ---
+"Alt + Shift + Equal" = "resize_window_grow"
+"Alt + Shift + Minus" = "resize_window_shrink"
+
+# --- Флоат/фуллскрин/сервисные ---
+"Alt + Space" = "toggle_window_floating"
+"Meta + Shift + F" = "toggle_window_floating" # cmd+shift+f
+"Alt + F" = "toggle_fullscreen"
+
+"Alt + Ctrl + S" = "serialize"
+"Meta + Shift + Q" = "save_and_exit" # cmd+shift+q
+
+# # --- Дисплеи ---
+# "Meta + 1" = { focus_display = 0 }
+# "Meta + 2" = { focus_display = 1 }
+#
+# "Meta + Shift + 1" = { move_window_to_display = 0 }
+# "Meta + Shift + 2" = { move_window_to_display = 1 }

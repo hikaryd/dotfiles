@@ -1,0 +1,155 @@
+#:schema https://yazi-rs.github.io/schemas/theme.json
+# Ayu Mirage flavor for Yazi — generated from palette/ayu.toml.
+# Edit the palette and run `python3 palette/generate.py`, not this file.
+
+[mgr]
+cwd = { fg = "#73d0ff" }
+
+find_keyword  = { fg = "#73d0ff", bold = true, italic = true, underline = true }
+find_position = { fg = "#dfbfff", bold = true, italic = true }
+
+symlink_target = { fg = "#707a8c", italic = true }
+
+marker_copied   = { fg = "#d5ff80", bg = "#d5ff80" }
+marker_cut      = { fg = "#ff6666", bg = "#ff6666" }
+marker_marked   = { fg = "#5ccfe6", bg = "#5ccfe6" }
+marker_selected = { fg = "#73d0ff", bg = "#73d0ff" }
+marker_symbol   = "▏"
+
+count_copied   = { fg = "#1f2430", bg = "#d5ff80" }
+count_cut      = { fg = "#1f2430", bg = "#ff6666" }
+count_selected = { fg = "#1f2430", bg = "#73d0ff" }
+
+border_symbol = "│"
+border_style  = { fg = "#414d60" }
+
+syntect_theme = ""
+
+[tabs]
+active   = { fg = "#73d0ff", bg = "#1f2430", bold = true }
+inactive = { fg = "#707a8c", bg = "#1a1f29" }
+sep_inner = { open = "", close = "" }
+sep_outer = { open = "", close = "" }
+
+[mode]
+normal_main = { fg = "#73d0ff", bg = "#1f2430", bold = true }
+normal_alt  = { fg = "#73d0ff", bg = "#1a1f29" }
+select_main = { fg = "#5ccfe6", bg = "#1f2430", bold = true }
+select_alt  = { fg = "#5ccfe6", bg = "#1a1f29" }
+unset_main  = { fg = "#f28779", bg = "#1f2430", bold = true }
+unset_alt   = { fg = "#f28779", bg = "#1a1f29" }
+
+[indicator]
+parent  = { fg = "#cccac2", bg = "#34455a" }
+current = { fg = "#cccac2", bg = "#34455a" }
+preview = { underline = true }
+padding = { open = "", close = "" }
+
+[status]
+overall   = {}
+sep_left  = { open = "", close = "" }
+sep_right = { open = "", close = "" }
+perm_sep   = { fg = "#707a8c" }
+perm_type  = { fg = "#d5ff80" }
+perm_read  = { fg = "#73d0ff" }
+perm_write = { fg = "#f28779" }
+perm_exec  = { fg = "#95e6cb" }
+progress_label  = { fg = "#cccac2", bold = true }
+progress_normal = { fg = "#73d0ff", bg = "#1a1f29" }
+progress_error  = { fg = "#1f2430", bg = "#ff6666" }
+
+[which]
+cols            = 3
+mask            = { bg = "#282e3b" }
+cand            = { fg = "#95e6cb" }
+rest            = { fg = "#707a8c" }
+desc            = { fg = "#cccac2" }
+separator       = "  "
+separator_style = { fg = "#707a8c" }
+
+[confirm]
+border  = { fg = "#73d0ff" }
+title   = { fg = "#73d0ff", bold = true }
+body    = { fg = "#cccac2" }
+list    = { fg = "#5ccfe6" }
+btn_yes = { fg = "#73d0ff", bg = "#1f2430", bold = true }
+btn_no  = { fg = "#cccac2", bg = "#1a1f29" }
+btn_labels = [ "  [Y]es  ", "  (N)o  " ]
+
+[spot]
+border   = { fg = "#73d0ff" }
+title    = { fg = "#73d0ff", bold = true }
+tbl_col  = { fg = "#5ccfe6" }
+tbl_cell = { fg = "#73d0ff", bg = "#34455a" }
+
+[notify]
+title_info  = { fg = "#d5ff80" }
+title_warn  = { fg = "#ffcc66" }
+title_error = { fg = "#ff6666" }
+icon_info  = ""
+icon_warn  = ""
+icon_error = ""
+
+[pick]
+border   = { fg = "#73d0ff" }
+active   = { fg = "#73d0ff", bold = true }
+inactive = { fg = "#cccac2" }
+
+[input]
+border   = { fg = "#73d0ff" }
+title    = { fg = "#cccac2" }
+value    = { fg = "#cccac2" }
+selected = { fg = "#cccac2", bg = "#34455a" }
+
+[cmp]
+border   = { fg = "#73d0ff" }
+active   = { fg = "#cccac2", bg = "#34455a" }
+inactive = { fg = "#cccac2" }
+icon_file    = ""
+icon_folder  = ""
+icon_command = ""
+
+[tasks]
+border  = { fg = "#73d0ff" }
+title   = { fg = "#73d0ff", bold = true }
+hovered = { fg = "#5ccfe6", underline = true }
+
+[help]
+on      = { fg = "#95e6cb" }
+run     = { fg = "#ffad66" }
+desc    = { fg = "#cccac2" }
+hovered = { fg = "#cccac2", bg = "#34455a", bold = true }
+footer  = { fg = "#73d0ff", bg = "#1f2430" }
+
+[filetype]
+rules = [
+	{ mime = "image/*", fg = "#73d0ff" },
+	{ mime = "{audio,video}/*", fg = "#dfbfff" },
+	{ mime = "application/{zip,rar,7z*,tar,gzip,xz,zstd,bzip*,lzma,compress,archive,cpio,arj,xar,ms-cab*}", fg = "#f28779" },
+	{ mime = "application/{pdf,doc,rtf}", fg = "#5ccfe6" },
+	{ mime = "vfs/{absent,stale}", fg = "#707a8c" },
+	{ url = "*", is = "orphan", bg = "#ff6666" },
+	{ url = "*", is = "exec", fg = "#d5ff80" },
+	{ url = "*", is = "dummy", bg = "#ff6666" },
+	{ url = "*/", is = "dummy", bg = "#ff6666" },
+	{ url = "*/", fg = "#73d0ff" }
+]
+
+[git]
+modified  = { fg = "#80bfff" }
+added     = { fg = "#87d96c" }
+untracked = { fg = "#707a8c" }
+ignored   = { fg = "#707a8c" }
+deleted   = { fg = "#f27983" }
+updated   = { fg = "#73d0ff" }
+unknown   = { fg = "#707a8c" }
+clean     = { fg = "#d5ff80" }
+modified_sign  = "•"
+added_sign     = "✚"
+untracked_sign = "?"
+ignored_sign   = ""
+deleted_sign   = "✗"
+updated_sign   = "↑"
+unknown_sign   = ""
+clean_sign     = ""
+

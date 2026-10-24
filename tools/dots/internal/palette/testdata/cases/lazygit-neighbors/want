@@ -1,0 +1,36 @@
+# Comments and neighboring keys must survive.
+gui:
+  showIcons: true
+  theme:
+    activeBorderColor:
+      - "#73d0ff"
+      - bold
+    inactiveBorderColor:
+      - "#414d60"
+    optionsTextColor:
+      - "#5ccfe6"
+    selectedLineBgColor:
+      - "#34455a"
+    selectedRangeBgColor:
+      - "#34455a"
+    cherryPickedCommitBgColor:
+      - "#34455a"
+    cherryPickedCommitFgColor:
+      - "#73d0ff"
+    unstagedChangesColor:
+      - "#ff6666"
+    defaultFgColor:
+      - "#cccac2"
+    searchingActiveBorderColor:
+      - "#ffcc66"
+  showRandomTip: false
+  authorColors:
+    "*": blue
+
+git:
+  paging:
+    colorArg: always
+customCommands:
+  - key: "x"
+    description: "Не менять"
+    command: 'printf "${USER}"'

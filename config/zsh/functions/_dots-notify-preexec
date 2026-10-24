@@ -1,0 +1,2 @@
+# Не храним текст команды: только начало измерения.
+typeset -gF _dots_notify_started=$EPOCHREALTIME

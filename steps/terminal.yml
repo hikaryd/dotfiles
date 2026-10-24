@@ -1,0 +1,222 @@
+- link:
+    ~/.local/bin/spotifast-app:
+      path: scripts/spotifast-launch.sh
+      create: true
+      force: false
+    ~/.local/bin/dots:
+      path: scripts/dots
+      create: true
+      force: true
+    ~/.local/bin/herdr:
+      path: scripts/herdr
+      create: true
+      force: true
+    ~/.config/atuin/config.toml:
+      path: config/atuin/config.toml
+      create: true
+      force: false
+    # Zsh
+    ~/.zshrc:
+      path: config/zsh/.zshrc
+      create: true
+      force: true
+    ~/.zshenv:
+      path: config/zsh/.zshenv
+      create: true
+      force: true
+    ~/.zprofile:
+      path: config/zsh/.zprofile
+      create: true
+      force: true
+    ~/.config/zsh/functions:
+      path: config/zsh/functions
+      create: true
+      force: true
+    # Bash
+    ~/.bashrc:
+      path: config/bash/.bashrc
+      create: true
+      force: true
+    ~/.bash_profile:
+      path: config/bash/.bash_profile
+      create: true
+      force: true
+    ~/.profile:
+      path: config/bash/.profile
+      create: true
+      force: true
+    # Shared shell — Pi VLESS-прокси (общий для bash и zsh)
+    ~/.config/shell/pi-proxy.sh:
+      path: config/shell/pi-proxy.sh
+      create: true
+      force: true
+    # Compiled helpers; secrets stay in ~/.config/xray-pi/.
+    ~/.local/bin/dots-tools:
+      path: build/bin/dots-tools
+      create: true
+      force: false
+    ~/.local/bin/dots-kube:
+      path: build/bin/dots-kube
+      create: true
+      force: false
+    ~/.local/bin/dots-vpn:
+      path: build/bin/dots-vpn
+      create: true
+      force: false
+    ~/.local/bin/dots-task-titles:
+      path: build/bin/dots-task-titles
+      create: true
+      force: true
+    # Tmux
+    ~/.config/tmux/tmux.conf:
+      path: config/tmux/tmux.conf
+      create: true
+      force: true
+    # Herdr
+    ~/.config/herdr/config.toml:
+      path: config/herdr/config.toml
+      create: true
+      force: true
+    # Git
+    ~/.gitconfig:
+      path: config/git/.gitconfig
+      create: true
+      force: true
+    ~/.gitignore_global:
+      path: config/git/.gitignore_global
+      create: true
+      force: true
+    ~/.config/git/gitk:
+      path: config/git/gitk
+      create: true
+      force: true
+    ~/.config/git/hooks/prepare-commit-msg:
+      path: config/git/hooks/prepare-commit-msg
+      create: true
+      force: true
+    # SSH
+    ~/.ssh/config:
+      path: config/ssh/config
+      create: true
+      force: true
+    # Starship
+    ~/.config/starship.toml:
+      path: config/starship/starship.toml
+      create: true
+      force: true
+    # Fastfetch
+    ~/.config/fastfetch/config.jsonc:
+      path: config/fastfetch/config.jsonc
+      create: true
+      force: true
+    # Nushell
+    ~/.local/bin/dots-nu:
+      path: scripts/dots-nu
+      create: true
+      force: true
+    ~/.local/bin/dots-zsh:
+      path: scripts/dots-zsh
+      create: true
+      force: true
+    ~/.config/nushell/env.nu:
+      path: config/nushell/env.nu
+      create: true
+      force: true
+    ~/.config/nushell/prompt.nu:
+      path: config/nushell/prompt.nu
+      create: true
+      force: true
+    ~/.config/nushell/bridge.nu:
+      path: config/nushell/bridge.nu
+      create: true
+      force: true
+    ~/Library/Application Support/nushell/config.nu:
+      path: config/nushell/config.nu
+      create: true
+      force: true
+    ~/Library/Application Support/nushell/ayu.nu:
+      path: config/nushell/ayu.nu
+      create: true
+      force: true
+    ~/Library/Application Support/nushell/prompt.nu:
+      path: config/nushell/prompt.nu
+      create: true
+      force: true
+    ~/Library/Application Support/nushell/bridge.nu:
+      path: config/nushell/bridge.nu
+      create: true
+      force: true
+    ~/Library/Application Support/nushell/env.nu:
+      path: config/nushell/env.nu
+      create: true
+      force: true
+    ~/.config/nushell/config.nu:
+      path: config/nushell/config.nu
+      create: true
+      force: true
+    ~/.config/nushell/ayu.nu:
+      path: config/nushell/ayu.nu
+      create: true
+      force: true
+    # Sesh
+    ~/.config/sesh/sesh.toml:
+      path: config/sesh/sesh.toml
+      create: true
+      force: true
+- shell:
+    - command: |
+        set -e
+        "$HOME/dots/scripts/build-herdr-last-workspace.sh"
+        herdr plugin link "$HOME/dots/config/herdr/plugins/last-workspace" --enabled
+        dots-last-workspace prime
+      description: Building and linking the native Herdr workspace toggle
+      stdout: true
+      stderr: true
+    - command: herdr plugin link "$HOME/dots/config/herdr/plugins/task-titles" --enabled
+      description: Linking automatic Pi task titles in Herdr
+      stdout: true
+      stderr: true
+    - command: herdr plugin action invoke dots.task-titles.sync
+      description: Naming existing Pi panes and tabs
+      stdout: true
+      stderr: true
+    - command: chmod +x ~/.config/git/hooks/prepare-commit-msg
+      description: Making git hook executable
+      stdout: false
+      stderr: false
+    - command: git config --global core.excludesFile '~/dots/config/git/.gitignore_global'
+      description: Setting global git excludesFile
+      stdout: true
+      stderr: true
+    - command: |
+        if [[ ! -d "$HOME/.tmux/plugins/tpm" ]]; then
+          echo "Installing TPM (tmux plugin manager)..."
+          mkdir -p "$HOME/.tmux/plugins"
+          git clone https://github.com/tmux-plugins/tpm "$HOME/.tmux/plugins/tpm"
+        else
+          echo "TPM already present; updating..."
+          git -C "$HOME/.tmux/plugins/tpm" pull --ff-only || true
+        fi
+      description: Installing tmux plugin manager (TPM)
+      stdout: true
+      stderr: true
+    - command: |
+        if ! grep -q "/opt/homebrew/bin/zsh" /etc/shells 2>/dev/null; then
+          echo "Adding Homebrew zsh to /etc/shells..."
+          sudo sh -c 'echo "/opt/homebrew/bin/zsh" >> /etc/shells'
+        else
+          echo "Homebrew zsh already in /etc/shells"
+        fi
+      description: Adding Homebrew zsh to available shells
+      stdout: true
+      stderr: true
+    - command: |
+        if [[ "$(dscl . -read /Users/$USER UserShell | awk '{print $2}')" != "/opt/homebrew/bin/zsh" ]]; then
+          echo "Setting zsh as default shell..."
+          chsh -s /opt/homebrew/bin/zsh
+        else
+          echo "Zsh is already the default shell"
+        fi
+      description: Setting zsh as default login shell
+      stdout: true
+      stderr: true

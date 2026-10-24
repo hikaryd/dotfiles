@@ -1,0 +1,19 @@
+id = "dots.last-workspace"
+name = "Last workspace"
+version = "0.2.0"
+min_herdr_version = "0.9.1"
+description = "Toggle between the two most recently focused workspaces"
+platforms = ["macos"]
+
+[[startup]]
+command = ["dots-last-workspace", "prime"]
+
+[[events]]
+on = "workspace.focused"
+command = ["dots-last-workspace", "focused"]
+
+[[actions]]
+id = "toggle"
+title = "Return to last workspace"
+contexts = ["workspace"]
+command = ["dots-last-workspace", "toggle"]

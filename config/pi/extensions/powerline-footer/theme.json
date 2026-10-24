@@ -1,0 +1,14 @@
+{
+  "colors": {
+    "model": "accent",
+    "path": "#59c2ff",
+    "gitClean": "success",
+    "gitDirty": "warning",
+    "thinkingHigh": "accent",
+    "thinkingXhigh": "accent",
+    "thinkingMax": "accent",
+    "context": "muted",
+    "cost": "text",
+    "tokens": "muted"
+  }
+}

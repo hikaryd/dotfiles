@@ -1,0 +1,10 @@
+# Fixture for the still-supported Starship generator.
+palette = "previous" # preserve this comment
+format = "$directory$character"
+
+[directory]
+style = "color_blue"
+
+# Палитра Previous
+[palettes.previous]
+color_blue = "#ffffff"

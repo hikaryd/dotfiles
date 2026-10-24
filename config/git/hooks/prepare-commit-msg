@@ -1,0 +1,103 @@
+#!/usr/bin/env bash
+
+COMMIT_MSG_FILE="$1"
+COMMIT_SOURCE="$2"
+
+BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null)
+
+resolve_ticket() {
+	local branch="$1"
+	local ticket number prefix
+
+	ticket=$(printf '%s' "$branch" | grep -Eoi '[[:alpha:]][[:alnum:]]*-[0-9]+' | head -n 1)
+	if [ -z "$ticket" ]; then
+		number=$(printf '%s' "$branch" | grep -Eo '[0-9]+' | head -n 1)
+		if [ -n "$number" ]; then
+			# Префикс можно задать явно; иначе используем настройку репозитория
+			# или последний встречавшийся ticket-id из его истории.
+			prefix="${AI_COMMIT_TICKET_PREFIX:-}"
+			if [ -z "$prefix" ]; then
+				prefix=$(git config --get ai.commitTicketPrefix 2>/dev/null)
+			fi
+			if [ -z "$prefix" ]; then
+				prefix=$(git log -n 100 --format=%s 2>/dev/null |
+					grep -Eoi '[[:alpha:]][[:alnum:]]*-[0-9]+' |
+					head -n 1 |
+					sed -E 's/-[0-9]+$//')
+			fi
+
+			prefix=${prefix%-}
+			if printf '%s' "$prefix" | grep -Eq '^[[:alpha:]][[:alnum:]]*$'; then
+				ticket="$prefix-$number"
+			else
+				ticket="$number"
+			fi
+		fi
+	fi
+
+	printf '%s' "$ticket" | tr '[:lower:]' '[:upper:]'
+}
+
+TICKET=$(resolve_ticket "$BRANCH")
+
+prepend_ticket_to_file() {
+	if [ -n "$TICKET" ]; then
+		if ! head -n 1 "$COMMIT_MSG_FILE" | grep -Eq "^$TICKET([[:space:]]|$)"; then
+			awk -v prefix="$TICKET " 'NR==1{print prefix $0; next} {print}' \
+				"$COMMIT_MSG_FILE" >"$COMMIT_MSG_FILE.tmp" &&
+				mv "$COMMIT_MSG_FILE.tmp" "$COMMIT_MSG_FILE"
+		fi
+	fi
+}
+
+# Для merge полностью оставляем сообщение как есть (без AI и без тикета).
+if [ "$COMMIT_SOURCE" = "merge" ]; then
+	exit 0
+fi
+
+# Для остальных неинтерактивных источников не запускаем AI,
+# но тикет допишем, если он нужен.
+if [ "${AI_HELPER_SKIP_COMMIT:-0}" = "1" ]; then
+	prepend_ticket_to_file
+	exit 0
+fi
+
+case "$COMMIT_SOURCE" in
+squash | commit | template | message)
+	prepend_ticket_to_file
+	exit 0
+	;;
+esac
+
+AI_HELPER_BIN="${AI_HELPER_BIN:-$HOME/dots/scripts/ai_helper}"
+AI_HELPER_STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/ai-helper"
+AI_HELPER_ERROR_LOG="$AI_HELPER_STATE_DIR/last-error.log"
+mkdir -p "$AI_HELPER_STATE_DIR"
+chmod 700 "$AI_HELPER_STATE_DIR" 2>/dev/null || true
+
+AI_COMMIT=$("$AI_HELPER_BIN" \
+	--mode commit \
+	--provider "${AI_HELPER_PROVIDER:-openai-compatible}" \
+	2>"$AI_HELPER_ERROR_LOG")
+AI_STATUS=$?
+chmod 600 "$AI_HELPER_ERROR_LOG" 2>/dev/null || true
+
+if [ "$AI_STATUS" -eq 0 ] && [ -n "$AI_COMMIT" ]; then
+	TITLE=$(printf '%s' "$AI_COMMIT" | head -n 1)
+	DESCRIPTION=$(printf '%s' "$AI_COMMIT" | tail -n +3)
+
+	if [ -n "$TICKET" ] && ! printf '%s' "$TITLE" | grep -Eq "^$TICKET([[:space:]]|$)"; then
+		TITLE="$TICKET $TITLE"
+	fi
+
+	if [ -n "$DESCRIPTION" ]; then
+		printf "%s\n\n%s\n" "$TITLE" "$DESCRIPTION" >"$COMMIT_MSG_FILE"
+	else
+		printf "%s\n" "$TITLE" >"$COMMIT_MSG_FILE"
+	fi
+else
+	prepend_ticket_to_file
+	if [ "$AI_STATUS" -ne 0 ]; then
+		printf "\n# AI commit generation failed; details: %s\n" "$AI_HELPER_ERROR_LOG" >>"$COMMIT_MSG_FILE"
+	fi
+fi

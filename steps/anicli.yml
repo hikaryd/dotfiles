@@ -1,0 +1,9 @@
+- shell:
+    - command: scripts/anicli-install.sh
+      description: Install verified Russian anime CLI with uv
+      stdout: true
+      stderr: true
+- link:
+    ~/.local/bin/anicli:
+      path: scripts/anicli
+      create: true

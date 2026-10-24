@@ -1,0 +1,33 @@
+---
+- link:
+    ~/.config/sketchybar:
+      path: config/sketchybar
+      create: true
+      force: true
+    ~/.config/rift/config.toml:
+      path: config/rift/config.toml
+      create: true
+      force: true
+    ~/.config/aerospace/aerospace.toml:
+      path: config/aerospace/aerospace.toml
+      create: true
+      force: true
+    ~/.config/glide/glide.toml:
+      path: config/glide/glide.toml
+      create: true
+      force: true
+
+- shell:
+    - description: "Set Tinycast launcher hotkey to Option+A"
+      command: build/bin/dots-tools setup tinycast-hotkey
+    - description: "Configure Vorssaint battery and sound controls"
+      command: scripts/vorssaint-defaults.sh
+    - description: "Prefer key repeat over the accent menu"
+      command: >-
+        defaults write NSGlobalDomain ApplePressAndHoldEnabled -bool false
+    - description: "Enable separate Spaces per display (required for aerospace)"
+      command: defaults write com.apple.spaces spans-displays -bool false
+    - description: "Disable auto-rearrange Spaces by recent use"
+      command: defaults write com.apple.dock mru-spaces -bool false
+    - description: "Apply Dock changes"
+      command: killall Dock

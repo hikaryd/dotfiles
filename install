@@ -1,0 +1,93 @@
+#!/usr/bin/env bash
+
+set -e
+
+SHELL='/bin/bash'
+export SHELL
+
+readonly DOTBOT_DIR='dotbot'
+readonly DOTBOT_BIN='bin/dotbot'
+BASEDIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+readonly BASEDIR
+
+SELECTED_CONFIG=''
+DOTBOT_ARGS=()
+while [[ $# -gt 0 ]]; do
+	case $1 in
+		-c|--config|--config-file)
+			[[ $# -ge 2 ]] || { echo "install: $1 requires a config path" >&2; exit 2; }
+			[[ -z $SELECTED_CONFIG ]] || { echo "install: config specified more than once" >&2; exit 2; }
+			[[ -n $2 ]] || { echo "install: $1 requires a non-empty config path" >&2; exit 2; }
+			SELECTED_CONFIG=$2
+			shift 2
+			;;
+		--config=*|--config-file=*)
+			[[ -z $SELECTED_CONFIG ]] || { echo "install: config specified more than once" >&2; exit 2; }
+			SELECTED_CONFIG=${1#*=}
+			[[ -n $SELECTED_CONFIG ]] || { echo "install: config path must not be empty" >&2; exit 2; }
+			shift
+			;;
+		*)
+			DOTBOT_ARGS+=("$1")
+			shift
+			;;
+	esac
+done
+readonly SELECTED_CONFIG
+readonly -a DOTBOT_ARGS
+
+cd "$BASEDIR"
+
+if [[ ! -d "$DOTBOT_DIR" ]]; then
+	echo "Настраивается dotbot..."
+	git submodule add https://github.com/anishathalye/dotbot "$DOTBOT_DIR"
+	git submodule update --init --recursive
+fi
+
+git submodule sync --quiet --recursive
+git submodule update --init --recursive
+
+run_dotbot() {
+	local config
+	config="$1"
+
+	"$BASEDIR/$DOTBOT_DIR/$DOTBOT_BIN" \
+		-d "$BASEDIR" \
+		-c "$config" "${DOTBOT_ARGS[@]}"
+}
+
+if [[ -n $SELECTED_CONFIG ]]; then
+	case "$SELECTED_CONFIG" in
+		steps/terminal.yml|steps/tools.yml|steps/anicli.yml|steps/pi.yml|steps/jcode.yml|steps/jevgrep.yml|steps/macos.yml)
+			"$BASEDIR/scripts/build-go-tools.sh" ;;
+	esac
+	run_dotbot "$SELECTED_CONFIG"
+	exit 0
+fi
+
+# Keep processing independent steps, but never hide a failed installation.
+FAILED_STEPS=0
+STEP_SUMMARY=()
+run_step() {
+	local name="$1" status
+	shift
+	if "$@"; then
+		STEP_SUMMARY+=("OK   $name")
+	else
+		status=$?
+		STEP_SUMMARY+=("FAIL $name (exit $status)")
+		FAILED_STEPS=$((FAILED_STEPS + 1))
+	fi
+}
+
+run_step 'steps/dependencies.yml' run_dotbot 'steps/dependencies.yml'
+run_step 'native helpers' "$BASEDIR/scripts/build-go-tools.sh"
+run_step 'palette' "$BASEDIR/build/bin/dots-tools" palette
+for config in terminal editors tools pi jcode jevgrep macos; do
+	run_step "steps/$config.yml" run_dotbot "steps/$config.yml"
+done
+
+printf '\nInstallation summary:\n'
+printf '%s\n' "${STEP_SUMMARY[@]}"
+printf 'Failed steps: %s\n' "$FAILED_STEPS"
+[[ $FAILED_STEPS -eq 0 ]]

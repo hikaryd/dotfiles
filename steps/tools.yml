@@ -1,0 +1,135 @@
+- link:
+    # Shared desktop MCP workflow for Pi; preserve foreign skills.
+    ~/.agents/skills/peekaboo:
+      path: config/peekaboo/skill
+      create: true
+    # Ghostty terminal
+    ~/.config/ghostty/config:
+      path: config/ghostty/config
+      create: true
+      force: true
+    ~/.config/ghostty/shaders:
+      path: config/ghostty/shaders
+      create: true
+      force: true
+    # Yazi file manager
+    ~/.config/yazi/yazi.toml:
+      path: config/yazi/yazi.toml
+      create: true
+      force: true
+    ~/.config/yazi/init.lua:
+      path: config/yazi/init.lua
+      create: true
+      force: true
+    ~/.config/yazi/theme.toml:
+      path: config/yazi/theme.toml
+      create: true
+      force: true
+    ~/.config/yazi/flavors:
+      path: config/yazi/flavors
+      create: true
+      force: true
+    ~/.config/yazi/keymap.toml:
+      path: config/yazi/keymap.toml
+      create: true
+      force: true
+    # Custom eza-preview plugin (directory tree preview)
+    ~/.config/yazi/plugins/eza-preview.yazi:
+      path: config/yazi/plugins/eza-preview.yazi
+      create: true
+      force: true
+    # Lazygit
+    ~/.config/lazygit/config.yml:
+      path: config/lazygit/config.yml
+      create: true
+      force: true
+    # LazyGit uses this native macOS config path when XDG_CONFIG_HOME is unset.
+    ~/Library/Application Support/lazygit/config.yml:
+      path: config/lazygit/config.yml
+      create: true
+      force: true
+    # Bat
+    ~/.config/bat/config:
+      path: config/bat/config
+      create: true
+      force: true
+    # Общая тема Bat/Yazi — один источник, без дублирования цветов.
+    ~/.config/bat/themes/ayu-dark.tmTheme:
+      path: config/yazi/flavors/ayu-dark.yazi/tmtheme.xml
+      create: true
+      force: true
+    # Thorium browser theme
+    ~/.config/thorium/ayu-dark:
+      path: config/thorium/ayu-dark
+      create: true
+      force: true
+- shell:
+    - command: ./install -c steps/anicli.yml
+      description: Install Russian anime CLI and AniLiberty launcher
+      stdout: true
+      stderr: true
+    - command: build/bin/dots-tools setup waterfox-apply
+      description: Применить настройки Waterfox к существующим профилям
+      stdout: true
+      stderr: true
+    - command: bat cache --build
+      description: Build shared Ayu theme cache for Bat
+      stdout: true
+      stderr: true
+    - command: |
+        # Install Zen Browser user-overrides.js and userChrome.css
+        ZEN_BASE="$HOME/Library/Application Support/zen"
+        if [[ ! -d "$ZEN_BASE/Profiles" ]]; then
+          echo "Zen Browser not found, skipping."
+          exit 0
+        fi
+        INSTALLED=0
+        for profile_dir in "$ZEN_BASE/Profiles/"*/; do
+          # Only install into profiles that have been used (have prefs.js)
+          if [[ -f "$profile_dir/prefs.js" ]]; then
+            echo "Zen profile: $(basename "$profile_dir")"
+            cp "$HOME/dots/config/zen-browser/user-overrides.js" "$profile_dir/user.js"
+            mkdir -p "$profile_dir/chrome"
+            cp "$HOME/dots/config/zen-browser/userChrome.css" "$profile_dir/chrome/userChrome.css"
+            echo "  Installed user.js + userChrome.css"
+            INSTALLED=1
+          fi
+        done
+        if [[ "$INSTALLED" -eq 0 ]]; then
+          echo "No active Zen profiles found, skipping."
+        fi
+      description: Install Zen Browser settings
+      stdout: true
+      stderr: true
+    - command: |
+        # Ensure yazi plugins are installed (via `ya pkg`). Idempotent.
+        mkdir -p ~/.config/yazi/plugins
+        install_plugin() {
+          local pkg="$1" dir="$2"
+          local path="$HOME/.config/yazi/plugins/$dir"
+          # Drop a broken symlink (e.g. a stale Nix link) so `ya pkg` can deploy.
+          [[ -L "$path" && ! -e "$path" ]] && rm -f "$path"
+          # Already present (real dir or valid symlink) → nothing to do.
+          [[ -e "$path" ]] && return 0
+          echo "Installing yazi plugin: $dir"
+          ya pkg add "$pkg" 2>/dev/null || echo "  (ya pkg failed for $pkg — skipping)"
+        }
+        # Official UI / navigation plugins
+        install_plugin "yazi-rs/plugins:git"          git.yazi
+        install_plugin "yazi-rs/plugins:full-border"  full-border.yazi
+        install_plugin "yazi-rs/plugins:smart-filter" smart-filter.yazi
+        install_plugin "yazi-rs/plugins:jump-to-char" jump-to-char.yazi
+        install_plugin "yazi-rs/plugins:smart-enter"  smart-enter.yazi
+        install_plugin "yazi-rs/plugins:toggle-pane"  toggle-pane.yazi
+        # Starship prompt in the header (matches the shell prompt)
+        install_plugin "Rolv-Apneseth/starship"       starship.yazi
+        # Previewers, archive tools, status bar
+        install_plugin "ndtoan96/ouch"                ouch.yazi
+        install_plugin "boydaihungst/mediainfo"       mediainfo.yazi
+        install_plugin "Reledia/glow"                 glow.yazi
+        install_plugin "boydaihungst/restore"         restore.yazi
+        install_plugin "KKV9/compress"                compress.yazi
+        install_plugin "imsi32/yatline"               yatline.yazi
+      description: Installing yazi plugins (UI, navigation, previewers, status bar)
+      stdout: true
+      stderr: true

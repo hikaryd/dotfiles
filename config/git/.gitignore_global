@@ -1,0 +1,28 @@
+.DS_Store
+*.swp
+*.swo
+*~
+*.log
+.env
+.direnv/
+result
+result-*
+.pre-commit-config.yaml
+requirements
+
+# Node lockfile (Python-only workflow — never committed)
+package-lock.json
+
+# OMC artifacts (session data, cache, project memory, state)
+.omc/
+
+# Local AI tools and graph indexes (unanchored: apply at any depth).
+.serena/
+.codegraphcontext/
+.jcode/
+.neo4j/
+*.cgc
+index.scip
+node_modules/
+.venv/
+__pycache__/

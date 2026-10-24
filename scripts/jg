@@ -1,0 +1,5 @@
+#!/bin/zsh -f
+# Official Jevgrep CLI through the shared dots proxy, including agent shells.
+export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
+source "${0:A:h:h}/config/shell/pi-proxy.sh" || exit
+jg "$@"

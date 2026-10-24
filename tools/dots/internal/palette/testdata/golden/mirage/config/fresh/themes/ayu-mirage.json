@@ -1,0 +1,258 @@
+{
+  "name": "ayu-mirage",
+  "editor": {
+    "bg": [
+      31,
+      36,
+      48
+    ],
+    "fg": [
+      204,
+      202,
+      194
+    ],
+    "cursor": [
+      115,
+      208,
+      255
+    ],
+    "selection_bg": [
+      52,
+      69,
+      90
+    ],
+    "current_line_bg": [
+      26,
+      31,
+      41
+    ],
+    "line_number_fg": [
+      112,
+      122,
+      140
+    ],
+    "line_number_bg": [
+      31,
+      36,
+      48
+    ]
+  },
+  "ui": {
+    "tab_active_fg": [
+      115,
+      208,
+      255
+    ],
+    "tab_active_bg": [
+      52,
+      69,
+      90
+    ],
+    "tab_inactive_fg": [
+      112,
+      122,
+      140
+    ],
+    "tab_inactive_bg": [
+      31,
+      36,
+      48
+    ],
+    "tab_separator_bg": [
+      31,
+      36,
+      48
+    ],
+    "status_bar_fg": [
+      204,
+      202,
+      194
+    ],
+    "status_bar_bg": [
+      31,
+      36,
+      48
+    ],
+    "prompt_fg": [
+      115,
+      208,
+      255
+    ],
+    "prompt_bg": [
+      31,
+      36,
+      48
+    ],
+    "prompt_selection_fg": [
+      204,
+      202,
+      194
+    ],
+    "prompt_selection_bg": [
+      52,
+      69,
+      90
+    ],
+    "popup_border_fg": [
+      65,
+      77,
+      96
+    ],
+    "popup_bg": [
+      31,
+      36,
+      48
+    ],
+    "popup_selection_bg": [
+      52,
+      69,
+      90
+    ],
+    "popup_text_fg": [
+      204,
+      202,
+      194
+    ],
+    "suggestion_bg": [
+      31,
+      36,
+      48
+    ],
+    "suggestion_selected_bg": [
+      52,
+      69,
+      90
+    ],
+    "help_bg": [
+      31,
+      36,
+      48
+    ],
+    "help_fg": [
+      204,
+      202,
+      194
+    ],
+    "help_key_fg": [
+      149,
+      230,
+      203
+    ],
+    "help_separator_fg": [
+      65,
+      77,
+      96
+    ],
+    "help_indicator_fg": [
+      242,
+      135,
+      121
+    ],
+    "help_indicator_bg": [
+      31,
+      36,
+      48
+    ],
+    "split_separator_fg": [
+      65,
+      77,
+      96
+    ]
+  },
+  "search": {
+    "match_bg": [
+      52,
+      69,
+      90
+    ],
+    "match_fg": [
+      115,
+      208,
+      255
+    ]
+  },
+  "diagnostic": {
+    "error_fg": [
+      255,
+      102,
+      102
+    ],
+    "error_bg": [
+      31,
+      36,
+      48
+    ],
+    "warning_fg": [
+      255,
+      204,
+      102
+    ],
+    "warning_bg": [
+      31,
+      36,
+      48
+    ],
+    "info_fg": [
+      92,
+      207,
+      230
+    ],
+    "info_bg": [
+      31,
+      36,
+      48
+    ],
+    "hint_fg": [
+      112,
+      122,
+      140
+    ],
+    "hint_bg": [
+      31,
+      36,
+      48
+    ]
+  },
+  "syntax": {
+    "keyword": [
+      255,
+      173,
+      102
+    ],
+    "string": [
+      213,
+      255,
+      128
+    ],
+    "comment": [
+      110,
+      127,
+      151
+    ],
+    "function": [
+      255,
+      209,
+      115
+    ],
+    "type": [
+      115,
+      208,
+      255
+    ],
+    "variable": [
+      204,
+      202,
+      194
+    ],
+    "constant": [
+      223,
+      191,
+      255
+    ],
+    "operator": [
+      242,
+      158,
+      116
+    ]
+  }
+}

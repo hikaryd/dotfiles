@@ -1,0 +1,8 @@
+# Private installation inventory, rendered configs, credentials and evidence.
+/private/
+/rendered/
+*.local.json
+*.local.env
+# Runtime session metadata is never part of the portable source distribution.
+/.omx/
+/.omc/

@@ -1,0 +1,43 @@
+gui:
+  theme:
+    activeBorderColor:
+      - "#73d0ff"
+      - bold
+    inactiveBorderColor:
+      - "#303847"
+    optionsTextColor:
+      - "#39bae6"
+    selectedLineBgColor:
+      - "#273747"
+    selectedRangeBgColor:
+      - "#273747"
+    cherryPickedCommitBgColor:
+      - "#273747"
+    cherryPickedCommitFgColor:
+      - "#73d0ff"
+    unstagedChangesColor:
+      - "#f07178"
+    defaultFgColor:
+      - "#bfbdb6"
+    searchingActiveBorderColor:
+      - "#e6b450"
+git:
+  # Keep remote updates explicit instead of fetching on every startup.
+  autoFetch: false
+refresher:
+  # Preserve automatic refresh with fewer background Git/filesystem probes.
+  refreshInterval: 30
+  externalChangeCheckInterval: 5
+customCommands:
+  - key: "C"
+    command: "~/dots/scripts/ai_commit"
+    description: "Коммит с AI-сообщением + nvim"
+    output: "terminal"
+    loadingText: "Генерирую AI-сообщение..."
+    context: "files"
+  - key: "M"
+    command: "AI_HELPER_SKIP_COMMIT=1 git commit --no-verify"
+    description: "Коммит БЕЗ AI (без hook-ов)"
+    output: "terminal"
+    loadingText: "Открывается nvim..."
+    context: "files"
