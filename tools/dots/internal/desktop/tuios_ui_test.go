@@ -18,6 +18,7 @@ func TestTUIOSKeepsDarkCanvasOverBrightWallpaper(t *testing.T) {
 	}
 	var cfg struct {
 		Appearance struct {
+			DockCompact    bool   `toml:"dock_compact"`
 			Theme          string `toml:"theme"`
 			Background     string `toml:"background"`
 			PaneBackground string `toml:"pane_background"`
@@ -29,6 +30,9 @@ func TestTUIOSKeepsDarkCanvasOverBrightWallpaper(t *testing.T) {
 	}
 	if err := toml.Unmarshal(data, &cfg); err != nil {
 		t.Fatal(err)
+	}
+	if !cfg.Appearance.DockCompact {
+		t.Error("TUIOS dock must not draw the unwanted horizontal separator")
 	}
 	if cfg.Appearance.Theme != "ayu-dots" {
 		t.Fatalf("daily UI must keep Ayu, got %q", cfg.Appearance.Theme)

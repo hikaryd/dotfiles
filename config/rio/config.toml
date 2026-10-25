@@ -23,14 +23,14 @@ disable-occluded-render = true
 disable-unfocused-render = false
 
 [window]
-# Native glass uses a separate macOS backdrop. This tint is not the old
-# ordinary-blur two-layer opacity calibration.
-opacity = 0.88
+# Ordinary blur, before the clear-glass experiment. Rio composites two
+# background layers, so 0.75 per layer gives about 0.94 effective opacity.
+opacity = 0.75
 # Keep explicit UI backgrounds opaque: rounded caps are foreground glyphs,
 # so translucent fills would have a different color. Herdr panel_bg="reset"
 # still uses the translucent terminal background.
 opacity-cells = false
-blur = "macos-glass-clear"
+blur = true
 decorations = "disabled"
 colorspace = "display-p3"
 

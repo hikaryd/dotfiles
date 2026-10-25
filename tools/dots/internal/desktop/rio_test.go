@@ -90,7 +90,7 @@ func TestRioShellStartsOutsideInheritedHerdrSession(t *testing.T) {
 	}
 }
 
-func TestRioUsesNativeGlassAndSolidRoundedTabs(t *testing.T) {
+func TestRioUsesCalibratedBlurWithoutGlassRim(t *testing.T) {
 	_, source, _, _ := runtime.Caller(0)
 	root := filepath.Clean(filepath.Join(filepath.Dir(source), "../../../.."))
 	data, err := os.ReadFile(filepath.Join(root, "config/rio/config.toml"))
@@ -107,10 +107,10 @@ func TestRioUsesNativeGlassAndSolidRoundedTabs(t *testing.T) {
 	if err := toml.Unmarshal(data, &config); err != nil {
 		t.Fatal(err)
 	}
-	// Native glass has its own macOS backdrop. The old ordinary-blur
-	// two-layer opacity calibration must not be reused for this material.
-	if config.Window.Blur != "macos-glass-clear" || config.Window.Opacity <= 0 || config.Window.Opacity >= 1 || config.Window.OpacityCells {
-		t.Fatalf("Rio must use native glass, a translucent background and solid UI fills: %+v", config.Window)
+	// Restore the pre-experiment two-layer blur calibration. Native clear glass
+	// draws a bright rim over wallpaper even when the mux paints a dark canvas.
+	if config.Window.Blur != true || config.Window.Opacity != 0.75 || config.Window.OpacityCells {
+		t.Fatalf("Rio must keep ordinary calibrated blur, no glass material, and solid UI fills: %+v", config.Window)
 	}
 	// Powerline rounded caps are opaque foreground glyphs. Their adjacent
 	// background fills must also stay opaque, while the Herdr base canvas

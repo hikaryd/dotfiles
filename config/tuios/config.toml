@@ -4,7 +4,7 @@
 theme = "ayu-dots"
 max_fps = 120
 motion = "basic"
-# Keep a dark Ayu canvas. Clear Rio glass must not wash it out over bright wallpaper.
+# Keep a dark Ayu canvas independently of the terminal backdrop.
 background = "theme"
 pane_background = "theme"
 dock_background = "theme"
@@ -13,6 +13,7 @@ border_focused_color = "#73d0ff"
 border_unfocused_color = "#303847"
 shared_borders = true
 dockbar_position = "top"
+dock_compact = true
 dock_workspace_tab_format = "{index} {name}{zoom}"
 dock_workspace_label_max = 22
 dock_pill_caps = true
