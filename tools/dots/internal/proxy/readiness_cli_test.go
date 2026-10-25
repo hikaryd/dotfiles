@@ -2,10 +2,8 @@ package proxy
 
 import (
 	"bytes"
-	"encoding/json"
 	"os"
 	"path/filepath"
-	"reflect"
 	"strings"
 	"testing"
 )
@@ -22,7 +20,7 @@ func TestEnsureNeverSelectsOrSpawns(t *testing.T) {
 		t.Fatal("ensure made external requests", string(data))
 	}
 }
-func TestEnsureReadyAndRunAreLocal(t *testing.T) {
+func TestEnsureReadyAndRemovedAgentLaunchAreLocal(t *testing.T) {
 	c, fixture, pid, cfg := startMonitored(t)
 	if err := c.maintain(&monitorState{}); err != nil {
 		t.Fatal(err)
@@ -31,23 +29,16 @@ func TestEnsureReadyAndRunAreLocal(t *testing.T) {
 	if _, err := c.dispatch([]string{"--ensure"}); err != nil {
 		t.Fatal(err)
 	}
-	c.rawIn = strings.NewReader("prompt stdin\n")
+	input := strings.NewReader("prompt stdin\n")
+	c.rawIn = input
 	c.out = &bytes.Buffer{}
 	args := []string{"--daemon", "--install-service", "-p", "two words"}
 	code, err := c.dispatch(append([]string{"--run", "--"}, args...))
-	if err != nil || code != 7 {
-		t.Fatalf("run result %d %v", code, err)
+	if err == nil || code != 2 {
+		t.Fatalf("removed agent launch result %d %v", code, err)
 	}
-	var result struct {
-		Args  []string
-		Stdin string
-	}
-	_, output, _ := strings.Cut(c.out.(*bytes.Buffer).String(), "\n")
-	if err := json.Unmarshal([]byte(output), &result); err != nil {
-		t.Fatal(err)
-	}
-	if !reflect.DeepEqual(result.Args, args) || result.Stdin != "prompt stdin\n" {
-		t.Fatalf("lost Pi arguments/stdin: %+v", result)
+	if input.Len() != len("prompt stdin\n") || c.out.(*bytes.Buffer).Len() != 0 {
+		t.Fatal("removed agent launch consumed input or produced child output")
 	}
 	after, _ := os.ReadFile(filepath.Join(fixture, "requests"))
 	if !bytes.Equal(before, after) {

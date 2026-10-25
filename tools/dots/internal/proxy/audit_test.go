@@ -3,15 +3,11 @@ package proxy
 import (
 	"bytes"
 	"compress/gzip"
-	"context"
-	"fmt"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strconv"
-	"syscall"
 	"testing"
-	"time"
 )
 
 func TestSubscriptionSizeLimitPreservesCache(t *testing.T) {
@@ -76,39 +72,4 @@ func TestServiceCollisionRefusesMutation(t *testing.T) {
 			}
 		})
 	}
-}
-
-func TestPiChildCanceledAndReaped(t *testing.T) {
-	c, fixture, pid, cfg := startMonitored(t)
-	t.Setenv("DOTS_PROXY_PI_BLOCK", "1")
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	c.ctx = ctx
-	done := make(chan struct{})
-	go func() { defer close(done); c.runCLI(nil) }()
-	var child int
-	deadline := time.Now().Add(4 * time.Second)
-	for time.Now().Before(deadline) {
-		data, _ := os.ReadFile(filepath.Join(fixture, "pi-pid"))
-		child, _ = strconv.Atoi(string(data))
-		if child > 0 {
-			break
-		}
-		time.Sleep(10 * time.Millisecond)
-	}
-	if child == 0 {
-		t.Fatal("child did not start")
-	}
-	defer syscall.Kill(child, syscall.SIGKILL)
-	cancel()
-	select {
-	case <-done:
-	case <-time.After(4 * time.Second):
-		t.Fatal("wrapper ignored cancellation")
-	}
-	if syscall.Kill(child, 0) == nil {
-		t.Fatal("child remains")
-	}
-	sameRoute(t, c, pid, cfg)
-	fmt.Fprint(c.out, "")
 }

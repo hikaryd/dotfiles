@@ -73,7 +73,7 @@ if [[ $group == all || $group == go ]]; then
   fi
 fi
 if [[ $group == all || $group == node ]]; then
-  run_suite 'Node / Pi extensions' node_suite
+  run_suite 'Node / shared proxy integration' node_suite
 fi
 printf '\nTest summary:\n'
 printf '%s\n' "${summary[@]}"

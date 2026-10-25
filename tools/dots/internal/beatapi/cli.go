@@ -37,7 +37,7 @@ Only listed free model IDs are accepted. jg uses Jev 1.14 free first.
 Jev alone falls back once to paid jev-1.14 on upstream 429/5xx or timeout
 before response headers, using the same key. Paid fallback can spend balance.
 No fallback for chat, caller cancellation or response body/stream errors.
-Outgoing traffic requires the shared dots Pi HTTP proxy.
+Outgoing traffic requires the shared dots local HTTP proxy.
 Secret input is hidden. Use --stdin explicitly for a password manager.
 Do not put a key in command arguments. Setup does not verify upstream inference.`
 

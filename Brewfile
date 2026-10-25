@@ -120,7 +120,7 @@ brew "biome"
 brew "jq-lsp"
 
 # Другие инструменты разработки
-brew "openclaw/tap/peekaboo" # Локальный MCP для управления macOS в Pi
+brew "openclaw/tap/peekaboo" # Локальный MCP для управления macOS в Jcode
 brew "sesh"    
 brew "acsandmann/tap/rift"
 brew "fastfetch"    

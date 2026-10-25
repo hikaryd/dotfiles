@@ -1,1 +1,0 @@
-../build/bin/pi-install

@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net"
 	"net/http"
 	"os"
@@ -82,20 +81,6 @@ func TestMain(m *testing.M) {
 			}
 			fmt.Println(strings.Join(args, " "))
 			os.Exit(0)
-		case "pi":
-			if os.Getenv("DOTS_PROXY_PI_BLOCK") == "1" {
-				os.WriteFile(filepath.Join(fixture, "pi-pid"), []byte(strconv.Itoa(os.Getpid())), 0600)
-				for {
-					time.Sleep(time.Hour)
-				}
-			}
-			env := map[string]string{}
-			for _, k := range proxyKeys {
-				env[k] = os.Getenv(k)
-			}
-			in, _ := io.ReadAll(os.Stdin)
-			_ = json.NewEncoder(os.Stdout).Encode(object{"args": os.Args[1:], "env": env, "stdin": string(in)})
-			os.Exit(7)
 		}
 	}
 	os.Exit(m.Run())
@@ -115,7 +100,7 @@ func fakeCommands(t *testing.T) string {
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, name := range []string{"xray", "ps", "pi", "launchctl"} {
+	for _, name := range []string{"xray", "ps", "launchctl"} {
 		if err := os.Symlink(exe, filepath.Join(bin, name)); err != nil {
 			t.Fatal(err)
 		}
@@ -162,7 +147,7 @@ func TestOwnedCommand(t *testing.T) {
 		}
 	}
 }
-func TestLifecycleAndRunCLI(t *testing.T) {
+func TestSharedProxyLifecycle(t *testing.T) {
 	fixture := fakeCommands(t)
 	c := testController(t)
 	cleanupChild(t, c, fixture)
@@ -188,30 +173,6 @@ func TestLifecycleAndRunCLI(t *testing.T) {
 		st, err := os.Stat(c.path(name))
 		if err != nil || st.Mode().Perm() != 0600 {
 			t.Fatalf("%s %v %v", name, st, err)
-		}
-	}
-	c.out.(*bytes.Buffer).Reset()
-	c.rawIn = strings.NewReader("fixture stdin\n")
-	code, err := c.runCLI([]string{"exec", "argument with spaces", "$(not-a-command)"})
-	if err != nil || code != 7 {
-		t.Fatalf("run %d %v", code, err)
-	}
-	output := c.out.(*bytes.Buffer).String()
-	_, body, _ := strings.Cut(output, "\n")
-	var result struct {
-		Args  []string
-		Env   map[string]string
-		Stdin string
-	}
-	if err := json.Unmarshal([]byte(body), &result); err != nil {
-		t.Fatalf("child output %q %v", body, err)
-	}
-	if strings.Join(result.Args, "|") != "exec|argument with spaces|$(not-a-command)" || result.Stdin != "fixture stdin\n" {
-		t.Fatalf("child argv/stdin %#v", result)
-	}
-	for _, k := range proxyKeys {
-		if result.Env[k] != c.envValue(k) {
-			t.Fatalf("env %s=%s", k, result.Env[k])
 		}
 	}
 	if err := c.stop(); err != nil {

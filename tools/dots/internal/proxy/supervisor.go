@@ -18,7 +18,7 @@ const readinessLifetime = 90 * time.Second
 
 type monitorState struct{ failures int }
 
-var errNotReady = errors.New("Proxy is not ready. Install/check the background service: pi-proxy --install-service; pi-proxy --status")
+var errNotReady = errors.New("Proxy is not ready. Install/check the background service: dots-proxy --install-service; dots-proxy --status")
 
 // Read-only identity: unlike process-control helpers, this never repairs PID files.
 func (c *controller) liveRoute() (int, string, error) {

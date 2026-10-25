@@ -45,14 +45,10 @@ func dispatch(root, name string, args []string) int {
 		return agents.Run(root, append([]string{"ai"}, args...))
 	case "dots-vpn":
 		return runVPN(root, args)
-	case "pi-install", "pi-install.sh":
-		return bootstrap.Run(root, args)
-	case "dots-task-titles":
-		return agents.Run(root, append([]string{"task-titles"}, args...))
 	}
 	if len(args) == 0 || args[0] == "-h" || args[0] == "--help" || args[0] == "help" {
 		fmt.Println("Usage: dots-tools desktop|setup|agents|proxy|palette|vpn|anime|ui <command> [args]")
-		fmt.Println("Aliases: dots, dots-nu, ai_helper, dots-vpn, dots-task-titles")
+		fmt.Println("Aliases: dots, dots-nu, ai_helper, dots-vpn")
 		return 0
 	}
 	switch args[0] {
@@ -63,9 +59,6 @@ func dispatch(root, name string, args []string) int {
 	case "desktop":
 		return desktop.Run(root, args[1:])
 	case "setup":
-		if len(args) > 1 && args[1] == "pi-install" {
-			return bootstrap.Run(root, args[2:])
-		}
 		return setup.Run(root, args[1:])
 	case "agents":
 		return agents.Run(root, args[1:])

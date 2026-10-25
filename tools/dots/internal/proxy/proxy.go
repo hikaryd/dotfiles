@@ -1,4 +1,4 @@
-// Package proxy provides the Pi xray controller.
+// Package proxy provides the shared local xray controller.
 package proxy
 
 import (
@@ -34,7 +34,7 @@ type controller struct {
 	out, errOut              io.Writer
 }
 
-// Run dispatches independent beatapi and Pi xray controllers.
+// Run dispatches independent beatapi and local xray controllers.
 func Run(root string, args []string) int { return run(root, args, os.Stdin, os.Stdout, os.Stderr) }
 
 func run(_ string, args []string, in io.Reader, out, errOut io.Writer) int {
@@ -42,7 +42,7 @@ func run(_ string, args []string, in io.Reader, out, errOut io.Writer) int {
 		return beatapi.Run(args[1:], in, out, errOut)
 	}
 	if len(args) == 0 {
-		fmt.Fprintln(errOut, "usage: dots-tools proxy pi|beatapi")
+		fmt.Fprintln(errOut, "usage: dots-tools proxy local|beatapi")
 		return 2
 	}
 	home, err := os.UserHomeDir()
@@ -50,16 +50,21 @@ func run(_ string, args []string, in io.Reader, out, errOut io.Writer) int {
 		fmt.Fprintln(errOut, "proxy: HOME is not configured")
 		return 2
 	}
-	if args[0] != "pi" {
-		fmt.Fprintln(errOut, "usage: dots-tools proxy pi|beatapi")
+	// Retain the service's legacy name without retaining the removed agent.
+	if args[0] != "local" && args[0] != "pi" {
+		fmt.Fprintln(errOut, "usage: dots-tools proxy local|beatapi")
 		return 2
 	}
 	port := 10810
-	if s, ok := os.LookupEnv("PI_PROXY_PORT"); ok {
+	s, ok := os.LookupEnv("DOTS_PROXY_PORT")
+	if !ok {
+		s, ok = os.LookupEnv("PI_PROXY_PORT")
+	}
+	if ok {
 		port, err = strconv.Atoi(s)
 	}
 	if err != nil || port < 1 || port > 65535 {
-		fmt.Fprintln(errOut, "PI_PROXY_PORT must be between 1 and 65535")
+		fmt.Fprintln(errOut, "proxy port must be between 1 and 65535")
 		return 1
 	}
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
@@ -74,7 +79,7 @@ func run(_ string, args []string, in io.Reader, out, errOut io.Writer) int {
 		return 0
 	}
 	if err = c.harden(); err != nil {
-		fmt.Fprintln(errOut, "pi-proxy: could not secure configuration")
+		fmt.Fprintln(errOut, "dots-proxy: could not secure configuration")
 		return 1
 	}
 	code, err := c.dispatch(args[1:])
@@ -171,22 +176,16 @@ func (c *controller) prompt(prompt string) (string, error) {
 }
 func (c *controller) dispatch(args []string) (int, error) {
 	for _, arg := range args {
-		if arg == "--run" {
-			break // All following words belong to Pi.
-		}
 		switch arg {
 		case "--help", "-h", "--set-vless", "--set-sub", "--update", "--allow-insecure-sub", "--stop", "--status", "--print-env", "--list", "--auto", "--ensure", "--daemon", "--require-ready", "--install-service", "--uninstall-service":
 		default:
-			return 2, errors.New("unsupported proxy option; see pi-proxy --help")
+			return 2, errors.New("unsupported proxy option; see dots-proxy --help")
 		}
 	}
 	has := func(flag string) bool {
 		for _, a := range args {
 			if a == flag {
 				return true
-			}
-			if a == "--run" {
-				break // Pi flags must not be interpreted as controller options.
 			}
 		}
 		return false
@@ -236,19 +235,6 @@ func (c *controller) dispatch(args []string) (int, error) {
 			return 1, err
 		}
 		c.display(servers)
-	case has("--run"):
-		for i, arg := range args {
-			if arg == "--run" {
-				rest := args[i+1:]
-				if len(rest) > 0 && rest[0] == "--" {
-					rest = rest[1:]
-				}
-				if err := c.requireReady(); err != nil {
-					return 1, err
-				}
-				return c.runCLI(rest)
-			}
-		}
 	default:
 		return 0, c.selectAndStart()
 	}

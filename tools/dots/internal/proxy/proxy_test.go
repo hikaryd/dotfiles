@@ -31,3 +31,22 @@ func TestPrintEnv(t *testing.T) {
 		t.Fatalf("private config directory: %v, %v", st, err)
 	}
 }
+
+func TestLocalProxyNameUsesSharedBackendWithoutPi(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
+	t.Setenv("DOTS_PROXY_PORT", "11811")
+	var out, diagnostic bytes.Buffer
+	if code := run("", []string{"local", "--print-env"}, strings.NewReader(""), &out, &diagnostic); code != 0 || !strings.Contains(out.String(), `HTTP_PROXY="http://127.0.0.1:11811"`) {
+		t.Fatalf("shared proxy: %d %q %q", code, out.String(), diagnostic.String())
+	}
+}
+
+func TestProxyCannotLaunchRemovedPiAgent(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
+	for _, name := range []string{"local", "pi"} {
+		var out, diagnostic bytes.Buffer
+		if code := run("", []string{name, "--run", "--", "-p", "do not launch"}, strings.NewReader(""), &out, &diagnostic); code != 2 {
+			t.Fatalf("removed agent launch through %s returned %d: %s", name, code, &diagnostic)
+		}
+	}
+}

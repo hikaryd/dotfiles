@@ -35,12 +35,12 @@ CGO_ENABLED=0 go -C "$root/tools/dots" build -trimpath \
 chmod 755 "$temporary"
 mv -f "$temporary" "$storage/dots-tools"
 ln -sfn "$storage/dots-tools" "$build_dir/dots-tools"
-for name in dots dots-nu ai_helper dots-vpn dots-task-titles pi-install; do
+for name in dots dots-nu ai_helper dots-vpn; do
   ln -sfn dots-tools "$build_dir/$name"
 done
 mkdir -p "$HOME/.local/bin"
 # Dotbot manages desktop aliases. Only these admin helpers are installed here.
-for name in dots-tools dots-vpn dots-task-titles; do
+for name in dots-tools dots-vpn; do
   target="$HOME/.local/bin/$name"
   source="$build_dir/$name"
   if [[ -e "$target" || -L "$target" ]]; then

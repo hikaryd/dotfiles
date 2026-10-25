@@ -62,7 +62,7 @@ func (g generator) generateTool(name string) error {
 		}
 	case "yazi":
 		return g.yazi()
-	case "rio", "nushell", "sketchybar", "fresh", "thorium", "pi", "jcode":
+	case "rio", "nushell", "sketchybar", "fresh", "thorium", "jcode":
 		switch name {
 		case "rio":
 			relative = "rio/themes/ayu.toml"
@@ -81,14 +81,6 @@ func (g generator) generateTool(name string) error {
 		case "jcode":
 			relative = "jcode/theme.toml"
 			mkdir = true
-		case "pi":
-			relative = "pi/themes/ayu.json"
-			mkdir = true
-			vars, err := g.piVars()
-			if err != nil {
-				return err
-			}
-			ctx["piVars"] = vars
 		}
 		content, err := render(name, ctx)
 		if err != nil {
@@ -100,10 +92,6 @@ func (g generator) generateTool(name string) error {
 	default:
 		return fmt.Errorf("unknown generator %s", name)
 	}
-	suffix := ""
-	if name == "pi" {
-		suffix = " (Ayu " + g.variant + ")"
-	}
-	fmt.Fprintf(g.out, "  %s: %s%s\n", name, g.path(relative), suffix)
+	fmt.Fprintf(g.out, "  %s: %s\n", name, g.path(relative))
 	return nil
 }

@@ -74,6 +74,5 @@ export FZF_DEFAULT_OPTS=" \
   --border='rounded' --preview-window='border-rounded' \
   --prompt='> ' --marker='>' --pointer='›' --separator='─' --scrollbar='│'"
 
-# Pi через изолированный VLESS-прокси (xray).
-# Источник (общий для bash и zsh): ~/.config/shell/pi-proxy.sh
-[[ -f "$DOTS_ROOT/config/shell/pi-proxy.sh" ]] && source "$DOTS_ROOT/config/shell/pi-proxy.sh"
+# Общий локальный VLESS-прокси (xray) для Jevgrep и Spotifast.
+[[ -f "$DOTS_ROOT/config/shell/local-proxy.sh" ]] && source "$DOTS_ROOT/config/shell/local-proxy.sh"

@@ -1,28 +1,27 @@
-Pi Proxy — локальный HTTP-прокси xray-core через VLESS вне РФ.
+Dots Proxy: локальный HTTP-прокси xray-core через VLESS вне РФ.
 Системный VPN и proxy-настройки не меняются.
 
 Настройка и фоновый запуск (macOS, после входа пользователя):
-  pi-proxy --set-vless          # сохранить один vless:// конфиг
-  pi-proxy --set-sub            # сохранить подписку и обновить серверы
-  pi-proxy --install-service    # LaunchAgent local.dots.pi-proxy, идемпотентно
-  pi-proxy --uninstall-service  # убрать наблюдатель, оставить xray/соединения
-  pi-proxy --stop               # убрать наблюдатель и остановить xray
-  pi-proxy --status             # состояние процесса и доступность OpenAI
+  dots-proxy --set-vless          # сохранить один vless:// конфиг
+  dots-proxy --set-sub            # сохранить подписку и обновить серверы
+  dots-proxy --install-service    # LaunchAgent, идемпотентно
+  dots-proxy --uninstall-service  # убрать наблюдатель, оставить xray/соединения
+  dots-proxy --stop               # убрать наблюдатель и остановить xray
+  dots-proxy --status             # состояние процесса и доступность OpenAI
 
 Потребители:
-  pi-proxy --ensure             # только локальная готовность, без запуска/выбора
-  pi-proxy --require-ready      # то же самое
-  pi-proxy --run [args...]      # готовность + pi CLI; stdin/аргументы сохранены
-  pi-proxy --print-env          # export-команды для текущего shell
+  dots-proxy --ensure             # только локальная готовность, без запуска/выбора
+  dots-proxy --require-ready      # то же самое
+  dots-proxy --print-env          # export-команды для текущего shell
 
 Ручное управление (может оборвать текущие соединения):
-  pi-proxy                      # выбрать сервер вручную
-  pi-proxy --auto               # полный рейтинг по медиане 3 запросов до OpenAI
-  pi-proxy --update             # обновить подписку
-  pi-proxy --allow-insecure-sub --update
+  dots-proxy                      # выбрать сервер вручную
+  dots-proxy --auto               # полный рейтинг по медиане 3 запросов до OpenAI
+  dots-proxy --update             # обновить подписку
+  dots-proxy --allow-insecure-sub --update
                                 # аварийное обновление без проверки TLS
-  pi-proxy --list               # показать серверы
-  pi-proxy --daemon             # foreground-наблюдатель (обычно запускает launchd)
+  dots-proxy --list               # показать серверы
+  dots-proxy --daemon             # foreground-наблюдатель (обычно запускает launchd)
 
 Наблюдатель подхватывает существующий исправный xray без перезапуска.
 Каждые 30 секунд проверяет реальную страну через Cloudflare и OpenAI
@@ -36,3 +35,6 @@ Pi Proxy — локальный HTTP-прокси xray-core через VLESS в�
 Без готового маршрута приложение не запускается напрямую.
 Сбой настоящего маршрута и его замена могут оборвать текущий TCP-запрос.
 Логи наблюдателя: ~/.config/xray-pi/supervisor.log (без секретов).
+Имя backend pi, каталог xray-pi и LaunchAgent local.dots.pi-proxy сохранены
+для совместимости действующих соединений Jcode, Jevgrep и Spotifast.
+Pi CLI этим прокси не устанавливается и не запускается.

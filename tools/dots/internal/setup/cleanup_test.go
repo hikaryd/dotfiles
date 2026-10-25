@@ -72,7 +72,7 @@ func TestCleanupPreviewApplyAndIdempotence(t *testing.T) {
 		filepath.Join(root, "scripts/spotifast-launch.sh"),
 		filepath.Join(root, "scripts/active.py"),
 		filepath.Join(root, "scripts/__pycache__/active.cpython-314.pyc"),
-		filepath.Join(root, "config/pi/auth.json"),
+		filepath.Join(root, "config/jcode/auth.json"),
 		filepath.Join(root, "build/release.tar.gz"),
 		filepath.Join(h, ".config/xray-pi/servers.json"),
 		filepath.Join(h, ".config/xray-pi/config.json"),

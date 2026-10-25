@@ -60,8 +60,13 @@ build_contract() {
   fi
   check test "$(wc -l < "$NATIVE_BUILD_CALLS" | tr -d ' ')" = 1
   check test ! -e "$work/data/dots/bin/dots-kube"
-  for name in dots dots-nu ai_helper dots-vpn dots-task-titles pi-install; do
+  for name in dots dots-nu ai_helper dots-vpn; do
     check test "$(readlink "$work/repo/build/bin/$name")" = dots-tools
+  done
+  for name in pi-install dots-task-titles; do
+    check test ! -e "$work/repo/build/bin/$name"
+    check test ! -L "$work/repo/build/bin/$name"
+    check test ! -e "$HOME/.local/bin/$name"
   done
   printf 'PASS only the remaining dots runtime is built\n'
 

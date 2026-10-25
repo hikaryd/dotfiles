@@ -32,7 +32,7 @@ func fixtureHome(t *testing.T) string {
 	t.Helper()
 	h := t.TempDir()
 	t.Setenv("HOME", h)
-	for _, k := range []string{"XDG_CONFIG_HOME", "PI_CODING_AGENT_DIR"} {
+	for _, k := range []string{"XDG_CONFIG_HOME"} {
 		t.Setenv(k, "")
 	}
 	return h

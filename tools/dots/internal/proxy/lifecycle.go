@@ -156,7 +156,7 @@ func (c *controller) lockFile(name string, timeout time.Duration) (func(), error
 		}
 		if time.Now().After(deadline) {
 			f.Close()
-			return nil, errors.New("Timed out waiting for pi-proxy controller lock.")
+			return nil, errors.New("Timed out waiting for dots-proxy controller lock.")
 		}
 		time.Sleep(50 * time.Millisecond)
 	}
@@ -174,7 +174,7 @@ func (c *controller) start(server object) error {
 	if pid > 0 {
 		if pidRunning(pid) {
 			if c.owned(pid) {
-				fmt.Fprintf(c.out, "xray is already running for Pi (PID %d).\nStop it first: pi-proxy --stop\n", pid)
+				fmt.Fprintf(c.out, "shared xray is already running (PID %d).\nStop it first: dots-proxy --stop\n", pid)
 				return nil
 			}
 			fmt.Fprintf(c.errOut, "Warning: PID file points to PID %d, but it is not this pi xray process. Removing stale PID file without stopping that process.\n", pid)
@@ -226,7 +226,7 @@ func (c *controller) start(server object) error {
 		return errors.New("xray failed to start (process exited).")
 	default:
 	}
-	fmt.Fprintf(c.out, "\nxray started (PID %d)\nHTTP proxy: %s\n\nTest it:\n  curl -x %s -s -o /dev/null -w 'HTTP Status: %%{http_code}\\n' https://api.openai.com/v1/models\nExpected: HTTP 401 without API key. 401 is OK here: it means proxy reached OpenAI.\n\nFor Pi CLI:\n  pi-proxy --run\n", cmd.Process.Pid, c.proxyURL(), c.proxyURL())
+	fmt.Fprintf(c.out, "\nxray started (PID %d)\nHTTP proxy: %s\n\nTest it:\n  curl -x %s -s -o /dev/null -w 'HTTP Status: %%{http_code}\\n' https://api.openai.com/v1/models\nExpected: HTTP 401 without API key. 401 is OK here: it means proxy reached OpenAI.\n", cmd.Process.Pid, c.proxyURL(), c.proxyURL())
 	return nil
 }
 func (c *controller) stop() error {
@@ -240,7 +240,7 @@ func (c *controller) stop() error {
 		return err
 	}
 	if pid == 0 {
-		fmt.Fprintln(c.out, "xray is not running for Pi (no PID file).")
+		fmt.Fprintln(c.out, "shared xray is not running (no PID file).")
 		return nil
 	}
 	if !pidRunning(pid) {
@@ -248,7 +248,7 @@ func (c *controller) stop() error {
 		return c.removePID()
 	}
 	if !c.owned(pid) {
-		fmt.Fprintf(c.errOut, "Refusing to stop PID %d: it is not the xray process started by pi-proxy.\nRemoving stale PID file without stopping that process.\n", pid)
+		fmt.Fprintf(c.errOut, "Refusing to stop PID %d: it is not the xray process started by dots-proxy.\nRemoving stale PID file without stopping that process.\n", pid)
 		return c.removePID()
 	}
 	if err := syscall.Kill(pid, syscall.SIGTERM); err != nil {
@@ -279,5 +279,5 @@ func (c *controller) requireRunning() error {
 	if pid > 0 && pidRunning(pid) && c.owned(pid) {
 		return nil
 	}
-	return errors.New("xray proxy is not running. Start it first: pi-proxy")
+	return errors.New("xray proxy is not running. Start it first: dots-proxy")
 }

@@ -47,10 +47,10 @@ func (c *controller) serverKey(server object) string {
 }
 
 func (c *controller) candidates() ([]object, error) {
-	// Autostart must never prompt or consume Pi's stdin, including first run.
+	// Autostart must never prompt or consume the caller's stdin, including first run.
 	if _, err := os.Stat(c.path("servers.json")); errors.Is(err, os.ErrNotExist) {
 		if _, err := os.Stat(c.path("subscription_url.txt")); err != nil {
-			return nil, errors.New("No proxy servers configured. Run pi-proxy --set-sub or --set-vless first.")
+			return nil, errors.New("No proxy servers configured. Run dots-proxy --set-sub or --set-vless first.")
 		}
 	}
 	servers, err := c.loadServers()
@@ -73,7 +73,7 @@ func (c *controller) candidates() ([]object, error) {
 		}
 	}
 	if len(unique) == 0 {
-		return nil, errors.New("No valid proxy servers configured. Run pi-proxy --update.")
+		return nil, errors.New("No valid proxy servers configured. Run dots-proxy --update.")
 	}
 	return unique, nil
 }

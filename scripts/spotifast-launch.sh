@@ -9,10 +9,10 @@ if [[ ! -d "$app" ]]; then
   exit 1
 fi
 
-# shellcheck source=../config/shell/pi-proxy.sh
-source "$HOME/.config/shell/pi-proxy.sh"
-_pi_proxy_ensure spotifast
-proxy="$PI_PROXY_URL"
+# shellcheck source=../config/shell/local-proxy.sh
+source "$HOME/.config/shell/local-proxy.sh"
+_dots_proxy_ensure spotifast
+proxy="$DOTS_PROXY_URL"
 
 if pgrep -x Spotifast >/dev/null; then
   open -a "$app"

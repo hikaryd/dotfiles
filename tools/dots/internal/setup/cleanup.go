@@ -164,7 +164,6 @@ func cleanupPlan(root string, now time.Time) ([]cleanupItem, error) {
 		{filepath.Join(h, ".local/bin"), h, 0, false, false},
 		{filepath.Join(h, ".config"), h, 3, false, false},
 		{filepath.Join(h, ".agents/skills"), h, 1, false, false},
-		{filepath.Join(h, ".pi/agent/extensions"), h, 1, false, false},
 		{filepath.Join(h, ".config/xray-pi"), h, 2, false, true},
 	} {
 		if err := walk(scope.base, scope.boundary, scope.depth, scope.repo, scope.bytecode); err != nil {

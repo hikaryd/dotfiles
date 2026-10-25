@@ -84,9 +84,9 @@ func (c *controller) processStatus() error {
 	}
 	running := pid > 0 && pidRunning(pid) && c.owned(pid)
 	if running {
-		fmt.Fprintf(c.out, "xray is running for Pi (PID %d)\n", pid)
+		fmt.Fprintf(c.out, "shared xray is running (PID %d)\n", pid)
 	} else {
-		fmt.Fprintln(c.out, "xray is NOT running for Pi")
+		fmt.Fprintln(c.out, "shared xray is NOT running")
 		if pid > 0 {
 			if pidRunning(pid) {
 				fmt.Fprintf(c.errOut, "PID file points to PID %d, but it is not this pi xray process.\n", pid)

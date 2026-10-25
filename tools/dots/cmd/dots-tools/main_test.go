@@ -34,20 +34,38 @@ func captureDispatch(t *testing.T, root, name string, args []string) (int, strin
 func TestNativeAliasesAndSetupHelpDoNotApply(t *testing.T) {
 	home, root := t.TempDir(), t.TempDir()
 	t.Setenv("HOME", home)
-	for _, command := range []string{"pi-install", "pi-apply", "jevgrep-apply", "waterfox-apply", "tinycast-hotkey", "managed-links", "json-keys"} {
+	for _, command := range []string{"jevgrep-apply", "waterfox-apply", "tinycast-hotkey", "managed-links", "json-keys"} {
 		code, out, err := captureDispatch(t, root, "dots-tools", []string{"setup", command, "--help"})
 		if code != 0 || out == "" || err != "" {
 			t.Fatalf("help %s: %d %q %q", command, code, out, err)
 		}
 	}
-	for _, name := range []string{"pi-install", "pi-install.sh"} {
-		if code, _, _ := captureDispatch(t, root, name, []string{"--help"}); code != 0 {
-			t.Fatalf("alias %s: %d", name, code)
-		}
-	}
 	entries, err := os.ReadDir(home)
 	if err != nil || len(entries) != 0 {
 		t.Fatalf("help changed HOME: %v %v", entries, err)
+	}
+}
+
+func TestRemovedAgentCommandsCannotInstallOrCreateState(t *testing.T) {
+	for _, args := range [][]string{
+		{"setup", "pi-install"},
+		{"setup", "pi-apply"},
+		{"agents", "task-titles", "sync"},
+	} {
+		t.Run(strings.Join(args, "/"), func(t *testing.T) {
+			home := t.TempDir()
+			t.Setenv("HOME", home)
+			t.Setenv("PATH", t.TempDir())
+			t.Setenv("HERDR_SOCKET_PATH", "")
+			code, _, _ := captureDispatch(t, t.TempDir(), "dots-tools", args)
+			if code != 2 {
+				t.Fatalf("removed command %v returned %d, want unknown-command status 2", args, code)
+			}
+			entries, err := os.ReadDir(home)
+			if err != nil || len(entries) != 0 {
+				t.Fatalf("removed command changed HOME: %v %v", entries, err)
+			}
+		})
 	}
 }
 

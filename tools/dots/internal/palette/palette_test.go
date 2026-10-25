@@ -187,20 +187,6 @@ func TestCustomPaletteGolden(t *testing.T) {
 	}
 }
 
-func TestPiEscapingAndSyntaxMerge(t *testing.T) {
-	root := fixture(t)
-	mustWrite(t, filepath.Join(root, "palette/ayu.toml"), mustRead(t, "testdata/pi-escaped.toml"))
-	var out, stderr bytes.Buffer
-	if code := run(root, []string{"--tool", "pi"}, &out, &stderr); code != 0 {
-		t.Fatalf("exit %d: %s", code, &stderr)
-	}
-	want := mustRead(t, "testdata/pi-escaped.json")
-	got := mustRead(t, filepath.Join(root, "config/pi/themes/ayu.json"))
-	if !bytes.Equal(got, want) {
-		t.Fatalf("got %s; want %s", got, want)
-	}
-}
-
 func TestCLIOptionsAndDryRun(t *testing.T) {
 	for _, tc := range []struct {
 		name string
@@ -209,11 +195,12 @@ func TestCLIOptionsAndDryRun(t *testing.T) {
 		want string
 	}{
 		{"default", []string{"--dry-run"}, 0, ""},
-		{"equals", []string{"--variant=mirage", "--tool=pi", "--dry-run"}, 0, "Generating ayu mirage configs:\n  [dry-run] pi\nDone.\n"},
+		{"equals", []string{"--variant=mirage", "--tool=jcode", "--dry-run"}, 0, "Generating ayu mirage configs:\n  [dry-run] jcode\nDone.\n"},
 		{"abbreviations", []string{"--var", "mirage", "--to", "tmux", "--dry"}, 0, "Generating ayu mirage configs:\n  [dry-run] tmux\nDone.\n"},
-		{"repeat", []string{"--tool", "pi", "--tool", "fresh", "--variant", "mirage", "--variant", "dark", "--dry-run"}, 0, "Generating ayu dark configs:\n  [dry-run] fresh\nDone.\n"},
+		{"repeat", []string{"--tool", "jcode", "--tool", "fresh", "--variant", "mirage", "--variant", "dark", "--dry-run"}, 0, "Generating ayu dark configs:\n  [dry-run] fresh\nDone.\n"},
 		{"bad-variant", []string{"--variant", "light"}, 2, ""},
 		{"bad-tool", []string{"--tool", "zen"}, 2, ""},
+		{"removed-tool", []string{"--tool", "pi"}, 2, ""},
 		{"missing-value", []string{"--tool"}, 2, ""},
 		{"value-flag", []string{"--tool", "--dry-run"}, 2, ""},
 		{"extra-value", []string{"--dry-run=true"}, 2, ""},
@@ -303,12 +290,12 @@ func TestErrorsAndPartialFailure(t *testing.T) {
 	}
 	t.Run("write-error", func(t *testing.T) {
 		root := fixture(t)
-		path := filepath.Join(root, "config/pi/themes/ayu.json")
+		path := filepath.Join(root, "config/jcode/theme.toml")
 		if err := os.MkdirAll(path, 0755); err != nil {
 			t.Fatal(err)
 		}
 		var out, stderr bytes.Buffer
-		if code := run(root, []string{"--tool", "pi"}, &out, &stderr); code != 1 || strings.Contains(out.String(), "Done.") || stderr.Len() == 0 {
+		if code := run(root, []string{"--tool", "jcode"}, &out, &stderr); code != 1 || strings.Contains(out.String(), "Done.") || stderr.Len() == 0 {
 			t.Fatalf("exit %d stdout=%q stderr=%q", code, &out, &stderr)
 		}
 	})
@@ -366,7 +353,7 @@ func TestCLIProcess(t *testing.T) {
 	for _, tc := range []struct {
 		args []string
 		code int
-	}{{[]string{"--tool", "pi"}, 0}, {[]string{"--tool", "invalid"}, 2}} {
+	}{{[]string{"--tool", "jcode"}, 0}, {[]string{"--tool", "invalid"}, 2}} {
 		root := fixture(t)
 		cmd := exec.Command(executable, append([]string{"-test.run=^TestCLIProcess$", "--"}, tc.args...)...)
 		cmd.Env = []string{"HOME=" + t.TempDir(), "PATH=" + t.TempDir(), "DOTS_PALETTE_TEST_PROCESS=1", "DOTS_PALETTE_TEST_ROOT=" + root}
@@ -386,7 +373,7 @@ func TestCLIProcess(t *testing.T) {
 			t.Fatalf("exit %d, want %d: %s", code, tc.code, &stderr)
 		}
 		if code == 0 {
-			want := "Generating ayu dark configs:\n  pi: " + filepath.Join(root, "config/pi/themes/ayu.json") + " (Ayu dark)\nDone.\n"
+			want := "Generating ayu dark configs:\n  jcode: " + filepath.Join(root, "config/jcode/theme.toml") + "\nDone.\n"
 			if out.String() != want || stderr.Len() != 0 {
 				t.Fatalf("stdout=%q stderr=%q", &out, &stderr)
 			}

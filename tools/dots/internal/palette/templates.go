@@ -11,8 +11,6 @@ import (
 	"strings"
 	"text/template"
 	"unicode/utf16"
-
-	"github.com/pelletier/go-toml/v2/unstable"
 )
 
 // These templates are a literal transcription of the source generator's templates.
@@ -106,7 +104,7 @@ func render(name string, ctx map[string]any) (string, error) {
 	if err := t.Execute(&out, ctx); err != nil {
 		return "", err
 	}
-	if name == "fresh" || name == "thorium" || name == "pi" {
+	if name == "fresh" || name == "thorium" {
 		var formatted bytes.Buffer
 		if err := json.Indent(&formatted, bytes.TrimSpace(out.Bytes()), "", "  "); err != nil {
 			return "", fmt.Errorf("invalid generated %s JSON", name)
@@ -124,68 +122,4 @@ func (g generator) write(relative, content string, mkdir bool) error {
 		}
 	}
 	return os.WriteFile(path, []byte(content), 0666)
-}
-
-// syntaxOrder preserves TOML insertion order for Pi's **syntax dictionary merge,
-// including dotted keys and inline tables. The document has already been decoded.
-func syntaxOrder(data []byte, variant string) ([]string, error) {
-	var parser unstable.Parser
-	parser.Reset(data)
-	var table, order []string
-	var visit func(*unstable.Node, []string)
-	visit = func(node *unstable.Node, prefix []string) {
-		key := node.Key()
-		path := append([]string(nil), prefix...)
-		for key.Next() {
-			path = append(path, string(key.Node().Data))
-		}
-		if node.Value().Kind == unstable.InlineTable {
-			children := node.Value().Children()
-			for children.Next() {
-				visit(children.Node(), path)
-			}
-		} else if len(path) == 3 && path[0] == variant && path[1] == "syntax" {
-			order = append(order, path[2])
-		}
-	}
-	for parser.NextExpression() {
-		n := parser.Expression()
-		switch n.Kind {
-		case unstable.Table, unstable.ArrayTable:
-			table = nil
-			key := n.Key()
-			for key.Next() {
-				table = append(table, string(key.Node().Data))
-			}
-		case unstable.KeyValue:
-			visit(n, table)
-		}
-	}
-	return order, parser.Error()
-}
-
-func (g generator) piVars() (string, error) {
-	type field struct{ key, section, color string }
-	fields := []field{{"bg", "editor", "bg"}, {"panel", "editor", "panel"}, {"line", "editor", "line"}, {"text", "editor", "fg"}, {"muted", "ui", "fg"}, {"dim", "syntax", "comment"}, {"border", "ui", "border"}, {"selection", "ui", "selection"}, {"accent", "common", "accent"}, {"warning", "common", "warning"}, {"error", "common", "error"}}
-	keys := make([]string, 0, len(fields)+len(g.p["syntax"]))
-	values := map[string]string{}
-	for _, f := range fields {
-		value, err := g.color(f.section, f.color)
-		if err != nil {
-			return "", err
-		}
-		keys = append(keys, f.key)
-		values[f.key] = value
-	}
-	for _, key := range g.syntaxKeys {
-		if _, exists := values[key]; !exists {
-			keys = append(keys, key)
-		}
-		values[key] = g.p["syntax"][key]
-	}
-	var parts []string
-	for _, key := range keys {
-		parts = append(parts, jsonString(key)+": "+jsonString(values[key]))
-	}
-	return "{" + strings.Join(parts, ",") + "}", nil
 }

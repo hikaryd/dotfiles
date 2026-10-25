@@ -49,9 +49,9 @@
       path: config/bash/.profile
       create: true
       force: true
-    # Shared shell — Pi VLESS-прокси (общий для bash и zsh)
-    ~/.config/shell/pi-proxy.sh:
-      path: config/shell/pi-proxy.sh
+    # Shared local proxy for Jevgrep and Spotifast.
+    ~/.config/shell/local-proxy.sh:
+      path: config/shell/local-proxy.sh
       create: true
       force: true
     # Compiled helpers; secrets stay in ~/.config/xray-pi/.
@@ -63,10 +63,6 @@
       path: build/bin/dots-vpn
       create: true
       force: false
-    ~/.local/bin/dots-task-titles:
-      path: build/bin/dots-task-titles
-      create: true
-      force: true
     # Tmux
     ~/.config/tmux/tmux.conf:
       path: config/tmux/tmux.conf
@@ -170,14 +166,6 @@
         herdr plugin link "$HOME/dots/config/herdr/plugins/last-workspace" --enabled
         dots-last-workspace prime
       description: Building and linking the native Herdr workspace toggle
-      stdout: true
-      stderr: true
-    - command: herdr plugin link "$HOME/dots/config/herdr/plugins/task-titles" --enabled
-      description: Linking automatic Pi task titles in Herdr
-      stdout: true
-      stderr: true
-    - command: herdr plugin action invoke dots.task-titles.sync
-      description: Naming existing Pi panes and tabs
       stdout: true
       stderr: true
     - command: chmod +x ~/.config/git/hooks/prepare-commit-msg
