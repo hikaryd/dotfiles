@@ -1,4 +1,4 @@
-// Package beatapi provides a single-user loopback API for free BeatAPI models.
+// Package beatapi provides a single-user loopback API for free-first BeatAPI models.
 package beatapi
 
 import (

@@ -27,13 +27,16 @@ const help = `Usage: dots-tools proxy beatapi <command>
   setup [--stdin]    Save BeatAPI key, enable launchd and connect jg
   key [--stdin]      Save/rotate the BeatAPI key
   status             Read-only local configuration/service/health checks
-  doctor             One synthetic Jev request, 15s limit, no retries
+  doctor             One local Jev request, 15s limit; paid fallback may be used
   restart            Restart only the BeatAPI LaunchAgent
   stop               Unload and remove only this LaunchAgent; retain key/jg
   serve [--config ABSOLUTE_PATH]  Run the API in the foreground
 
 API: http://127.0.0.1:6446/v1 (no local authorization).
-Only listed free BeatAPI models; no fallback. jg uses Jev 1.14.
+Only listed free model IDs are accepted. jg uses Jev 1.14 free first.
+Jev alone falls back once to paid jev-1.14 on upstream 429/5xx or timeout
+before response headers, using the same key. Paid fallback can spend balance.
+No fallback for chat, caller cancellation or response body/stream errors.
 Outgoing traffic requires the shared dots Pi HTTP proxy.
 Secret input is hidden. Use --stdin explicitly for a password manager.
 Do not put a key in command arguments. Setup does not verify upstream inference.`

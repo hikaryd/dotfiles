@@ -16,8 +16,8 @@ import (
 )
 
 const beatKeyMessage = "BeatAPI rejected the API key; run dots-tools proxy beatapi key"
-const beatQuotaMessage = "BeatAPI free usage limit reached; wait for Retry-After or check account limits"
-const beatRejectionMessage = "BeatAPI rejected the request; check free model availability, key and quota"
+const beatQuotaMessage = "BeatAPI usage limit reached; wait for Retry-After or check account limits"
+const beatRejectionMessage = "BeatAPI rejected the request; check model availability, key and quota"
 
 var errNotConnected = errors.New("beatapi: jevgrep is not connected to this API")
 
@@ -69,7 +69,7 @@ func (c *cli) jevgrepConnected(cfg Config) bool {
 
 // One real synthetic evaluation; unlike jg 0.8, never sleep through Retry-After.
 func (c *cli) doctor(cfg Config) error {
-	fmt.Fprintln(c.out, "Checking Jev through the local API (one request, 15s limit, no retries)...")
+	fmt.Fprintln(c.out, "Checking Jev through the local API (one local request, 15s limit; paid fallback may be used)...")
 	ctx, cancel := context.WithTimeout(c.ctx, 15*time.Second)
 	defer cancel()
 	body := fmt.Sprintf(`{"model":%q,"state":{"source":"export function recordEvent(event) { events.push(event); }"},"questions":{"relevant":{"type":"noul","instructions":"Does this source implement recording an event?"}}}`, jevModel)

@@ -103,7 +103,7 @@ func TestJevFallbackPaidFailureIsTerminalAndSanitized(t *testing.T) {
 				return res, nil
 			})
 			w := request(h, "POST", "/v1/systemone", `{"model":"jev-1.14-free"}`)
-			if w.Code != status || calls != 2 || w.Header().Get("Retry-After") != "15" || w.Header().Get("Location") != "" || strings.Contains(w.Body.String(), "test-secret") {
+			if w.Code != status || calls != 2 || w.Header().Get("Retry-After") != "15" || w.Header().Get("Location") != "" || strings.Contains(w.Body.String(), "test-secret") || strings.Contains(w.Body.String(), "free") {
 				t.Fatalf("unsafe/unbounded terminal fallback: status=%d calls=%d headers=%v body=%s", w.Code, calls, w.Header(), w.Body)
 			}
 		})
@@ -224,5 +224,48 @@ func TestJevFallbackClosesFreeBodyBeforePaidAttempt(t *testing.T) {
 	w := request(h, "POST", "/v1/systemone", `{"model":"jev-1.14-free"}`)
 	if w.Code != 200 || calls != 2 || !freeBody.closed || !paidBody.closed {
 		t.Fatalf("unclosed or missing attempts: status=%d calls=%d freeClosed=%t paidClosed=%t", w.Code, calls, freeBody.closed, paidBody.closed)
+	}
+}
+
+func TestJevFallbackPaidTransportFailureIsTerminal(t *testing.T) {
+	for _, tc := range []struct {
+		name   string
+		err    error
+		status int
+	}{{"timeout", os.ErrDeadlineExceeded, 504}, {"network", errors.New("test-secret network failure"), 502}} {
+		t.Run(tc.name, func(t *testing.T) {
+			calls := 0
+			h := routedHandler(testConfig(), func(r *http.Request) (*http.Response, error) {
+				calls++
+				if calls == 1 {
+					return beatResponse(429, "application/json", `{}`), nil
+				}
+				if r.URL.String() != "https://api.beatapi.io/v1/systemone" || r.Header.Get("Authorization") != "Bearer test-secret" {
+					t.Error("paid failure crossed the provider/key boundary")
+				}
+				return nil, tc.err
+			})
+			w := request(h, "POST", "/v1/systemone", `{"model":"jev-1.14-free"}`)
+			if calls != 2 || w.Code != tc.status || strings.Contains(w.Body.String(), "test-secret") {
+				t.Fatalf("paid failure was retried or reflected: calls=%d status=%d body=%s", calls, w.Code, w.Body)
+			}
+		})
+	}
+}
+
+type fallbackTimedOutBody struct{}
+
+func (fallbackTimedOutBody) Read([]byte) (int, error) { return 0, os.ErrDeadlineExceeded }
+func (fallbackTimedOutBody) Close() error             { return nil }
+
+func TestJevFallbackResponseBodyTimeoutNeverSpends(t *testing.T) {
+	calls := 0
+	h := routedHandler(testConfig(), func(*http.Request) (*http.Response, error) {
+		calls++
+		return &http.Response{StatusCode: 200, Header: http.Header{"Content-Type": {"application/json"}}, Body: fallbackTimedOutBody{}}, nil
+	})
+	w := request(h, "POST", "/v1/systemone", `{"model":"jev-1.14-free"}`)
+	if calls != 1 || w.Code != 502 {
+		t.Fatalf("a failure after headers triggered paid inference: calls=%d status=%d", calls, w.Code)
 	}
 }

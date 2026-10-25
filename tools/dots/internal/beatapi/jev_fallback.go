@@ -10,8 +10,9 @@ import (
 )
 
 // requestUpstream keeps paid Jev internal to the free-first systemone route.
-// Only failures before response headers can trigger one paid attempt. In
-// particular, caller cancellation must never cause additional spending.
+// Eligible HTTP errors or transport timeouts can trigger one paid attempt.
+// Response body failures never do, and caller cancellation must never cause
+// additional spending.
 func (h *handler) requestUpstream(ctx context.Context, endpoint string, body []byte, key string) (*http.Response, error) {
 	res, err := h.sendUpstream(ctx, endpoint, body, key)
 	if endpoint != "/systemone" || ctx.Err() != nil {

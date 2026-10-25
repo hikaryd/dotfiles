@@ -87,7 +87,7 @@ func TestInferenceAdmissionBoundKeepsHealthResponsive(t *testing.T) {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		excess <- request(h, "POST", "/v1/chat/completions", `{"model":"glm-5.3-free"}`)
+		excess <- request(h, "POST", "/v1/systemone", `{"model":"jev-1.14-free"}`)
 	}()
 	select {
 	case w := <-excess:

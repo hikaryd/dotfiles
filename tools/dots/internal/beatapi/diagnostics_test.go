@@ -22,7 +22,7 @@ func TestUpstreamRejectionExplainsQuotaAndAccessWithoutReflectingSecrets(t *test
 		status    int
 		typ, want string
 	}{
-		{429, "FreeUsageLimitError", "free usage limit"},
+		{429, "FreeUsageLimitError", "usage limit"},
 		{403, "PermissionError", "rejected the request"},
 		{401, "AuthenticationError", "API key"},
 	} {
@@ -64,7 +64,7 @@ func TestDoctorChecksRealJevAnswerOnceAndDoesNotWriteConfiguration(t *testing.T)
 		status, exit            int
 	}{
 		{"success", `{"answers":{"relevant":{"type":"noul","noul":0.99}}}`, "", "Jev access verified", 200, 0},
-		{"quota", `{"error":{"message":"BeatAPI free usage limit reached"}}`, "59941", "59941", 429, 1},
+		{"quota", `{"error":{"message":"BeatAPI usage limit reached; wait for Retry-After or check account limits"}}`, "59941", "59941", 429, 1},
 		{"not-an-answer", `{"configured":true}`, "", "invalid Jev response", 200, 1},
 		{"low-score", `{"answers":{"relevant":{"type":"noul","noul":0.1}}}`, "", "invalid Jev response", 200, 1},
 		{"infinity-score", `{"answers":{"relevant":{"type":"noul","noul":2}}}`, "", "invalid Jev response", 200, 1},
