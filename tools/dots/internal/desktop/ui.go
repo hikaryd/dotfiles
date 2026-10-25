@@ -144,7 +144,7 @@ const helpText = `
   Поиск по команде или описанию; ↑/↓ / Ctrl+N/P выбор
   Enter открыть · Esc/Ctrl+C отмена; Ctrl+L — очистить поиск
   zsh Ctrl+O — меню; Ctrl+R — история Atuin
-  tmux/Herdr prefix = Ctrl+A: O меню, P проекты, T сессии
+  rmux/tmux/Herdr prefix = Ctrl+A: O меню, P проекты, T сессии
   F refs, Y clipboard, V status
 
 Приватность

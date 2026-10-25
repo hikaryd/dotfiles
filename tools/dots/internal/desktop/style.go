@@ -10,6 +10,8 @@ import (
 	"strings"
 	"time"
 	"unicode"
+
+	"dots/native/internal/mux"
 )
 
 var styleModes = []string{"glass", "focus", "presentation"}
@@ -40,9 +42,9 @@ var presentation = [][2]string{{"status-left", "#[fg=#bfbdb6] PRESENTATION "}, {
 const snapshotOption = "@dots-style-snapshot"
 
 func tmuxStyle(mode string) error {
-	r, e := captureCommand(4*time.Second, maxBytes, "", nil, "tmux", "list-sessions")
+	r, e := captureCommand(4*time.Second, maxBytes, "", nil, mux.Argv("list-sessions")...)
 	if e != nil {
-		if !available("tmux") {
+		if !available(mux.Argv()[0]) {
 			return nil
 		}
 		return e
@@ -51,14 +53,14 @@ func tmuxStyle(mode string) error {
 		return nil
 	}
 	show := func(key string) (string, error) {
-		r, e := captureCommand(4*time.Second, maxBytes, "", nil, "tmux", "show-options", "-gqv", key)
+		r, e := captureCommand(4*time.Second, maxBytes, "", nil, mux.Argv("show-options", "-gqv", key)...)
 		if e != nil || r.code != 0 {
 			return "", errors.New("tmux show-options failed")
 		}
 		return strings.TrimRight(r.out, "\n"), nil
 	}
 	set := func(k, v string) error {
-		r, e := captureCommand(4*time.Second, maxBytes, "", nil, "tmux", "set-option", "-g", k, v)
+		r, e := captureCommand(4*time.Second, maxBytes, "", nil, mux.Argv("set-option", "-g", k, v)...)
 		if e != nil || r.code != 0 {
 			return errors.New("tmux set-option failed")
 		}
@@ -110,7 +112,7 @@ func tmuxStyle(mode string) error {
 				}
 			}
 		}
-		r, e := captureCommand(4*time.Second, maxBytes, "", nil, "tmux", "set-option", "-gu", snapshotOption)
+		r, e := captureCommand(4*time.Second, maxBytes, "", nil, mux.Argv("set-option", "-gu", snapshotOption)...)
 		if e != nil || r.code != 0 {
 			return errors.New("tmux snapshot reset failed")
 		}

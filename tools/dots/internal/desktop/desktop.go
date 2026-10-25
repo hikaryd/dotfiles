@@ -123,7 +123,7 @@ func menu(root string) int {
 		}
 		return Run(root, []string{"style", style})
 	case "config":
-		configs := [][2]string{{"zsh", "config/zsh/.zshrc"}, {"tmux", "config/tmux/tmux.conf"}, {"herdr", "config/herdr/config.toml"}, {"ghostty", "config/ghostty/config"}, {"nvim", "config/nvim/init.lua"}, {"sesh", "config/sesh/sesh.toml"}, {"atuin", "config/atuin/config.toml"}}
+		configs := [][2]string{{"zsh", "config/zsh/.zshrc"}, {"rmux", "config/rmux/rmux.conf"}, {"tmux", "config/tmux/tmux.conf"}, {"herdr", "config/herdr/config.toml"}, {"ghostty", "config/ghostty/config"}, {"nvim", "config/nvim/init.lua"}, {"sesh", "config/sesh/sesh.toml"}, {"atuin", "config/atuin/config.toml"}}
 		key, err := pickMenu("Редактировать конфиг", configs)
 		if err != nil {
 			return fail("dots config", err)

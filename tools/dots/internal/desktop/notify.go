@@ -12,6 +12,8 @@ import (
 	"strings"
 	"syscall"
 	"time"
+
+	"dots/native/internal/mux"
 )
 
 func notifyCapture(args ...string) string {
@@ -74,7 +76,7 @@ func deliverNotification(payload []byte, pane string, force bool) string {
 		}
 		return "no-terminal"
 	}
-	rows := notifyCapture("tmux", "list-clients", "-F", "#{client_tty}\t#{client_termname}\t#{pane_id}")
+	rows := notifyCapture(mux.Argv("list-clients", "-F", "#{client_tty}\t#{client_termname}\t#{pane_id}")...)
 	clients := [][]string{}
 	for _, line := range strings.Split(rows, "\n") {
 		r := strings.Split(line, "\t")
@@ -132,7 +134,7 @@ func notifyRun(args []string) int {
 		}
 		project = filepath.Base(cwd)
 	}
-	pane := os.Getenv("TMUX_PANE")
+	pane := mux.SourcePane()
 	if p, ok := o.values["--pane"]; ok {
 		pane = p
 	}

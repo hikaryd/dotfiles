@@ -13,6 +13,8 @@ import (
 	"sort"
 	"strings"
 	"time"
+
+	"dots/native/internal/mux"
 )
 
 type pane struct {
@@ -168,7 +170,7 @@ func livePanesContext(ctx context.Context) ([]pane, error) {
 		}
 		return panes, nil
 	}
-	r, e := captureCommandContext(ctx, 5*time.Second, 16*maxBytes, "", nil, "tmux", "list-panes", "-a", "-F", "#{session_id}\t#{session_name}\t#{window_id}\t#{pane_id}\t#{session_attached}\t#{pane_current_command}\t#{pane_active}\t#{pane_current_path}")
+	r, e := captureCommandContext(ctx, 5*time.Second, 16*maxBytes, "", nil, mux.Argv("list-panes", "-a", "-F", "#{session_id}\t#{session_name}\t#{window_id}\t#{pane_id}\t#{session_attached}\t#{pane_current_command}\t#{pane_active}\t#{pane_current_path}")...)
 	if e != nil {
 		return nil, e
 	}
@@ -345,6 +347,15 @@ func focusPane(p pane) error {
 	if inHerdr() {
 		return herdrFocus(p.Session)
 	}
+	if mux.IsRmux() {
+		if _, err := command(mux.Argv("select-pane", "-t", p.Pane)...); err != nil {
+			return err
+		}
+		if _, err := command(mux.Argv("select-window", "-t", p.Window)...); err != nil {
+			return err
+		}
+		return rmuxFocus(p.Session)
+	}
 	action := "attach-session"
 	if os.Getenv("TMUX") != "" {
 		action = "switch-client"
@@ -453,7 +464,7 @@ func openProject(target string) error {
 		_, e = herdrCall("tab.focus", map[string]any{"tab_id": tab}, "tab", "focus", tab)
 		return e
 	}
-	argv := []string{"tmux", "new-session", "-d", "-P", "-F", "#{session_id}\t#{window_id}\t#{pane_id}", "-s", sessionName(path), "-n", "editor", "-c", path}
+	argv := mux.Argv("new-session", "-d", "-P", "-F", "#{session_id}\t#{window_id}\t#{pane_id}", "-s", sessionName(path), "-n", "editor", "-c", path)
 	if available("nvim") {
 		argv = append(argv, "nvim")
 	}
@@ -466,7 +477,7 @@ func openProject(target string) error {
 		return errors.New("Некорректный ответ tmux")
 	}
 	for _, label := range []string{"shell", "logs"} {
-		if _, e = command("tmux", "new-window", "-d", "-t", f[0]+":", "-n", label, "-c", path); e != nil {
+		if _, e = command(mux.Argv("new-window", "-d", "-t", f[0]+":", "-n", label, "-c", path)...); e != nil {
 			return e
 		}
 	}

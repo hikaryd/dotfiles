@@ -12,6 +12,8 @@ import (
 	"strings"
 	"time"
 	"unicode"
+
+	"dots/native/internal/mux"
 )
 
 type reference struct {
@@ -139,7 +141,7 @@ func captureRefs(pane string, lines int) (string, string, error) {
 	if !regexp.MustCompile(`^%[0-9]+$`).MatchString(pane) {
 		return "", "", errors.New("Нужна tmux pane %id или Herdr pane w…:p…; lines 1..5000.")
 	}
-	r, e := captureCommand(5*time.Second, 16384, "", nil, "tmux", "display-message", "-p", "-t", pane, "#{pane_current_path}")
+	r, e := captureCommand(5*time.Second, 16384, "", nil, mux.Argv("display-message", "-p", "-t", pane, "#{pane_current_path}")...)
 	if e != nil || r.code != 0 {
 		return "", "", errors.New("Не удалось определить каталог панели.")
 	}
@@ -147,7 +149,7 @@ func captureRefs(pane string, lines int) (string, string, error) {
 	if cwd == "" || strings.ContainsFunc(cwd, control) {
 		return "", "", errors.New("Не удалось определить каталог панели.")
 	}
-	r, e = captureCommand(5*time.Second, maxBytes, "", nil, "tmux", "capture-pane", "-p", "-J", "-S", fmt.Sprintf("-%d", lines), "-t", pane)
+	r, e = captureCommand(5*time.Second, maxBytes, "", nil, mux.Argv("capture-pane", "-p", "-J", "-S", fmt.Sprintf("-%d", lines), "-t", pane)...)
 	if e == nil && r.code != 0 {
 		e = errors.New("внешняя команда завершилась с ошибкой")
 	}
@@ -207,11 +209,7 @@ func refsRun(args []string) int {
 	} else {
 		pane := o.values["--pane"]
 		if _, ok := o.values["--pane"]; !ok {
-			for _, k := range []string{"DOTS_SOURCE_PANE", "HERDR_ACTIVE_PANE_ID", "HERDR_PANE_ID", "TMUX_PANE"} {
-				if pane = os.Getenv(k); pane != "" {
-					break
-				}
-			}
+			pane = mux.SourcePane()
 		}
 		text, cwd, e = captureRefs(pane, lines)
 	}

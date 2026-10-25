@@ -14,6 +14,7 @@ import (
 	"syscall"
 	"time"
 
+	"dots/native/internal/mux"
 	"dots/native/internal/tui"
 )
 
@@ -257,7 +258,7 @@ func localPorts(ctx context.Context, projects []project) (map[string][]portRow, 
 			}
 		}
 	} else {
-		r, e = statusCommand(ctx, "tmux", "list-panes", "-a", "-F", "#{pane_id}\t#{pane_pid}")
+		r, e = statusCommand(ctx, mux.Argv("list-panes", "-a", "-F", "#{pane_id}\t#{pane_pid}")...)
 		if e != nil {
 			warnings = append(warnings, "Pane process attribution unavailable")
 		}

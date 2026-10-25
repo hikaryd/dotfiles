@@ -9,6 +9,9 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
+
+	"dots/native/internal/mux"
 )
 
 type session struct {
@@ -67,17 +70,36 @@ func liveWorkspaces(snapshot map[string]any) []session {
 	return entries
 }
 func sessionInventory() ([]session, error) {
-	s, e := herdrSnapshot()
-	if e != nil {
-		return nil, e
+	var entries []session
+	if mux.IsRmux() {
+		var e error
+		entries, e = rmuxSessions()
+		if e != nil {
+			return nil, e
+		}
+		if !available("sesh") {
+			return entries, nil
+		}
+	} else {
+		s, e := herdrSnapshot()
+		if e != nil {
+			return nil, e
+		}
+		entries = liveWorkspaces(s)
 	}
-	entries := liveWorkspaces(s)
-	raw, e := command("sesh", "list", "-j")
+	raw, e := sourceMuxCommand("sesh", "list", "-j")
 	if e != nil {
+		if mux.IsRmux() {
+			fmt.Fprintln(os.Stderr, "sesh недоступен; показаны живые сессии rmux.")
+			return entries, nil
+		}
 		return nil, e
 	}
 	var rows []any
 	if json.Unmarshal([]byte(raw), &rows) != nil || rows == nil {
+		if mux.IsRmux() {
+			return entries, nil
+		}
 		return nil, errors.New("Некорректный список sesh")
 	}
 	seen := map[string]bool{}
@@ -138,8 +160,42 @@ type layoutWindow struct {
 	panes     []layoutPane
 }
 
+// Source templates belong to real tmux, not rmux's compatibility shim/socket.
+func sourceMuxCommand(args ...string) (string, error) {
+	if !mux.IsRmux() {
+		return command(args...)
+	}
+	env := mux.ExternalEnv(os.Environ())
+	var path string
+	for _, item := range env {
+		if strings.HasPrefix(item, "PATH=") {
+			path = strings.TrimPrefix(item, "PATH=")
+		}
+	}
+	var bin string
+	for _, dir := range filepath.SplitList(path) {
+		candidate := filepath.Join(dir, args[0])
+		if info, err := os.Stat(candidate); err == nil && !info.IsDir() && info.Mode()&0111 != 0 {
+			bin = candidate
+			break
+		}
+	}
+	if bin == "" {
+		return "", errors.New("внешняя команда недоступна")
+	}
+	argv := append([]string{bin}, args[1:]...)
+	r, err := captureCommand(5*time.Second, 16*maxBytes, "", env, argv...)
+	if err != nil {
+		return "", err
+	}
+	if r.code != 0 {
+		return "", errors.New("внешняя команда завершилась с ошибкой")
+	}
+	return r.out, nil
+}
+
 func tmuxLayout(name string) ([]layoutWindow, error) {
-	raw, e := command("tmux", "list-windows", "-a", "-F", "#{session_name}\t#{window_id}\t#{window_index}\t#{window_name}")
+	raw, e := sourceMuxCommand("tmux", "list-windows", "-a", "-F", "#{session_name}\t#{window_id}\t#{window_index}\t#{window_name}")
 	if e != nil {
 		return nil, e
 	}
@@ -155,7 +211,7 @@ func tmuxLayout(name string) ([]layoutWindow, error) {
 		}
 		windows = append(windows, layoutWindow{id: f[1], label: f[3], index: n})
 	}
-	raw, e = command("tmux", "list-panes", "-a", "-F", "#{session_name}\t#{window_id}\t#{pane_index}\t#{pane_current_path}")
+	raw, e = sourceMuxCommand("tmux", "list-panes", "-a", "-F", "#{session_name}\t#{window_id}\t#{pane_index}\t#{pane_current_path}")
 	if e != nil {
 		return nil, e
 	}
@@ -262,6 +318,9 @@ func existingWorkspace(entry session, snapshot map[string]any, windows []layoutW
 	return "", nil
 }
 func openEntry(entry session) error {
+	if mux.IsRmux() {
+		return rmuxOpenEntry(entry)
+	}
 	if entry.Source == "herdr" {
 		return herdrFocus(entry.Workspace)
 	}
@@ -402,7 +461,7 @@ func sessionsRun(args []string) int {
 		if len(matches) > 1 {
 			live := []int{}
 			for _, i := range matches {
-				if entries[i].Source == "herdr" {
+				if has(entries[i].Source, "herdr", "rmux") {
 					live = append(live, i)
 				}
 			}
@@ -438,7 +497,7 @@ func sessionsRun(args []string) int {
 			// Keep the full import/history inventory behind --all.
 			live := []session{}
 			for _, s := range entries {
-				if s.Source == "herdr" {
+				if has(s.Source, "herdr", "rmux") {
 					live = append(live, s)
 				}
 			}
@@ -473,6 +532,8 @@ func sessionsRun(args []string) int {
 			detail := s.Source + " · fresh shell"
 			if s.Source == "herdr" {
 				detail = fmt.Sprintf("Herdr %s · %d tabs", s.Workspace, *s.Tabs)
+			} else if s.Source == "rmux" {
+				detail = fmt.Sprintf("rmux %s · %d tabs", s.Workspace, *s.Tabs)
 			} else if s.Source == "tmux" {
 				detail = "tmux · copy layout as fresh shells"
 			} else if s.Source == "project" {

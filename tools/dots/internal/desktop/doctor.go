@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"dots/native/internal/mux"
 	"github.com/pelletier/go-toml/v2"
 )
 
@@ -64,7 +65,7 @@ func diagnose(root, userHome string) ([]doctorCheck, error) {
 	if len(links) == 0 {
 		add("FAIL", "managed links", "No supported link entries found in steps/*.yml")
 	}
-	critical := []string{"~/.zshrc", "~/.zshenv", "~/.config/zsh/functions", "~/.config/tmux/tmux.conf", "~/.config/herdr/config.toml", "~/.config/ghostty/config", "~/.config/nvim"}
+	critical := []string{"~/.zshrc", "~/.zshenv", "~/.config/zsh/functions", "~/.config/tmux/tmux.conf", "~/.config/rmux/rmux.conf", "~/.config/herdr/config.toml", "~/.config/ghostty/config", "~/.config/nvim"}
 	for _, l := range links {
 		target := filepath.Join(userHome, l.destination[2:])
 		severity := "WARN"
@@ -103,6 +104,13 @@ func diagnose(root, userHome string) ([]doctorCheck, error) {
 			}
 		}
 		add(status, "command:"+name, detail)
+	}
+	if mux.IsRmux() || isFile(filepath.Join(root, "config/rmux/rmux.conf")) {
+		status := "OK"
+		if !available("rmux") {
+			status = "FAIL"
+		}
+		add(status, "command:rmux", "Default multiplexer for new clients")
 	}
 	zshrc := filepath.Join(root, "config/zsh/.zshrc")
 	if isFile(zshrc) {

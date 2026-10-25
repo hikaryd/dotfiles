@@ -9,6 +9,8 @@ import (
 	"os"
 	"strings"
 	"time"
+
+	"dots/native/internal/mux"
 )
 
 // Explicit socket paths use one request per connection. Serialise before dialing:
@@ -93,7 +95,9 @@ func herdrSnapshotContext(ctx context.Context) (map[string]any, error) {
 	}
 	return s, nil
 }
-func inHerdr() bool { return os.Getenv("HERDR_ENV") != "" || os.Getenv("HERDR_SOCKET_PATH") != "" }
+func inHerdr() bool {
+	return !mux.IsRmux() && (os.Getenv("HERDR_ENV") != "" || os.Getenv("HERDR_SOCKET_PATH") != "")
+}
 func herdrFocus(id string) error {
 	_, e := herdrCall("workspace.focus", map[string]any{"workspace_id": id}, "workspace", "focus", id)
 	return e
