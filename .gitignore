@@ -50,7 +50,7 @@ config/pi/*.bak-*
 config/zsh/private.zsh
 config/git/private.inc
 
-# Private Kubernetes watcher inventories live under ~/.config, never in dots.
+# Private deployment inventories live outside this repository.
 **/deploy-watch.resources
 
 # Defense in depth: metrics coordinates and token files belong outside Git.

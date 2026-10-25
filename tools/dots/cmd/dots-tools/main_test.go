@@ -79,21 +79,29 @@ func TestVPNInstallerHelpersDispatchThroughBothEntrypoints(t *testing.T) {
 	}
 }
 
-func TestKubernetesAliasesAndGroupDispatchWithoutLoadingConfiguration(t *testing.T) {
-	t.Setenv("HOME", t.TempDir())
-	for _, name := range []string{"kpdev", "kpstage", "kppreprod", "kpprod", "kstage", "kprod-connect", "kpdev-logs", "kpstage-logs-save", "kppreprod-jobs", "kpprod-jobs-save", "kpdev-cron-run", "kpstage-exec", "kpprod-log-search", "kpdev-logs-multi", "kpstage-scale", "kppreprod-pod-restart", "kpprod-pod-analyze", "kpstage-deploy-watch", "kube-tools-help", "kube-log-watch", "kube-deploy-watch", "kube-pod-analyze", "kube-metrics-watch", "km", "kma"} {
-		code, out, diagnostic := captureDispatch(t, "", name, []string{"--help"})
-		if code != 0 || out+diagnostic == "" {
-			t.Fatalf("alias %s: %d %q %q", name, code, out, diagnostic)
+func TestStandaloneClusterToolIsNotDispatchedByDots(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	t.Setenv("PATH", t.TempDir())
+	for _, entry := range []struct {
+		name string
+		args []string
+	}{
+		{"dots-tools", []string{"kube", "commands"}},
+		{"dots-kube", []string{"commands"}},
+	} {
+		code, out, diagnostic := captureDispatch(t, "", entry.name, entry.args)
+		if code != 2 || out != "" || !strings.Contains(diagnostic, "unknown group") {
+			t.Fatalf("retired entrypoint %s %v: %d %q %q", entry.name, entry.args, code, out, diagnostic)
 		}
 	}
-	code, out, diagnostic := captureDispatch(t, "", "dots-tools", []string{"kube", "kpstage", "--help"})
-	if code != 0 || !strings.Contains(out, "namespace") || diagnostic != "" {
-		t.Fatalf("group %d %q %q", code, out, diagnostic)
+	code, out, diagnostic := captureDispatch(t, "", "dots-tools", []string{"--help"})
+	if code != 0 || diagnostic != "" || strings.Contains(out, "kube") {
+		t.Fatalf("help advertises standalone tooling: %d %q %q", code, out, diagnostic)
 	}
-	code, out, diagnostic = captureDispatch(t, "", "dots-tools", []string{"kube", "commands"})
-	if code != 0 || !strings.Contains(out, "kpstage\n") || !strings.Contains(out, "kpprod-pod-restart\n") || diagnostic != "" {
-		t.Fatalf("commands %d %q %q", code, out, diagnostic)
+	entries, err := os.ReadDir(home)
+	if err != nil || len(entries) != 0 {
+		t.Fatalf("retired commands changed HOME: %v %v", entries, err)
 	}
 }
 

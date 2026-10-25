@@ -24,7 +24,6 @@ var menuActions = []menuAction{
 	{"clip", "Инструменты", "JSON / Base64 / JWT / время"},
 	{"status", "Проверки", "Git / процессы / порты"},
 	{"ports", "Проверки", "TCP listeners · без kill"},
-	{"kube", "Проверки", "Kubernetes · read-only"},
 	{"doctor", "Проверки", "Диагностика сетапа"},
 	{"style", "Настройка", "Glass / Focus / Presentation"},
 	{"config", "Настройка", "Открыть конфиг"},
@@ -122,7 +121,6 @@ const helpText = `
   dots status [--all]        Git / процессы / порты; --json
                             --interactive: r / o / q
   dots ports                TCP listeners · без kill
-  dots kube                 Kubernetes · read-only
   dots doctor [--strict]    диагностика; --json
 
 Настройка

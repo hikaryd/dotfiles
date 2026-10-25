@@ -69,8 +69,6 @@ func Run(root string, args []string) int {
 			return 0
 		}
 		return code
-	case "kube":
-		return kube(root)
 	}
 	fmt.Fprintf(os.Stderr, "Неизвестная команда: %s; dots help\n", command)
 	return 2
@@ -80,7 +78,7 @@ func commandHelp(command string) int {
 		printMenuHelp()
 		return 0
 	}
-	help := map[string]string{"projects": "list [--json] | refresh | open [target]", "sessions": "list [--json] | open [target]", "clip": "[json|compact|base64|jwt|time|redact] [--stdin] [--stdout|--write] [--keys KEY,...]", "refs": "[--pane ID] [--lines 1..5000] [--stdin] [--list|--json]", "private": "[init|check]", "style": "[glass|focus|presentation|status]", "tmux-style": "glass|focus|presentation|--current", "status": "[--all] [--json|--interactive]", "doctor": "[--json] [--strict]", "notify": "[--test] [--status 0..255] [--seconds N] [--pane ID]", "herdr-status": "", "ghostty-reload": "", "menu": "", "ports": "", "kube": ""}
+	help := map[string]string{"projects": "list [--json] | refresh | open [target]", "sessions": "list [--json] | open [target]", "clip": "[json|compact|base64|jwt|time|redact] [--stdin] [--stdout|--write] [--keys KEY,...]", "refs": "[--pane ID] [--lines 1..5000] [--stdin] [--list|--json]", "private": "[init|check]", "style": "[glass|focus|presentation|status]", "tmux-style": "glass|focus|presentation|--current", "status": "[--all] [--json|--interactive]", "doctor": "[--json] [--strict]", "notify": "[--test] [--status 0..255] [--seconds N] [--pane ID]", "herdr-status": "", "ghostty-reload": "", "menu": "", "ports": ""}
 	if s, ok := help[command]; ok {
 		fmt.Printf("usage: dots %s %s\n", command, s)
 		return 0
@@ -138,26 +136,4 @@ func menu(root string) int {
 		return 0
 	}
 	return Run(root, []string{choice})
-}
-func kube(root string) int {
-	environment, err := pickMenu("Окружение Kubernetes", [][2]string{{"dev", "DEV"}, {"stage", "STAGE"}, {"preprod", "PREPROD"}, {"prod", "PROD · только чтение"}})
-	if err != nil {
-		return fail("dots kube", err)
-	}
-	if environment == "" {
-		return 0
-	}
-	action, err := pickMenu("Read-only действие", [][2]string{{"pods", "Список pod"}, {"logs", "Выбрать pod и открыть логи"}, {"watch", "Наблюдать workload"}, {"analyze", "CPU/RAM и состояние pod"}})
-	if err != nil {
-		return fail("dots kube", err)
-	}
-	if action == "" {
-		return 0
-	}
-	suffix := map[string]string{"pods": "", "logs": "-logs", "watch": "-deploy-watch", "analyze": "-pod-analyze"}[action]
-	argv := []string{"dots-tools", "kube", "kp" + environment + suffix}
-	if action == "pods" {
-		argv = append(argv, "get", "pods")
-	}
-	return interactive(argv...)
 }

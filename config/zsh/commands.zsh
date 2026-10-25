@@ -12,11 +12,6 @@ export BUN_INSTALL="$HOME/.bun"
 typeset -g DOTS_PRIVATE_ZSH="${DOTS_PRIVATE_ZSH:-${XDG_CONFIG_HOME:-$HOME/.config}/dots/private.zsh}"
 [[ -r "$DOTS_PRIVATE_ZSH" ]] && source "$DOTS_PRIVATE_ZSH"
 
-# Kubernetes-команды и guards — в dots-kube. Этот source только убирает
-# старые shell-функции; KUBECONFIG и приватные настройки не меняются.
-[[ -r "$DOTS_ROOT/config/zsh/kube-tools.zsh" ]] &&
-  source "$DOTS_ROOT/config/zsh/kube-tools.zsh"
-
 # PATH / function and module paths (typeset -U removes duplicates)
 typeset -U path fpath module_path
 path=(
@@ -82,4 +77,3 @@ export FZF_DEFAULT_OPTS=" \
 # Pi через изолированный VLESS-прокси (xray).
 # Источник (общий для bash и zsh): ~/.config/shell/pi-proxy.sh
 [[ -f "$DOTS_ROOT/config/shell/pi-proxy.sh" ]] && source "$DOTS_ROOT/config/shell/pi-proxy.sh"
-

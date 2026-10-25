@@ -12,7 +12,7 @@ group=${1:-all}
 case "$group" in
   all|go|node|runner) ;;
   --list)
-    printf '%s\n' 'runner: tests/test-runner.sh, tests/test-pytest-safe.zsh, tests/test-spotifast.sh, tests/test-brew-install.sh, tests/test-herdr-auto-patch.sh (isolated shell contracts)' \
+    printf '%s\n' 'runner: tests/test-runner.sh, tests/test-native-build.sh, tests/test-pytest-safe.zsh, tests/test-spotifast.sh, tests/test-brew-install.sh, tests/test-herdr-auto-patch.sh (isolated shell contracts)' \
       'go: tools/*/go.mod (race tests and vet; untested modules stay visible)' \
       'node: tests/*.test.mjs'
     exit 0 ;;
@@ -51,6 +51,7 @@ node_suite() {
 }
 if [[ $group == all || $group == runner ]]; then
   run_suite 'runner contract' bash tests/test-runner.sh
+  run_suite 'native build ownership contract' bash tests/test-native-build.sh
   run_suite 'pytest-safe contract' zsh -f tests/test-pytest-safe.zsh
   run_suite 'Spotifast contract' bash tests/test-spotifast.sh
   run_suite 'Homebrew installer contract' bash tests/test-brew-install.sh

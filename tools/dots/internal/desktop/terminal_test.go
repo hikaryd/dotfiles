@@ -49,7 +49,7 @@ func TestNativeMenuCancellationAndPrivacy(t *testing.T) {
 	}
 }
 func TestNativeMenuKnownDispatchAndNestedCancel(t *testing.T) {
-	for _, action := range []string{"git", "ports", "style", "config", "kube"} {
+	for _, action := range []string{"git", "ports", "style", "config"} {
 		t.Run(action, func(t *testing.T) {
 			f := newFixture(t)
 			f.fake("lazygit", allRule("git fixture\n", 0))
@@ -64,7 +64,7 @@ func TestNativeMenuKnownDispatchAndNestedCancel(t *testing.T) {
 			case "git", "ports":
 				p.Wait(0)
 			default:
-				title := map[string]string{"style": "Стиль", "config": "Редактировать конфиг", "kube": "Окружение Kubernetes"}[action]
+				title := map[string]string{"style": "Стиль", "config": "Редактировать конфиг"}[action]
 				p.After(offset, title)
 				p.Send("\x1b")
 				p.Wait(0)
@@ -99,24 +99,20 @@ func TestNativeMenuConfigUsesKnownPath(t *testing.T) {
 		t.Fatalf("argv %+v", calls)
 	}
 }
-func TestNativeDesktopKubePinsReadOnlyArgv(t *testing.T) {
-	f := newFixture(t)
-	f.fake("dots-tools", allRule("", 0))
-	p := f.terminal("kube")
-	p.Screen("Окружение Kubernetes")
-	p.Send("prod")
-	p.Screen("Поиск › prod")
-	p.Send("\x1b[F")
-	offset := len(p.Text())
-	p.Send("\r")
-	p.After(offset, "Read-only действие")
-	p.Send("pods")
-	p.Screen("Поиск › pods")
-	p.Send("\r")
-	p.Wait(0)
-	calls := f.calls()
-	if len(calls) != 1 || !reflect.DeepEqual(calls[0].Args, []string{"kube", "kpprod", "get", "pods"}) {
-		t.Fatalf("argv %+v", calls)
+func TestStandaloneClusterToolIsNotOfferedByDesktop(t *testing.T) {
+	for _, args := range [][]string{{"kube"}, {"kube", "--help"}} {
+		f := newFixture(t)
+		out, diagnostic, code := f.run("", args...)
+		if code != 2 || out != "" || diagnostic == "" || len(f.calls()) != 0 {
+			t.Fatalf("retired desktop action %v: %d %q %q %+v", args, code, out, diagnostic, f.calls())
+		}
+	}
+	for _, args := range [][]string{{"help"}, {"menu", "--preview", "--plain"}} {
+		f := newFixture(t)
+		out, diagnostic, code := f.run("", args...)
+		if code != 0 || diagnostic != "" || strings.Contains(strings.ToLower(out), "kube") || len(f.calls()) != 0 {
+			t.Fatalf("desktop advertises standalone tooling %v: %d %q %q", args, code, out, diagnostic)
+		}
 	}
 }
 func TestNativeClipboardConfirmationAndRace(t *testing.T) {

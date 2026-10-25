@@ -55,10 +55,6 @@
       path: build/bin/dots-tools
       create: true
       force: false
-    ~/.local/bin/dots-kube:
-      path: build/bin/dots-kube
-      create: true
-      force: false
     ~/.local/bin/dots-vpn:
       path: build/bin/dots-vpn
       create: true
