@@ -1,7 +1,6 @@
 package beatapi
 
 import (
-	"bytes"
 	"crypto/rand"
 	"encoding/hex"
 	"encoding/json"
@@ -170,14 +169,7 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if path == "/v1/systemone" {
 		endpoint = "/systemone"
 	}
-	req, err := http.NewRequestWithContext(r.Context(), "POST", h.upstream+endpoint, bytes.NewReader(body))
-	if err != nil {
-		apiError(w, anthropic, 502, "Cannot construct upstream request")
-		return
-	}
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", "Bearer "+c.APIKey)
-	res, err := h.client.Do(req)
+	res, err := h.requestUpstream(r.Context(), endpoint, body, c.APIKey)
 	if err != nil {
 		status := 502
 		var timeout net.Error

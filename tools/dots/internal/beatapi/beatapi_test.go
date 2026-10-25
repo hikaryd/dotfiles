@@ -149,7 +149,7 @@ func TestBeatAPIModelCatalogMatchesActualProvider(t *testing.T) {
 	}
 }
 
-func TestBeatAPIErrorsAreSanitizedAndNeverRetried(t *testing.T) {
+func TestBeatAPIChatErrorsAreSanitizedAndNeverRetried(t *testing.T) {
 	for _, status := range []int{302, 401, 403, 429, 500, 503} {
 		t.Run(strconv.Itoa(status), func(t *testing.T) {
 			calls := 0
@@ -163,7 +163,7 @@ func TestBeatAPIErrorsAreSanitizedAndNeverRetried(t *testing.T) {
 				res.Header.Set("Location", "https://attacker.example/")
 				return res, nil
 			})
-			w := request(h, "POST", "/v1/systemone", `{"model":"jev-1.14-free"}`)
+			w := request(h, "POST", "/v1/chat/completions", `{"model":"glm-5.3-free"}`)
 			if w.Code != status || calls != 1 || !strings.Contains(w.Body.String(), "BeatAPI") || strings.Contains(w.Body.String(), "secret") || w.Header().Get("Retry-After") != "15" || w.Header().Get("Location") != "" {
 				t.Fatalf("unsafe failure %d calls=%d %s", w.Code, calls, w.Body)
 			}
