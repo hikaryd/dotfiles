@@ -1,4 +1,4 @@
-package desktop
+package integration_test
 
 import (
 	"fmt"
@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"dots/native/internal/testpty"
+	"dots/native/tests/testutil/testpty"
 )
 
 func (f *fixture) terminal(args ...string) *testpty.CLI {

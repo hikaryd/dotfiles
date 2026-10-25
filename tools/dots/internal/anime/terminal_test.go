@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"dots/native/internal/testpty"
+	"dots/native/tests/testutil/testpty"
 )
 
 type slowCatalog struct{}

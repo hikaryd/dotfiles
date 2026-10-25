@@ -1,4 +1,4 @@
-package setup
+package integration_test
 
 import (
 	"os"

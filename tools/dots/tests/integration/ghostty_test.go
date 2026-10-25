@@ -1,4 +1,4 @@
-package desktop
+package integration_test
 
 import (
 	"context"

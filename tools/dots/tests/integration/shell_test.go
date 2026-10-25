@@ -1,4 +1,4 @@
-package uicli
+package integration_test
 
 import (
 	"os"
@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"dots/native/internal/testpty"
+	"dots/native/tests/testutil/testpty"
 )
 
 func shellFixture(t *testing.T) (string, []string) {

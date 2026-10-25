@@ -1,4 +1,4 @@
-package uicli
+package integration_test
 
 import (
 	"bytes"
@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"dots/native/internal/testpty"
+	"dots/native/tests/testutil/testpty"
 
 	"golang.org/x/sys/unix"
 )

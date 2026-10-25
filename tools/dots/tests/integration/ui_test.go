@@ -1,4 +1,4 @@
-package uicli
+package integration_test
 
 import (
 	"bytes"
@@ -8,19 +8,9 @@ import (
 	"syscall"
 	"testing"
 
-	"dots/native/internal/testpty"
+	"dots/native/tests/testutil/testpty"
 )
 
-func TestMain(m *testing.M) {
-	if os.Getenv("DOTS_UI_CLI") == "1" {
-		args := os.Args[1:]
-		if len(args) > 0 && args[0] == "ui" {
-			args = args[1:]
-		}
-		os.Exit(Run(args))
-	}
-	os.Exit(m.Run())
-}
 func command(t *testing.T, args ...string) *exec.Cmd {
 	t.Helper()
 	exe, err := os.Executable()

@@ -1,4 +1,4 @@
-package setup
+package integration_test
 
 import (
 	"os"
@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"dots/native/internal/setup"
 )
 
 // No network, containers or package execution: verify original-tool ordering.
@@ -119,7 +121,7 @@ func TestJcodeNeo4jInitDoesNotPublishConfig(t *testing.T) {
 	config := filepath.Join(root, "config")
 	t.Setenv("JCODE_INTEGRATIONS_DIR", data)
 	t.Setenv("JCODE_CONFIG_DIR", config)
-	if code := Run(root, []string{"jcode-neo4j-init"}); code != 0 {
+	if code := setup.Run(root, []string{"jcode-neo4j-init"}); code != 0 {
 		t.Fatalf("exit %d", code)
 	}
 	if _, err := os.Stat(filepath.Join(data, "neo4j/private.env")); err != nil {

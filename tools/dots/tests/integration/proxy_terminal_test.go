@@ -1,4 +1,4 @@
-package proxy
+package integration_test
 
 import (
 	"encoding/json"
@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"dots/native/internal/testpty"
+	"dots/native/tests/testutil/testpty"
 )
 
 func proxyTerminal(t *testing.T, home string, args ...string) *testpty.CLI {
@@ -60,7 +60,7 @@ func TestNativeProxyServerSearchCancellationAndFirstRun(t *testing.T) {
 	home := t.TempDir()
 	dir := filepath.Join(home, ".config/xray-pi")
 	os.MkdirAll(dir, 0700)
-	b, _ := json.Marshal([]object{{"name": "Alpha", "address": "alpha.test", "port": 443}, {"name": "Beta", "address": "beta.test", "port": 443}})
+	b, _ := json.Marshal([]map[string]any{{"name": "Alpha", "address": "alpha.test", "port": 443}, {"name": "Beta", "address": "beta.test", "port": 443}})
 	os.WriteFile(filepath.Join(dir, "servers.json"), b, 0600)
 	p := proxyTerminal(t, home, "pi")
 	p.Screen("Выбор сервера")

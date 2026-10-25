@@ -8,7 +8,7 @@ import (
 	"syscall"
 	"testing"
 
-	"dots/native/internal/testpty"
+	"dots/native/tests/testutil/testpty"
 )
 
 func TestMRInputSIGTERMRestoresTerminal(t *testing.T) {

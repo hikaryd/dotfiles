@@ -1,4 +1,4 @@
-package bootstrap_test
+package integration_test
 
 import (
 	"fmt"
