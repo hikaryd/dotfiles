@@ -4,8 +4,10 @@
 theme = "ayu-dots"
 max_fps = 120
 motion = "basic"
-background = "off"
-dock_background = "off"
+# Keep a dark Ayu canvas. Clear Rio glass must not wash it out over bright wallpaper.
+background = "theme"
+pane_background = "theme"
+dock_background = "theme"
 border_style = "rounded"
 border_focused_color = "#73d0ff"
 border_unfocused_color = "#303847"
@@ -31,7 +33,7 @@ preferred_shell = ""
 [appearance.sidebar]
 enabled = false
 sections = "sessions,agents,terminals"
-background = "off"
+background = "theme"
 
 [startup]
 tiled = true
@@ -218,3 +220,7 @@ height = "90%"
 
 [plugins]
 dirs = ["~/dots/config/herdr/plugins/task-titles"]
+enabled = ["dots.task-titles"]
+
+[spotlight]
+enabled = false

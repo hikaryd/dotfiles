@@ -1,0 +1,46 @@
+package desktop
+
+import (
+	"os"
+	"path/filepath"
+	"runtime"
+	"testing"
+
+	"github.com/pelletier/go-toml/v2"
+)
+
+func TestTUIOSKeepsDarkCanvasOverBrightWallpaper(t *testing.T) {
+	_, source, _, _ := runtime.Caller(0)
+	root := filepath.Clean(filepath.Join(filepath.Dir(source), "../../../.."))
+	data, err := os.ReadFile(filepath.Join(root, "config/tuios/config.toml"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var cfg struct {
+		Appearance struct {
+			Theme          string `toml:"theme"`
+			Background     string `toml:"background"`
+			PaneBackground string `toml:"pane_background"`
+			DockBackground string `toml:"dock_background"`
+			Sidebar        struct {
+				Background string `toml:"background"`
+			} `toml:"sidebar"`
+		} `toml:"appearance"`
+	}
+	if err := toml.Unmarshal(data, &cfg); err != nil {
+		t.Fatal(err)
+	}
+	if cfg.Appearance.Theme != "ayu-dots" {
+		t.Fatalf("daily UI must keep Ayu, got %q", cfg.Appearance.Theme)
+	}
+	for name, value := range map[string]string{
+		"canvas":  cfg.Appearance.Background,
+		"pane":    cfg.Appearance.PaneBackground,
+		"dock":    cfg.Appearance.DockBackground,
+		"sidebar": cfg.Appearance.Sidebar.Background,
+	} {
+		if value != "theme" {
+			t.Errorf("%s must paint the dark theme instead of exposing bright Rio glass: %q", name, value)
+		}
+	}
+}
