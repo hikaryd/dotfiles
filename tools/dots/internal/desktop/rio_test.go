@@ -56,7 +56,9 @@ func TestRioShellStartsOutsideInheritedHerdrSession(t *testing.T) {
 			if err := os.WriteFile(filepath.Join(bin, "tuios"), []byte("#!/bin/sh\nprintf 'DOTS_MUX=tuios\\n'\nexec /usr/bin/env\n"), 0755); err != nil {
 				t.Fatal(err)
 			}
-			ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+			// The full race suite starts many instrumented subprocesses together.
+			// Keep a bounded deadline without treating host scheduling as a hang.
+			ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 			defer cancel()
 			cmd := exec.CommandContext(ctx, config.Shell.Program, config.Shell.Args...)
 			cmd.Env = []string{"HOME=" + home, "PATH=/usr/bin:/bin", "TERM=rio", "KEEP_ME=unchanged"}

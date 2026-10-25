@@ -57,3 +57,8 @@ before=$(find "$HOME/.config/dots-backups/tuios" -type f | wc -l)
 sh "$root/scripts/install-tuios.sh"
 [[ $(find "$HOME/.config/dots-backups/tuios" -type f | wc -l) == "$before" ]]
 printf 'PASS installer preserves legacy binary and is idempotent\n'
+if grep -Eq 'herdr plugin|dots-last-workspace prime|build-herdr-last-workspace' "$root/steps/terminal.yml"; then
+  printf 'FAIL default installation still starts Herdr\n' >&2
+  exit 1
+fi
+printf 'PASS default installation never starts the retired Herdr daemon\n'

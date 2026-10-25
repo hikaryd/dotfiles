@@ -1,5 +1,5 @@
 [settings]
-animate = true
+animate = false
 animation_duration = 0.3
 animation_fps = 100.0
 animation_easing = "ease_in_out"
@@ -47,7 +47,7 @@ fade_enabled = true
 fade_duration_ms = 180.0
 
 [settings.gestures]
-enabled = true
+enabled = false
 invert_horizontal_swipe = false
 swipe_vertical_tolerance = 0.4
 skip_empty = true
