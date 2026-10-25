@@ -19,6 +19,7 @@
     "npm:pi-subagents",
     "npm:billion-context",
     "git:github.com/obra/superpowers",
+    "git:github.com/DietrichGebert/ponytail@v5.3.2",
     "npm:pi-web-access",
     "npm:pi-lens",
     "npm:pi-powerline-footer"
@@ -26,6 +27,9 @@
   "extensions": [
     "-extensions/dots-ayu-bar/index.ts",
     "extensions/dots-ayu-bar/quota-status.ts"
+  ],
+  "skills": [
+    "!skills/ponytail*"
   ],
   "powerline": {
     "preset": "default",

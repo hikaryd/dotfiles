@@ -48,9 +48,9 @@ func piApply(root string) error {
 			merged["proxy"] = current["proxy"]
 		}
 		if name == "settings.json" {
-			// Add managed references without dropping personal packages/extensions
+			// Add managed references without dropping personal packages/extensions/skills
 			// or replacing package objects carrying local resource filters.
-			for _, key := range []string{"packages", "extensions"} {
+			for _, key := range []string{"packages", "extensions", "skills"} {
 				managed, ok := template[key].([]any)
 				if !ok {
 					continue

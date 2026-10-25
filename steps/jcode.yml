@@ -1,4 +1,8 @@
 - shell:
+    - command: DISABLE_TELEMETRY=1 npx --yes skills@1.7.4 add https://github.com/DietrichGebert/ponytail/tree/v5.3.2 --global --agent universal --skill '*' --yes
+      description: Install Ponytail skills for Jcode
+      stdout: true
+      stderr: true
     - command: scripts/jcode-install.sh
       description: Set up Codex-only jcode and local Neo4j
       stdout: true

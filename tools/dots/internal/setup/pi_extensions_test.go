@@ -9,8 +9,8 @@ import (
 
 func TestPiManagedResourceListsPreserveLocalEntries(t *testing.T) {
 	root, agent := fixturePi(t)
-	put(t, filepath.Join(root, "config/pi/settings.json"), `{"packages":["npm:pi-lens","npm:pi-web-access","npm:pi-powerline-footer"],"extensions":["-extensions/dots-ayu-bar/index.ts"]}`)
-	put(t, filepath.Join(agent, "settings.json"), `{"packages":["npm:personal",{"source":"npm:pi-lens","skills":[]}],"extensions":["other.ts"]}`)
+	put(t, filepath.Join(root, "config/pi/settings.json"), `{"packages":["npm:pi-lens","npm:pi-web-access","npm:pi-powerline-footer"],"extensions":["-extensions/dots-ayu-bar/index.ts"],"skills":["!skills/ponytail*"]}`)
+	put(t, filepath.Join(agent, "settings.json"), `{"packages":["npm:personal",{"source":"npm:pi-lens","skills":[]}],"extensions":["other.ts"],"skills":["personal-skills"]}`)
 	if Run(root, []string{"pi-apply"}) != 0 {
 		t.Fatal("apply")
 	}
@@ -19,7 +19,7 @@ func TestPiManagedResourceListsPreserveLocalEntries(t *testing.T) {
 		t.Fatal(err)
 	}
 	wantPackages := []any{"npm:personal", map[string]any{"source": "npm:pi-lens", "skills": []any{}}, "npm:pi-web-access", "npm:pi-powerline-footer"}
-	if !reflect.DeepEqual(got["packages"], wantPackages) || !reflect.DeepEqual(got["extensions"], []any{"other.ts", "-extensions/dots-ayu-bar/index.ts"}) {
+	if !reflect.DeepEqual(got["packages"], wantPackages) || !reflect.DeepEqual(got["extensions"], []any{"other.ts", "-extensions/dots-ayu-bar/index.ts"}) || !reflect.DeepEqual(got["skills"], []any{"personal-skills", "!skills/ponytail*"}) {
 		t.Fatalf("local resources lost or managed packages duplicated: %v", got)
 	}
 	before := tree(t, agent)
