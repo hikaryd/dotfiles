@@ -1,7 +1,23 @@
 #!/bin/sh
 set -eu
 # A GUI launched from a pane is a new outer client, never that pane itself.
-for name in $(/usr/bin/env | /usr/bin/awk -F= '/^(HERDR_|TMUX)/ { print $1 }'); do
+backend=rmux
+if [ "${1:-}" = --herdr ]; then backend=herdr; shift; fi
+for name in $(/usr/bin/env | /usr/bin/awk -F= '/^(HERDR_|TMUX|RMUX|DOTS_SOURCE_PANE=|DOTS_MUX_CLIENT=)/ { print $1 }'); do
   unset "$name"
 done
-exec "$HOME/.local/bin/herdr" "$@"
+if [ "$backend" = herdr ]; then exec "$HOME/.local/bin/herdr" "$@"; fi
+rmux=${DOTS_RMUX_BIN:-}
+if [ -z "$rmux" ]; then
+  for candidate in "$HOME/.local/bin/rmux" /opt/homebrew/bin/rmux /usr/local/bin/rmux; do
+    if [ -x "$candidate" ]; then rmux=$candidate; break; fi
+  done
+fi
+config="${XDG_CONFIG_HOME:-$HOME/.config}/rmux/rmux.conf"
+if [ ! -x "$rmux" ] || [ ! -f "$config" ]; then
+  printf 'rmux is not configured; preserving the Herdr workflow.\n' >&2
+  exec "$HOME/.local/bin/herdr" "$@"
+fi
+if [ "$#" -gt 0 ]; then exec "$rmux" "$@"; fi
+if "$rmux" has-session 2>/dev/null; then exec "$rmux" attach-session; fi
+exec "$rmux" new-session -A -s main
