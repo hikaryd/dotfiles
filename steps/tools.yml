@@ -77,10 +77,6 @@
       description: Install Russian anime CLI and AniLiberty launcher
       stdout: true
       stderr: true
-    - command: build/bin/dots-tools setup waterfox-apply
-      description: Применить настройки Waterfox к существующим профилям
-      stdout: true
-      stderr: true
     - command: bat cache --build
       description: Build shared Ayu theme cache for Bat
       stdout: true

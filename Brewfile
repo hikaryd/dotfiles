@@ -131,8 +131,8 @@ brew "mpv" # Player for anicli-ru / AniLiberty
 brew "bat-extras" 
 
 # Приложения
+# Zephium устанавливается вручную из официального GitHub: см. docs/browsers.md.
 cask "vorssaint" # Батарея, системный монитор и управление звуком в одном menu bar app
-cask "waterfox"
 cask "telegram-desktop"
 cask "crmne/tap/spotifast"
 brew "kcat"
