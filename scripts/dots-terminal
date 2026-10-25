@@ -1,0 +1,7 @@
+#!/bin/sh
+set -eu
+# A GUI launched from a pane is a new outer client, never that pane itself.
+for name in $(/usr/bin/env | /usr/bin/awk -F= '/^(HERDR_|TUIOS_|TMUX)/ { print $1 }'); do
+  unset "$name"
+done
+exec "$HOME/.local/bin/tuios" "$@"

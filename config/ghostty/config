@@ -1,5 +1,5 @@
 # Новые терминалы — Nushell; login shell системы не меняется.
-command = shell:"$HOME/.local/bin/dots-nu"
+command = shell:"$HOME/.local/bin/dots-terminal"
 shell-integration = nushell
 
 theme = Ayu

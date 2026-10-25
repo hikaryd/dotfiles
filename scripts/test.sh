@@ -56,6 +56,7 @@ if [[ $group == all || $group == runner ]]; then
   run_suite 'Spotifast contract' bash tests/test-spotifast.sh
   run_suite 'Homebrew installer contract' bash tests/test-brew-install.sh
   run_suite 'Herdr automatic UI patch contract' bash tests/test-herdr-auto-patch.sh
+  run_suite 'TUIOS launcher and migration contract' bash tests/test-tuios.sh
 fi
 if [[ $group == all || $group == go ]]; then
   modules=(tools/*/go.mod)

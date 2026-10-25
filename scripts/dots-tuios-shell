@@ -1,0 +1,12 @@
+#!/bin/sh
+set -eu
+# The daemon's private XDG profile must not hide Nu history, Git auth, or secrets.
+export XDG_CONFIG_HOME="${DOTS_TUIOS_XDG_CONFIG_HOME:-$HOME/.config}"
+export XDG_STATE_HOME="${DOTS_TUIOS_XDG_STATE_HOME:-$HOME/.local/state}"
+if [ -n "${DOTS_TUIOS_XDG_RUNTIME_DIR:-}" ]; then
+  export XDG_RUNTIME_DIR="$DOTS_TUIOS_XDG_RUNTIME_DIR"
+else
+  unset XDG_RUNTIME_DIR
+fi
+# Preserve the fresh HERDR_* compatibility identity supplied by TUIOS.
+exec "$HOME/.local/bin/dots-nu" "$@"

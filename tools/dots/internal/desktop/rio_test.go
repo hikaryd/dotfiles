@@ -31,7 +31,7 @@ func TestRioShellStartsOutsideInheritedHerdrSession(t *testing.T) {
 	if err := toml.Unmarshal(data, &config); err != nil {
 		t.Fatal(err)
 	}
-	markers := []string{"HERDR_ENV", "HERDR_BIN_PATH", "HERDR_SOCKET_PATH", "HERDR_WORKSPACE_ID", "HERDR_TAB_ID", "HERDR_PANE_ID"}
+	markers := []string{"HERDR_ENV", "HERDR_BIN_PATH", "HERDR_SOCKET_PATH", "HERDR_WORKSPACE_ID", "HERDR_TAB_ID", "HERDR_PANE_ID", "TUIOS_ENV", "TUIOS_SOCKET", "TUIOS_WINDOW_ID", "TUIOS_SERVER", "TMUX"}
 	for _, inherited := range []bool{false, true} {
 		name := "clean"
 		if inherited {
@@ -44,6 +44,16 @@ func TestRioShellStartsOutsideInheritedHerdrSession(t *testing.T) {
 				t.Fatal(err)
 			}
 			if err := os.WriteFile(filepath.Join(bin, "dots-nu"), []byte("#!/bin/sh\nexec /usr/bin/env\n"), 0755); err != nil {
+				t.Fatal(err)
+			}
+			adapter, err := os.ReadFile(filepath.Join(root, "scripts/dots-terminal"))
+			if err != nil {
+				t.Fatal(err)
+			}
+			if err := os.WriteFile(filepath.Join(bin, "dots-terminal"), adapter, 0755); err != nil {
+				t.Fatal(err)
+			}
+			if err := os.WriteFile(filepath.Join(bin, "tuios"), []byte("#!/bin/sh\nprintf 'DOTS_MUX=tuios\\n'\nexec /usr/bin/env\n"), 0755); err != nil {
 				t.Fatal(err)
 			}
 			ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
@@ -72,6 +82,9 @@ func TestRioShellStartsOutsideInheritedHerdrSession(t *testing.T) {
 			}
 			if env["KEEP_ME"] != "unchanged" || env["TERM"] != "rio" || env["HOME"] != home {
 				t.Fatal("Rio shell discarded unrelated environment")
+			}
+			if env["DOTS_MUX"] != "tuios" {
+				t.Fatal("Rio must start the managed TUIOS client")
 			}
 		})
 	}

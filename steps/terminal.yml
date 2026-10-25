@@ -160,6 +160,11 @@
       create: true
       force: true
 - shell:
+    - command: '"$HOME/dots/scripts/install-tuios.sh"'
+      description: Installing the pinned TUIOS terminal profile (keeps live daemons)
+      stdout: true
+      stderr: true
+    # Herdr remains installed only for rollback and existing live processes.
     - command: |
         set -e
         "$HOME/dots/scripts/build-herdr-last-workspace.sh"
