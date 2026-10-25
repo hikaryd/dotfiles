@@ -1,6 +1,8 @@
 # Новые терминалы — Nushell; login shell системы не меняется.
 command = shell:"$HOME/.local/bin/dots-terminal"
-shell-integration = nushell
+# The outer command is TUIOS, not Nu. Nushell runs in its panes, so Ghostty
+# must not append its Nushell --execute bootstrap to the mux CLI.
+shell-integration = none
 
 theme = Ayu
 

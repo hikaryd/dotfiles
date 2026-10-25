@@ -9,7 +9,7 @@ import (
 	"github.com/pelletier/go-toml/v2"
 )
 
-func TestTUIOSKeepsDarkCanvasOverBrightWallpaper(t *testing.T) {
+func TestTUIOSPreservesTerminalTransparencyAndSolidDock(t *testing.T) {
 	_, source, _, _ := runtime.Caller(0)
 	root := filepath.Clean(filepath.Join(filepath.Dir(source), "../../../.."))
 	data, err := os.ReadFile(filepath.Join(root, "config/tuios/config.toml"))
@@ -38,13 +38,19 @@ func TestTUIOSKeepsDarkCanvasOverBrightWallpaper(t *testing.T) {
 		t.Fatalf("daily UI must keep Ayu, got %q", cfg.Appearance.Theme)
 	}
 	for name, value := range map[string]string{
-		"canvas":  cfg.Appearance.Background,
-		"pane":    cfg.Appearance.PaneBackground,
+		"canvas": cfg.Appearance.Background,
+		"pane":   cfg.Appearance.PaneBackground,
+	} {
+		if value != "off" {
+			t.Errorf("%s must leave default terminal cells unpainted so Rio/Ghostty transparency works: %q", name, value)
+		}
+	}
+	for name, value := range map[string]string{
 		"dock":    cfg.Appearance.DockBackground,
 		"sidebar": cfg.Appearance.Sidebar.Background,
 	} {
 		if value != "theme" {
-			t.Errorf("%s must paint the dark theme instead of exposing bright Rio glass: %q", name, value)
+			t.Errorf("%s must keep legible Ayu chrome over the transparent terminal: %q", name, value)
 		}
 	}
 }
