@@ -23,7 +23,7 @@ vim.keymap.set("n", "<leader>e", function()
 end, { desc = "Open Fyler View" })
 
 local function move_split(key, direction, tmux_action)
-	if vim.env.HERDR_ENV == "1" then
+	if vim.env.HERDR_ENV == "1" and not vim.env.RMUX then
 		local previous = vim.api.nvim_get_current_win()
 		vim.cmd("wincmd " .. key)
 		if vim.api.nvim_get_current_win() == previous then
