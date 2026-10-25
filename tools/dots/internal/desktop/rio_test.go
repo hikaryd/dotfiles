@@ -2,6 +2,7 @@ package desktop
 
 import (
 	"context"
+	"math"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -77,7 +78,7 @@ func TestRioShellStartsOutsideInheritedHerdrSession(t *testing.T) {
 	}
 }
 
-func TestRioAppliesOpacityToTUIBackgrounds(t *testing.T) {
+func TestRioPreservesBackgroundOpacityAndSolidRoundedTabs(t *testing.T) {
 	_, source, _, _ := runtime.Caller(0)
 	root := filepath.Clean(filepath.Join(filepath.Dir(source), "../../../.."))
 	data, err := os.ReadFile(filepath.Join(root, "config/rio/config.toml"))
@@ -88,12 +89,59 @@ func TestRioAppliesOpacityToTUIBackgrounds(t *testing.T) {
 		Window struct {
 			Opacity      float64 `toml:"opacity"`
 			OpacityCells bool    `toml:"opacity-cells"`
+			Blur         bool    `toml:"blur"`
 		} `toml:"window"`
 	}
 	if err := toml.Unmarshal(data, &config); err != nil {
 		t.Fatal(err)
 	}
-	if config.Window.Opacity != 0.94 || !config.Window.OpacityCells {
-		t.Fatalf("TUI backgrounds must use the Ghostty opacity: got %+v", config.Window)
+	// Configuration guard, not a substitute for testing Rio's compositor.
+	// On macOS Rio 0.5.28 composites NSWindow and Metal background layers.
+	// Live window captures without blur confirmed the two-layer alpha.
+	effectiveOpacity := 1 - math.Pow(1-config.Window.Opacity, 2)
+	if math.Abs(effectiveOpacity-0.94) > 0.005 || config.Window.OpacityCells || !config.Window.Blur {
+		t.Fatalf("Rio must preserve ~0.94 background opacity and solid UI fills: effective=%f config=%+v", effectiveOpacity, config.Window)
+	}
+	// Powerline rounded caps are opaque foreground glyphs. Their adjacent
+	// background fills must also stay opaque, while the Herdr base canvas
+	// must use the terminal default to keep the wallpaper visible.
+	data, err = os.ReadFile(filepath.Join(root, "config/herdr/config.toml"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var herdr struct {
+		Theme struct {
+			Custom struct {
+				PanelBg string `toml:"panel_bg"`
+			} `toml:"custom"`
+		} `toml:"theme"`
+	}
+	if err := toml.Unmarshal(data, &herdr); err != nil {
+		t.Fatal(err)
+	}
+	if herdr.Theme.Custom.PanelBg != "reset" {
+		t.Fatalf("Herdr must use the translucent terminal background: panel_bg=%q", herdr.Theme.Custom.PanelBg)
+	}
+}
+
+func TestRioDoesNotReserveHiddenGPUTabStrip(t *testing.T) {
+	_, source, _, _ := runtime.Caller(0)
+	root := filepath.Clean(filepath.Join(filepath.Dir(source), "../../../.."))
+	data, err := os.ReadFile(filepath.Join(root, "config/rio/config.toml"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var config struct {
+		Navigation struct {
+			Mode string `toml:"mode"`
+		} `toml:"navigation"`
+	}
+	if err := toml.Unmarshal(data, &config); err != nil {
+		t.Fatal(err)
+	}
+	// On macOS Tab reserves 38pt even when hidden, Plain reserves 26pt.
+	// NativeTab with no unified titlebar uses only the configured margin.
+	if config.Navigation.Mode != "nativetab" {
+		t.Fatalf("Rio reserves extra top chrome: navigation mode %q", config.Navigation.Mode)
 	}
 }

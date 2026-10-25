@@ -25,10 +25,13 @@ args = [
 ]
 
 [window]
-opacity = 0.94
-# Herdr and other TUIs paint explicit cell backgrounds. Keep those translucent
-# too, rather than applying opacity only to the terminal's default background.
-opacity-cells = true
+# Rio 0.5.28 composites the window and Metal backgrounds twice on macOS.
+# 0.75 per layer gives ~0.94 effective opacity, matching Ghostty's 0.94.
+opacity = 0.75
+# Keep explicit UI backgrounds opaque: rounded caps are foreground glyphs,
+# so translucent fills would have a different color. Herdr panel_bg="reset"
+# still uses the translucent terminal background.
+opacity-cells = false
 blur = true
 decorations = "disabled"
 colorspace = "display-p3"
@@ -48,6 +51,9 @@ shape = "beam"
 blinking = false
 
 [navigation]
+# GPU Tab mode reserves 38pt on macOS even when its single tab is hidden.
+# NativeTab keeps only our margin; Herdr owns the visible tab bar.
+mode = "nativetab"
 hide-if-single = true
 unfocused-split-opacity = 0.94
 unfocused-split-fill = "#0d1017"
