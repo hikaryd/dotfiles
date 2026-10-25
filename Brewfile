@@ -54,6 +54,7 @@ brew "fzf"
 brew "atuin" # Локальная история; без аккаунта, sync и daemon
 brew "fzf-tab"
 brew "tmux"
+brew "rmux" # Default multiplexer for new clients; Herdr sessions stay alive
 brew "herdr" # Ghostty-backed multiplexer
 brew "zig" # Сборка локального оформления Herdr
 brew "zsh"

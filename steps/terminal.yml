@@ -68,7 +68,11 @@
       path: config/tmux/tmux.conf
       create: true
       force: true
-    # Herdr
+    # Native rmux for new clients, preserved Herdr for existing processes.
+    ~/.config/rmux/rmux.conf:
+      path: config/rmux/rmux.conf
+      create: true
+      force: false
     ~/.config/herdr/config.toml:
       path: config/herdr/config.toml
       create: true

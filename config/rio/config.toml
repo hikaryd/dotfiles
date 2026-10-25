@@ -9,8 +9,8 @@ option-as-alt = "none"
 enable-scroll-bar = false
 
 [shell]
-# New GUI windows attach to Herdr without inheriting another pane's identity.
-# Nushell runs inside Herdr; resolve HOME without relying on the GUI PATH.
+# New GUI windows attach to rmux without inheriting another pane's identity.
+# Nushell runs inside rmux; resolve HOME without relying on the GUI PATH.
 program = "/bin/sh"
 args = ["-c", 'exec "$HOME/.local/bin/dots-terminal"']
 
@@ -27,7 +27,7 @@ disable-unfocused-render = false
 # background layers, so 0.75 per layer gives about 0.94 effective opacity.
 opacity = 0.75
 # Keep explicit UI backgrounds opaque: rounded caps are foreground glyphs,
-# so translucent fills would have a different color. Herdr panel_bg="reset"
+# so translucent fills would have a different color. rmux bg=default
 # still uses the translucent terminal background.
 opacity-cells = false
 blur = true
@@ -50,7 +50,7 @@ blinking = false
 
 [navigation]
 # GPU Tab mode reserves 38pt on macOS even when its single tab is hidden.
-# NativeTab keeps only our margin; Herdr owns the visible tab bar.
+# NativeTab keeps only our margin; rmux owns the visible tab bar.
 mode = "nativetab"
 hide-if-single = true
 unfocused-split-opacity = 0.94

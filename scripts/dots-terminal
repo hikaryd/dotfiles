@@ -3,6 +3,9 @@ set -eu
 # A GUI launched from a pane is a new outer client, never that pane itself.
 backend=rmux
 if [ "${1:-}" = --herdr ]; then backend=herdr; shift; fi
+# Ghostty may retain Nushell integration in an already-running app. This exact
+# bootstrap belongs inside Nu, not on a multiplexer command line.
+if [ "$#" -eq 2 ] && [ "$1" = --execute ] && [ "$2" = 'use ghostty *' ]; then shift 2; fi
 for name in $(/usr/bin/env | /usr/bin/awk -F= '/^(HERDR_|TMUX|RMUX|DOTS_SOURCE_PANE=|DOTS_MUX_CLIENT=)/ { print $1 }'); do
   unset "$name"
 done
@@ -18,6 +21,16 @@ if [ ! -x "$rmux" ] || [ ! -f "$config" ]; then
   printf 'rmux is not configured; preserving the Herdr workflow.\n' >&2
   exec "$HOME/.local/bin/herdr" "$@"
 fi
+# Popup jobs inherit the server environment, not dots-nu's expanded pane PATH.
+PATH="$HOME/.local/bin:/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:${PATH:-/usr/bin:/bin}"
+export PATH
 if [ "$#" -gt 0 ]; then exec "$rmux" "$@"; fi
-if "$rmux" has-session 2>/dev/null; then exec "$rmux" attach-session; fi
-exec "$rmux" new-session -A -s main
+if "$rmux" has-session 2>/dev/null; then
+  # Existing daemons may have loaded tmux.conf before rmux was configured.
+  # Source bindings once, without replacing panes or resetting runtime styles.
+  if [ "$("$rmux" show-options -gqv @dots-rmux-profile 2>/dev/null)" != dots-native-v1 ]; then
+    "$rmux" source-file "$config" || exit "$?"
+  fi
+  exec "$rmux" attach-session
+fi
+exec "$rmux" -f "$config" new-session -A -s main
