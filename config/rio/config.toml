@@ -33,14 +33,14 @@ disable-occluded-render = true
 disable-unfocused-render = false
 
 [window]
-# Rio 0.5.28 composites the window and Metal backgrounds twice on macOS.
-# 0.75 per layer gives ~0.94 effective opacity, matching Ghostty's 0.94.
-opacity = 0.75
+# Native glass uses a separate macOS backdrop. This tint is not the old
+# ordinary-blur two-layer opacity calibration.
+opacity = 0.88
 # Keep explicit UI backgrounds opaque: rounded caps are foreground glyphs,
 # so translucent fills would have a different color. Herdr panel_bg="reset"
 # still uses the translucent terminal background.
 opacity-cells = false
-blur = true
+blur = "macos-glass-clear"
 decorations = "disabled"
 colorspace = "display-p3"
 
@@ -68,7 +68,12 @@ unfocused-split-fill = "#0d1017"
 
 [effects]
 custom-mouse-cursor = false
-trail-cursor = false
+# Animate only cursor movement, not the entire idle window.
+trail-cursor = true
+trail-cursor-color = "#73d0ff"
+trail-cursor-opacity = 0.35
+trail-cursor-decay = [45, 120]
+trail-cursor-start-threshold = 2
 
 [bindings]
 keys = [

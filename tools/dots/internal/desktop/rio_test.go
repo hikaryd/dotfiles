@@ -2,7 +2,6 @@ package desktop
 
 import (
 	"context"
-	"math"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -78,7 +77,7 @@ func TestRioShellStartsOutsideInheritedHerdrSession(t *testing.T) {
 	}
 }
 
-func TestRioPreservesBackgroundOpacityAndSolidRoundedTabs(t *testing.T) {
+func TestRioUsesNativeGlassAndSolidRoundedTabs(t *testing.T) {
 	_, source, _, _ := runtime.Caller(0)
 	root := filepath.Clean(filepath.Join(filepath.Dir(source), "../../../.."))
 	data, err := os.ReadFile(filepath.Join(root, "config/rio/config.toml"))
@@ -89,18 +88,16 @@ func TestRioPreservesBackgroundOpacityAndSolidRoundedTabs(t *testing.T) {
 		Window struct {
 			Opacity      float64 `toml:"opacity"`
 			OpacityCells bool    `toml:"opacity-cells"`
-			Blur         bool    `toml:"blur"`
+			Blur         any     `toml:"blur"`
 		} `toml:"window"`
 	}
 	if err := toml.Unmarshal(data, &config); err != nil {
 		t.Fatal(err)
 	}
-	// Configuration guard, not a substitute for testing Rio's compositor.
-	// On macOS Rio 0.5.28 composites NSWindow and Metal background layers.
-	// Live window captures without blur confirmed the two-layer alpha.
-	effectiveOpacity := 1 - math.Pow(1-config.Window.Opacity, 2)
-	if math.Abs(effectiveOpacity-0.94) > 0.005 || config.Window.OpacityCells || !config.Window.Blur {
-		t.Fatalf("Rio must preserve ~0.94 background opacity and solid UI fills: effective=%f config=%+v", effectiveOpacity, config.Window)
+	// Native glass has its own macOS backdrop. The old ordinary-blur
+	// two-layer opacity calibration must not be reused for this material.
+	if config.Window.Blur != "macos-glass-clear" || config.Window.Opacity <= 0 || config.Window.Opacity >= 1 || config.Window.OpacityCells {
+		t.Fatalf("Rio must use native glass, a translucent background and solid UI fills: %+v", config.Window)
 	}
 	// Powerline rounded caps are opaque foreground glyphs. Their adjacent
 	// background fills must also stay opaque, while the Herdr base canvas
@@ -121,6 +118,30 @@ func TestRioPreservesBackgroundOpacityAndSolidRoundedTabs(t *testing.T) {
 	}
 	if herdr.Theme.Custom.PanelBg != "reset" {
 		t.Fatalf("Herdr must use the translucent terminal background: panel_bg=%q", herdr.Theme.Custom.PanelBg)
+	}
+}
+
+func TestRioCursorTrailIsVisibleAndShort(t *testing.T) {
+	_, source, _, _ := runtime.Caller(0)
+	root := filepath.Clean(filepath.Join(filepath.Dir(source), "../../../.."))
+	data, err := os.ReadFile(filepath.Join(root, "config/rio/config.toml"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var config struct {
+		Effects struct {
+			Trail   bool    `toml:"trail-cursor"`
+			Color   string  `toml:"trail-cursor-color"`
+			Opacity float64 `toml:"trail-cursor-opacity"`
+			Decay   [2]int  `toml:"trail-cursor-decay"`
+		} `toml:"effects"`
+	}
+	if err := toml.Unmarshal(data, &config); err != nil {
+		t.Fatal(err)
+	}
+	effects := config.Effects
+	if !effects.Trail || effects.Color != "#73d0ff" || effects.Opacity <= 0 || effects.Opacity > 0.4 || effects.Decay[0] <= 0 || effects.Decay[0] > effects.Decay[1] || effects.Decay[1] > 140 {
+		t.Fatalf("Rio needs a visible short trail, not a long full-screen animation: %+v", effects)
 	}
 }
 
