@@ -118,7 +118,7 @@ func captureRefs(pane string, lines int) (string, string, error) {
 			return "", "", errors.New("Не удалось определить каталог панели Herdr.")
 		}
 		var s string
-		if muxSocketPath() != "" {
+		if os.Getenv("HERDR_SOCKET_PATH") != "" {
 			read, err := herdrCall("pane.read", map[string]any{"pane_id": pane, "source": "recent_unwrapped", "lines": lines, "format": "text", "strip_ansi": true})
 			if err != nil {
 				return "", "", err
@@ -137,7 +137,7 @@ func captureRefs(pane string, lines int) (string, string, error) {
 		return s, cwd, e
 	}
 	if !regexp.MustCompile(`^%[0-9]+$`).MatchString(pane) {
-		return "", "", errors.New("Нужна tmux pane %id или TUIOS/Herdr pane w…:p…; lines 1..5000.")
+		return "", "", errors.New("Нужна tmux pane %id или Herdr pane w…:p…; lines 1..5000.")
 	}
 	r, e := captureCommand(5*time.Second, 16384, "", nil, "tmux", "display-message", "-p", "-t", pane, "#{pane_current_path}")
 	if e != nil || r.code != 0 {

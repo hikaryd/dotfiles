@@ -9,8 +9,8 @@ option-as-alt = "none"
 enable-scroll-bar = false
 
 [shell]
-# The adapter clears inherited Herdr/TUIOS pane authority before attaching.
-# Nushell runs inside TUIOS, with ordinary app config/history directories.
+# New GUI windows attach to Herdr without inheriting another pane's identity.
+# Nushell runs inside Herdr; resolve HOME without relying on the GUI PATH.
 program = "/bin/sh"
 args = ["-c", 'exec "$HOME/.local/bin/dots-terminal"']
 

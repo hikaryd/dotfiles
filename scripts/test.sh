@@ -12,7 +12,7 @@ group=${1:-all}
 case "$group" in
   all|go|node|runner) ;;
   --list)
-    printf '%s\n' 'runner: tests/test-runner.sh, tests/test-native-build.sh, tests/test-pytest-safe.zsh, tests/test-spotifast.sh, tests/test-brew-install.sh, tests/test-herdr-auto-patch.sh (isolated shell contracts)' \
+    printf '%s\n' 'runner: tests/test-runner.sh, tests/test-native-build.sh, tests/test-pytest-safe.zsh, tests/test-spotifast.sh, tests/test-brew-install.sh, tests/test-herdr-auto-patch.sh, tests/test-terminal-launcher.sh (isolated shell contracts)' \
       'go: tools/*/go.mod (race tests and vet; untested modules stay visible)' \
       'node: tests/*.test.mjs'
     exit 0 ;;
@@ -56,7 +56,7 @@ if [[ $group == all || $group == runner ]]; then
   run_suite 'Spotifast contract' bash tests/test-spotifast.sh
   run_suite 'Homebrew installer contract' bash tests/test-brew-install.sh
   run_suite 'Herdr automatic UI patch contract' bash tests/test-herdr-auto-patch.sh
-  run_suite 'TUIOS launcher and migration contract' bash tests/test-tuios.sh
+  run_suite 'Herdr terminal launcher contract' bash tests/test-terminal-launcher.sh
 fi
 if [[ $group == all || $group == go ]]; then
   modules=(tools/*/go.mod)

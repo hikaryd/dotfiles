@@ -42,10 +42,6 @@ func sessionKey(source, name, path string) string {
 }
 func liveWorkspaces(snapshot map[string]any) []session {
 	entries := []session{}
-	source := "herdr"
-	if strings.Contains(str(snapshot["version"]), "tuios") {
-		source = "tuios"
-	}
 	for _, v := range array(snapshot["workspaces"]) {
 		w := object(v)
 		id, name := str(w["workspace_id"]), str(w["label"])
@@ -66,7 +62,7 @@ func liveWorkspaces(snapshot map[string]any) []session {
 		if s, ok := object(w["tokens"])["dots_session_id"].(string); ok {
 			key = &s
 		}
-		entries = append(entries, session{source + ":" + id, source, name, cwd, id, &tabs, &panes, false, key})
+		entries = append(entries, session{"herdr:" + id, "herdr", name, cwd, id, &tabs, &panes, false, key})
 	}
 	return entries
 }
@@ -266,7 +262,7 @@ func existingWorkspace(entry session, snapshot map[string]any, windows []layoutW
 	return "", nil
 }
 func openEntry(entry session) error {
-	if entry.Source == "herdr" || entry.Source == "tuios" {
+	if entry.Source == "herdr" {
 		return herdrFocus(entry.Workspace)
 	}
 	var windows []layoutWindow
@@ -362,11 +358,7 @@ func openEntry(entry session) error {
 	if len(windows) > 0 {
 		suffix = "; процессы tmux не переносились"
 	}
-	backend := "Herdr"
-	if strings.Contains(str(s["version"]), "tuios") {
-		backend = "TUIOS"
-	}
-	fmt.Printf("%s: создано рабочее пространство %s с пустыми shell%s\n", entry.Name, backend, suffix)
+	fmt.Printf("%s: создано рабочее пространство Herdr с пустыми shell%s\n", entry.Name, suffix)
 	return nil
 }
 func sessionsRun(args []string) int {
@@ -410,7 +402,7 @@ func sessionsRun(args []string) int {
 		if len(matches) > 1 {
 			live := []int{}
 			for _, i := range matches {
-				if entries[i].Source == "herdr" || entries[i].Source == "tuios" {
+				if entries[i].Source == "herdr" {
 					live = append(live, i)
 				}
 			}
@@ -446,7 +438,7 @@ func sessionsRun(args []string) int {
 			// Keep the full import/history inventory behind --all.
 			live := []session{}
 			for _, s := range entries {
-				if s.Source == "herdr" || s.Source == "tuios" {
+				if s.Source == "herdr" {
 					live = append(live, s)
 				}
 			}
@@ -479,12 +471,8 @@ func sessionsRun(args []string) int {
 		labels := []string{}
 		for _, s := range entries {
 			detail := s.Source + " · fresh shell"
-			if s.Source == "herdr" || s.Source == "tuios" {
-				label := "Herdr"
-				if s.Source == "tuios" {
-					label = "TUIOS"
-				}
-				detail = fmt.Sprintf("%s %s · %d tabs", label, s.Workspace, *s.Tabs)
+			if s.Source == "herdr" {
+				detail = fmt.Sprintf("Herdr %s · %d tabs", s.Workspace, *s.Tabs)
 			} else if s.Source == "tmux" {
 				detail = "tmux · copy layout as fresh shells"
 			} else if s.Source == "project" {

@@ -11,6 +11,10 @@
       path: scripts/herdr
       create: true
       force: true
+    ~/.local/bin/dots-terminal:
+      path: scripts/dots-terminal
+      create: true
+      force: true
     ~/.config/atuin/config.toml:
       path: config/atuin/config.toml
       create: true
@@ -160,12 +164,22 @@
       create: true
       force: true
 - shell:
-    - command: '"$HOME/dots/scripts/install-tuios.sh"'
-      description: Installing the pinned TUIOS terminal profile (keeps live daemons)
+    - command: |
+        set -e
+        "$HOME/dots/scripts/build-herdr-last-workspace.sh"
+        herdr plugin link "$HOME/dots/config/herdr/plugins/last-workspace" --enabled
+        dots-last-workspace prime
+      description: Building and linking the native Herdr workspace toggle
       stdout: true
       stderr: true
-    # Herdr files remain available for explicit rollback only.
-    # TUIOS loads the shared task-title plugin from its managed config.
+    - command: herdr plugin link "$HOME/dots/config/herdr/plugins/task-titles" --enabled
+      description: Linking automatic Pi task titles in Herdr
+      stdout: true
+      stderr: true
+    - command: herdr plugin action invoke dots.task-titles.sync
+      description: Naming existing Pi panes and tabs
+      stdout: true
+      stderr: true
     - command: chmod +x ~/.config/git/hooks/prepare-commit-msg
       description: Making git hook executable
       stdout: false

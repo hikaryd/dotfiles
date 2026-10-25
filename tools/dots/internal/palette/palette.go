@@ -13,7 +13,7 @@ import (
 	"github.com/pelletier/go-toml/v2"
 )
 
-var toolNames = []string{"ghostty", "rio", "tuios", "starship", "nushell", "sketchybar", "tmux", "fresh", "lazygit", "thorium", "yazi", "pi", "jcode"}
+var toolNames = []string{"ghostty", "rio", "starship", "nushell", "sketchybar", "tmux", "fresh", "lazygit", "thorium", "yazi", "pi", "jcode"}
 
 type palette map[string]map[string]string
 
@@ -27,7 +27,7 @@ type generator struct {
 // Run implements dots-tools palette [--variant dark|mirage] [--tool TOOL] [--dry-run].
 func Run(root string, args []string) int { return run(root, args, os.Stdout, os.Stderr) }
 
-const usage = "usage: dots-tools palette [-h] [--variant {dark,mirage}]\n                          [--tool {ghostty,rio,tuios,starship,nushell,sketchybar,tmux,fresh,lazygit,thorium,yazi,pi,jcode}]\n                          [--dry-run]\n"
+const usage = "usage: dots-tools palette [-h] [--variant {dark,mirage}]\n                          [--tool {ghostty,rio,starship,nushell,sketchybar,tmux,fresh,lazygit,thorium,yazi,pi,jcode}]\n                          [--dry-run]\n"
 
 func run(root string, args []string, out, stderr io.Writer) int {
 	variant, tool, dry := "dark", "", false

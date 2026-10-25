@@ -1,6 +1,6 @@
-# Новые терминалы — Nushell; login shell системы не меняется.
+# Новые терминалы открывают Herdr; Nushell запускается внутри его панелей.
 command = shell:"$HOME/.local/bin/dots-terminal"
-# The outer command is TUIOS, not Nu. Nushell runs in its panes, so Ghostty
+# The outer command is Herdr, not Nu. Nushell runs in its panes, so Ghostty
 # must not append its Nushell --execute bootstrap to the mux CLI.
 shell-integration = none
 

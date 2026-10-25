@@ -54,6 +54,6 @@ func TestGhosttyDoesNotInjectShellArgumentsIntoMultiplexer(t *testing.T) {
 		t.Fatalf("Ghostty did not load the managed multiplexer launcher: %q", values["command"])
 	}
 	if values["shell-integration"] != "none" {
-		t.Fatalf("Ghostty would inject shell bootstrap arguments into TUIOS: shell-integration=%q", values["shell-integration"])
+		t.Fatalf("Ghostty would inject shell bootstrap arguments into Herdr: shell-integration=%q", values["shell-integration"])
 	}
 }

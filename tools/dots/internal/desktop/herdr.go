@@ -18,7 +18,7 @@ func herdrCall(method string, params map[string]any, argv ...string) (map[string
 }
 func herdrCallContext(ctx context.Context, method string, params map[string]any, argv ...string) (map[string]any, error) {
 	var raw []byte
-	if path := muxSocketPath(); path != "" {
+	if path := os.Getenv("HERDR_SOCKET_PATH"); path != "" {
 		if params == nil {
 			params = map[string]any{}
 		}

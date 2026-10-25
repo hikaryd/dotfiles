@@ -14,7 +14,7 @@ import (
 	"time"
 )
 
-func TestHerdrSocketProtocolAndRefs(t *testing.T) {
+func TestHerdrSocketProtocolAndAlphanumericRefs(t *testing.T) {
 	f := newFixture(t)
 	dir, e := os.MkdirTemp("/tmp", "desktop-socket-")
 	if e != nil {
@@ -64,7 +64,7 @@ func TestHerdrSocketProtocolAndRefs(t *testing.T) {
 		done <- nil
 	}()
 	f.env = append(f.env, "HERDR_SOCKET_PATH="+path)
-	out, err, code := f.run("", "refs", "--pane", "w1:p2", "--lines", "17", "--list")
+	out, err, code := f.run("", "refs", "--pane", "w8:p5J", "--lines", "17", "--list")
 	if code != 0 || out != "1. [url] https://fixture.example\n" {
 		t.Fatalf("socket refs %d %s %s", code, out, err)
 	}
@@ -75,7 +75,7 @@ func TestHerdrSocketProtocolAndRefs(t *testing.T) {
 	if first["method"] != "pane.get" || second["method"] != "pane.read" {
 		t.Fatalf("methods %+v %+v", first, second)
 	}
-	want := map[string]any{"pane_id": "w1:p2", "source": "recent_unwrapped", "lines": float64(17), "strip_ansi": true, "format": "text"}
+	want := map[string]any{"pane_id": "w8:p5J", "source": "recent_unwrapped", "lines": float64(17), "strip_ansi": true, "format": "text"}
 	if !reflect.DeepEqual(second["params"], want) {
 		t.Fatalf("params %+v", second)
 	}
