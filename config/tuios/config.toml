@@ -18,6 +18,8 @@ dock_compact = true
 dock_workspace_tab_format = "{index} {name}{zoom}"
 dock_workspace_label_max = 22
 dock_pill_caps = true
+# V/H is the next split direction, not the input mode. Keep the mode pill clear.
+dock_mode_split_letter = false
 window_title_position = "top"
 window_title_format = "{title}"
 window_title_style = "pill"
@@ -29,6 +31,7 @@ copy_on_select = false
 dim_unfocused = 0
 session_colors = false
 new_window_inherit_cwd = true
+auto_enter_terminal_on_focus = "all"
 # scripts/tuios supplies SHELL=dots-tuios-shell with an absolute path.
 preferred_shell = ""
 
@@ -40,6 +43,7 @@ background = "theme"
 [startup]
 tiled = true
 daemon = true
+start_in_terminal_mode = true
 
 [daemon]
 persist_scrollback = false
@@ -71,6 +75,8 @@ show_add = true
 [keybindings]
 preset = "tmux"
 leader_key = "ctrl+a"
+# One prefix, one action. Repeated resizing is explicit in Ctrl+A R instead.
+repeat = []
 
 [keybindings.global]
 command_palette = ["ctrl+shift+p"]
@@ -98,7 +104,10 @@ terminal_focus_up = ["ctrl+k", "alt+up"]
 terminal_focus_right = ["ctrl+l", "alt+right"]
 
 [keybindings.prefix_mode]
-new_workspace = ["c"]
+# Cancel the prefix without entering window mode or sending Esc to the pane.
+prefix_exit_mode = []
+enter_terminal_mode = ["esc"]
+new_workspace = []
 prev_workspace = ["b"]
 next_workspace = ["n"]
 rename_workspace = [","]
@@ -147,6 +156,15 @@ prefix_jump_notif = []
 prefix_keybinds = []
 toggle_scratch = []
 "open_menu:resize" = ["R"]
+
+[[keybindings.command]]
+key = "prefix+c"
+name = "new-terminal-workspace"
+description = "New tab, ready to type"
+type = "shell"
+# The native new_workspace action visits an empty workspace first and drops
+# terminal mode. The tmux-compatible verb creates its pane before switching.
+command = 'exec "$HOME/.local/bin/tuios" tmux new-window -t "$TUIOS_SESSION:" -c "$TUIOS_ACTIVE_PANE_CWD"'
 
 [keybindings.menus.resize]
 title = "Resize · hjkl · Esc to finish"
