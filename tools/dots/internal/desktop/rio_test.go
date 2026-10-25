@@ -124,6 +124,29 @@ func TestRioPreservesBackgroundOpacityAndSolidRoundedTabs(t *testing.T) {
 	}
 }
 
+func TestRioRendererAvoidsContinuousAndOccludedRedraw(t *testing.T) {
+	_, source, _, _ := runtime.Caller(0)
+	root := filepath.Clean(filepath.Join(filepath.Dir(source), "../../../.."))
+	data, err := os.ReadFile(filepath.Join(root, "config/rio/config.toml"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var config struct {
+		Renderer struct {
+			Backend                string `toml:"backend"`
+			Strategy               string `toml:"strategy"`
+			DisableOccludedRender  bool   `toml:"disable-occluded-render"`
+			DisableUnfocusedRender bool   `toml:"disable-unfocused-render"`
+		} `toml:"renderer"`
+	}
+	if err := toml.Unmarshal(data, &config); err != nil {
+		t.Fatal(err)
+	}
+	if config.Renderer.Backend != "metal" || config.Renderer.Strategy != "events" || !config.Renderer.DisableOccludedRender || config.Renderer.DisableUnfocusedRender {
+		t.Fatalf("Rio must render on demand, skip covered windows and keep the visible second monitor updating: %+v", config.Renderer)
+	}
+}
+
 func TestRioDoesNotReserveHiddenGPUTabStrip(t *testing.T) {
 	_, source, _, _ := runtime.Caller(0)
 	root := filepath.Clean(filepath.Join(filepath.Dir(source), "../../../.."))

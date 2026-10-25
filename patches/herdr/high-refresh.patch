@@ -1,0 +1,36 @@
+diff --git a/src/app/mod.rs b/src/app/mod.rs
+--- a/src/app/mod.rs
++++ b/src/app/mod.rs
+@@ -36,7 +36,7 @@ use std::io;
+ use std::sync::Arc;
+ use std::time::{Duration, Instant};
+ 
+-pub(crate) const MIN_RENDER_INTERVAL: Duration = Duration::from_millis(16);
++pub(crate) const MIN_RENDER_INTERVAL: Duration = Duration::from_millis(8);
+ const GIT_REMOTE_STATUS_REFRESH_INTERVAL: Duration = Duration::from_millis(1500);
+ const GIT_REPO_DISCOVERY_REFRESH_INTERVAL: Duration = Duration::from_secs(5 * 60);
+ const AUTO_UPDATE_CHECK_INTERVAL: Duration = Duration::from_secs(30 * 60);
+diff --git a/src/app/runtime.rs b/src/app/runtime.rs
+--- a/src/app/runtime.rs
++++ b/src/app/runtime.rs
+@@ -217,6 +217,20 @@ mod tests {
+     use crate::workspace::Workspace;
+ 
+     #[test]
++    fn high_refresh_render_and_presentation_resume_after_eight_ms() {
++        let (mut app, _) = test_app_with_pane();
++        let presented = Instant::now();
++        app.record_render_attempt(presented, true);
++
++        let early = presented + Duration::from_millis(7);
++        assert!(!app.can_render_now(early));
++        assert!(!app.can_present_now(early));
++        let next_frame = presented + Duration::from_millis(8);
++        assert!(app.can_render_now(next_frame));
++        assert!(app.can_present_now(next_frame));
++    }
++
++    #[test]
+     fn hidden_render_attempt_keeps_presentation_cadence_available() {
+         let (mut app, _) = test_app_with_pane();
+         let initial_presentation = Instant::now();

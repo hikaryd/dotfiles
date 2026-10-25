@@ -2,8 +2,9 @@
 set -euo pipefail
 umask 077
 
-# --ensure is the launcher's cached, retry-throttled mode. A manual invocation
-# always retries. Build only the installed release; never replace/stop a server.
+# --ensure is cached and retry-throttled; a manual invocation always retries.
+# Build the installed release with local chrome and high-refresh cadence.
+# Compilation never replaces/stops a live server; handoff is a separate action.
 root=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 ensure=0
 if [[ ${1:-} == --ensure ]]; then ensure=1; shift; fi
@@ -20,9 +21,14 @@ case "$version" in
   0.9.1) expected_commit=065ef9d6a531c49fb8bee7e818ef837065b21ee9 ;;
   0.9.4) expected_commit=7e26bad94044eba205033111a0ce8033ede7e24f ;;
 esac
-# One maintained patch; compatibility is checked against each exact release.
-patch="$root/patches/herdr/centered-rounded-tabs.patch"
-patch_hash=$(shasum -a 256 "$patch")
+# Keep legacy UI support separate from the tested high-refresh runtime patch.
+patches=("$root/patches/herdr/centered-rounded-tabs.patch")
+regressions=(tab_group_is_centered_and_uses_rounded_caps)
+if [[ $version != 0.9.1 ]]; then
+  patches=("$root/patches/herdr/high-refresh.patch" "${patches[@]}")
+  regressions+=(high_refresh_render_and_presentation_resume_after_eight_ms)
+fi
+patch_hash=$(cat "${patches[@]}" | shasum -a 256)
 patch_hash=${patch_hash%% *}
 data="${XDG_DATA_HOME:-$HOME/.local/share}/dots/herdr"
 cache="${XDG_CACHE_HOME:-$HOME/.cache}/dots/herdr"
@@ -89,8 +95,8 @@ if [[ -n $expected_commit && $commit != "$expected_commit" ]]; then
   echo 'Herdr tag changed; refusing to apply the local UI patch' >&2
   exit 1
 fi
-git apply --check "$patch"
-git apply "$patch"
+git apply --check "${patches[@]}"
+git apply "${patches[@]}"
 
 # Homebrew can upgrade Zig independently. Keep a verified 0.16.0 compiler in
 # our private cache instead of changing the user's globally installed version.
@@ -125,8 +131,10 @@ export ZIG="$zig"
 mkdir -p "${CARGO_TARGET_DIR:-$cache/target}"
 CARGO_TARGET_DIR=$(cd "${CARGO_TARGET_DIR:-$cache/target}" && pwd)
 export CARGO_TARGET_DIR
-cargo test --locked --bin herdr tab_group_is_centered_and_uses_rounded_caps | tee "$build_dir/test.log"
-grep -Eq 'test result: ok\. [1-9][0-9]* passed;' "$build_dir/test.log" || { echo 'No tab-rendering regression tests ran' >&2; exit 1; }
+for regression in "${regressions[@]}"; do
+  cargo test --locked --bin herdr "$regression" | tee "$build_dir/test.log"
+  grep -Eq 'test result: ok\. [1-9][0-9]* passed;' "$build_dir/test.log" || { echo "No regression tests ran: $regression" >&2; exit 1; }
+done
 cargo build --locked --release --bin herdr
 [[ $("$CARGO_TARGET_DIR/release/herdr" --version) == "herdr $version" ]] || { echo 'Built client version does not match the installed release' >&2; exit 1; }
 install -m 755 "$CARGO_TARGET_DIR/release/herdr" "$destination/herdr.new"

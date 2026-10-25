@@ -24,6 +24,14 @@ args = [
   "/bin/sh", "-c", 'exec "$HOME/.local/bin/dots-nu"',
 ]
 
+[renderer]
+backend = "metal"
+# Game mode forces full redraws and busy-polls, even without new terminal output.
+strategy = "events"
+disable-occluded-render = true
+# Keep visible windows updating on the second monitor when focus is elsewhere.
+disable-unfocused-render = false
+
 [window]
 # Rio 0.5.28 composites the window and Metal backgrounds twice on macOS.
 # 0.75 per layer gives ~0.94 effective opacity, matching Ghostty's 0.94.
