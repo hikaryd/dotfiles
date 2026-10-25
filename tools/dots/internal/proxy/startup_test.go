@@ -91,6 +91,14 @@ func serveFixtureRoute(fixture string) {
 		} else if address == "blocked.test" {
 			w.WriteHeader(http.StatusForbidden)
 		} else {
+			if !probe {
+				if data, err := os.ReadFile(filepath.Join(fixture, "rewrite-config")); err == nil {
+					if os.WriteFile(os.Args[3], data, 0600) != nil {
+						w.WriteHeader(http.StatusInternalServerError)
+						return
+					}
+				}
+			}
 			w.WriteHeader(http.StatusUnauthorized)
 		}
 	}))

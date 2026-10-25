@@ -26,6 +26,20 @@ func TestMain(m *testing.M) {
 			fakeLaunchctl(fixture)
 			os.Exit(0)
 		case "xray":
+			owner, err := strconv.Atoi(os.Getenv("DOTS_PROXY_TEST_OWNER"))
+			if err != nil || owner <= 1 {
+				os.Exit(2)
+			}
+			go func() {
+				ticker := time.NewTicker(100 * time.Millisecond)
+				defer ticker.Stop()
+				for range ticker.C {
+					_, err := os.Stat(fixture)
+					if !pidRunning(owner) || os.IsNotExist(err) {
+						os.Exit(0)
+					}
+				}
+			}()
 			if os.Getenv("DOTS_PROXY_TEST_XRAY_FAIL") == "1" {
 				fmt.Fprintln(os.Stderr, "fixture-password-do-not-log")
 				os.Exit(23)
@@ -60,6 +74,12 @@ func TestMain(m *testing.M) {
 				time.Sleep(time.Hour)
 			}
 		case "ps":
+			log, err := os.OpenFile(filepath.Join(fixture, "ps-calls"), os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600)
+			if err != nil {
+				os.Exit(2)
+			}
+			fmt.Fprintln(log, strings.Join(os.Args[1:], " "))
+			log.Close()
 			b, err := os.ReadFile(filepath.Join(fixture, "xray-argv"))
 			if err != nil {
 				os.Exit(1)
@@ -111,6 +131,7 @@ func fakeCommands(t *testing.T) string {
 	}
 	t.Setenv("PATH", bin)
 	t.Setenv("DOTS_PROXY_TEST_FIXTURE", fixture)
+	t.Setenv("DOTS_PROXY_TEST_OWNER", strconv.Itoa(os.Getpid()))
 	t.Setenv("GORACE", "atexit_sleep_ms=0")
 	return fixture
 }
@@ -184,6 +205,56 @@ func TestSharedProxyLifecycle(t *testing.T) {
 	if c.requireRunning() == nil {
 		t.Fatal("allowed run after stop")
 	}
+}
+
+func TestFakeXrayExitsWithTestOwner(t *testing.T) {
+	exe, err := os.Executable()
+	if err != nil {
+		t.Fatal(err)
+	}
+	root := t.TempDir()
+	report := filepath.Join(root, "child-pid")
+	cmd := exec.Command(exe, "-test.run=^TestFakeXrayOwnerChild$")
+	cmd.Env = append(os.Environ(), "DOTS_PROXY_TEST_OWNER_REPORT="+report, "TMPDIR="+root)
+	if output, err := cmd.CombinedOutput(); err != nil {
+		t.Fatalf("owner subprocess: %v %s", err, output)
+	}
+	data, err := os.ReadFile(report)
+	if err != nil {
+		t.Fatal(err)
+	}
+	pid, err := strconv.Atoi(strings.TrimSpace(string(data)))
+	if err != nil || pid <= 1 {
+		t.Fatalf("invalid child PID: %q", data)
+	}
+	t.Cleanup(func() { _ = syscall.Kill(pid, syscall.SIGKILL) })
+	deadline := time.Now().Add(2 * time.Second)
+	for pidRunning(pid) && time.Now().Before(deadline) {
+		time.Sleep(10 * time.Millisecond)
+	}
+	if pidRunning(pid) {
+		t.Fatal("fake xray survived its test owner exiting without cleanup")
+	}
+}
+
+func TestFakeXrayOwnerChild(t *testing.T) {
+	report := os.Getenv("DOTS_PROXY_TEST_OWNER_REPORT")
+	if report == "" {
+		return
+	}
+	fakeCommands(t)
+	c := testController(t)
+	if err := c.start(fixtureVLESS(t)); err != nil {
+		t.Fatal(err)
+	}
+	pid, err := c.readPID()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(report, []byte(strconv.Itoa(pid)), 0600); err != nil {
+		t.Fatal(err)
+	}
+	os.Exit(0)
 }
 func TestStartFailureWithholdsSecrets(t *testing.T) {
 	fakeCommands(t)

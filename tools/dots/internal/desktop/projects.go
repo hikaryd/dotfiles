@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -26,6 +27,7 @@ type pane struct {
 	Cwd      string `json:"cwd"`
 	Command  string `json:"command"`
 	Active   bool   `json:"active"`
+	pid      int
 }
 type project struct {
 	ID    string `json:"id"`
@@ -166,11 +168,11 @@ func livePanesContext(ctx context.Context) ([]pane, error) {
 				continue
 			}
 			active, _ := p["focused"].(bool)
-			panes = append(panes, pane{id, str(w["label"]), str(p["tab_id"]), str(p["pane_id"]), true, cwd, "herdr", active})
+			panes = append(panes, pane{id, str(w["label"]), str(p["tab_id"]), str(p["pane_id"]), true, cwd, "herdr", active, 0})
 		}
 		return panes, nil
 	}
-	r, e := captureCommandContext(ctx, 5*time.Second, 16*maxBytes, "", nil, mux.Argv("list-panes", "-a", "-F", "#{session_id}\t#{session_name}\t#{window_id}\t#{pane_id}\t#{session_attached}\t#{pane_current_command}\t#{pane_active}\t#{pane_current_path}")...)
+	r, e := captureCommandContext(ctx, 5*time.Second, 16*maxBytes, "", nil, mux.Argv("list-panes", "-a", "-F", "#{session_id}\t#{session_name}\t#{window_id}\t#{pane_id}\t#{session_attached}\t#{pane_current_command}\t#{pane_active}\t#{pane_pid}\t#{pane_current_path}")...)
 	if e != nil {
 		return nil, e
 	}
@@ -181,9 +183,13 @@ func livePanesContext(ctx context.Context) ([]pane, error) {
 		return nil, errors.New("tmux pane inventory failed")
 	}
 	for _, line := range strings.Split(r.out, "\n") {
-		f := strings.SplitN(line, "\t", 8)
-		if len(f) == 8 {
-			panes = append(panes, pane{f[0], f[1], f[2], f[3], f[4] != "0", f[7], f[5], f[6] == "1"})
+		f := strings.SplitN(line, "\t", 9)
+		if len(f) == 9 {
+			pid, err := strconv.Atoi(f[7])
+			if err != nil || pid <= 1 {
+				pid = 0
+			}
+			panes = append(panes, pane{f[0], f[1], f[2], f[3], f[4] != "0", f[8], f[5], f[6] == "1", pid})
 		}
 	}
 	return panes, nil

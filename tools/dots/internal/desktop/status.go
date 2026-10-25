@@ -14,7 +14,6 @@ import (
 	"syscall"
 	"time"
 
-	"dots/native/internal/mux"
 	"dots/native/internal/tui"
 )
 
@@ -208,12 +207,7 @@ func localPorts(ctx context.Context, projects []project) (map[string][]portRow, 
 	warnings := []string{}
 	attributed := map[string][]portRow{}
 	unassigned := []portRow{}
-	r, e := statusCommand(ctx, "ps", "-axo", "pid=,ppid=,comm=")
-	processes := parseProcesses(r.out)
-	if e != nil || r.code != 0 {
-		warnings = append(warnings, "Process ancestry unavailable")
-	}
-	r, e = statusCommand(ctx, "lsof", "-nP", "-iTCP", "-sTCP:LISTEN", "-Fpcn0")
+	r, e := statusCommand(ctx, "lsof", "-nP", "-iTCP", "-sTCP:LISTEN", "-Fpcn0")
 	if e != nil {
 		return attributed, unassigned, append(warnings, "TCP listeners unavailable (lsof missing/timeout)")
 	}
@@ -221,6 +215,14 @@ func localPorts(ctx context.Context, projects []project) (map[string][]portRow, 
 		return attributed, unassigned, append(warnings, "TCP listeners could not be inspected")
 	}
 	listeners := parseLsof(r.out)
+	if len(listeners) == 0 {
+		return attributed, unassigned, warnings
+	}
+	r, e = statusCommand(ctx, "ps", "-axo", "pid=,ppid=,comm=")
+	processes := parseProcesses(r.out)
+	if e != nil || r.code != 0 {
+		warnings = append(warnings, "Process ancestry unavailable")
+	}
 	cwd := map[int]*lsofRecord{}
 	pids := []int{}
 	for pid := range listeners {
@@ -239,12 +241,15 @@ func localPorts(ctx context.Context, projects []project) (map[string][]portRow, 
 		cwd = parseLsof(r.out)
 	}
 	paneIDs := map[string]string{}
+	paneProjects := map[int]string{}
 	for _, p := range projects {
 		for _, pane := range p.Panes {
 			paneIDs[pane.Pane] = p.ID
+			if pane.pid > 1 {
+				paneProjects[pane.pid] = p.ID
+			}
 		}
 	}
-	paneProjects := map[int]string{}
 	if inHerdr() {
 		for pane, id := range paneIDs {
 			r, e := herdrCallContext(ctx, "pane.process_info", map[string]any{"pane_id": pane}, "pane", "process-info", "--pane", pane)
@@ -255,21 +260,6 @@ func localPorts(ctx context.Context, projects []project) (map[string][]portRow, 
 			pid := number(object(r["process_info"])["shell_pid"])
 			if pid > 0 {
 				paneProjects[pid] = id
-			}
-		}
-	} else {
-		r, e = statusCommand(ctx, mux.Argv("list-panes", "-a", "-F", "#{pane_id}\t#{pane_pid}")...)
-		if e != nil {
-			warnings = append(warnings, "Pane process attribution unavailable")
-		}
-		for _, line := range strings.Split(r.out, "\n") {
-			f := strings.Split(line, "\t")
-			if len(f) != 2 {
-				continue
-			}
-			pid, e := strconv.Atoi(f[1])
-			if e == nil && paneIDs[f[0]] != "" {
-				paneProjects[pid] = paneIDs[f[0]]
 			}
 		}
 	}

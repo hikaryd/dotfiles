@@ -168,7 +168,7 @@ func (c *controller) matchesRunning(server object) bool {
 }
 
 func (c *controller) activate(server object) error {
-	if err := c.noForeignListener(); err != nil {
+	if _, err := c.noForeignListener(); err != nil {
 		return err
 	}
 	if c.matchesRunning(server) {
@@ -306,8 +306,12 @@ func (c *controller) reportProbe(server object, result probeResult) {
 }
 
 func (c *controller) saveSelection(keys []string, index int, m measurement) error {
+	return c.saveSelectionForPID(0, keys, index, m)
+}
+
+func (c *controller) saveSelectionForPID(expectedPID int, keys []string, index int, m measurement) error {
 	pid, key, err := c.liveRoute()
-	if err != nil || index < 0 || index >= len(keys) || key != keys[index] || !allowedCountry(m.Country) || m.Latency <= 0 {
+	if err != nil || expectedPID > 0 && pid != expectedPID || index < 0 || index >= len(keys) || key != keys[index] || !allowedCountry(m.Country) || m.Latency <= 0 {
 		return errors.New("Could not certify the live proxy selection.")
 	}
 	if err := c.listenerOwned(pid); err != nil {

@@ -56,7 +56,7 @@ func TestRmuxProjectInventoryUsesNativePaneBackend(t *testing.T) {
 	f := newFixture(t)
 	p := f.repo("work with spaces")
 	f.env = append(f.env, "RMUX=/tmp/rmux.sock,42,0", "HERDR_ENV=1")
-	f.fake("rmux", fakeRule{Args: []string{"-S", "/tmp/rmux.sock", "list-panes", "-a", "-F", "#{session_id}\t#{session_name}\t#{window_id}\t#{pane_id}\t#{session_attached}\t#{pane_current_command}\t#{pane_active}\t#{pane_current_path}"}, Output: fmt.Sprintf("$2\tproject\t@3\t%%7\t1\tnu\t1\t%s\n", p)})
+	f.fake("rmux", fakeRule{Args: []string{"-S", "/tmp/rmux.sock", "list-panes", "-a", "-F", "#{session_id}\t#{session_name}\t#{window_id}\t#{pane_id}\t#{session_attached}\t#{pane_current_command}\t#{pane_active}\t#{pane_pid}\t#{pane_current_path}"}, Output: fmt.Sprintf("$2\tproject\t@3\t%%7\t1\tnu\t1\t10\t%s\n", p)})
 	out, err, code := f.run("", "projects", "list", "--json")
 	if code != 0 || !strings.Contains(out, `"pane": "%7"`) {
 		t.Fatalf("exit %d: %s %s", code, out, err)

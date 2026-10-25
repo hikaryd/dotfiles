@@ -30,7 +30,15 @@ func (c *controller) liveRoute() (int, string, error) {
 	if err != nil || !pidRunning(pid) || !c.owned(pid) {
 		return 0, "", errNotReady
 	}
-	data, err = os.ReadFile(c.path("config.json"))
+	key, err := c.routeKey()
+	if err != nil {
+		return 0, "", err
+	}
+	return pid, key, nil
+}
+
+func (c *controller) routeKey() (string, error) {
+	data, err := os.ReadFile(c.path("config.json"))
 	var cfg object
 	var listener struct {
 		Inbounds []struct {
@@ -39,7 +47,7 @@ func (c *controller) liveRoute() (int, string, error) {
 		}
 	}
 	if err != nil || json.Unmarshal(data, &cfg) != nil || json.Unmarshal(data, &listener) != nil {
-		return 0, "", errNotReady
+		return "", errNotReady
 	}
 	matches := false
 	for _, in := range listener.Inbounds {
@@ -48,9 +56,9 @@ func (c *controller) liveRoute() (int, string, error) {
 		}
 	}
 	if !matches {
-		return 0, "", errNotReady
+		return "", errNotReady
 	}
-	return pid, digest(cfg), nil
+	return digest(cfg), nil
 }
 
 func (c *controller) requireReady() error {
@@ -116,24 +124,24 @@ func (c *controller) listenerOwned(pid int) error {
 }
 
 // Refuse foreign state before selection can change config or signal anything.
-func (c *controller) noForeignListener() error {
+func (c *controller) noForeignListener() (int, error) {
 	data, _ := os.ReadFile(c.path("xray.pid"))
 	pid, _ := strconv.Atoi(strings.TrimSpace(string(data)))
 	if pidRunning(pid) {
 		if !c.owned(pid) {
-			return errors.New("Refusing foreign process in proxy PID file.")
+			return 0, errors.New("Refusing foreign process in proxy PID file.")
 		}
 		err := c.listenerOwned(pid)
 		if errors.Is(err, errListenerMissing) {
-			return nil
+			return pid, nil
 		}
-		return err
+		return pid, err
 	}
 	listener, err := net.Listen("tcp4", net.JoinHostPort("127.0.0.1", strconv.Itoa(c.port)))
 	if err != nil {
-		return errors.New("Proxy port is occupied; refusing to replace an unowned listener.")
+		return 0, errors.New("Proxy port is occupied; refusing to replace an unowned listener.")
 	}
-	return listener.Close()
+	return 0, listener.Close()
 }
 
 func (c *controller) withdrawReadiness() error {
@@ -178,11 +186,12 @@ func (c *controller) maintain(state *monitorState) error {
 	recoverRoute := false
 	err = func() error {
 		defer unlock()
-		if err := c.noForeignListener(); err != nil {
+		pid, err := c.noForeignListener()
+		if err != nil {
 			return err
 		}
-		pid, key, liveErr := c.liveRoute()
-		if liveErr != nil {
+		key, liveErr := c.routeKey()
+		if pid <= 1 || liveErr != nil {
 			// An owned process with unreadable/mismatched config is not safe to adopt.
 			if c.requireRunning() == nil {
 				return errNotReady
@@ -197,16 +206,16 @@ func (c *controller) maintain(state *monitorState) error {
 		if ctx.Err() != nil {
 			return ctx.Err()
 		}
-		nextPID, nextKey, identityErr := c.liveRoute()
-		if identityErr != nil || pid != nextPID || key != nextKey {
-			return errNotReady
-		}
 		if checkErr == nil && allowedCountry(m.Country) && m.Latency > 0 {
-			if err := c.saveSelection([]string{key}, 0, m); err != nil {
+			if err := c.saveSelectionForPID(pid, []string{key}, 0, m); err != nil {
 				return err
 			}
 			state.failures = 0
 			return nil
+		}
+		nextPID, nextKey, identityErr := c.liveRoute()
+		if identityErr != nil || pid != nextPID || key != nextKey {
+			return errNotReady
 		}
 		state.failures++
 		if m.Country != "RU" && state.failures < 3 {

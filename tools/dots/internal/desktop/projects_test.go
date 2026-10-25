@@ -19,7 +19,7 @@ func TestProjectRegistryWorktreeInventory(t *testing.T) {
 	f.write(filepath.Join(main, ".git/worktrees/linked/gitdir"), filepath.Join(linked, ".git")+"\n", 0600)
 	f.write(filepath.Join(main, ".git/worktrees/stale/gitdir"), filepath.Join(f.base, "missing/.git"), 0600)
 	f.registry(main)
-	panes := "$2\told\t@2\t%2\t0\tzsh\t1\t" + main + "\n$1\tproject space\t@1\t%1\t1\tnvim\t0\t" + main + "\n"
+	panes := "$2\told\t@2\t%2\t0\tzsh\t1\t20\t" + main + "\n$1\tproject space\t@1\t%1\t1\tnvim\t0\t10\t" + main + "\n"
 	f.fake("tmux", allRule(panes, 0))
 	out, err, code := f.run("", "projects", "list", "--json")
 	var projects []project
@@ -91,7 +91,7 @@ func TestProjectOpenFocusAndCreationArgv(t *testing.T) {
 			f.env = append(f.env, "TMUX=fixture")
 			paneOutput := ""
 			if live {
-				paneOutput = "$1\ta\t@2\t%3\t1\tnvim\t1\t" + p + "\n"
+				paneOutput = "$1\ta\t@2\t%3\t1\tnvim\t1\t10\t" + p + "\n"
 			}
 			f.fake("git", fakeRule{Args: []string{"-C", p, "rev-parse", "--show-toplevel"}, Output: p + "\n"})
 			f.fake("tmux", fakeRule{Args: []string{"list-panes"}, Prefix: true, Output: paneOutput}, fakeRule{Args: []string{"new-session"}, Prefix: true, Output: "$5\t@6\t%7\n"}, fakeRule{Args: []string{"new-window"}, Prefix: true}, fakeRule{Args: []string{"select-window"}, Prefix: true})

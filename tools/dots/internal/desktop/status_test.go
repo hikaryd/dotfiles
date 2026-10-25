@@ -26,7 +26,7 @@ func TestStatusLocalAttributionAndGitFilterGuard(t *testing.T) {
 	f := newFixture(t)
 	p := f.repo("project")
 	f.registry(p)
-	f.fake("tmux", fakeRule{Args: []string{"list-panes", "-a", "-F", "#{pane_id}\t#{pane_pid}"}, Output: "%1\t10\n"}, fakeRule{Args: []string{"list-panes"}, Prefix: true, Output: "$1\tproject\t@1\t%1\t1\tnvim\t1\t" + p + "\n"})
+	f.fake("tmux", fakeRule{Args: []string{"list-panes"}, Prefix: true, Output: "$1\tproject\t@1\t%1\t1\tnvim\t1\t10\t" + p + "\n"})
 	f.fake("ps", allRule("10 1 /bin/zsh\n20 10 /bin/server\n30 10 /bin/other\n", 0))
 	f.fake("lsof", fakeRule{Args: []string{"-nP", "-iTCP", "-sTCP:LISTEN", "-Fpcn0"}, Output: "p20\x00cserver\x00n127.0.0.1:1234\x00n127.0.0.1:1234\x00\np30\x00cother\x00n*:9999\x00\n"}, fakeRule{Args: []string{"-a", "-p", "20,30", "-d", "cwd", "-Fpn0"}, Output: "p30\x00n" + f.home + "\x00\n"})
 	f.fake("git", fakeRule{Args: []string{"-C", p, "config", "--null", "--get-regexp", `^filter\..*\.(clean|process)$`}, Output: "filter.fixture.clean\nfixture-secret-command\x00"}, fakeRule{Args: []string{"-C", p, "symbolic-ref", "--short", "-q", "HEAD"}, Output: "feature\n"})

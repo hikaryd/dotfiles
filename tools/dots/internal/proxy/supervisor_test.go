@@ -87,6 +87,44 @@ func TestSupervisorAdoptsHealthyProcess(t *testing.T) {
 		t.Fatal("healthy adoption probed subscription candidates")
 	}
 }
+
+func TestSupervisorChecksIdentityOncePerBoundary(t *testing.T) {
+	c, fixture, pid, cfg := startMonitored(t)
+	if err := c.maintain(&monitorState{}); err != nil {
+		t.Fatal(err)
+	}
+	sameRoute(t, c, pid, cfg)
+	data, err := os.ReadFile(filepath.Join(fixture, "ps-calls"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	calls := strings.Split(strings.TrimSpace(string(data)), "\n")
+	if len(calls) != 2 {
+		t.Fatalf("healthy maintenance launched %d ps checks, want one before and one after probing", len(calls))
+	}
+	requests, err := os.ReadFile(filepath.Join(fixture, "requests"))
+	if err != nil || string(requests) != "fast.test false /country\nfast.test false /models\n" {
+		t.Fatalf("maintenance repeated network checks or probed candidates: %q %v", requests, err)
+	}
+}
+
+func TestSupervisorRejectsConfigChangeDuringProbe(t *testing.T) {
+	c, fixture, _, cfg := startMonitored(t)
+	var changed object
+	if err := json.Unmarshal(cfg, &changed); err != nil {
+		t.Fatal(err)
+	}
+	changed["log"] = object{"loglevel": "debug"}
+	if err := writeJSON(filepath.Join(fixture, "rewrite-config"), changed); err != nil {
+		t.Fatal(err)
+	}
+	if c.maintain(&monitorState{}) == nil {
+		t.Fatal("configuration changed during probe but was certified ready")
+	}
+	if _, err := os.Stat(c.path("selection.json")); !os.IsNotExist(err) {
+		t.Fatal("readiness published for a different route", err)
+	}
+}
 func TestSupervisorAdoptsWithoutSelection(t *testing.T) {
 	c, _, pid, cfg := startMonitored(t)
 	if err := c.saveServers([]object{startupServer(t, "blocked.test")}); err != nil {
