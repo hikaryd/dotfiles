@@ -2,6 +2,7 @@ package uicli
 
 import (
 	"bytes"
+	"errors"
 	"os"
 	"strings"
 	"syscall"
@@ -9,6 +10,8 @@ import (
 	"time"
 
 	"dots/native/internal/testpty"
+
+	"golang.org/x/sys/unix"
 )
 
 func TestSelectorDisplaysSafeLabelsReturnsOriginal(t *testing.T) {
@@ -39,6 +42,21 @@ func TestPipeInputCancellation(t *testing.T) {
 			}
 			defer reader.Close()
 			defer writer.Close()
+			fd := int(writer.Fd())
+			if err := unix.SetNonblock(fd, true); err != nil {
+				t.Fatal(err)
+			}
+			// A full pipe becomes writable only after the CLI starts reading it.
+			buffer := make([]byte, 4096)
+			for {
+				_, err := unix.Write(fd, buffer)
+				if errors.Is(err, unix.EAGAIN) {
+					break
+				}
+				if err != nil {
+					t.Fatal(err)
+				}
+			}
 			cmd.Stdin = reader
 			var out bytes.Buffer
 			cmd.Stdout = &out
@@ -49,23 +67,27 @@ func TestPipeInputCancellation(t *testing.T) {
 			defer cmd.Process.Kill()
 			done := make(chan error, 1)
 			go func() { done <- cmd.Wait() }()
-			ticker := time.NewTicker(25 * time.Millisecond)
-			defer ticker.Stop()
-			deadline := time.NewTimer(2 * time.Second)
-			defer deadline.Stop()
-			time.Sleep(150 * time.Millisecond)
+			poll := []unix.PollFd{{Fd: int32(fd), Events: unix.POLLOUT}}
 			for {
-				select {
-				case <-ticker.C:
-					cmd.Process.Signal(syscall.SIGTERM)
-				case err = <-done:
-					if cmd.ProcessState.ExitCode() != 130 {
-						t.Fatalf("exit=%d err=%v output=%q", cmd.ProcessState.ExitCode(), err, out.String())
-					}
-					return
-				case <-deadline.C:
-					t.Fatal("blocked stdin ignored cancellation")
+				n, err := unix.Poll(poll, 10000)
+				if errors.Is(err, unix.EINTR) {
+					continue
 				}
+				if err != nil || n != 1 || poll[0].Revents&unix.POLLOUT == 0 {
+					t.Fatalf("CLI did not start reading stdin: poll=%v err=%v", poll, err)
+				}
+				break
+			}
+			if err := cmd.Process.Signal(syscall.SIGTERM); err != nil {
+				t.Fatal(err)
+			}
+			select {
+			case err = <-done:
+				if cmd.ProcessState.ExitCode() != 130 {
+					t.Fatalf("exit=%d err=%v output=%q", cmd.ProcessState.ExitCode(), err, out.String())
+				}
+			case <-time.After(2 * time.Second):
+				t.Fatal("blocked stdin ignored cancellation")
 			}
 		})
 	}
