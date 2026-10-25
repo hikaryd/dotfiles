@@ -62,8 +62,11 @@ func (g generator) generateTool(name string) error {
 		}
 	case "yazi":
 		return g.yazi()
-	case "nushell", "sketchybar", "fresh", "thorium", "pi", "jcode":
+	case "rio", "nushell", "sketchybar", "fresh", "thorium", "pi", "jcode":
 		switch name {
+		case "rio":
+			relative = "rio/themes/ayu.toml"
+			mkdir = true
 		case "nushell":
 			relative = "nushell/ayu.nu"
 		case "sketchybar":

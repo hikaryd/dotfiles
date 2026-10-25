@@ -1,0 +1,91 @@
+# Clean Ghostty profile, without the removed iglass overrides.
+# Colors are generated separately from palette/ayu.toml.
+theme = "ayu"
+line-height = 1.12
+margin = [14, 18]
+confirm-before-quit = false
+hide-mouse-cursor-when-typing = true
+option-as-alt = "none"
+enable-scroll-bar = false
+
+[shell]
+# GUI launches need not inherit ~/.local/bin in PATH. The shell only resolves
+# HOME and immediately execs the same native Nushell launcher as Ghostty.
+program = "/bin/sh"
+args = ["-c", 'exec "$HOME/.local/bin/dots-nu"']
+
+[window]
+opacity = 0.94
+blur = true
+decorations = "disabled"
+colorspace = "display-p3"
+
+[fonts]
+family = "SF Mono"
+size = 15
+features = ["-calt", "-liga", "-dlig"]
+# Nerd Font private-use glyphs, without replacing normal SF Mono text.
+symbol-map = [
+  { start = "E000", end = "F533", font-family = "Symbols Nerd Font Mono" },
+  { start = "F0001", end = "F1AF0", font-family = "Symbols Nerd Font Mono" },
+]
+
+[cursor]
+shape = "beam"
+blinking = false
+
+[navigation]
+hide-if-single = true
+unfocused-split-opacity = 0.94
+unfocused-split-fill = "#0d1017"
+
+[effects]
+custom-mouse-cursor = false
+trail-cursor = false
+
+[bindings]
+keys = [
+  # Option is not a general Alt modifier, but Option+Delete removes a word.
+  { key = "Backspace", with = "alt", esc = "\u001b\u007f" },
+
+  # Rio 0.5.28 accepts logical keys, not configurable physical scancodes.
+  # Explicit Russian aliases preserve the existing English/Russian shortcuts.
+  { key = "a", with = "control", esc = "\u0001" },
+  { key = "ф", with = "control", esc = "\u0001" },
+  { key = "h", with = "control", esc = "\u0008" },
+  { key = "р", with = "control", esc = "\u0008" },
+  { key = "j", with = "control", esc = "\u000a" },
+  { key = "о", with = "control", esc = "\u000a" },
+  { key = "k", with = "control", esc = "\u000b" },
+  { key = "л", with = "control", esc = "\u000b" },
+  { key = "l", with = "control", esc = "\u000c" },
+  { key = "д", with = "control", esc = "\u000c" },
+  { key = "v", with = "control", esc = "\u0016" },
+  { key = "м", with = "control", esc = "\u0016" },
+  { key = "w", with = "control", esc = "\u0017" },
+  { key = "ц", with = "control", esc = "\u0017" },
+  { key = "h", with = "control | shift", esc = "\u001b[104;6u" },
+  { key = "р", with = "control | shift", esc = "\u001b[104;6u" },
+  { key = "j", with = "control | shift", esc = "\u001b[106;6u" },
+  { key = "о", with = "control | shift", esc = "\u001b[106;6u" },
+  { key = "k", with = "control | shift", esc = "\u001b[107;6u" },
+  { key = "л", with = "control | shift", esc = "\u001b[107;6u" },
+  { key = "l", with = "control | shift", esc = "\u001b[108;6u" },
+  { key = "д", with = "control | shift", esc = "\u001b[108;6u" },
+
+  { key = "1", with = "control", esc = "\u001b[49;5u" },
+  { key = "2", with = "control", esc = "\u001b[50;5u" },
+  { key = "3", with = "control", esc = "\u001b[51;5u" },
+  { key = "4", with = "control", esc = "\u001b[52;5u" },
+  { key = "5", with = "control", esc = "\u001b[53;5u" },
+  { key = "6", with = "control", esc = "\u001b[54;5u" },
+  { key = "7", with = "control", esc = "\u001b[55;5u" },
+  { key = "8", with = "control", esc = "\u001b[56;5u" },
+  { key = "9", with = "control", esc = "\u001b[57;5u" },
+
+  # Keep Ghostty's split direction and common window shortcuts.
+  { key = "d", with = "super", action = "SplitRight" },
+  { key = "d", with = "super | shift", action = "SplitDown" },
+  { key = "Enter", with = "super", action = "ToggleFullscreen" },
+  { key = "p", with = "super | shift", action = "OpenCommandPalette" },
+]

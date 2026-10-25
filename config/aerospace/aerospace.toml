@@ -319,3 +319,7 @@ run = 'move-node-to-workspace w'
 [[on-window-detected]]
 if.app-id = 'com.mitchellh.ghostty'
 run = 'move-node-to-workspace d'
+
+[[on-window-detected]]
+if.app-id = 'com.raphaelamorim.rio'
+run = 'move-node-to-workspace d'

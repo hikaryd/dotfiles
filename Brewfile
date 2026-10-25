@@ -140,17 +140,15 @@ cask "1password"
 cask "1password-cli"
 cask "nikitabobko/tap/aerospace"
 cask "ghostty"
+cask "rio" # Rust/GPU terminal; Ghostty stays available as a fallback
 cask "mos"       
 cask "karabiner-elements"
 cask "duongductrong/snapzy/snapzy"
 cask "abue-ammar/tinycast/tinycast" # Native launcher; Option+A
 cask "logi-options+"
 cask "logitech-options"
+cask "sf-symbols" # Apple's symbol browser app, not a terminal font
 
-# Шрифты
+# Шрифты, используемые Ghostty и Rio
 cask "font-symbols-only-nerd-font"
 cask "font-sf-mono"
-cask "font-sf-pro"
-cask "sf-symbols"
-cask "font-martian-mono"
-cask "font-sketchybar-app-font"

@@ -132,6 +132,7 @@ app_rules = [
 
   # "d": терминал
   { app_name = "Ghostty", workspace = "d" },
+  { app_id = "com.raphaelamorim.rio", workspace = "d" },
 ]
 
 [modifier_combinations]
