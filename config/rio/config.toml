@@ -9,13 +9,26 @@ option-as-alt = "none"
 enable-scroll-bar = false
 
 [shell]
-# GUI launches need not inherit ~/.local/bin in PATH. The shell only resolves
-# HOME and immediately execs the same native Nushell launcher as Ghostty.
-program = "/bin/sh"
-args = ["-c", 'exec "$HOME/.local/bin/dots-nu"']
+# GUI apps opened from a Herdr pane can inherit that pane's identity. Rio is
+# a new outer terminal, not a nested pane. Keep this cleanup out of dots-nu,
+# which must still preserve Herdr context when used inside real panes.
+# /bin/sh resolves HOME without relying on the GUI application's PATH.
+program = "/usr/bin/env"
+args = [
+  "-u", "HERDR_ENV",
+  "-u", "HERDR_BIN_PATH",
+  "-u", "HERDR_SOCKET_PATH",
+  "-u", "HERDR_WORKSPACE_ID",
+  "-u", "HERDR_TAB_ID",
+  "-u", "HERDR_PANE_ID",
+  "/bin/sh", "-c", 'exec "$HOME/.local/bin/dots-nu"',
+]
 
 [window]
 opacity = 0.94
+# Herdr and other TUIs paint explicit cell backgrounds. Keep those translucent
+# too, rather than applying opacity only to the terminal's default background.
+opacity-cells = true
 blur = true
 decorations = "disabled"
 colorspace = "display-p3"
