@@ -131,7 +131,10 @@ brew "mpv" # Player for anicli-ru / AniLiberty
 brew "bat-extras" 
 
 # Приложения
-# Zephium устанавливается вручную из официального GitHub: см. docs/browsers.md.
+# Zephium: https://github.com/zephium-browser/Zephium/releases/latest
+# Ручная установка: Zephium-macOS-arm64.dmg -> /Applications/Zephium.app.
+# Проверен 1.0.3 (2026-10-25), официального Homebrew cask пока нет.
+# 1Password ставится через Утилиты -> Управление расширениями -> Chrome Web Store.
 cask "vorssaint" # Батарея, системный монитор и управление звуком в одном menu bar app
 cask "telegram-desktop"
 cask "crmne/tap/spotifast"
