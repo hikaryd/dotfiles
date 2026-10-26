@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+
+	"dots/native/internal/tui"
 )
 
 // Run dispatches desktop commands. root is the checkout containing config/ and
@@ -100,6 +102,8 @@ func pickMenu(title string, choices [][2]string) (string, error) {
 	return choices[i][0], nil
 }
 func menu(root string) int {
+	endScreen := tui.HoldScreen()
+	defer endScreen()
 	choice, err := pickMenu(menuTitle(menuContext()), menuChoices())
 	if err != nil {
 		return fail("dots menu", err)
@@ -108,6 +112,7 @@ func menu(root string) int {
 	case "":
 		return 0
 	case "git":
+		endScreen()
 		return interactive("lazygit")
 	case "status":
 		if isTerminal(os.Stdin) {
@@ -121,19 +126,26 @@ func menu(root string) int {
 		if style == "" {
 			return 0
 		}
+		endScreen()
 		return Run(root, []string{"style", style})
 	case "config":
-		configs := [][2]string{{"zsh", "config/zsh/.zshrc"}, {"rmux", "config/rmux/rmux.conf"}, {"tmux", "config/tmux/tmux.conf"}, {"herdr", "config/herdr/config.toml"}, {"ghostty", "config/ghostty/config"}, {"nvim", "config/nvim/init.lua"}, {"sesh", "config/sesh/sesh.toml"}, {"atuin", "config/atuin/config.toml"}}
+		configs := [][2]string{{"zsh", "config/zsh/.zshrc"}, {"rmux", "config/rmux/rmux.conf"}, {"tmux", "config/tmux/tmux.conf"}, {"ghostty", "config/ghostty/config"}, {"nvim", "config/nvim/init.lua"}, {"sesh", "config/sesh/sesh.toml"}, {"atuin", "config/atuin/config.toml"}}
 		key, err := pickMenu("Редактировать конфиг", configs)
 		if err != nil {
 			return fail("dots config", err)
 		}
+		endScreen()
 		for _, c := range configs {
 			if key == c[0] {
 				return interactive("nvim", filepath.Join(root, c[1]))
 			}
 		}
 		return 0
+	}
+	switch choice {
+	case "sessions", "projects", "refs", "clip":
+	default:
+		endScreen()
 	}
 	return Run(root, []string{choice})
 }

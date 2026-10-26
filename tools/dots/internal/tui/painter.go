@@ -26,6 +26,9 @@ func (p *Painter) Draw(frame Frame) {
 	if frame.Height > 0 && len(lines) > frame.Height {
 		lines = lines[:frame.Height]
 	}
+	if frame.Height > len(lines) {
+		lines = append(lines, make([]string, frame.Height-len(lines))...)
+	}
 	force := p.width != frame.Width || p.height != frame.Height
 	var out strings.Builder
 	for index := 0; index < max(len(lines), len(p.previous)); index++ {
@@ -39,7 +42,11 @@ func (p *Painter) Draw(frame Frame) {
 		if !force && index < len(p.previous) && p.previous[index] == line {
 			continue
 		}
-		fmt.Fprintf(&out, "\x1b[%d;1H\x1b[0m%s\x1b[K", index+1, line)
+		fmt.Fprintf(&out, "\x1b[%d;1H\x1b[0m%s", index+1, line)
+		// EL at a pending wrap erases the rightmost cell, not an empty tail.
+		if frame.Width <= 0 || Width(line) < frame.Width {
+			out.WriteString("\x1b[K")
+		}
 	}
 	if out.Len() > 0 {
 		fmt.Fprint(p.output, "\x1b[?2026h", out.String(), "\x1b[?2026l")

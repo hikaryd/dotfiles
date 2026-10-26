@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"strings"
+	"sync"
 	"time"
 	"unicode"
 	"unicode/utf8"
@@ -208,10 +209,55 @@ func Raw(input *os.File) (func(), error) {
 	}
 	return func() { _ = term.Restore(int(input.Fd()), state) }, nil
 }
+
+var screenOwner struct {
+	sync.Mutex
+	output *os.File
+	active bool
+}
+
+// HoldScreen keeps the previous picker visible while its next screen loads.
+func HoldScreen() func() {
+	terminal, err := Open()
+	if err != nil {
+		return func() {}
+	}
+	screenOwner.Lock()
+	if screenOwner.output != nil {
+		screenOwner.Unlock()
+		terminal.Close()
+		return func() {}
+	}
+	screenOwner.output = terminal
+	screenOwner.Unlock()
+	var once sync.Once
+	return func() {
+		once.Do(func() {
+			screenOwner.Lock()
+			defer screenOwner.Unlock()
+			if screenOwner.active {
+				io.WriteString(terminal, "\x1b[0m\x1b[?2004l\x1b[?25h\x1b[?1049l")
+			}
+			screenOwner.output, screenOwner.active = nil, false
+			terminal.Close()
+		})
+	}
+}
+
 func Screen(output *os.File) func() {
 	if !term.IsTerminal(int(output.Fd())) {
 		return func() {}
 	}
+	screenOwner.Lock()
+	if screenOwner.output != nil {
+		if !screenOwner.active {
+			io.WriteString(output, "\x1b[?1049h\x1b[?25l\x1b[?2004h")
+			screenOwner.active = true
+		}
+		screenOwner.Unlock()
+		return func() {}
+	}
+	screenOwner.Unlock()
 	io.WriteString(output, "\x1b[?1049h\x1b[?25l\x1b[?2004h")
 	return func() { io.WriteString(output, "\x1b[0m\x1b[?2004l\x1b[?25h\x1b[?1049l") }
 }

@@ -7,10 +7,6 @@
       path: scripts/dots
       create: true
       force: true
-    ~/.local/bin/herdr:
-      path: scripts/herdr
-      create: true
-      force: true
     ~/.local/bin/dots-terminal:
       path: scripts/dots-terminal
       create: true
@@ -68,15 +64,11 @@
       path: config/tmux/tmux.conf
       create: true
       force: true
-    # Native rmux for new clients, preserved Herdr for existing processes.
+    # Native rmux in Ghostty.
     ~/.config/rmux/rmux.conf:
       path: config/rmux/rmux.conf
       create: true
       force: false
-    ~/.config/herdr/config.toml:
-      path: config/herdr/config.toml
-      create: true
-      force: true
     # Git
     ~/.gitconfig:
       path: config/git/.gitconfig
@@ -164,14 +156,6 @@
       create: true
       force: true
 - shell:
-    - command: |
-        set -e
-        "$HOME/dots/scripts/build-herdr-last-workspace.sh"
-        herdr plugin link "$HOME/dots/config/herdr/plugins/last-workspace" --enabled
-        dots-last-workspace prime
-      description: Building and linking the native Herdr workspace toggle
-      stdout: true
-      stderr: true
     - command: chmod +x ~/.config/git/hooks/prepare-commit-msg
       description: Making git hook executable
       stdout: false

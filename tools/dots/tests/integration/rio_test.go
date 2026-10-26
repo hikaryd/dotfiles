@@ -15,7 +15,7 @@ import (
 
 // Exercise the actual Rio shell command, not a copy of its environment filter.
 // GUI apps opened from a Herdr pane must not masquerade as another Herdr pane.
-func TestRioShellStartsOutsideInheritedHerdrSession(t *testing.T) {
+func TestLegacyRioShellStartsOutsideInheritedMuxSession(t *testing.T) {
 	_, source, _, _ := runtime.Caller(0)
 	root := filepath.Clean(filepath.Join(filepath.Dir(source), "../../../.."))
 	data, err := os.ReadFile(filepath.Join(root, "config/rio/config.toml"))
@@ -50,7 +50,14 @@ func TestRioShellStartsOutsideInheritedHerdrSession(t *testing.T) {
 			if err := os.WriteFile(filepath.Join(bin, "dots-terminal"), adapter, 0755); err != nil {
 				t.Fatal(err)
 			}
-			if err := os.WriteFile(filepath.Join(bin, "herdr"), []byte("#!/bin/sh\nprintf 'DOTS_MUX=herdr\\n'\nexec /usr/bin/env\n"), 0755); err != nil {
+			rmuxConfig := filepath.Join(home, ".config/rmux")
+			if err := os.MkdirAll(rmuxConfig, 0755); err != nil {
+				t.Fatal(err)
+			}
+			if err := os.WriteFile(filepath.Join(rmuxConfig, "rmux.conf"), nil, 0644); err != nil {
+				t.Fatal(err)
+			}
+			if err := os.WriteFile(filepath.Join(bin, "rmux"), []byte("#!/bin/sh\n[ \"${1:-}\" = has-session ] && exit 1\nprintf 'DOTS_MUX=rmux\\n'\nexec /usr/bin/env\n"), 0755); err != nil {
 				t.Fatal(err)
 			}
 			// The full race suite starts many instrumented subprocesses together.
@@ -82,8 +89,8 @@ func TestRioShellStartsOutsideInheritedHerdrSession(t *testing.T) {
 			if env["KEEP_ME"] != "unchanged" || env["TERM"] != "rio" || env["HOME"] != home {
 				t.Fatal("Rio shell discarded unrelated environment")
 			}
-			if env["DOTS_MUX"] != "herdr" {
-				t.Fatal("Rio must start the managed Herdr client")
+			if env["DOTS_MUX"] != "rmux" {
+				t.Fatal("Legacy Rio config must use the current rmux-only launcher")
 			}
 		})
 	}

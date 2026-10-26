@@ -65,7 +65,7 @@ func diagnose(root, userHome string) ([]doctorCheck, error) {
 	if len(links) == 0 {
 		add("FAIL", "managed links", "No supported link entries found in steps/*.yml")
 	}
-	critical := []string{"~/.zshrc", "~/.zshenv", "~/.config/zsh/functions", "~/.config/tmux/tmux.conf", "~/.config/rmux/rmux.conf", "~/.config/herdr/config.toml", "~/.config/ghostty/config", "~/.config/nvim"}
+	critical := []string{"~/.zshrc", "~/.zshenv", "~/.config/zsh/functions", "~/.config/tmux/tmux.conf", "~/.config/rmux/rmux.conf", "~/.config/ghostty/config", "~/.config/nvim"}
 	for _, l := range links {
 		target := filepath.Join(userHome, l.destination[2:])
 		severity := "WARN"
@@ -95,11 +95,11 @@ func diagnose(root, userHome string) ([]doctorCheck, error) {
 			add("OK", l.destination, "Managed link resolves correctly")
 		}
 	}
-	for _, name := range []string{"zsh", "git", "dots-tools", "tmux", "herdr", "sesh", "nvim", "dots", "zoxide", "eza", "bat", "rg", "fd", "yazi", "lazygit", "atuin"} {
+	for _, name := range []string{"zsh", "git", "dots-tools", "tmux", "sesh", "nvim", "dots", "zoxide", "eza", "bat", "rg", "fd", "yazi", "lazygit", "atuin"} {
 		status, detail := "OK", "Available"
 		if !available(name) {
 			status, detail = "WARN", "Not on PATH"
-			if has(name, "zsh", "git", "dots-tools", "tmux", "herdr") {
+			if has(name, "zsh", "git", "dots-tools", "tmux") {
 				status = "FAIL"
 			}
 		}
@@ -148,7 +148,7 @@ func diagnose(root, userHome string) ([]doctorCheck, error) {
 			}
 		}
 	}
-	for _, p := range []string{filepath.Join(root, "config/sesh/sesh.toml"), filepath.Join(root, "config/herdr/config.toml"), filepath.Join(userHome, ".config/atuin/config.toml")} {
+	for _, p := range []string{filepath.Join(root, "config/sesh/sesh.toml"), filepath.Join(userHome, ".config/atuin/config.toml")} {
 		parent := filepath.Base(filepath.Dir(p))
 		name := "syntax:" + parent + "/" + filepath.Base(p)
 		if !isFile(p) {

@@ -90,12 +90,12 @@ func TestNativeMenuConfigUsesKnownPath(t *testing.T) {
 	offset := len(p.Text())
 	p.Send("\r")
 	p.After(offset, "Редактировать конфиг")
-	p.Send("herdr")
-	p.Screen("Поиск › herdr")
+	p.Send("rmux")
+	p.Screen("Поиск › rmux")
 	p.Send("\r")
 	p.Wait(0)
 	calls := f.calls()
-	if len(calls) != 1 || calls[0].Name != "nvim" || !reflect.DeepEqual(calls[0].Args, []string{filepath.Join(f.root, "config/herdr/config.toml")}) {
+	if len(calls) != 1 || calls[0].Name != "nvim" || !reflect.DeepEqual(calls[0].Args, []string{filepath.Join(f.root, "config/rmux/rmux.conf")}) {
 		t.Fatalf("argv %+v", calls)
 	}
 }

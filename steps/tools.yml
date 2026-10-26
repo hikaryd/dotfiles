@@ -12,15 +12,6 @@
       path: config/ghostty/shaders
       create: true
       force: true
-    # Rio: preserve a foreign configuration instead of silently replacing it.
-    ~/.config/rio/config.toml:
-      path: config/rio/config.toml
-      create: true
-      force: false
-    ~/.config/rio/themes/ayu.toml:
-      path: config/rio/themes/ayu.toml
-      create: true
-      force: false
     # Yazi file manager
     ~/.config/yazi/yazi.toml:
       path: config/yazi/yazi.toml

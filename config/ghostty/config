@@ -1,4 +1,4 @@
-# Новые терминалы открывают rmux; старые процессы Herdr остаются нетронутыми.
+# Терминалы открывают постоянные сессии rmux.
 command = shell:"$HOME/.local/bin/dots-terminal"
 # The outer command is rmux, not Nu. Nushell runs in its panes, so Ghostty
 # must not append its Nushell --execute bootstrap to the mux CLI.

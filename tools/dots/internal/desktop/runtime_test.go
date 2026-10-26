@@ -135,20 +135,19 @@ func TestNuRejectsSymlinkCache(t *testing.T) {
 		t.Fatalf("unsafe cache accepted %d %s", code, out)
 	}
 }
-func TestDoctorReadOnlyFixtureAndStrict(t *testing.T) {
+func TestDoctorReadOnlyRmuxOnlyFixtureAndStrict(t *testing.T) {
 	f := newFixture(t)
 	f.write(filepath.Join(f.root, "steps/terminal.yml"), "- link:\n    ~/.zshrc:\n      path: config/zsh/.zshrc\n", 0600)
 	f.write(filepath.Join(f.root, "config/zsh/.zshrc"), "# fixture\n", 0600)
 	os.Symlink(filepath.Join(f.root, "config/zsh/.zshrc"), filepath.Join(f.home, ".zshrc"))
-	for _, p := range []string{"config/sesh/sesh.toml", "config/herdr/config.toml"} {
-		f.write(filepath.Join(f.root, p), "enabled = true\n", 0600)
-	}
+	f.write(filepath.Join(f.root, "config/sesh/sesh.toml"), "enabled = true\n", 0600)
+	f.write(filepath.Join(f.root, "config/rmux/rmux.conf"), "set -g prefix C-a\n", 0600)
 	f.write(filepath.Join(f.home, ".config/atuin/config.toml"), "auto_sync = false\nupdate_check = false\n", 0600)
 	f.write(filepath.Join(f.home, ".config/dots/style"), "glass\n", 0600)
 	f.write(filepath.Join(f.home, ".config/dots/ghostty-style.conf"), "# fixture", 0600)
 	f.registry()
 	f.write(filepath.Join(f.home, ".ssh/id_fixture"), "never-read-fixture-secret", 0600)
-	for _, name := range []string{"zsh", "git", "dots-tools", "tmux", "herdr", "sesh", "nvim", "dots", "zoxide", "eza", "bat", "rg", "fd", "yazi", "lazygit", "atuin"} {
+	for _, name := range []string{"zsh", "git", "dots-tools", "tmux", "rmux", "sesh", "nvim", "dots", "zoxide", "eza", "bat", "rg", "fd", "yazi", "lazygit", "atuin"} {
 		f.fake(name, allRule("", 0))
 	}
 	out, err, code := f.run("", "doctor", "--json", "--strict")

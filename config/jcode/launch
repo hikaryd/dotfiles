@@ -1,0 +1,30 @@
+#!/bin/sh
+# Harness-only proxy; no shell startup or system proxy changes.
+set -eu
+"$HOME/.local/bin/dots-tools" proxy pi --ensure </dev/null >&2
+proxy='http://127.0.0.1:10810'
+bypass="127.0.0.1,localhost,::1,*.local,private.invalid${NO_PROXY:+,$NO_PROXY}${no_proxy:+,$no_proxy}"
+export HTTP_PROXY="$proxy" HTTPS_PROXY="$proxy" ALL_PROXY="$proxy"
+export http_proxy="$proxy" https_proxy="$proxy" all_proxy="$proxy"
+export WS_PROXY="$proxy" WSS_PROXY="$proxy" ws_proxy="$proxy" wss_proxy="$proxy"
+export NO_PROXY="$bypass" no_proxy="$bypass" JCODE_NO_TELEMETRY=1
+export JCODE_DISABLE_CLAUDE_MCP=1
+if [ -n "${RMUX:-}" ] && [ -n "${RMUX_PANE:-}" ]; then
+  unset HERDR_ENV HERDR_BIN_PATH HERDR_PANE_ID HERDR_SOCKET_PATH HERDR_TAB_ID HERDR_WORKSPACE_ID
+  outer=$(rmux display-message -p -t "$RMUX_PANE" '#{client_termname}|#{client_termfeatures}' 2>/dev/null || true)
+  passthrough=$(rmux show-options -Awqv -t "$RMUX_PANE" allow-passthrough 2>/dev/null || true)
+  case "$outer" in
+    xterm-ghostty\|*kitty-graphics*)
+      if [ "$passthrough" = on ]; then
+        # rmux forwards Kitty replies but drops CSI cell-size/status probe replies.
+        export TERM_PROGRAM=ghostty
+        export JCODE_MERMAID_PICKER_PROBE="${JCODE_MERMAID_PICKER_PROBE-0}"
+      fi ;;
+  esac
+fi
+# Jcode tools use noninteractive bash, not the harness proxy environment.
+if [ "${BASH_ENV:-}" != "$HOME/.config/jcode/shell-env.sh" ]; then
+  export JCODE_PREVIOUS_BASH_ENV="${BASH_ENV:-}"
+fi
+export BASH_ENV="$HOME/.config/jcode/shell-env.sh"
+exec "$HOME/.jcode/builds/stable/jcode" "$@"

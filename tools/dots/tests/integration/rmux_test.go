@@ -2,16 +2,17 @@ package integration_test
 
 import (
 	"context"
-	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 	"testing"
 	"time"
+	"unicode/utf8"
 
-	"github.com/creack/pty"
+	"dots/native/tests/testutil/testpty"
 )
 
 func TestRmuxRealTerminalWorkflow(t *testing.T) {
@@ -30,7 +31,7 @@ func TestRmuxRealTerminalWorkflow(t *testing.T) {
 	}
 	socket := filepath.Join(dir, "s")
 	defer os.RemoveAll(dir)
-	environment := envSet(f.env, "PATH="+f.bin+string(os.PathListSeparator)+filepath.Dir(bin)+":/usr/bin:/bin", "TERM=xterm-256color", "LANG=en_US.UTF-8")
+	environment := envSet(f.env, "PATH="+f.bin+string(os.PathListSeparator)+filepath.Dir(bin)+":/usr/bin:/bin", "TERM=xterm-ghostty", "TERM_PROGRAM=ghostty", "LANG=en_US.UTF-8")
 	ctl := func(args ...string) string {
 		t.Helper()
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -67,20 +68,10 @@ func TestRmuxRealTerminalWorkflow(t *testing.T) {
 	}
 	client := exec.Command(bin, "-S", socket, "attach-session", "-t", "smoke")
 	client.Env = environment
-	terminal, err := pty.StartWithSize(client, &pty.Winsize{Rows: 32, Cols: 120})
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer terminal.Close()
-	defer func() { _ = client.Process.Kill(); _ = client.Wait() }()
-	go func() { _, _ = io.Copy(io.Discard, terminal) }()
-	await("attached client", func() bool { return ctl("list-clients", "-F", "#{client_name}") != "" })
-	keys := func(value string) {
-		t.Helper()
-		if _, e := terminal.WriteString(value); e != nil {
-			t.Fatal(e)
-		}
-	}
+	terminal := testpty.Start(t, client)
+	terminal.Resize(120, 32)
+	await("attached client", func() bool { return ctl("list-clients", "-F", "#{client_height}") == "32" })
+	keys := terminal.Send
 	keys("\x01c")
 	await("prefix+c creates a tab", func() bool { return ctl("display-message", "-p", "-t", "smoke", "#{session_windows}") == "2" })
 	keys("\x1b[49;5u")
@@ -120,18 +111,104 @@ func TestRmuxRealTerminalWorkflow(t *testing.T) {
 			t.Logf("popup source: %q (%v)", b, e)
 			t.Logf("pane state: %s", ctl("list-panes", "-a", "-F", "#{pane_id} #{pane_title} #{pane_current_command}"))
 			t.Logf("pane output: %q", ctl("capture-pane", "-p", "-t", pane))
+			text := terminal.Text()
+			t.Logf("outer frame: %q", text[max(0, len(text)-5000):])
 		}
 	}()
 	await("native task title", func() bool { return ctl("display-message", "-p", "-t", pane, "#{pane_title}") == "Задача rmux" })
 	// Use the real profile's popup binding, with a bounded test command replacing
 	// only the external dots executable at the PATH boundary.
-	f.write(filepath.Join(f.bin, "dots"), "#!/bin/sh\nprintf '%s\\n' \"$DOTS_SOURCE_PANE\" > \"$HOME/popup-source\"\n", 0700)
+	f.write(filepath.Join(f.bin, "dots"), "#!/bin/sh\n[ -z \"$DOTS_SOURCE_PANE\" ] || printf '%s\\n' \"$DOTS_SOURCE_PANE\" > \"$HOME/popup-source\"\nexec /bin/sleep 30\n", 0700)
+	f.write(filepath.Join(f.bin, "lazygit"), "#!/bin/sh\nexec /bin/sleep 30\n", 0700)
+	topBorder := regexp.MustCompile(`\x1b\[(\d+);(\d+)H(?:\x1b\[[0-9;]*m)*╭(─+)╮`)
+	bottomBorder := regexp.MustCompile(`\x1b\[(\d+);(\d+)H(?:\x1b\[[0-9;]*m)*╰─+╯`)
+	for _, size := range []struct{ cols, rows uint16 }{{120, 32}, {133, 41}} {
+		terminal.Resize(size.cols, size.rows)
+		await("client resized", func() bool {
+			return ctl("list-clients", "-F", "#{client_width}x#{client_height}") == strconv.Itoa(int(size.cols))+"x"+strconv.Itoa(int(size.rows))
+		})
+		for _, key := range []string{"O", "T", "g", "P", "F", "Y", "V", "Щ", "Е", "п", "З", "А", "Н", "М"} {
+			_ = os.Remove(filepath.Join(f.home, "popup-source"))
+			offset := len(terminal.Text())
+			keys("\x01" + key)
+			await("popup borders for "+key, func() bool {
+				text := terminal.Text()[offset:]
+				return topBorder.MatchString(text) && bottomBorder.MatchString(text)
+			})
+			if strings.Contains("OTPFVЩЕЗАМ", key) {
+				await("popup received original pane for "+key, func() bool {
+					b, _ := os.ReadFile(filepath.Join(f.home, "popup-source"))
+					return strings.TrimSpace(string(b)) == pane
+				})
+			}
+			text := terminal.Text()[offset:]
+			top, bottom := topBorder.FindStringSubmatch(text), bottomBorder.FindStringSubmatch(text)
+			topRow, _ := strconv.Atoi(top[1])
+			bottomRow, _ := strconv.Atoi(bottom[1])
+			column, _ := strconv.Atoi(top[2])
+			width := utf8.RuneCountInString(top[3]) + 2
+			upper, lower := topRow-1, int(size.rows)-bottomRow
+			left, right := column-1, int(size.cols)-(column-1+width)
+			ctl("display-popup", "-C", "-c", clientID)
+			if upper-lower < -1 || upper-lower > 1 || left-right < -2 || left-right > 2 {
+				t.Fatalf("popup %s at %dx%d is not centered: margins top=%d bottom=%d left=%d right=%d", key, size.cols, size.rows, upper, lower, left, right)
+			}
+		}
+	}
+	executable, err := os.Executable()
+	if err != nil {
+		t.Fatal(err)
+	}
+	f.write(filepath.Join(f.bin, "dots"), "#!/bin/sh\nexec "+strconv.Quote(executable)+" \"$@\"\n", 0700)
+	offset := len(terminal.Text())
+	keys("\x01T")
+	await("real session picker header", func() bool {
+		return strings.Contains(terminal.Text()[offset:], "Session / workspace")
+	})
+	if text := terminal.Text()[offset:]; !strings.Contains(text, "LOCAL") {
+		t.Fatalf("popup clipped the header's rightmost cell: %q", text[max(0, len(text)-5000):])
+	}
+	ctl("display-popup", "-C", "-c", clientID)
+	if err := os.Remove(filepath.Join(f.bin, "sesh")); err != nil {
+		t.Fatal(err)
+	}
+	f.write(filepath.Join(f.bin, "sesh"), "#!/bin/sh\n/bin/sleep 0.2\nprintf '[]'\n", 0700)
+	ctl("send-keys", "-t", pane, "for i in 1 2 3 4 5 6 7 8 9 10; do printf 'background update\\n'; sleep 0.05; done", "Enter")
+	offset = len(terminal.Text())
 	keys("\x01O")
-	await("prefix+O popup ran", func() bool {
-		b, _ := os.ReadFile(filepath.Join(f.home, "popup-source"))
-		return strings.TrimSpace(string(b)) == pane
+	await("real menu header", func() bool {
+		return strings.Contains(terminal.Text()[offset:], "Меню")
+	})
+	offset = len(terminal.Text())
+	keys("\r")
+	await("menu opens sessions", func() bool {
+		return strings.Contains(terminal.Text()[offset:], "Session / workspace")
+	})
+	framePattern := regexp.MustCompile(`(?s)\x1b\[\?2026h(.*?)\x1b\[\?2026l`)
+	var frames [][]string
+	await("complete session frame without stale menu rows", func() bool {
+		frames = framePattern.FindAllStringSubmatch(terminal.Text()[offset:], -1)
+		if len(frames) == 0 {
+			return false
+		}
+		last := frames[len(frames)-1][1]
+		return strings.Contains(last, "Session / workspace") && !strings.Contains(last, "Настройка /")
+	})
+	for _, frame := range frames {
+		if strings.Contains(frame[1], "╭") && !strings.Contains(frame[1], "Меню") && !strings.Contains(frame[1], "Session / workspace") {
+			t.Fatalf("popup exposed an empty frame between native screens: %q", frame[1][max(0, len(frame[1])-2500):])
+		}
+	}
+	ctl("display-popup", "-C", "-c", clientID)
+	offset = len(terminal.Text())
+	ctl("send-keys", "-t", pane, "printf '\\033_Gi=314159,a=q,t=d,f=24,s=1,v=1;AAAA\\033\\\\'", "Enter")
+	await("Kitty graphics query reaches the outer terminal", func() bool {
+		return strings.Contains(terminal.Text()[offset:], "\x1b_Gi=314159,a=q,t=d,f=24,s=1,v=1;AAAA\x1b\\")
 	})
 	other := f.repo("second project")
+	if err := os.Remove(filepath.Join(f.bin, "sesh")); err != nil {
+		t.Fatal(err)
+	}
 	f.fake("sesh", fakeRule{Args: []string{"list", "-j"}, Output: `[{"Src":"tmux","Name":"old tmux","Path":` + strconv.Quote(cwd) + `}]`})
 	f.fake("tmux", fakeRule{Args: []string{"list-windows", "-a", "-F", "#{session_name}\t#{window_id}\t#{window_index}\t#{window_name}"}, Output: "old tmux\t@0\t1\teditor\nold tmux\t@1\t2\tshell\n"},
 		fakeRule{Args: []string{"list-panes", "-a", "-F", "#{session_name}\t#{window_id}\t#{pane_index}\t#{pane_current_path}"}, Output: "old tmux\t@0\t1\t" + other + "\nold tmux\t@1\t1\t" + cwd + "\nold tmux\t@1\t2\t" + other + "\n"})

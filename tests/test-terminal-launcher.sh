@@ -45,7 +45,7 @@ grep -Fx "PATH=$HOME/.local/bin:/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/
 HAS_SESSION=0 sh "$root/scripts/dots-terminal" > "$work/output"
 grep -Fx 'RMUX_ARG=<attach-session>' "$work/output"
 grep -Fx "PROFILE_SOURCE=<$HOME/.config/rmux/rmux.conf>" "$work/output"
-HAS_SESSION=0 PROFILE_MARKER=dots-native-v1 sh "$root/scripts/dots-terminal" > "$work/output"
+HAS_SESSION=0 PROFILE_MARKER=dots-native-v2 sh "$root/scripts/dots-terminal" > "$work/output"
 if grep -F 'PROFILE_SOURCE=' "$work/output"; then
   printf 'FAIL an active native profile was needlessly reloaded\n' >&2
   exit 1
@@ -58,16 +58,25 @@ if grep -F 'RMUX_ARG=<--execute>' "$work/output"; then
 fi
 sh "$root/scripts/dots-terminal" new-session -s 'project with spaces' > "$work/output"
 grep -Fx 'RMUX_ARG=<project with spaces>' "$work/output"
-sh "$root/scripts/dots-terminal" --herdr --session 'old project with spaces' > "$work/output"
-grep -Fx 'HERDR_ARG=<--session>' "$work/output"
-grep -Fx 'HERDR_ARG=<old project with spaces>' "$work/output"
-check_clean
+set +e
 DOTS_RMUX_BIN="$work/missing" sh "$root/scripts/dots-terminal" > "$work/output" 2> "$work/error"
-grep -F 'Herdr' "$work/error"
-grep -Fx 'HERDR_ARG=<>' "$work/output"
+status=$?
+set -e
+[[ $status -eq 127 ]] || { printf 'FAIL missing rmux returned %s, expected 127\n' "$status" >&2; exit 1; }
+[[ ! -s "$work/output" ]] || { printf 'FAIL removed backend was invoked\n' >&2; exit 1; }
+grep -F 'rmux' "$work/error"
+mv "$HOME/.config/rmux/rmux.conf" "$work/saved.conf"
+set +e
+sh "$root/scripts/dots-terminal" > "$work/output" 2> "$work/error"
+status=$?
+set -e
+[[ $status -eq 78 ]] || { printf 'FAIL missing config returned %s, expected 78\n' "$status" >&2; exit 1; }
+[[ ! -s "$work/output" ]] || { printf 'FAIL removed backend was invoked\n' >&2; exit 1; }
+grep -F 'rmux' "$work/error"
+mv "$work/saved.conf" "$HOME/.config/rmux/rmux.conf"
 set +e
 LAUNCH_EXIT=23 sh "$root/scripts/dots-terminal" > "$work/output"
 status=$?
 set -e
 [[ $status -eq 23 ]]
-printf 'PASS GUI launcher: rmux attach/create, preserved Herdr, clean context, arguments and exit status\n'
+printf 'PASS GUI launcher: rmux attach/create, no legacy fallback, clean context, arguments and exit status\n'

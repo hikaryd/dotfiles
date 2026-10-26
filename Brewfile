@@ -54,9 +54,7 @@ brew "fzf"
 brew "atuin" # Локальная история; без аккаунта, sync и daemon
 brew "fzf-tab"
 brew "tmux"
-brew "rmux" # Default multiplexer for new clients; Herdr sessions stay alive
-brew "herdr" # Ghostty-backed multiplexer
-brew "zig" # Сборка локального оформления Herdr
+brew "rmux" # Default multiplexer in Ghostty
 brew "zsh"
 brew "zsh-autosuggestions"
 brew "zsh-syntax-highlighting"
@@ -140,7 +138,6 @@ cask "1password"
 cask "1password-cli"
 cask "nikitabobko/tap/aerospace"
 cask "ghostty"
-cask "rio" # Rust/GPU terminal; Ghostty stays available as a fallback
 cask "mos"       
 cask "karabiner-elements"
 cask "duongductrong/snapzy/snapzy"
@@ -149,6 +146,6 @@ cask "logi-options+"
 cask "logitech-options"
 cask "sf-symbols" # Apple's symbol browser app, not a terminal font
 
-# Шрифты, используемые Ghostty и Rio
+# Шрифты Ghostty
 cask "font-symbols-only-nerd-font"
 cask "font-sf-mono"

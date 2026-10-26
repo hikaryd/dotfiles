@@ -1,15 +1,12 @@
 #!/bin/sh
 set -eu
 # A GUI launched from a pane is a new outer client, never that pane itself.
-backend=rmux
-if [ "${1:-}" = --herdr ]; then backend=herdr; shift; fi
 # Ghostty may retain Nushell integration in an already-running app. This exact
 # bootstrap belongs inside Nu, not on a multiplexer command line.
 if [ "$#" -eq 2 ] && [ "$1" = --execute ] && [ "$2" = 'use ghostty *' ]; then shift 2; fi
 for name in $(/usr/bin/env | /usr/bin/awk -F= '/^(HERDR_|TMUX|RMUX|DOTS_SOURCE_PANE=|DOTS_MUX_CLIENT=)/ { print $1 }'); do
   unset "$name"
 done
-if [ "$backend" = herdr ]; then exec "$HOME/.local/bin/herdr" "$@"; fi
 rmux=${DOTS_RMUX_BIN:-}
 if [ -z "$rmux" ]; then
   for candidate in "$HOME/.local/bin/rmux" /opt/homebrew/bin/rmux /usr/local/bin/rmux; do
@@ -17,9 +14,13 @@ if [ -z "$rmux" ]; then
   done
 fi
 config="${XDG_CONFIG_HOME:-$HOME/.config}/rmux/rmux.conf"
-if [ ! -x "$rmux" ] || [ ! -f "$config" ]; then
-  printf 'rmux is not configured; preserving the Herdr workflow.\n' >&2
-  exec "$HOME/.local/bin/herdr" "$@"
+if [ ! -x "$rmux" ]; then
+  printf 'rmux is not installed; install it before opening Ghostty.\n' >&2
+  exit 127
+fi
+if [ ! -f "$config" ]; then
+  printf 'rmux config is missing: %s\n' "$config" >&2
+  exit 78
 fi
 # Popup jobs inherit the server environment, not dots-nu's expanded pane PATH.
 PATH="$HOME/.local/bin:/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:${PATH:-/usr/bin:/bin}"
@@ -28,7 +29,7 @@ if [ "$#" -gt 0 ]; then exec "$rmux" "$@"; fi
 if "$rmux" has-session 2>/dev/null; then
   # Existing daemons may have loaded tmux.conf before rmux was configured.
   # Source bindings once, without replacing panes or resetting runtime styles.
-  if [ "$("$rmux" show-options -gqv @dots-rmux-profile 2>/dev/null)" != dots-native-v1 ]; then
+  if [ "$("$rmux" show-options -gqv @dots-rmux-profile 2>/dev/null)" != dots-native-v2 ]; then
     "$rmux" source-file "$config" || exit "$?"
   fi
   exec "$rmux" attach-session
