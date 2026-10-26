@@ -1,4 +1,4 @@
-// Package beatapi provides a single-user loopback API for free-first BeatAPI models.
+// Package beatapi provides a single-user loopback API for BeatAPI models.
 package beatapi
 
 import (
@@ -18,7 +18,8 @@ import (
 const defaultPort = 6446
 const maxConfig = 64 << 10 // Covers JSON escaping of an accepted 8 KiB key.
 const label = "local.dots.beatapi-proxy"
-const jevModel = "jev-1.14-free"
+const jevModel = "jev-1.14"
+const legacyJevModel = "jev-1.14-free"
 
 // Config is private on disk; never format it in diagnostics.
 type Config struct {

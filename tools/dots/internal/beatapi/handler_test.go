@@ -22,7 +22,7 @@ func request(h http.Handler, method, path, body string) *httptest.ResponseRecord
 	return w
 }
 func TestSystemoneTransparentWithoutLocalAuth(t *testing.T) {
-	body := `{"model":"jev-1.14-free","state":"sample","questions":{"q":{"type":"noul","instructions":"relevant?"}}}`
+	body := `{"model":"jev-1.14","state":"sample","questions":{"q":{"type":"noul","instructions":"relevant?"}}}`
 	var count atomic.Int32
 	u := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		count.Add(1)

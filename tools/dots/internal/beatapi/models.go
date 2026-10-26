@@ -7,11 +7,14 @@ import (
 )
 
 var chatModels = []string{"glm-5.3-free", "glm-5.3-flash-free", "deepseek-v4.1-flash-free", "deepseek-v4-flash-0731-free", "gemini-3.8-flash-free", "gpt-6.1-sol-free"}
-var errModel = errors.New("Unsupported model for this endpoint; only listed free models are allowed")
+var errModel = errors.New("Unsupported model for this endpoint; only listed models are allowed")
 
 func resolveModel(model string, systemone bool) (string, error) {
 	model = strings.TrimPrefix(model, "beatapi/")
-	if (systemone && model == jevModel) || (!systemone && slices.Contains(chatModels, model)) {
+	if systemone && (model == jevModel || model == legacyJevModel) {
+		return jevModel, nil
+	}
+	if !systemone && slices.Contains(chatModels, model) {
 		return model, nil
 	}
 	return "", errModel

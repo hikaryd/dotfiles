@@ -153,7 +153,7 @@ func TestJevgrepBackupAndRollback(t *testing.T) {
 	fakeCommand(t, "jg", `printf '%s\n' "$@" > "$JG_ARGS"
 read key
 [ "$key" = local ] || exit 3
-printf '%s' '{"provider":"custom","apiKey":"local","baseURL":"http://127.0.0.1:6446/v1","model":"jev-1.14-free"}' > "$JG_CREDS"
+printf '%s' '{"provider":"custom","apiKey":"local","baseURL":"http://127.0.0.1:6446/v1","model":"jev-1.14"}' > "$JG_CREDS"
 `)
 	if err := c.connectJevgrep(testConfig()); err != nil {
 		t.Fatal(err)

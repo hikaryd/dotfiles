@@ -76,7 +76,7 @@ func TestDoctorChecksRealJevAnswerOnceAndDoesNotWriteConfiguration(t *testing.T)
 			configureDoctor(t, c, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				calls.Add(1)
 				b, _ := io.ReadAll(r.Body)
-				if r.Method != "POST" || r.URL.Path != "/v1/systemone" || !strings.Contains(string(b), `"type":"noul"`) || !strings.Contains(string(b), `"model":"jev-1.14-free"`) || r.Header.Get("Authorization") != "" {
+				if r.Method != "POST" || r.URL.Path != "/v1/systemone" || !strings.Contains(string(b), `"type":"noul"`) || !strings.Contains(string(b), `"model":"jev-1.14"`) || r.Header.Get("Authorization") != "" {
 					t.Error("doctor did not exercise the actual local Jev protocol")
 				}
 				w.Header().Set("Retry-After", tc.retry)

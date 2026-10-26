@@ -41,7 +41,7 @@ func (c *cli) connectJevgrep(cfg Config) error {
 		return errors.New("beatapi: unsafe jevgrep credentials; client unchanged")
 	}
 	baseURL := fmt.Sprintf("http://%s/v1", cfg.address())
-	matches := func(b []byte) bool { return jevgrepMatches(b, cfg) }
+	matches := func(b []byte) bool { return jevgrepMatches(b, cfg, jevModel) }
 	if matches(before) {
 		return nil
 	}

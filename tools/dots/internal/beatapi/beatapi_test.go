@@ -29,7 +29,7 @@ func routedHandler(c Config, transport beatTransport) http.Handler {
 }
 
 func TestBeatAPISystemoneFixedDestinationAndSeparateKey(t *testing.T) {
-	body := `{"model":"jev-1.14-free","state":{"source":"merchant checkout outage"},"questions":{"relevant":{"type":"noul","instructions":"Is the source relevant?"}}}`
+	body := `{"model":"jev-1.14","state":{"source":"merchant checkout outage"},"questions":{"relevant":{"type":"noul","instructions":"Is the source relevant?"}}}`
 	calls := 0
 	h := routedHandler(beatConfig(), func(r *http.Request) (*http.Response, error) {
 		calls++
@@ -93,20 +93,20 @@ func TestBeatAPIFreeChatAndAnthropicTools(t *testing.T) {
 	}
 }
 
-func TestBeatAPIRejectsPaidAliasesAndCrossEndpointWithoutRequests(t *testing.T) {
+func TestBeatAPIRejectsPaidChatAndCrossEndpointWithoutRequests(t *testing.T) {
 	calls := 0
 	h := routedHandler(beatConfig(), func(*http.Request) (*http.Response, error) {
 		calls++
 		return beatResponse(200, "application/json", `{}`), nil
 	})
-	for _, id := range []string{"glm-5.3", "deepseek-v4.1-flash", "gpt-6.1-sol", "typesafe/jev-1.14", "typesafe/jev-1.14:free", "jev-1.14", "latest", "auto", "made-up-free", "beatapi/big-pickle", "beatapi/opencode/glm-5.3-free", "opencode/beatapi/glm-5.3-free", "beatapi/../glm-5.3-free", "jev-1.14-free", "beatapi/jev-1.14-free"} {
+	for _, id := range []string{"glm-5.3", "deepseek-v4.1-flash", "gpt-6.1-sol", "typesafe/jev-1.14", "typesafe/jev-1.14:free", "jev-1.14", "beatapi/jev-1.14", "latest", "auto", "made-up-free", "beatapi/big-pickle", "beatapi/opencode/glm-5.3-free", "opencode/beatapi/glm-5.3-free", "beatapi/../glm-5.3-free", "jev-1.14-free", "beatapi/jev-1.14-free"} {
 		for _, path := range []string{"/v1/chat/completions", "/v1/messages"} {
 			if w := request(h, "POST", path, fmt.Sprintf(`{"model":%q}`, id)); w.Code != 400 {
 				t.Errorf("accepted %s %s: %d", path, id, w.Code)
 			}
 		}
 	}
-	for _, id := range []string{"glm-5.3-free", "beatapi/glm-5.3-free", "opencode/big-pickle", "jev-1.14", "beatapi/jev-1.13-free", "opencode/jev-1.14-free"} {
+	for _, id := range []string{"glm-5.3-free", "beatapi/glm-5.3-free", "opencode/big-pickle", "jev-1.13", "beatapi/jev-1.13-free", "opencode/jev-1.14-free"} {
 		if w := request(h, "POST", "/v1/systemone", fmt.Sprintf(`{"model":%q}`, id)); w.Code != 400 {
 			t.Errorf("accepted cross endpoint %s: %d", id, w.Code)
 		}

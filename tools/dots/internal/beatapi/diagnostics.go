@@ -33,7 +33,7 @@ func upstreamRejection(status int) string {
 	}
 }
 
-func jevgrepMatches(b []byte, cfg Config) bool {
+func jevgrepMatches(b []byte, cfg Config, model string) bool {
 	var current struct{ Provider, BaseURL, Model, APIKey string }
 	if json.Unmarshal(b, &current) != nil {
 		return false
@@ -50,7 +50,7 @@ func jevgrepMatches(b []byte, cfg Config) bool {
 			return false
 		}
 	}
-	return current.Provider == "custom" && current.BaseURL == "http://"+cfg.address()+"/v1" && current.Model == jevModel && current.APIKey == "local"
+	return current.Provider == "custom" && current.BaseURL == "http://"+cfg.address()+"/v1" && current.Model == model && current.APIKey == "local"
 }
 
 func (c *cli) jevgrepConnected(cfg Config) bool {
@@ -64,12 +64,12 @@ func (c *cli) jevgrepConnected(cfg Config) bool {
 	}
 	defer f.Close()
 	b, err := io.ReadAll(io.LimitReader(f, 1<<20+1))
-	return err == nil && len(b) <= 1<<20 && jevgrepMatches(b, cfg)
+	return err == nil && len(b) <= 1<<20 && (jevgrepMatches(b, cfg, jevModel) || jevgrepMatches(b, cfg, legacyJevModel))
 }
 
 // One real synthetic evaluation; unlike jg 0.8, never sleep through Retry-After.
 func (c *cli) doctor(cfg Config) error {
-	fmt.Fprintln(c.out, "Checking Jev through the local API (one local request, 15s limit; paid fallback may be used)...")
+	fmt.Fprintln(c.out, "Checking paid Jev through the local API (one request, 15s limit; uses BeatAPI balance)...")
 	ctx, cancel := context.WithTimeout(c.ctx, 15*time.Second)
 	defer cancel()
 	body := fmt.Sprintf(`{"model":%q,"state":{"source":"export function recordEvent(event) { events.push(event); }"},"questions":{"relevant":{"type":"noul","instructions":"Does this source implement recording an event?"}}}`, jevModel)
