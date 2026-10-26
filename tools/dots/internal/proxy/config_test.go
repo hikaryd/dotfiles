@@ -90,6 +90,51 @@ func TestAllStreamVariants(t *testing.T) {
 		})
 	}
 }
+
+func TestPrivateDirectDomains(t *testing.T) {
+	c := testController(t)
+	if err := os.WriteFile(c.path("direct-domains.txt"), []byte("# Local only\nModels.Corp.Example\n\napi.corp.example\nmodels.corp.example\n"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	cfg, err := c.config(object{"uuid": "fixture-id", "address": "example.test", "port": 443})
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := object{"rules": []any{object{
+		"type": "field", "domain": []string{"full:private.invalid", "full:models.corp.example", "full:api.corp.example"}, "outboundTag": "direct",
+	}}}
+	if !reflect.DeepEqual(cfg["routing"], want) {
+		t.Fatalf("private exact hosts must route direct: %#v", cfg["routing"])
+	}
+	if cfg["outbounds"].([]any)[0].(object)["tag"] != "proxy" {
+		t.Fatal("other traffic must retain the proxy default")
+	}
+}
+
+func TestPrivateDirectDomainsRejectInvalidHosts(t *testing.T) {
+	for _, host := range []string{"*.corp.example", "https://corp.example/v1", "corp.example:443", "bad host", "bad..host", "-bad.example", strings.Repeat("a", 64) + ".example"} {
+		t.Run(host, func(t *testing.T) {
+			c := testController(t)
+			if err := os.WriteFile(c.path("direct-domains.txt"), []byte(host), 0600); err != nil {
+				t.Fatal(err)
+			}
+			_, err := c.config(object{"uuid": "fixture-id", "address": "example.test", "port": 443})
+			if err == nil || strings.Contains(err.Error(), host) {
+				t.Fatal("invalid private hosts must fail without disclosing their contents")
+			}
+		})
+	}
+}
+
+func TestPrivateDirectDomainsReadFailure(t *testing.T) {
+	c := testController(t)
+	if err := os.Mkdir(c.path("direct-domains.txt"), 0700); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := c.config(object{"uuid": "fixture-id", "address": "example.test", "port": 443}); err == nil {
+		t.Fatal("unreadable private routing must not silently disappear")
+	}
+}
 func TestDecodeSubscription(t *testing.T) {
 	plain := "vless://fixture@host:443#one\nvless://fixture@host:80#two"
 	enc := base64.StdEncoding.EncodeToString([]byte(plain))

@@ -174,6 +174,39 @@ func streamSettings(s object) object {
 	}
 	return stream
 }
+func (c *controller) directDomains() ([]string, error) {
+	domains := []string{"full:private.invalid"}
+	data, err := os.ReadFile(c.path("direct-domains.txt"))
+	if errors.Is(err, os.ErrNotExist) {
+		return domains, nil
+	}
+	if err != nil {
+		return nil, errors.New("Could not read private direct-domain configuration.")
+	}
+	seen := map[string]bool{"private.invalid": true}
+	for _, line := range strings.Split(string(data), "\n") {
+		host := strings.ToLower(strings.TrimSpace(line))
+		if host == "" || strings.HasPrefix(host, "#") {
+			continue
+		}
+		valid := len(host) <= 253
+		for _, label := range strings.Split(host, ".") {
+			valid = valid && len(label) > 0 && len(label) <= 63 && !strings.HasPrefix(label, "-") && !strings.HasSuffix(label, "-")
+			for _, r := range label {
+				valid = valid && (r >= 'a' && r <= 'z' || r >= '0' && r <= '9' || r == '-')
+			}
+		}
+		if !valid {
+			return nil, errors.New("Invalid private direct-domain configuration.")
+		}
+		if !seen[host] {
+			domains = append(domains, "full:"+host)
+			seen[host] = true
+		}
+	}
+	return domains, nil
+}
+
 func (c *controller) config(s object) (object, error) {
 	port, err := strconv.Atoi(fmt.Sprint(s["port"]))
 	if err != nil || port < 1 || port > 65535 || value(s, "uuid", "") == "" || value(s, "address", "") == "" {
@@ -181,13 +214,17 @@ func (c *controller) config(s object) (object, error) {
 	}
 	user := object{"id": s["uuid"], "encryption": value(s, "encryption", "none")}
 	copyFields(user, s, "flow", "flow")
+	domains, err := c.directDomains()
+	if err != nil {
+		return nil, err
+	}
 	return object{
 		"log":      object{"loglevel": "warning"},
 		"inbounds": []any{object{"port": c.port, "listen": "127.0.0.1", "protocol": "http", "tag": "http-in", "settings": object{"timeout": 300}}},
-		// Clients launched from an old terminal or Herdr can inherit stale NO_PROXY.
-		// Keep the internal MCP endpoint reachable through the local proxy too.
+		// Clients launched from old terminals can inherit stale NO_PROXY.
+		// Keep corporate endpoints reachable through the local proxy too.
 		"routing": object{"rules": []any{object{
-			"type": "field", "domain": []string{"full:private.invalid"}, "outboundTag": "direct",
+			"type": "field", "domain": domains, "outboundTag": "direct",
 		}}},
 		"outbounds": []any{
 			object{"protocol": "vless", "settings": object{"vnext": []any{object{"address": s["address"], "port": port, "users": []any{user}}}}, "streamSettings": streamSettings(s), "tag": "proxy"},

@@ -116,7 +116,7 @@ func (c *controller) harden() error {
 	if err := os.Chmod(c.dir, 0700); err != nil {
 		return err
 	}
-	for _, path := range []string{c.path("subscription_url.txt"), c.path("servers.json"), c.path("config.json"), c.path("xray.pid"), c.path("selection.json")} {
+	for _, path := range []string{c.path("subscription_url.txt"), c.path("servers.json"), c.path("direct-domains.txt"), c.path("config.json"), c.path("xray.pid"), c.path("selection.json")} {
 		if err := os.Chmod(path, 0600); err != nil && !errors.Is(err, os.ErrNotExist) {
 			return err
 		}
