@@ -70,10 +70,10 @@ session_end='keep'
 		t.Fatal(err)
 	}
 	servers := mcp["servers"].(map[string]any)
-	if len(servers) != 9 || servers["pilens"] != nil {
+	if len(servers) != 10 || servers["pilens"] != nil {
 		t.Fatal("wrong managed server set")
 	}
-	for _, name := range []string{"serena", "context7", "deepwiki", "code-graph", "neo4j-cypher", "neo4j-memory", "piweb", "kaiten", "peekaboo"} {
+	for _, name := range []string{"serena", "context7", "deepwiki", "code-graph", "neo4j-cypher", "neo4j-memory", "piweb", "agent-voice", "kaiten", "peekaboo"} {
 		if servers[name] == nil {
 			t.Fatal("missing server:", name)
 		}

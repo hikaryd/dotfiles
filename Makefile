@@ -1,8 +1,12 @@
 .DEFAULT_GOAL := test
-.PHONY: test test-go test-integration test-node test-runner test-list
+.PHONY: test test-go test-integration test-node test-runner test-list test-voice
 
 test:
 	./scripts/test.sh all
+	$(MAKE) test-voice
+
+test-voice:
+	PYTHONDONTWRITEBYTECODE=1 "$${PYTHON_BIN:-python3}" -m unittest discover -s config/jcode -p test_agent_voice.py -v
 
 test-go:
 	./scripts/test.sh go

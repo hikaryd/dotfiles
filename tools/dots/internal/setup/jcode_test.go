@@ -18,7 +18,8 @@ func jcodeFixture(t *testing.T) (string, string) {
 	t.Setenv("JCODE_INTEGRATIONS_DIR", "")
 	t.Setenv("JCODE_NODE_BIN", "/fixture/node")
 	root := filepath.Join(h, "checkout")
-	put(t, filepath.Join(root, "config/jcode/mcp.json"), `{"mcpServers":{"serena":{"command":"@DATA@/python/serena-agent/bin/serena"},"context7":{"command":"@NODE@"},"deepwiki":{"command":"@NODE@"},"code-graph":{"command":"@DATA@/python/codegraphcontext/bin/cgc","env":{"NEO4J_PASSWORD":"@NEO4J_PASSWORD@"}},"neo4j-cypher":{"command":"@DATA@/python/mcp-neo4j-cypher/bin/mcp-neo4j-cypher","env":{"NEO4J_PASSWORD":"@NEO4J_PASSWORD@"}},"neo4j-memory":{"command":"@DATA@/python/mcp-neo4j-memory/bin/mcp-neo4j-memory","env":{"NEO4J_PASSWORD":"@NEO4J_PASSWORD@"}},"piweb":{"command":"@NODE@","args":["@DATA@/runtime/node_modules/pi-web-access/dist/mcp-cli.js"],"env":{"PI_CODING_AGENT_DIR":"@DATA@/web/config"}}}}`)
+	put(t, filepath.Join(root, "config/jcode/mcp.json"), `{"mcpServers":{"serena":{"command":"@DATA@/python/serena-agent/bin/serena"},"context7":{"command":"@NODE@"},"deepwiki":{"command":"@NODE@"},"code-graph":{"command":"@DATA@/python/codegraphcontext/bin/cgc","env":{"NEO4J_PASSWORD":"@NEO4J_PASSWORD@"}},"neo4j-cypher":{"command":"@DATA@/python/mcp-neo4j-cypher/bin/mcp-neo4j-cypher","env":{"NEO4J_PASSWORD":"@NEO4J_PASSWORD@"}},"neo4j-memory":{"command":"@DATA@/python/mcp-neo4j-memory/bin/mcp-neo4j-memory","env":{"NEO4J_PASSWORD":"@NEO4J_PASSWORD@"}},"agent-voice":{"command":"@HOME@/Library/Application Support/VoiceStudio/runtime/project/.venv/bin/python","args":["-u","@DATA@/voice/server.py"],"env":{"HF_HUB_OFFLINE":"1","TRANSFORMERS_OFFLINE":"1","AGENT_VOICE_CACHE_DIR":"@DATA@/voice/audio"}},"piweb":{"command":"@NODE@","args":["@DATA@/runtime/node_modules/pi-web-access/dist/mcp-cli.js"],"env":{"PI_CODING_AGENT_DIR":"@DATA@/web/config"}}}}`)
+	put(t, filepath.Join(root, "config/jcode/agent-voice.py"), "print('fixture voice')\n")
 	put(t, filepath.Join(root, "config/jcode/theme.toml"), "[display]\ntheme = 'dark'\n[display.colors]\naccent = '#73d0ff'\n")
 	return h, root
 }
@@ -49,7 +50,7 @@ func TestJcodeApplyPreservesSettingsAndIdempotence(t *testing.T) {
 		t.Fatal(err)
 	}
 	servers := mcp["mcpServers"].(map[string]any)
-	if len(servers) != 8 || servers["kaiten"].(map[string]any)["command"] != "personal" || servers["context7"].(map[string]any)["command"] != "/fixture/node" || servers["pilens"] != nil {
+	if len(servers) != 9 || servers["kaiten"].(map[string]any)["command"] != "personal" || servers["context7"].(map[string]any)["command"] != "/fixture/node" || servers["pilens"] != nil {
 		t.Fatal("MCP merge failed")
 	}
 	if get(t, authPath) != "private credentials" {
@@ -86,7 +87,7 @@ func TestJcodeApplyPreservesNativeServerKey(t *testing.T) {
 		t.Fatal("duplicate server-map aliases make native jcode reject its config")
 	}
 	servers := mcp["servers"].(map[string]any)
-	if len(servers) != 8 || servers["kaiten"].(map[string]any)["command"] != "personal" || servers["context7"].(map[string]any)["command"] != "/fixture/node" || servers["pilens"] != nil {
+	if len(servers) != 9 || servers["kaiten"].(map[string]any)["command"] != "personal" || servers["context7"].(map[string]any)["command"] != "/fixture/node" || servers["pilens"] != nil {
 		t.Fatal("native server-map merge failed")
 	}
 	before := tree(t, h)
@@ -120,7 +121,7 @@ func TestJcodeApplyFreshAndCustomPaths(t *testing.T) {
 }
 
 func TestJcodeInvalidInputNeverPartiallyPublishes(t *testing.T) {
-	for _, scenario := range []string{"bad TOML", "bad MCP", "MCP servers array", "duplicate MCP server maps", "missing template", "bad template", "symlink"} {
+	for _, scenario := range []string{"bad TOML", "bad MCP", "MCP servers array", "duplicate MCP server maps", "missing template", "bad template", "missing voice source", "voice symlink", "symlink"} {
 		t.Run(scenario, func(t *testing.T) {
 			h, root := jcodeFixture(t)
 			p := filepath.Join(h, ".jcode/config.toml")
@@ -140,6 +141,17 @@ func TestJcodeInvalidInputNeverPartiallyPublishes(t *testing.T) {
 				_ = os.Remove(filepath.Join(root, "config/jcode/mcp.json"))
 			case "bad template":
 				put(t, filepath.Join(root, "config/jcode/mcp.json"), `[]`)
+			case "missing voice source":
+				_ = os.Remove(filepath.Join(root, "config/jcode/agent-voice.py"))
+			case "voice symlink":
+				voice := filepath.Join(h, ".local/share/jcode-integrations/voice/server.py")
+				put(t, filepath.Join(h, "outside.py"), "untouched")
+				if err := os.MkdirAll(filepath.Dir(voice), 0700); err != nil {
+					t.Fatal(err)
+				}
+				if err := os.Symlink(filepath.Join(h, "outside.py"), voice); err != nil {
+					t.Fatal(err)
+				}
 			case "symlink":
 				_ = os.Remove(p)
 				put(t, filepath.Join(h, "personal.toml"), "personal")

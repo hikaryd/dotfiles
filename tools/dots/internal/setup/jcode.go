@@ -35,6 +35,11 @@ func jcodeApply(root string) error {
 	if err != nil {
 		return err
 	}
+	voicePath := filepath.Join(dataDir, "voice/server.py")
+	priorVoice, err := regularOptional(voicePath)
+	if err != nil {
+		return err
+	}
 	current := map[string]any{}
 	if len(priorConfig) > 0 {
 		if err = toml.Unmarshal(priorConfig, &current); err != nil {
@@ -77,9 +82,9 @@ func jcodeApply(root string) error {
 		return errors.New("invalid jcode MCP template")
 	}
 	managed, ok := desired["mcpServers"].(map[string]any)
-	names := []string{"serena", "context7", "deepwiki", "code-graph", "neo4j-cypher", "neo4j-memory", "piweb"}
+	names := []string{"serena", "context7", "deepwiki", "code-graph", "neo4j-cypher", "neo4j-memory", "piweb", "agent-voice"}
 	if !ok || len(managed) != len(names) {
-		return errors.New("jcode MCP template must define the seven managed servers")
+		return errors.New("jcode MCP template must define all managed servers")
 	}
 	for _, name := range names {
 		if _, ok := managed[name].(map[string]any); !ok {
@@ -107,12 +112,16 @@ func jcodeApply(root string) error {
 			return errors.New("invalid shared jcode theme color")
 		}
 	}
+	voiceSource, err := os.ReadFile(filepath.Join(root, "config/jcode/agent-voice.py"))
+	if err != nil || len(voiceSource) == 0 {
+		return errors.New("cannot read agent voice MCP source")
+	}
 	password, err := jcodeNeo4jPassword(dataDir)
 	if err != nil {
 		return err
 	}
 	path := filepath.Dir(node) + string(os.PathListSeparator) + envDefault([]string{"PATH"}, "/usr/bin:/bin")
-	replacer := strings.NewReplacer("@NODE@", node, "@DATA@", dataDir, "@PATH@", path, "@NEO4J_PASSWORD@", password)
+	replacer := strings.NewReplacer("@NODE@", node, "@DATA@", dataDir, "@HOME@", home(), "@PATH@", path, "@NEO4J_PASSWORD@", password)
 	managed = replaceJcodeTokens(managed, replacer).(map[string]any)
 	delete(servers, "pilens")
 	for _, name := range names {
@@ -137,6 +146,7 @@ func jcodeApply(root string) error {
 		return errors.New("cannot encode jcode configuration")
 	}
 	if err = commit([]change{
+		{path: voicePath, data: voiceSource, mode: 0600, backup: privateBackup("jcode", voicePath), backupPrivate: true, expect: true, expected: priorVoice},
 		{path: mcpPath, data: encode(currentMCP), mode: 0600, backup: privateBackup("jcode", mcpPath), backupPrivate: true, expect: true, expected: priorMCP},
 		{path: configPath, data: config, mode: 0600, backup: privateBackup("jcode", configPath), backupPrivate: true, expect: true, expected: priorConfig},
 	}); err != nil {

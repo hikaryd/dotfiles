@@ -29,6 +29,12 @@
       "args": ["--transport", "stdio"],
       "env": {"NEO4J_URL": "bolt://127.0.0.1:7687", "NEO4J_USERNAME": "neo4j", "NEO4J_PASSWORD": "@NEO4J_PASSWORD@", "NEO4J_DATABASE": "neo4j"}
     },
+    "agent-voice": {
+      "command": "@HOME@/Library/Application Support/VoiceStudio/runtime/project/.venv/bin/python",
+      "args": ["-u", "@DATA@/voice/server.py"],
+      "timeout_secs": 600,
+      "env": {"HF_HUB_OFFLINE": "1", "TRANSFORMERS_OFFLINE": "1", "PYTHONNOUSERSITE": "1", "AGENT_VOICE_CACHE_DIR": "@DATA@/voice/audio"}
+    },
     "piweb": {
       "command": "@NODE@",
       "args": ["@DATA@/runtime/node_modules/pi-web-access/dist/mcp-cli.js"],
