@@ -1,7 +1,9 @@
 package setup
 
 import (
+	"errors"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"reflect"
 	"strings"
@@ -20,6 +22,7 @@ func jcodeFixture(t *testing.T) (string, string) {
 	root := filepath.Join(h, "checkout")
 	put(t, filepath.Join(root, "config/jcode/mcp.json"), `{"mcpServers":{"serena":{"command":"@DATA@/python/serena-agent/bin/serena"},"context7":{"command":"@NODE@"},"deepwiki":{"command":"@NODE@"},"code-graph":{"command":"@DATA@/python/codegraphcontext/bin/cgc","env":{"NEO4J_PASSWORD":"@NEO4J_PASSWORD@"}},"neo4j-cypher":{"command":"@DATA@/python/mcp-neo4j-cypher/bin/mcp-neo4j-cypher","env":{"NEO4J_PASSWORD":"@NEO4J_PASSWORD@"}},"neo4j-memory":{"command":"@DATA@/python/mcp-neo4j-memory/bin/mcp-neo4j-memory","env":{"NEO4J_PASSWORD":"@NEO4J_PASSWORD@"}},"agent-voice":{"command":"@HOME@/Library/Application Support/VoiceStudio/runtime/project/.venv/bin/python","args":["-u","@DATA@/voice/server.py"],"env":{"HF_HUB_OFFLINE":"1","TRANSFORMERS_OFFLINE":"1","AGENT_VOICE_CACHE_DIR":"@DATA@/voice/audio"}},"piweb":{"command":"@NODE@","args":["@DATA@/runtime/node_modules/pi-web-access/dist/mcp-cli.js"],"env":{"PI_CODING_AGENT_DIR":"@DATA@/web/config"}}}}`)
 	put(t, filepath.Join(root, "config/jcode/agent-voice.py"), "print('fixture voice')\n")
+	put(t, filepath.Join(root, "config/jcode/swarm-model-gate.py"), "print('fixture gate')\n")
 	put(t, filepath.Join(root, "config/jcode/theme.toml"), "[display]\ntheme = 'dark'\n[display.colors]\naccent = '#73d0ff'\n")
 	put(t, filepath.Join(root, "config/jcode/config.toml"), "[provider]\ndefault_provider = 'openai'\ndefault_model = 'gpt-6.1-terra'\ncross_provider_failover = 'manual'\n[features]\nswarm = true\nauto_poke = false\nmemory = false\n[agents]\nswarm_model = 'openai-oauth:gpt-6.1-terra'\nswarm_effort = 'low'\nswarm_max_concurrent_agents = 8\nmemory_sidecar_enabled = false\n")
 	put(t, filepath.Join(root, "config/jcode/swarm-routing"), "managed routing policy\n")
@@ -44,6 +47,86 @@ func TestJcodeTrackedModelRouting(t *testing.T) {
 		if !strings.Contains(policy, route) {
 			t.Fatalf("routing policy missing %q", route)
 		}
+	}
+}
+
+func TestJcodeApplyAddsSwarmGateWithoutReplacingPersonalHook(t *testing.T) {
+	h, root := jcodeFixture(t)
+	configPath := filepath.Join(h, ".jcode/config.toml")
+	put(t, configPath, "[hooks]\npre_tool = 'personal-hook'\n")
+	if code, _, diagnostic := runCaptured(t, root, "jcode-apply"); code != 0 {
+		t.Fatal(code, diagnostic)
+	}
+	var config map[string]any
+	if err := toml.Unmarshal([]byte(get(t, configPath)), &config); err != nil {
+		t.Fatal(err)
+	}
+	hooks, ok := config["hooks"].(map[string]any)["pre_tool"].([]any)
+	if !ok || len(hooks) != 2 || hooks[0] != "personal-hook" || !strings.Contains(hooks[1].(string), "swarm-model-gate.py") {
+		t.Fatalf("personal hook or swarm gate missing: %#v", hooks)
+	}
+	if get(t, filepath.Join(h, ".local/share/jcode-integrations/swarm-model-gate.py")) != "print('fixture gate')\n" {
+		t.Fatal("swarm gate was not installed")
+	}
+	before := tree(t, h)
+	if code, _, diagnostic := runCaptured(t, root, "jcode-apply"); code != 0 || !reflect.DeepEqual(before, tree(t, h)) {
+		t.Fatal("reapplying must not duplicate the hook", code, diagnostic)
+	}
+}
+
+func TestJcodeApplyUpdatesManagedGateInterpreter(t *testing.T) {
+	h, root := jcodeFixture(t)
+	configPath := filepath.Join(h, ".jcode/config.toml")
+	gatePath := filepath.Join(h, ".local/share/jcode-integrations/swarm-model-gate.py")
+	put(t, configPath, "[hooks]\npre_tool = [\"personal-hook\", \"audit-wrapper '"+gatePath+"'\"]\n")
+	first, second := filepath.Join(h, "first"), filepath.Join(h, "second")
+	for _, dir := range []string{first, second} {
+		if err := os.MkdirAll(dir, 0700); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(filepath.Join(dir, "python3"), []byte("#!/bin/sh\n"), 0700); err != nil {
+			t.Fatal(err)
+		}
+	}
+	t.Setenv("PATH", first)
+	if code, _, diagnostic := runCaptured(t, root, "jcode-apply"); code != 0 {
+		t.Fatal(code, diagnostic)
+	}
+	t.Setenv("PATH", second)
+	if code, _, diagnostic := runCaptured(t, root, "jcode-apply"); code != 0 {
+		t.Fatal(code, diagnostic)
+	}
+	var config map[string]any
+	if err := toml.Unmarshal([]byte(get(t, configPath)), &config); err != nil {
+		t.Fatal(err)
+	}
+	hooks := config["hooks"].(map[string]any)["pre_tool"].([]any)
+	if len(hooks) != 3 || hooks[0] != "personal-hook" || hooks[1] != "audit-wrapper '"+gatePath+"'" || !strings.Contains(hooks[2].(string), second) {
+		t.Fatalf("managed gate must use the current interpreter exactly once: %#v", hooks)
+	}
+}
+
+func TestJcodeInstalledGateRunsFromQuotedPath(t *testing.T) {
+	h, root := jcodeFixture(t)
+	dataDir := filepath.Join(h, "data with ' quote")
+	t.Setenv("JCODE_INTEGRATIONS_DIR", dataDir)
+	source := get(t, filepath.Join("..", "..", "..", "..", "config", "jcode", "swarm-model-gate.py"))
+	put(t, filepath.Join(root, "config/jcode/swarm-model-gate.py"), source)
+	if code, _, diagnostic := runCaptured(t, root, "jcode-apply"); code != 0 {
+		t.Fatal(code, diagnostic)
+	}
+	var config map[string]any
+	if err := toml.Unmarshal([]byte(get(t, filepath.Join(h, ".jcode/config.toml"))), &config); err != nil {
+		t.Fatal(err)
+	}
+	hooks := config["hooks"].(map[string]any)["pre_tool"].([]any)
+	command := exec.Command("/bin/sh", "-c", hooks[0].(string))
+	command.Env = append(os.Environ(), "JCODE_HOOK_TOOL_NAME=swarm")
+	command.Stdin = strings.NewReader(`{"action":"spawn","label":"reviewer","model":"inherit"}`)
+	output, err := command.CombinedOutput()
+	var exit *exec.ExitError
+	if !errors.As(err, &exit) || exit.ExitCode() != 2 || !strings.Contains(string(output), "gpt-6.1-sol") {
+		t.Fatalf("installed gate did not reject inherited reviewer: %v %s", err, output)
 	}
 }
 

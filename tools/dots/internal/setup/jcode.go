@@ -24,6 +24,11 @@ func jcodeApply(root string) error {
 		}
 		node = absolute(resolved)
 	}
+	python, err := exec.LookPath("python3")
+	if err != nil {
+		return errors.New("Python 3 is required for swarm model routing")
+	}
+	python = absolute(python)
 	configPath, mcpPath := filepath.Join(configDir, "config.toml"), filepath.Join(configDir, "mcp.json")
 	priorConfig, err := regularOptional(configPath)
 	if err != nil {
@@ -34,6 +39,11 @@ func jcodeApply(root string) error {
 		return err
 	}
 	voicePath := filepath.Join(dataDir, "voice/server.py")
+	gatePath := filepath.Join(dataDir, "swarm-model-gate.py")
+	priorGate, err := regularOptional(gatePath)
+	if err != nil {
+		return err
+	}
 	priorVoice, err := regularOptional(voicePath)
 	if err != nil {
 		return err
@@ -127,6 +137,10 @@ func jcodeApply(root string) error {
 			return errors.New("invalid shared jcode theme color")
 		}
 	}
+	gateSource, err := os.ReadFile(filepath.Join(root, "config/jcode/swarm-model-gate.py"))
+	if err != nil || len(gateSource) == 0 {
+		return errors.New("cannot read swarm model gate")
+	}
 	voiceSource, err := os.ReadFile(filepath.Join(root, "config/jcode/agent-voice.py"))
 	if err != nil || len(voiceSource) == 0 {
 		return errors.New("cannot read agent voice MCP source")
@@ -144,7 +158,49 @@ func jcodeApply(root string) error {
 	}
 	currentMCP[serverKey] = servers
 	quote := func(s string) string { return "'" + strings.ReplaceAll(s, "'", `'"'"'`) + "'" }
-	if hooks := current["hooks"].(map[string]any); hooks["post_tool_feedback"] == quote(node)+" "+quote(filepath.Join(dataDir, "lens/hooks.mjs")) {
+	hooks := current["hooks"].(map[string]any)
+	gateCommand := quote(python) + " " + quote(gatePath)
+	var gates []any
+	switch value := hooks["pre_tool"].(type) {
+	case nil:
+	case string:
+		if value != "" {
+			gates = append(gates, value)
+		}
+	case []any:
+		for _, item := range value {
+			if _, ok := item.(string); !ok {
+				return errors.New("jcode pre_tool hooks must be strings")
+			}
+			gates = append(gates, item)
+		}
+	default:
+		return errors.New("jcode pre_tool hooks must be strings")
+	}
+	updated := make([]any, 0, len(gates)+1)
+	found := false
+	for _, gate := range gates {
+		command := gate.(string)
+		prefix, matches := strings.CutSuffix(command, " "+quote(gatePath))
+		managed := false
+		if matches && len(prefix) >= 2 && prefix[0] == '\'' && prefix[len(prefix)-1] == '\'' {
+			interpreter := strings.ReplaceAll(prefix[1:len(prefix)-1], `'"'"'`, "'")
+			managed = quote(interpreter) == prefix && filepath.IsAbs(interpreter) && filepath.Base(interpreter) == "python3"
+		}
+		if managed {
+			if !found {
+				updated = append(updated, gateCommand)
+				found = true
+			}
+		} else {
+			updated = append(updated, command)
+		}
+	}
+	if !found {
+		updated = append(updated, gateCommand)
+	}
+	hooks["pre_tool"] = updated
+	if hooks["post_tool_feedback"] == quote(node)+" "+quote(filepath.Join(dataDir, "lens/hooks.mjs")) {
 		delete(hooks, "post_tool_feedback")
 		delete(hooks, "post_tool_feedback_timeout_ms")
 	}
@@ -155,6 +211,7 @@ func jcodeApply(root string) error {
 		return errors.New("cannot encode jcode configuration")
 	}
 	if err = commit([]change{
+		{path: gatePath, data: gateSource, mode: 0600, backup: privateBackup("jcode", gatePath), backupPrivate: true, expect: true, expected: priorGate},
 		{path: voicePath, data: voiceSource, mode: 0600, backup: privateBackup("jcode", voicePath), backupPrivate: true, expect: true, expected: priorVoice},
 		{path: mcpPath, data: encode(currentMCP), mode: 0600, backup: privateBackup("jcode", mcpPath), backupPrivate: true, expect: true, expected: priorMCP},
 		{path: configPath, data: config, mode: 0600, backup: privateBackup("jcode", configPath), backupPrivate: true, expect: true, expected: priorConfig},
