@@ -16,23 +16,28 @@ import (
 )
 
 const defaultPort = 6446
-const maxConfig = 64 << 10 // Covers JSON escaping of an accepted 8 KiB key.
+const maxConfig = 128 << 10 // Covers JSON escaping of both accepted 8 KiB keys.
 const label = "local.dots.beatapi-proxy"
 const jevModel = "jev-1.14"
 const legacyJevModel = "jev-1.14-free"
+const openRouterModel = "liquid/d1-ultra"
 
 // Config is private on disk; never format it in diagnostics.
 type Config struct {
-	APIKey   string `json:"api_key"`
-	Port     int    `json:"port"`
-	ProxyURL string `json:"proxy_url"`
+	APIKey           string `json:"api_key"`
+	OpenRouterAPIKey string `json:"openrouter_api_key,omitempty"`
+	Port             int    `json:"port"`
+	ProxyURL         string `json:"proxy_url"`
 }
 
 var errConfig = errors.New("beatapi: cannot read secure configuration; run setup or key")
 
 func (c Config) validate() error {
-	if c.APIKey == "" || c.APIKey == "public" || len(c.APIKey) > 8192 || strings.IndexFunc(c.APIKey, func(r rune) bool { return unicode.IsSpace(r) || unicode.IsControl(r) }) >= 0 {
+	if !validAPIKey(c.APIKey) {
 		return errors.New("beatapi: provide a non-public API key without whitespace (maximum 8 KiB)")
+	}
+	if c.OpenRouterAPIKey != "" && !validAPIKey(c.OpenRouterAPIKey) {
+		return errors.New("beatapi: provide a non-public OpenRouter API key without whitespace (maximum 8 KiB)")
 	}
 	if c.Port < 1 || c.Port > 65535 {
 		return errors.New("beatapi: local port must be between 1 and 65535")
@@ -49,6 +54,9 @@ func (c Config) validate() error {
 		return errors.New("beatapi: API and outgoing proxy ports must differ")
 	}
 	return nil
+}
+func validAPIKey(key string) bool {
+	return key != "" && key != "public" && len(key) <= 8192 && strings.IndexFunc(key, func(r rune) bool { return unicode.IsSpace(r) || unicode.IsControl(r) }) < 0
 }
 func (c Config) address() string { return net.JoinHostPort("127.0.0.1", strconv.Itoa(c.Port)) }
 

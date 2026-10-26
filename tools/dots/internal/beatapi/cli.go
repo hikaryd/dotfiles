@@ -26,6 +26,7 @@ import (
 const help = `Usage: dots-tools proxy beatapi <command>
   setup [--stdin]    Save BeatAPI key, enable launchd and connect jg
   key [--stdin]      Save/rotate the BeatAPI key
+  openrouter-key [--stdin]  Save/rotate OpenRouter key; use d1-ultra first
   status             Read-only local configuration/service/health checks
   doctor             One paid Jev request, 15s limit; uses BeatAPI balance
   restart            Restart only the BeatAPI LaunchAgent
@@ -33,9 +34,10 @@ const help = `Usage: dots-tools proxy beatapi <command>
   serve [--config ABSOLUTE_PATH]  Run the API in the foreground
 
 API: http://127.0.0.1:6446/v1 (no local authorization).
-Only listed model IDs are accepted. jg uses paid jev-1.14 directly.
+Only listed model IDs are accepted. jg keeps its local jev-1.14 alias.
 Legacy jev-1.14-free IDs also route to paid jev-1.14 and spend balance.
-Chat models remain free-only. No automatic retries or model fallback.
+With an OpenRouter key: liquid/d1-ultra first, paid BeatAPI Jev as fallback.
+Without an OpenRouter key: paid BeatAPI Jev directly. Chat stays free-only.
 Outgoing traffic requires the shared dots local HTTP proxy.
 Secret input is hidden. Use --stdin explicitly for a password manager.
 Do not put a key in command arguments. Setup does not verify upstream inference.`
@@ -58,7 +60,7 @@ func Run(args []string, in io.Reader, out, errOut io.Writer) int {
 	stdin, ifConnected := false, false
 	config := ""
 	switch command {
-	case "setup", "key", "status", "doctor", "restart", "stop", "serve":
+	case "setup", "key", "openrouter-key", "status", "doctor", "restart", "stop", "serve":
 	default:
 		fmt.Fprintln(errOut, "beatapi: unknown command; see --help")
 		return 2
@@ -67,7 +69,7 @@ func Run(args []string, in io.Reader, out, errOut io.Writer) int {
 		switch {
 		case args[i] == "--if-connected" && command == "doctor" && !ifConnected:
 			ifConnected = true
-		case args[i] == "--stdin" && (command == "setup" || command == "key") && !stdin:
+		case args[i] == "--stdin" && (command == "setup" || command == "key" || command == "openrouter-key") && !stdin:
 			stdin = true
 		case args[i] == "--config" && command == "serve" && config == "" && i+1 < len(args):
 			i++
@@ -163,6 +165,9 @@ func (c *cli) execute(command string, stdin bool) error {
 	defer unlock()
 	cfg, err := loadConfig(c.config)
 	if err != nil {
+		if command == "openrouter-key" {
+			return errConfig
+		}
 		if _, e := os.Lstat(c.config); !errors.Is(e, os.ErrNotExist) {
 			return errConfig
 		}
@@ -175,14 +180,22 @@ func (c *cli) execute(command string, stdin bool) error {
 		}
 		cfg = Config{Port: defaultPort, ProxyURL: fmt.Sprintf("http://127.0.0.1:%d", port)}
 	}
-	if command == "key" || stdin || cfg.APIKey == "" {
-		key, err := c.readKey(stdin)
+	if command == "key" || command == "openrouter-key" || stdin || cfg.APIKey == "" {
+		provider := "BeatAPI"
+		if command == "openrouter-key" {
+			provider = "OpenRouter"
+		}
+		key, err := c.readKey(stdin, provider)
 		if err != nil {
 			return err
 		}
-		cfg.APIKey = key
 		if key == "" {
-			return errors.New("beatapi: a nonempty BeatAPI key is required")
+			return fmt.Errorf("beatapi: a nonempty %s key is required", provider)
+		}
+		if command == "openrouter-key" {
+			cfg.OpenRouterAPIKey = key
+		} else {
+			cfg.APIKey = key
 		}
 	}
 	if err := cfg.validate(); err != nil {
@@ -193,6 +206,10 @@ func (c *cli) execute(command string, stdin bool) error {
 	}
 	if command == "key" {
 		fmt.Fprintln(c.out, "BeatAPI key saved; new requests use it immediately on a compatible running API.")
+		return nil
+	}
+	if command == "openrouter-key" {
+		fmt.Fprintln(c.out, "OpenRouter key saved; Jev uses liquid/d1-ultra first and BeatAPI as fallback on a compatible running API.")
 		return nil
 	}
 	if err := c.installService(cfg); err != nil {
@@ -207,7 +224,7 @@ func (c *cli) execute(command string, stdin bool) error {
 	fmt.Fprintf(c.out, "BeatAPI service ready: http://%s/v1\njg uses %s through this local API. Upstream access is not yet verified; run dots-tools proxy beatapi doctor.\n", cfg.address(), jevModel)
 	return nil
 }
-func (c *cli) readKey(stdin bool) (string, error) {
+func (c *cli) readKey(stdin bool, provider string) (string, error) {
 	if stdin {
 		b, err := io.ReadAll(io.LimitReader(c.in, 8194))
 		if err != nil || len(b) > 8193 {
@@ -219,7 +236,7 @@ func (c *cli) readKey(stdin bool) (string, error) {
 	if !ok || !tui.IsTerminal(f) {
 		return "", errors.New("beatapi: hidden terminal input required; use --stdin explicitly for piped input")
 	}
-	return tui.SecretInput(c.ctx, tui.Frame{Brand: "dots proxy", Title: "BeatAPI API key", Mode: "LOCAL CONFIG", Tone: tui.Yellow, Intro: "Ввод скрыт. Ключ хранится только в приватном конфиге. Esc — отмена."}, "")
+	return tui.SecretInput(c.ctx, tui.Frame{Brand: "dots proxy", Title: provider + " API key", Mode: "LOCAL CONFIG", Tone: tui.Yellow, Intro: "Ввод скрыт. Ключ хранится только в приватном конфиге. Esc — отмена."}, "")
 }
 func (c *cli) serve() error {
 	cfg, err := loadConfig(c.config)
@@ -321,6 +338,12 @@ func (c *cli) status() error {
 		state = "unavailable"
 	}
 	fmt.Fprintf(c.out, "BeatAPI configuration: %t\nLaunchAgent %s: %s\nLocal API healthy: %t\n", configErr == nil, label, state, healthy)
+	fmt.Fprintf(c.out, "OpenRouter configured: %t\n", configErr == nil && cfg.OpenRouterAPIKey != "")
+	if configErr == nil && cfg.OpenRouterAPIKey != "" {
+		fmt.Fprintf(c.out, "Jev route: OpenRouter %s -> BeatAPI %s (fallback)\n", openRouterModel, jevModel)
+	} else if configErr == nil {
+		fmt.Fprintln(c.out, "Jev route: BeatAPI only; run dots-tools proxy beatapi openrouter-key to enable OpenRouter first")
+	}
 	if configErr != nil || serviceErr != nil || !loaded || !healthy {
 		return errors.New("beatapi: not ready; run setup (no changes made by status)")
 	}
