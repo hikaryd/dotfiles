@@ -32,7 +32,8 @@ class SwarmModelGateTests(unittest.TestCase):
 
     def test_explicit_model_and_non_spawn_are_not_blocked(self):
         for tool, payload in (
-            ('swarm', {'action': 'spawn', 'label': 'reviewer', 'model': 'openai-oauth:gpt-6.1-sol', 'effort': 'low'}),
+            ('swarm', {'action': 'spawn', 'label': 'worker', 'model': 'openai-oauth:gpt-6.1-sol', 'effort': 'low'}),
+            ('swarm', {'action': 'spawn', 'label': 'reviewer', 'model': 'openai-oauth:gpt-6.1-sol', 'effort': 'xhigh'}),
             ('swarm', {'action': 'spawn', 'label': 'worker', 'model': 'x5-copilot:x5-airun-code-large', 'effort': 'max'}),
             ('swarm', {'action': 'spawn', 'label': 'worker', 'model': 'openai-oauth:gpt-6.1-terra', 'effort': 'low'}),
             ('swarm', {'action': 'status'}),
@@ -40,6 +41,17 @@ class SwarmModelGateTests(unittest.TestCase):
         ):
             with self.subTest(tool=tool, payload=payload):
                 self.assertEqual(run_hook(tool, payload).returncode, 0)
+
+    def test_reviewer_requires_sol_xhigh(self):
+        for model, effort in (
+            ('openai-oauth:gpt-6.1-sol', 'low'),
+            ('openai-oauth:gpt-6.1-terra', 'low'),
+            ('x5-copilot:x5-airun-code-large', 'max'),
+        ):
+            with self.subTest(model=model, effort=effort):
+                result = run_hook('swarm', {'action': 'spawn', 'label': 'reviewer', 'model': model, 'effort': effort})
+                self.assertEqual(result.returncode, 2, result.stderr)
+                self.assertIn('xhigh', result.stderr)
 
     def test_paid_workers_require_low_effort(self):
         for model in ('openai-oauth:gpt-6.1-sol', 'openai-oauth:gpt-6.1-terra'):
