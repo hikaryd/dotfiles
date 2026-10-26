@@ -53,7 +53,7 @@ session_end='keep'
 		t.Fatal(err)
 	}
 	provider := config["provider"].(map[string]any)
-	if provider["default_provider"] != "openai" || provider["default_model"] != "gpt-6.1-terra" || provider["openai_reasoning_effort"] != "xhigh" || provider["cross_provider_failover"] != "manual" {
+	if provider["default_provider"] != "openai" || provider["default_model"] != "gpt-6.1-sol" || provider["openai_reasoning_effort"] != "high" || provider["cross_provider_failover"] != "manual" {
 		t.Fatal("managed provider/model contract broken")
 	}
 	if config["features"].(map[string]any)["swarm"] != true {

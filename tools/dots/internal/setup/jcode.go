@@ -66,7 +66,7 @@ func jcodeApply(root string) error {
 		return errors.New("private jcode providers must not be in shared settings")
 	}
 	current = merge(current, settings)
-	policyPath := absolute(filepath.Join(root, "config/jcode/swarm-routing"))
+	policyPath := absolute(filepath.Join(root, "config/jcode/swarm-routing-next"))
 	policy, err := os.ReadFile(policyPath)
 	if err != nil || len(strings.TrimSpace(string(policy))) == 0 {
 		return errors.New("cannot read shared jcode swarm routing")

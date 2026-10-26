@@ -24,8 +24,9 @@ func jcodeFixture(t *testing.T) (string, string) {
 	put(t, filepath.Join(root, "config/jcode/agent-voice.py"), "print('fixture voice')\n")
 	put(t, filepath.Join(root, "config/jcode/swarm-model-gate.py"), "print('fixture gate')\n")
 	put(t, filepath.Join(root, "config/jcode/theme.toml"), "[display]\ntheme = 'dark'\n[display.colors]\naccent = '#73d0ff'\n")
-	put(t, filepath.Join(root, "config/jcode/config.toml"), "[provider]\ndefault_provider = 'openai'\ndefault_model = 'gpt-6.1-terra'\ncross_provider_failover = 'manual'\n[features]\nswarm = true\nauto_poke = false\nmemory = false\n[agents]\nswarm_model = 'openai-oauth:gpt-6.1-terra'\nswarm_effort = 'low'\nswarm_max_concurrent_agents = 8\nmemory_sidecar_enabled = false\n")
-	put(t, filepath.Join(root, "config/jcode/swarm-routing"), "managed routing policy\n")
+	put(t, filepath.Join(root, "config/jcode/config.toml"), "[provider]\ndefault_provider = 'openai'\ndefault_model = 'gpt-6.1-sol'\nopenai_reasoning_effort = 'high'\ncross_provider_failover = 'manual'\n[features]\nswarm = true\nauto_poke = false\nmemory = false\n[agents]\nswarm_model = 'openai-oauth:gpt-6.1-sol'\nswarm_effort = 'low'\nswarm_root_effort = 'high'\nswarm_deep_root_effort = 'high'\nswarm_max_concurrent_agents = 8\nmemory_sidecar_enabled = false\n")
+	put(t, filepath.Join(root, "config/jcode/swarm-routing"), "previous routing policy\n")
+	put(t, filepath.Join(root, "config/jcode/swarm-routing-next"), "managed routing policy\n")
 	return h, root
 }
 
@@ -36,14 +37,14 @@ func TestJcodeTrackedModelRouting(t *testing.T) {
 		t.Fatal(err)
 	}
 	provider, agents, features := config["provider"].(map[string]any), config["agents"].(map[string]any), config["features"].(map[string]any)
-	if provider["default_provider"] != "openai" || provider["default_model"] != "gpt-6.1-terra" || agents["swarm_model"] != "openai-oauth:gpt-6.1-terra" || agents["swarm_effort"] != "low" || features["swarm"] != true {
+	if provider["default_provider"] != "openai" || provider["default_model"] != "gpt-6.1-sol" || provider["openai_reasoning_effort"] != "high" || agents["swarm_model"] != "openai-oauth:gpt-6.1-sol" || agents["swarm_effort"] != "low" || agents["swarm_root_effort"] != "high" || agents["swarm_deep_root_effort"] != "high" || features["swarm"] != true {
 		t.Fatal("tracked defaults do not match the model routing policy")
 	}
 	if _, exists := config["providers"]; exists {
 		t.Fatal("shared settings contain private provider profiles")
 	}
-	policy := get(t, filepath.Join(root, "swarm-routing"))
-	for _, route := range []string{"x5-copilot:x5-airun-code-large", "openai-oauth:gpt-6.1-terra", "openai-oauth:gpt-6.1-sol", `effort "max"`, `effort "high"`} {
+	policy := get(t, filepath.Join(root, "swarm-routing-next"))
+	for _, route := range []string{"x5-copilot:x5-airun-code-large", "openai-oauth:gpt-6.1-terra", "openai-oauth:gpt-6.1-sol", `effort "max"`, `effort "low"`} {
 		if !strings.Contains(policy, route) {
 			t.Fatalf("routing policy missing %q", route)
 		}
@@ -145,19 +146,26 @@ func TestJcodeApplyPreservesSettingsAndIdempotence(t *testing.T) {
 	if err := toml.Unmarshal([]byte(get(t, configPath)), &config); err != nil {
 		t.Fatal(err)
 	}
-	if config["provider"].(map[string]any)["default_model"] != "gpt-6.1-terra" || config["hooks"].(map[string]any)["session_end"] != "personal-hook" || config["launch_hotkeys"].(map[string]any)["enabled"] != true {
+	if config["provider"].(map[string]any)["default_model"] != "gpt-6.1-sol" || config["hooks"].(map[string]any)["session_end"] != "personal-hook" || config["launch_hotkeys"].(map[string]any)["enabled"] != true {
 		t.Fatal(config)
 	}
 	private := config["providers"].(map[string]any)["private"].(map[string]any)
 	if private["base_url"] != "https://private.example/v1" || private["api_key_env"] != "PRIVATE_KEY" {
 		t.Fatal("private provider changed")
 	}
-	if config["features"].(map[string]any)["swarm"] != true || config["agents"].(map[string]any)["swarm_model"] != "openai-oauth:gpt-6.1-terra" || config["agents"].(map[string]any)["swarm_max_concurrent_agents"] != int64(8) {
+	if config["features"].(map[string]any)["swarm"] != true || config["agents"].(map[string]any)["swarm_model"] != "openai-oauth:gpt-6.1-sol" || config["agents"].(map[string]any)["swarm_max_concurrent_agents"] != int64(8) {
 		t.Fatal("managed swarm settings not applied")
 	}
 	policy := filepath.Join(h, ".jcode/swarm-prompt.md")
 	if get(t, policy) != "managed routing policy\n" {
 		t.Fatal("routing policy not installed")
+	}
+	link, err := os.Readlink(policy)
+	if err != nil || link != filepath.Join(root, "config/jcode/swarm-routing-next") {
+		t.Fatal("routing link must select the new policy", link, err)
+	}
+	if get(t, filepath.Join(root, "config/jcode/swarm-routing")) != "previous routing policy\n" {
+		t.Fatal("previous routing policy must remain untouched")
 	}
 	if _, exists := config["hooks"].(map[string]any)["post_tool_feedback"]; exists {
 		t.Fatal("minimal setup must not add automatic feedback")

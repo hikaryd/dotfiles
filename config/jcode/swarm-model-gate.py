@@ -26,15 +26,18 @@ elif action not in {'spawn', 'run_plan'}:
     sys.exit(0)
 
 model = payload.get('model')
-if isinstance(model, str) and model.strip() and model.strip().lower() not in {'inherit', 'coordinator'}:
-    sys.exit(0)
+if not isinstance(model, str) or not model.strip() or model.strip().lower() in {'inherit', 'coordinator'}:
+    print(
+        'Choose an explicit model and effort for this delegation and retry. '
+        'Use x5-copilot:x5-airun-code-large with effort max for well-specified work, '
+        'openai-oauth:gpt-6.1-sol with effort low for paid work and independent review, '
+        'or openai-oauth:gpt-6.1-terra with effort low when appropriate. '
+        'A reused worker keeps its current model and effort.',
+        file=sys.stderr,
+    )
+    sys.exit(2)
 
-print(
-    'Choose an explicit model for this delegation and retry. '
-    'Use x5-copilot:x5-airun-code-large with effort max for well-specified implementation, '
-    'openai-oauth:gpt-6.1-sol with effort high for consequential independent review, '
-    'or openai-oauth:gpt-6.1-terra for ambiguous design, diagnosis and integration. '
-    'Explicit choices and user-requested models are allowed. A reused worker keeps its current model.',
-    file=sys.stderr,
-)
-sys.exit(2)
+expected = 'max' if model.strip() == 'x5-copilot:x5-airun-code-large' else 'low'
+if payload.get('effort') != expected:
+    print(f'Use effort "{expected}" for this worker and retry. A reused worker keeps its current effort.', file=sys.stderr)
+    sys.exit(2)
