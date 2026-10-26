@@ -37,6 +37,9 @@ func TestVLESSAndConfig(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	if !reflect.DeepEqual(cfg["routing"], object{"rules": []any{}}) {
+		t.Fatal("missing private routes must not create a catch-all direct rule")
+	}
 	inbound := cfg["inbounds"].([]any)[0].(object)
 	if inbound["listen"] != "127.0.0.1" || inbound["protocol"] != "http" || inbound["port"] != 10810 {
 		t.Fatalf("inbound %#v", inbound)
@@ -47,21 +50,24 @@ func TestVLESSAndConfig(t *testing.T) {
 		t.Fatalf("user %#v", user)
 	}
 }
-func TestNebulaRoutesThroughCorporateNetwork(t *testing.T) {
+func TestPrivateRoutesThroughDirectNetwork(t *testing.T) {
 	c := testController(t)
+	if err := os.WriteFile(c.path("direct-domains.txt"), []byte("service.private.example\n"), 0600); err != nil {
+		t.Fatal(err)
+	}
 	cfg, err := c.config(object{"uuid": "fixture-id", "address": "example.test", "port": 443})
 	if err != nil {
 		t.Fatal(err)
 	}
 	want := object{"rules": []any{object{
-		"type": "field", "domain": []string{"full:private.invalid"}, "outboundTag": "direct",
+		"type": "field", "domain": []string{"full:service.private.example"}, "outboundTag": "direct",
 	}}}
 	if !reflect.DeepEqual(cfg["routing"], want) {
-		t.Fatalf("Nebula must bypass VLESS even when a client inherits stale NO_PROXY: routing = %#v", cfg["routing"])
+		t.Fatalf("private hosts must bypass VLESS even when a client inherits stale NO_PROXY: routing = %#v", cfg["routing"])
 	}
 	outbounds := cfg["outbounds"].([]any)
 	if outbounds[0].(object)["tag"] != "proxy" || outbounds[1].(object)["protocol"] != "freedom" || outbounds[1].(object)["tag"] != "direct" {
-		t.Fatal("other traffic must retain the VLESS default and Nebula must use a direct outbound")
+		t.Fatal("other traffic must retain the VLESS default and private hosts must use a direct outbound")
 	}
 }
 
@@ -101,7 +107,7 @@ func TestPrivateDirectDomains(t *testing.T) {
 		t.Fatal(err)
 	}
 	want := object{"rules": []any{object{
-		"type": "field", "domain": []string{"full:private.invalid", "full:models.corp.example", "full:api.corp.example"}, "outboundTag": "direct",
+		"type": "field", "domain": []string{"full:models.corp.example", "full:api.corp.example"}, "outboundTag": "direct",
 	}}}
 	if !reflect.DeepEqual(cfg["routing"], want) {
 		t.Fatalf("private exact hosts must route direct: %#v", cfg["routing"])

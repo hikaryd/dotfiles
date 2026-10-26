@@ -21,14 +21,37 @@ func jcodeFixture(t *testing.T) (string, string) {
 	put(t, filepath.Join(root, "config/jcode/mcp.json"), `{"mcpServers":{"serena":{"command":"@DATA@/python/serena-agent/bin/serena"},"context7":{"command":"@NODE@"},"deepwiki":{"command":"@NODE@"},"code-graph":{"command":"@DATA@/python/codegraphcontext/bin/cgc","env":{"NEO4J_PASSWORD":"@NEO4J_PASSWORD@"}},"neo4j-cypher":{"command":"@DATA@/python/mcp-neo4j-cypher/bin/mcp-neo4j-cypher","env":{"NEO4J_PASSWORD":"@NEO4J_PASSWORD@"}},"neo4j-memory":{"command":"@DATA@/python/mcp-neo4j-memory/bin/mcp-neo4j-memory","env":{"NEO4J_PASSWORD":"@NEO4J_PASSWORD@"}},"agent-voice":{"command":"@HOME@/Library/Application Support/VoiceStudio/runtime/project/.venv/bin/python","args":["-u","@DATA@/voice/server.py"],"env":{"HF_HUB_OFFLINE":"1","TRANSFORMERS_OFFLINE":"1","AGENT_VOICE_CACHE_DIR":"@DATA@/voice/audio"}},"piweb":{"command":"@NODE@","args":["@DATA@/runtime/node_modules/pi-web-access/dist/mcp-cli.js"],"env":{"PI_CODING_AGENT_DIR":"@DATA@/web/config"}}}}`)
 	put(t, filepath.Join(root, "config/jcode/agent-voice.py"), "print('fixture voice')\n")
 	put(t, filepath.Join(root, "config/jcode/theme.toml"), "[display]\ntheme = 'dark'\n[display.colors]\naccent = '#73d0ff'\n")
+	put(t, filepath.Join(root, "config/jcode/config.toml"), "[provider]\ndefault_provider = 'openai'\ndefault_model = 'gpt-6.1-terra'\ncross_provider_failover = 'manual'\n[features]\nswarm = true\nauto_poke = false\nmemory = false\n[agents]\nswarm_model = 'openai-oauth:gpt-6.1-terra'\nswarm_effort = 'low'\nswarm_max_concurrent_agents = 8\nmemory_sidecar_enabled = false\n")
+	put(t, filepath.Join(root, "config/jcode/swarm-routing"), "managed routing policy\n")
 	return h, root
+}
+
+func TestJcodeTrackedModelRouting(t *testing.T) {
+	root := filepath.Join("..", "..", "..", "..", "config", "jcode")
+	var config map[string]any
+	if err := toml.Unmarshal([]byte(get(t, filepath.Join(root, "config.toml"))), &config); err != nil {
+		t.Fatal(err)
+	}
+	provider, agents, features := config["provider"].(map[string]any), config["agents"].(map[string]any), config["features"].(map[string]any)
+	if provider["default_provider"] != "openai" || provider["default_model"] != "gpt-6.1-terra" || agents["swarm_model"] != "openai-oauth:gpt-6.1-terra" || agents["swarm_effort"] != "low" || features["swarm"] != true {
+		t.Fatal("tracked defaults do not match the model routing policy")
+	}
+	if _, exists := config["providers"]; exists {
+		t.Fatal("shared settings contain private provider profiles")
+	}
+	policy := get(t, filepath.Join(root, "swarm-routing"))
+	for _, route := range []string{"x5-copilot:x5-airun-code-large", "openai-oauth:gpt-6.1-terra", "openai-oauth:gpt-6.1-sol", `effort "max"`, `effort "high"`} {
+		if !strings.Contains(policy, route) {
+			t.Fatalf("routing policy missing %q", route)
+		}
+	}
 }
 
 func TestJcodeApplyPreservesSettingsAndIdempotence(t *testing.T) {
 	h, root := jcodeFixture(t)
 	configPath := filepath.Join(h, ".jcode/config.toml")
 	mcpPath := filepath.Join(h, ".jcode/mcp.json")
-	put(t, configPath, "[provider]\ndefault_model = 'personal-model'\n[hooks]\nsession_end = 'personal-hook'\n[launch_hotkeys]\nenabled = true\n")
+	put(t, configPath, "[provider]\ndefault_model = 'personal-model'\n[providers.private]\nbase_url = 'https://private.example/v1'\napi_key_env = 'PRIVATE_KEY'\n[hooks]\nsession_end = 'personal-hook'\n[launch_hotkeys]\nenabled = true\n")
 	put(t, mcpPath, `{"version":7,"mcpServers":{"kaiten":{"command":"personal","env":{"TOKEN":"fixture-secret"}},"pilens":{"command":"old"}}}`)
 	authPath := filepath.Join(h, ".jcode/auth.json")
 	put(t, authPath, "private credentials")
@@ -39,8 +62,19 @@ func TestJcodeApplyPreservesSettingsAndIdempotence(t *testing.T) {
 	if err := toml.Unmarshal([]byte(get(t, configPath)), &config); err != nil {
 		t.Fatal(err)
 	}
-	if config["provider"].(map[string]any)["default_model"] != "personal-model" || config["hooks"].(map[string]any)["session_end"] != "personal-hook" || config["launch_hotkeys"].(map[string]any)["enabled"] != true {
+	if config["provider"].(map[string]any)["default_model"] != "gpt-6.1-terra" || config["hooks"].(map[string]any)["session_end"] != "personal-hook" || config["launch_hotkeys"].(map[string]any)["enabled"] != true {
 		t.Fatal(config)
+	}
+	private := config["providers"].(map[string]any)["private"].(map[string]any)
+	if private["base_url"] != "https://private.example/v1" || private["api_key_env"] != "PRIVATE_KEY" {
+		t.Fatal("private provider changed")
+	}
+	if config["features"].(map[string]any)["swarm"] != true || config["agents"].(map[string]any)["swarm_model"] != "openai-oauth:gpt-6.1-terra" || config["agents"].(map[string]any)["swarm_max_concurrent_agents"] != int64(8) {
+		t.Fatal("managed swarm settings not applied")
+	}
+	policy := filepath.Join(h, ".jcode/swarm-prompt.md")
+	if get(t, policy) != "managed routing policy\n" {
+		t.Fatal("routing policy not installed")
 	}
 	if _, exists := config["hooks"].(map[string]any)["post_tool_feedback"]; exists {
 		t.Fatal("minimal setup must not add automatic feedback")
@@ -117,6 +151,46 @@ func TestJcodeApplyFreshAndCustomPaths(t *testing.T) {
 	server := mcp["mcpServers"].(map[string]any)["piweb"].(map[string]any)
 	if server["env"].(map[string]any)["PI_CODING_AGENT_DIR"] != filepath.Join(dataDir, "web/config") {
 		t.Fatal(server)
+	}
+}
+
+func TestJcodeApplyBacksUpExistingSwarmPrompt(t *testing.T) {
+	h, root := jcodeFixture(t)
+	path := filepath.Join(h, ".jcode/swarm-prompt.md")
+	put(t, path, "personal routing\n")
+	if code, _, diagnostic := runCaptured(t, root, "jcode-apply"); code != 0 {
+		t.Fatal(code, diagnostic)
+	}
+	if get(t, path) != "managed routing policy\n" {
+		t.Fatal("shared policy not installed")
+	}
+	backups, err := filepath.Glob(filepath.Join(h, ".config/dots-backups/jcode/*/swarm-prompt.md"))
+	if err != nil || len(backups) != 1 || get(t, backups[0]) != "personal routing\n" {
+		t.Fatal("original policy was not backed up")
+	}
+}
+
+func TestJcodeApplyRelativeRootCreatesUsablePolicyLink(t *testing.T) {
+	h, root := jcodeFixture(t)
+	t.Chdir(root)
+	if code, _, diagnostic := runCaptured(t, ".", "jcode-apply"); code != 0 {
+		t.Fatal(code, diagnostic)
+	}
+	if get(t, filepath.Join(h, ".jcode/swarm-prompt.md")) != "managed routing policy\n" {
+		t.Fatal("routing link must resolve independently of the working directory")
+	}
+}
+
+func TestJcodeRejectsPrivateProviderInSharedTemplate(t *testing.T) {
+	h, root := jcodeFixture(t)
+	path := filepath.Join(h, ".jcode/config.toml")
+	put(t, path, "[providers.personal]\nbase_url='https://private.example/v1'\n")
+	put(t, filepath.Join(root, "config/jcode/config.toml"), "[providers.bad]\nbase_url='https://private.example/v1'\n")
+	if code, _, _ := runCaptured(t, root, "jcode-apply"); code == 0 {
+		t.Fatal("private providers must not be shared")
+	}
+	if get(t, path) != "[providers.personal]\nbase_url='https://private.example/v1'\n" {
+		t.Fatal("rejected install modified the private config")
 	}
 }
 

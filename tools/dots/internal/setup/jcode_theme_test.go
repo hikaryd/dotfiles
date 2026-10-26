@@ -26,7 +26,7 @@ func TestJcodeAppliesOnlyOwnedThemeSettings(t *testing.T) {
 	if display["theme"] != "dark" || !reflect.DeepEqual(display["colors"], want) {
 		t.Fatalf("shared theme was not applied: %v", display)
 	}
-	if display["show_token_usage"] != false || current["provider"].(map[string]any)["default_model"] != "personal-model" || current["hooks"].(map[string]any)["session_end"] != "personal-hook" {
+	if display["show_token_usage"] != false || current["provider"].(map[string]any)["default_model"] != "gpt-6.1-terra" || current["hooks"].(map[string]any)["session_end"] != "personal-hook" {
 		t.Fatal("theme update overwrote personal settings")
 	}
 }

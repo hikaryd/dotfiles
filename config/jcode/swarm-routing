@@ -1,0 +1,29 @@
+Model routing for new swarm workers:
+
+Roles
+- GPT 6.1 Terra is the default chat model and coordinator. The saved worker default is openai-oauth:gpt-6.1-terra. Use Terra for decomposition, resolving requirements, cross-module integration and debugging that still needs diagnosis.
+- X5 code-large is the preferred workhorse for well-specified implementation, not just reading or mechanical edits. Spawn a fresh worker with model "x5-copilot:x5-airun-code-large" and effort "max". Its local profile enforces thinking enabled and maximum effort. X5 is free to this user, so low/none cost-saving guidance does not apply to it.
+- GPT 6.1 Sol is the independent reviewer. For substantive review use a fresh worker with model "openai-oauth:gpt-6.1-sol" and effort "high". Use it for correctness, security, concurrency, data-integrity and acceptance review. Routine implementation stays with X5 or Terra unless the user explicitly requests a comparison or another role.
+
+Choose by uncertainty and risk, not by whether a task writes code
+- X5: bounded features, bug fixes with a reproduction and intended behavior, test implementation, refactors with fixed interfaces, adapters, validation and multi-file changes whose design and acceptance criteria are already clear. Also use it for bounded discovery, summaries and routine test execution.
+- Terra: unclear requirements, investigation without an established cause, choosing architecture or transaction boundaries, coordinating dependent changes and integrating worker results. For cross-module concurrency, checkpoints, shutdown/cancellation, transaction safety and dynamically changing work sets, use medium/high design effort rather than a low-effort monolithic implementation. Split a hard problem into designed, checkable implementation slices and delegate those slices to X5.
+- Sol: independent review of consequential changes and evidence. Authorization, sensitive data, financial calculations, schema changes, concurrency and transaction safety require stronger review regardless of patch size. A green unit test alone is not production acceptance for those paths.
+- For salary semantics, tenant/authentication/replay guards and durable legacy serialization, prefer Terra implementation unless an X5 slice already has independently authored positive and negative acceptance tests plus mandatory Sol review. X5 still implements substantive code, but should not invent the safety contract and then be its only verifier.
+
+Delegate with a contract
+Before spawning an implementation worker provide the goal and expected behavior, owned paths and interfaces, invariants and forbidden side effects, reference code or a reproduction, and concrete acceptance commands plus important edge cases. Supply enough context to work independently without prescribing every line. Explicitly distinguish new-object behavior from legacy read/roundtrip compatibility. Pin helper signatures when acceptance depends on them. Give a worker a testable slice rather than a vague subsystem rewrite. One writer per worktree, isolate parallel writers.
+
+Verify and escalate
+The worker implements code and tests, runs relevant checks, and reports changed files, exact commands and observed results, unresolved failures and uncertainties. The coordinator reads the diff and independently checks acceptance evidence before integration. Never weaken supplied tests or treat a worker's success report as verification. Existing fixtures, snapshots and unrelated safety assertions are not writable merely to make a new implementation pass. Require explicit scope approval for such changes and preserve negative controls. Use Sol for independent review when the risk warrants it, not to duplicate every trivial read or test run.
+Allow one focused repair when a failing check gives a clear local diagnosis. Escalate to Terra for missing design, repeated failure, scope expansion or unreliable evidence. Use Sol to review the resulting correction rather than repeatedly asking the same failing worker. Respect project-required full checks and report externally blocked integration checks explicitly.
+
+Effort and cost
+For paid implementation workers use low for clear tasks, medium/high for genuinely unresolved reasoning. Sol review uses high, raising it only for concrete risk. Keep the main chat's saved effort unless the user changes it. Evaluate cost using actual route usage, elapsed time, retries and acceptance failures. Subscription/OAuth tokens are not a public API dollar invoice. Quality claims need measured task results; max effort alone does not establish equivalence between models.
+Treat x5-airun-code-large as the configured service identity. The backend equivalence to a public GLM model is unverified unless the user supplies authoritative metadata.
+
+Routing mechanics
+An explicit model on spawn wins over saved defaults. Omitted model uses the saved Terra worker default. model "inherit" forces the current coordinator model and route, which may differ from Terra in an older session. To select X5 or Sol, pin the exact route above on a fresh worker; reusing an idle worker does not change its model. Run swarm list_models when availability is in doubt. If the private X5 profile is unavailable, use Terra and report the fallback. Keep existing tasks and active worker models unchanged when applying routing updates.
+
+Privacy and structure
+Use local provider configuration. Keep endpoints, keys, private routing hosts, benchmark copies and results outside tracked repositories and public logs. Follow project disclosure and data-access rules. Always pass label when spawning. In normal/light mode only the root spawns workers. Recursive spawning is reserved for swarm-deep within live-worker and member budgets. This policy governs future delegation and does not authorize restarting sessions, reading credentials or contacting production services.

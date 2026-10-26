@@ -19,8 +19,7 @@ import (
 	"dots/native/internal/tui"
 )
 
-// Nebula's internal MCP endpoint must use the corporate network, not VLESS.
-const noProxy = "127.0.0.1,localhost,::1,*.local,private.invalid"
+const noProxy = "127.0.0.1,localhost,::1,*.local"
 
 var proxyKeys = []string{"HTTP_PROXY", "HTTPS_PROXY", "ALL_PROXY", "http_proxy", "https_proxy", "all_proxy", "WS_PROXY", "WSS_PROXY", "ws_proxy", "wss_proxy", "NO_PROXY", "no_proxy"}
 

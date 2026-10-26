@@ -3,7 +3,7 @@
 set -eu
 "$HOME/.local/bin/dots-tools" proxy pi --ensure </dev/null >&2
 proxy='http://127.0.0.1:10810'
-bypass="127.0.0.1,localhost,::1,*.local,private.invalid${NO_PROXY:+,$NO_PROXY}${no_proxy:+,$no_proxy}"
+bypass="127.0.0.1,localhost,::1,*.local${NO_PROXY:+,$NO_PROXY}${no_proxy:+,$no_proxy}"
 export HTTP_PROXY="$proxy" HTTPS_PROXY="$proxy" ALL_PROXY="$proxy"
 export http_proxy="$proxy" https_proxy="$proxy" all_proxy="$proxy"
 export WS_PROXY="$proxy" WSS_PROXY="$proxy" ws_proxy="$proxy" wss_proxy="$proxy"

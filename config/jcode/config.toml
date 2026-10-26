@@ -1,0 +1,230 @@
+[acp]
+profile = 'standard'
+tool_profile = 'acp'
+
+[agents]
+memory_embedding_backend = 'local'
+memory_jev_provider = 'auto'
+memory_jev_threshold = 0.800000011920929
+memory_rerank_cadence = 3
+memory_rerank_min_agree = 2
+memory_rerank_votes = 2
+memory_sidecar_enabled = false
+swarm_effort = 'low'
+swarm_max_concurrent_agents = 8
+swarm_model = 'openai-oauth:gpt-6.1-terra'
+swarm_spawn_mode = 'inline'
+swarm_stall_after_secs = 600
+swarm_stall_nudge = false
+swarm_strip_layout = 'vertical'
+
+[ambient]
+allow_api_keys = false
+enabled = false
+max_interval_minutes = 120
+min_interval_minutes = 5
+pause_on_active_session = true
+proactive_work = true
+visible = true
+work_branch_prefix = 'ambient/'
+
+[auth]
+trusted_external_sources = []
+
+[autojudge]
+enabled = false
+
+[autoreview]
+enabled = false
+
+[compaction]
+ewma_alpha = 0.30000001192092896
+goal_window_turns = 5
+lookahead_turns = 15
+max_context_tokens = 200000
+min_samples = 3
+min_turns_between_compactions = 10
+mode = 'reactive'
+proactive_floor = 0.4000000059604645
+relevance_keep_threshold = 0.6499999761581421
+stall_window = 5
+topic_shift_threshold = 0.44999998807907104
+
+[dictation]
+command = ''
+key = 'off'
+mode = 'send'
+recorder = ''
+timeout_secs = 90
+vocabulary = []
+
+[display]
+active_sessions_manager = false
+animation_fps = 60
+auto_server_reload = true
+centered = false
+compact_notifications = false
+copy_badge_alt_label = ''
+debug_socket = false
+diagram_mode = 'none'
+diff_mode = 'inline'
+disabled_animations = []
+emoji = true
+external_sessions = false
+idle_animation = false
+keybinding_hints = true
+latex_rendering = 'image'
+markdown_spacing = 'compact'
+mouse_capture = true
+performance = ''
+pin_images = true
+pin_todos = true
+prompt_entry_animation = true
+prompt_preview = true
+queue_mode = false
+reasoning_display = 'full'
+redraw_fps = 60
+resume_project_scope = false
+show_agentgrep_output = false
+show_bash_output = false
+show_thinking = true
+tool_call_details = false
+usage_display = 'left'
+
+[display.native_scrollbars]
+chat = true
+side_panel = true
+
+[features]
+auto_poke = false
+check_updates = false
+kv_cache_miss_notices = true
+memory = false
+mermaid = true
+message_timestamps = true
+persist_memory_injections = false
+swarm = true
+update_channel = 'stable'
+
+[gateway]
+bind_addr = '0.0.0.0'
+enabled = false
+port = 7643
+
+[hooks]
+pre_tool_timeout_ms = 5000
+pre_tool_transform_timeout_ms = 500
+
+[keybindings]
+auto_poke_toggle = 'ctrl+p'
+centered_toggle = 'alt+c'
+commit_log = 'alt+g'
+copy_selection_toggle = 'alt+y'
+diagram_pane_toggle = 'alt+t'
+diagram_pane_visibility_toggle = 'alt+shift+m'
+diff_mode_cycle = ''
+effort_decrease = 'cmd+left'
+effort_increase = 'cmd+right'
+fallback_switch = 'ctrl+y'
+info_widget_toggle = 'alt+i'
+model_switch_next = 'ctrl+tab'
+model_switch_prev = 'ctrl+shift+tab'
+new_terminal = 'cmd+shift+;'
+open_resume = 'cmd+b'
+scroll_bookmark = 'ctrl+g'
+scroll_down = 'ctrl+shift+j'
+scroll_down_fallback = ''
+scroll_page_down = 'alt+d'
+scroll_page_up = 'alt+u'
+scroll_prompt_down = 'ctrl+j'
+scroll_prompt_up = 'ctrl+k'
+scroll_up = 'ctrl+shift+k'
+scroll_up_fallback = ''
+session_picker_enter = 'current-terminal'
+side_panel_toggle = 'alt+m'
+speed_decrease = 'alt+down'
+speed_increase = 'alt+up'
+swarm_panel_focus = 'alt+n'
+todo_card_toggle = 'alt+x'
+typing_scroll_lock_toggle = 'alt+s'
+voice_input = 'ctrl+space'
+workspace_down = 'alt+j'
+workspace_left = 'alt+h'
+workspace_right = 'alt+l'
+workspace_up = 'alt+k'
+
+[launch_hotkeys]
+enabled = true
+imported = true
+
+[menubar]
+enabled = false
+
+[notifications]
+turn_complete = true
+turn_complete_min_secs = 120
+turn_complete_only_when_unfocused = true
+turn_complete_sound = 'Glass'
+turn_complete_todo_min_secs = 30
+
+[power]
+block_lid_close = true
+prevent_sleep_while_streaming = true
+
+[provider]
+anthropic_cache_ttl_1h = true
+cross_provider_failover = 'manual'
+default_model = 'gpt-6.1-terra'
+default_provider = 'openai'
+gemini_force_oauth = false
+max_retries = 8
+openai_native_compaction_mode = 'auto'
+openai_native_compaction_threshold_tokens = 200000
+openai_reasoning_effort = 'xhigh'
+openai_service_tier = 'off'
+openai_transport = 'https'
+preserve_reasoning_context = true
+retry_backoff_cap_secs = 30
+same_provider_account_failover = false
+stream_idle_timeout_secs = 180
+
+[safety]
+desktop_notifications = true
+discord_enabled = false
+discord_reply_enabled = false
+email_enabled = false
+email_imap_port = 993
+email_reply_enabled = false
+email_smtp_port = 587
+jade_relay_enabled = false
+jade_relay_launch_enabled = false
+jade_relay_reply_enabled = false
+ntfy_server = 'https://ntfy.sh'
+telegram_enabled = false
+telegram_reply_enabled = false
+
+[server]
+wake_mode = 'internal'
+
+[terminal]
+
+[tools]
+codemode = false
+disable_base_tools = false
+disabled = ['mcp__peekaboo__agent', 'mcp__peekaboo__analyze', 'mcp__peekaboo__browser']
+enabled = []
+mcp_tools = 'auto'
+mcp_tools_token_threshold = 8000
+profile = ''
+
+[websearch]
+bing_api_key_env = 'JCODE_BING_API_KEY'
+bing_market = 'en-US'
+engine = 'duckduckgo'
+fallback_engines = ['bing']
+native_allowed_domains = []
+native_anthropic_tool_version = 'web_search_20250305'
+native_blocked_domains = []
+native_max_uses = 5
+prefer_native = true
+searxng_url_env = 'JCODE_SEARXNG_URL'

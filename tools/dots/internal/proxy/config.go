@@ -175,7 +175,7 @@ func streamSettings(s object) object {
 	return stream
 }
 func (c *controller) directDomains() ([]string, error) {
-	domains := []string{"full:private.invalid"}
+	domains := []string{}
 	data, err := os.ReadFile(c.path("direct-domains.txt"))
 	if errors.Is(err, os.ErrNotExist) {
 		return domains, nil
@@ -183,7 +183,7 @@ func (c *controller) directDomains() ([]string, error) {
 	if err != nil {
 		return nil, errors.New("Could not read private direct-domain configuration.")
 	}
-	seen := map[string]bool{"private.invalid": true}
+	seen := map[string]bool{}
 	for _, line := range strings.Split(string(data), "\n") {
 		host := strings.ToLower(strings.TrimSpace(line))
 		if host == "" || strings.HasPrefix(host, "#") {
@@ -218,14 +218,14 @@ func (c *controller) config(s object) (object, error) {
 	if err != nil {
 		return nil, err
 	}
+	rules := []any{}
+	if len(domains) > 0 {
+		rules = append(rules, object{"type": "field", "domain": domains, "outboundTag": "direct"})
+	}
 	return object{
 		"log":      object{"loglevel": "warning"},
 		"inbounds": []any{object{"port": c.port, "listen": "127.0.0.1", "protocol": "http", "tag": "http-in", "settings": object{"timeout": 300}}},
-		// Clients launched from old terminals can inherit stale NO_PROXY.
-		// Keep corporate endpoints reachable through the local proxy too.
-		"routing": object{"rules": []any{object{
-			"type": "field", "domain": domains, "outboundTag": "direct",
-		}}},
+		"routing": object{"rules": rules},
 		"outbounds": []any{
 			object{"protocol": "vless", "settings": object{"vnext": []any{object{"address": s["address"], "port": port, "users": []any{user}}}}, "streamSettings": streamSettings(s), "tag": "proxy"},
 			object{"protocol": "freedom", "tag": "direct"}, object{"protocol": "blackhole", "tag": "block"},

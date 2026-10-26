@@ -26,7 +26,7 @@ func TestJcodeTemplatePinsNeo4jBackend(t *testing.T) {
 	}
 }
 
-func TestJcodeCodexOnlyAndManagedServers(t *testing.T) {
+func TestJcodeModelsAndManagedServers(t *testing.T) {
 	h, root := jcodeFixture(t)
 	p := filepath.Join(h, ".jcode/config.toml")
 	put(t, p, `[provider]
@@ -53,17 +53,20 @@ session_end='keep'
 		t.Fatal(err)
 	}
 	provider := config["provider"].(map[string]any)
-	if provider["default_provider"] != "openai" || provider["default_model"] != "my-codex-model" || provider["openai_reasoning_effort"] != "xhigh" || provider["cross_provider_failover"] != "manual" {
-		t.Fatal("Codex-only provider/model contract broken")
+	if provider["default_provider"] != "openai" || provider["default_model"] != "gpt-6.1-terra" || provider["openai_reasoning_effort"] != "xhigh" || provider["cross_provider_failover"] != "manual" {
+		t.Fatal("managed provider/model contract broken")
 	}
-	for _, name := range []string{"swarm", "auto_poke", "memory"} {
+	if config["features"].(map[string]any)["swarm"] != true {
+		t.Fatal("swarm disabled")
+	}
+	for _, name := range []string{"auto_poke", "memory"} {
 		if config["features"].(map[string]any)[name] != false {
 			t.Fatal("background feature enabled:", name)
 		}
 	}
 	agents := config["agents"].(map[string]any)
-	if agents["memory_sidecar_enabled"] != false || agents["swarm_max_concurrent_agents"] != int64(1) || config["hooks"].(map[string]any)["session_end"] != "keep" {
-		t.Fatal("background agents enabled or personal hooks overwritten")
+	if agents["memory_sidecar_enabled"] != false || agents["swarm_max_concurrent_agents"] != int64(8) || config["hooks"].(map[string]any)["session_end"] != "keep" {
+		t.Fatal("swarm settings incorrect or personal hooks overwritten")
 	}
 	mcp, err := readObject(filepath.Join(h, ".jcode/mcp.json"), false)
 	if err != nil {

@@ -13,8 +13,6 @@ import (
 	"github.com/pelletier/go-toml/v2"
 )
 
-// jcodeApply publishes owned MCP entries, the single-Codex policy and shared theme.
-// Personal model/authentication, hooks and unrelated MCP servers are preserved.
 func jcodeApply(root string) error {
 	configDir := absolute(envDefault([]string{"JCODE_CONFIG_DIR"}, filepath.Join(home(), ".jcode")))
 	dataDir := absolute(envDefault([]string{"JCODE_INTEGRATIONS_DIR"}, filepath.Join(envDefault([]string{"XDG_DATA_HOME"}, filepath.Join(home(), ".local/share")), "jcode-integrations")))
@@ -45,6 +43,23 @@ func jcodeApply(root string) error {
 		if err = toml.Unmarshal(priorConfig, &current); err != nil {
 			return errors.New("invalid jcode config.toml")
 		}
+	}
+	settingsData, err := os.ReadFile(filepath.Join(root, "config/jcode/config.toml"))
+	if err != nil {
+		return errors.New("cannot read shared jcode settings")
+	}
+	settings := map[string]any{}
+	if err = toml.Unmarshal(settingsData, &settings); err != nil || len(settings) == 0 {
+		return errors.New("invalid shared jcode settings")
+	}
+	if _, exists := settings["providers"]; exists {
+		return errors.New("private jcode providers must not be in shared settings")
+	}
+	current = merge(current, settings)
+	policyPath := absolute(filepath.Join(root, "config/jcode/swarm-routing"))
+	policy, err := os.ReadFile(policyPath)
+	if err != nil || len(strings.TrimSpace(string(policy))) == 0 {
+		return errors.New("cannot read shared jcode swarm routing")
 	}
 	for _, name := range []string{"provider", "features", "agents", "hooks", "display"} {
 		if value, exists := current[name]; exists {
@@ -128,12 +143,6 @@ func jcodeApply(root string) error {
 		servers[name] = managed[name]
 	}
 	currentMCP[serverKey] = servers
-	provider := current["provider"].(map[string]any)
-	provider["default_provider"], provider["cross_provider_failover"] = "openai", "manual"
-	features := current["features"].(map[string]any)
-	features["swarm"], features["auto_poke"], features["memory"] = false, false, false
-	agents := current["agents"].(map[string]any)
-	agents["memory_sidecar_enabled"], agents["swarm_max_concurrent_agents"] = false, int64(1)
 	quote := func(s string) string { return "'" + strings.ReplaceAll(s, "'", `'"'"'`) + "'" }
 	if hooks := current["hooks"].(map[string]any); hooks["post_tool_feedback"] == quote(node)+" "+quote(filepath.Join(dataDir, "lens/hooks.mjs")) {
 		delete(hooks, "post_tool_feedback")
@@ -149,10 +158,11 @@ func jcodeApply(root string) error {
 		{path: voicePath, data: voiceSource, mode: 0600, backup: privateBackup("jcode", voicePath), backupPrivate: true, expect: true, expected: priorVoice},
 		{path: mcpPath, data: encode(currentMCP), mode: 0600, backup: privateBackup("jcode", mcpPath), backupPrivate: true, expect: true, expected: priorMCP},
 		{path: configPath, data: config, mode: 0600, backup: privateBackup("jcode", configPath), backupPrivate: true, expect: true, expected: priorConfig},
+		{path: filepath.Join(configDir, "swarm-prompt.md"), link: policyPath, backup: privateBackup("jcode", filepath.Join(configDir, "swarm-prompt.md")), backupPrivate: true},
 	}); err != nil {
 		return err
 	}
-	fmt.Println("jcode: original MCP tools connected; Codex only, background agents disabled")
+	fmt.Println("jcode: shared settings, swarm routing and MCP tools applied")
 	return nil
 }
 
