@@ -53,6 +53,7 @@ alias cat='bat --style=plain'
 alias l='nls'
 alias c='clear'
 alias lg='lazygit'
+alias jx5='env JCODE_RUNTIME_DIR="$HOME/.jcode/runtime-x5" jcode --socket "$HOME/.jcode/runtime-x5/jcode.sock" --provider-profile x5-copilot --model x5-airun-code-large'
 alias gaa='git add -A'
 
 alias ..='cd ..'
