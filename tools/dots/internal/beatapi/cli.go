@@ -28,14 +28,14 @@ const help = `Usage: dots-tools proxy beatapi <command>
   key [--stdin]      Save/rotate the BeatAPI key
   openrouter-key [--stdin]  Save/rotate OpenRouter key; use d1-ultra first
   status             Read-only local configuration/service/health checks
-  doctor             One paid Jev request, 15s limit; uses BeatAPI balance
+  doctor             One local Jev request, 15s limit; uses provider balance
   restart            Restart only the BeatAPI LaunchAgent
   stop               Unload and remove only this LaunchAgent; retain key/jg
   serve [--config ABSOLUTE_PATH]  Run the API in the foreground
 
 API: http://127.0.0.1:6446/v1 (no local authorization).
 Only listed model IDs are accepted. jg keeps its local jev-1.14 alias.
-Legacy jev-1.14-free IDs also route to paid jev-1.14 and spend balance.
+Legacy jev-1.14-free IDs use the same route and may spend provider balance.
 With an OpenRouter key: liquid/d1-ultra first, paid BeatAPI Jev as fallback.
 Without an OpenRouter key: paid BeatAPI Jev directly. Chat stays free-only.
 Outgoing traffic requires the shared dots local HTTP proxy.
@@ -303,7 +303,7 @@ func localHealth(cfg Config) bool {
 		Configured   bool
 		Capabilities []string
 	}
-	return json.NewDecoder(io.LimitReader(res.Body, 4096)).Decode(&health) == nil && health.Service == label && health.Configured && slices.Contains(health.Capabilities, "beatapi")
+	return json.NewDecoder(io.LimitReader(res.Body, 4096)).Decode(&health) == nil && health.Service == label && health.Configured && slices.Contains(health.Capabilities, "beatapi") && (cfg.OpenRouterAPIKey == "" || slices.Contains(health.Capabilities, "openrouter"))
 }
 func (c *cli) waitReady(cfg Config) error {
 	deadline := time.NewTimer(10 * time.Second)
@@ -318,7 +318,7 @@ func (c *cli) waitReady(cfg Config) error {
 		case <-c.ctx.Done():
 			return c.ctx.Err()
 		case <-deadline.C:
-			return errors.New("beatapi: local API is not ready or lacks BeatAPI support; rebuild, run dots-tools proxy beatapi restart and repeat setup (jg unchanged)")
+			return errors.New("beatapi: local API is not ready or lacks configured provider support; rebuild, run dots-tools proxy beatapi restart and repeat setup (jg unchanged)")
 		case <-tick.C:
 		}
 	}

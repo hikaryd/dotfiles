@@ -110,7 +110,11 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if path == "/health" {
-		writeJSON(w, 200, map[string]any{"service": label, "version": "1", "configured": true, "capabilities": []string{"beatapi"}, "endpoints": []string{"/v1/models", "/v1/chat/completions", "/v1/messages", "/v1/systemone"}})
+		primary, fallback := jevModel, ""
+		if c.OpenRouterAPIKey != "" {
+			primary, fallback = openRouterModel, jevModel
+		}
+		writeJSON(w, 200, map[string]any{"service": label, "version": "2", "configured": true, "capabilities": []string{"beatapi", "openrouter"}, "jev_primary": primary, "jev_fallback": fallback, "endpoints": []string{"/v1/models", "/v1/chat/completions", "/v1/messages", "/v1/systemone"}})
 		return
 	}
 	if path == "/v1/models" {
@@ -165,18 +169,24 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	endpoint := "/chat/completions"
+	provider := "BeatAPI"
+	var res *http.Response
 	if path == "/v1/systemone" {
-		endpoint = "/systemone"
+		res, provider, err = h.requestDecision(r.Context(), body, fields, c)
+		w.Header().Set("X-Dots-Jev-Provider", provider)
+		if c.OpenRouterAPIKey != "" && provider == "BeatAPI" {
+			w.Header().Set("X-Dots-Jev-Fallback", "true")
+		}
+	} else {
+		res, err = h.requestUpstream(r.Context(), "/chat/completions", body, c.APIKey)
 	}
-	res, err := h.requestUpstream(r.Context(), endpoint, body, c.APIKey)
 	if err != nil {
 		status := 502
 		var timeout net.Error
 		if errors.As(err, &timeout) && timeout.Timeout() {
 			status = 504
 		}
-		apiError(w, anthropic, status, "BeatAPI transport unavailable or timed out; check the outgoing proxy")
+		apiError(w, anthropic, status, provider+" transport unavailable or timed out; check the outgoing proxy")
 		return
 	}
 	defer res.Body.Close()
@@ -188,7 +198,11 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				w.Header().Set("Retry-After", date.UTC().Format(http.TimeFormat))
 			}
 		}
-		apiError(w, anthropic, res.StatusCode, upstreamRejection(res.StatusCode))
+		message := upstreamRejection(res.StatusCode)
+		if provider == "OpenRouter" {
+			message = openRouterRejection(res.StatusCode)
+		}
+		apiError(w, anthropic, res.StatusCode, message)
 		return
 	}
 	if anthropic {

@@ -18,6 +18,8 @@ import (
 const beatKeyMessage = "BeatAPI rejected the API key; run dots-tools proxy beatapi key"
 const beatQuotaMessage = "BeatAPI usage limit reached; wait for Retry-After or check account limits"
 const beatRejectionMessage = "BeatAPI rejected the request; check model availability, key and quota"
+const openRouterKeyMessage = "OpenRouter rejected the API key; run dots-tools proxy beatapi openrouter-key"
+const openRouterRejectionMessage = "OpenRouter rejected the request; check model access, key and balance"
 
 var errNotConnected = errors.New("beatapi: jevgrep is not connected to this API")
 
@@ -31,6 +33,13 @@ func upstreamRejection(status int) string {
 	default:
 		return beatRejectionMessage
 	}
+}
+
+func openRouterRejection(status int) string {
+	if status == 401 {
+		return openRouterKeyMessage
+	}
+	return openRouterRejectionMessage
 }
 
 func jevgrepMatches(b []byte, cfg Config, model string) bool {
@@ -69,7 +78,11 @@ func (c *cli) jevgrepConnected(cfg Config) bool {
 
 // One real synthetic evaluation; unlike jg 0.8, never sleep through Retry-After.
 func (c *cli) doctor(cfg Config) error {
-	fmt.Fprintln(c.out, "Checking paid Jev through the local API (one request, 15s limit; uses BeatAPI balance)...")
+	if cfg.OpenRouterAPIKey != "" {
+		fmt.Fprintln(c.out, "Checking the Jev route (one local request, 15s limit; OpenRouter first, BeatAPI fallback; uses provider balance)...")
+	} else {
+		fmt.Fprintln(c.out, "Checking paid Jev through the local API (one request, 15s limit; uses BeatAPI balance)...")
+	}
 	ctx, cancel := context.WithTimeout(c.ctx, 15*time.Second)
 	defer cancel()
 	body := fmt.Sprintf(`{"model":%q,"state":{"source":"export function recordEvent(event) { events.push(event); }"},"questions":{"relevant":{"type":"noul","instructions":"Does this source implement recording an event?"}}}`, jevModel)
@@ -91,7 +104,7 @@ func (c *cli) doctor(cfg Config) error {
 		json.Unmarshal(b, &payload)
 		message := "check model access, key and quota"
 		switch payload.Error.Message {
-		case beatKeyMessage, beatQuotaMessage, beatRejectionMessage:
+		case beatKeyMessage, beatQuotaMessage, beatRejectionMessage, openRouterKeyMessage, openRouterRejectionMessage:
 			message = payload.Error.Message
 		}
 		fmt.Fprintf(c.out, "Jev check failed: HTTP %d; %s\n", res.StatusCode, message)
@@ -115,6 +128,16 @@ func (c *cli) doctor(cfg Config) error {
 	if answer.Type != "noul" || answer.Noul <= 0.5 || answer.Noul > 1 {
 		return errors.New("beatapi: invalid Jev response; synthetic question did not pass")
 	}
+	provider := res.Header.Get("X-Dots-Jev-Provider")
+	if cfg.OpenRouterAPIKey != "" && provider != "OpenRouter" && provider != "BeatAPI" {
+		return errors.New("beatapi: local API cannot identify the Jev provider; rebuild and run dots-tools proxy beatapi restart")
+	}
 	fmt.Fprintln(c.out, "Jev access verified through the local API.")
+	if provider == "OpenRouter" || provider == "BeatAPI" {
+		if res.Header.Get("X-Dots-Jev-Fallback") == "true" {
+			provider += " (fallback)"
+		}
+		fmt.Fprintf(c.out, "Answered by: %s\n", provider)
+	}
 	return nil
 }
