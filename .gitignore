@@ -50,10 +50,6 @@ config/pi/*.bak-*
 /config/jcode/mcp.local.json
 /config/jcode/mcp.private.json
 /.mcp.json
-/opencode.json
-/opencode.jsonc
-/config/opencode/opencode.json
-/config/opencode/opencode.jsonc
 # These reproducibility inputs override the personal global package-lock ignore.
 !/config/jcode/package-lock.json
 
