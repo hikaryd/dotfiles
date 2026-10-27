@@ -31,7 +31,8 @@ if not isinstance(model, str) or not model.strip() or model.strip().lower() in {
         'Choose an explicit model and effort for this delegation and retry. '
         'Use x5-copilot:x5-airun-code-large with effort max for well-specified work, '
         'openai-oauth:gpt-6.1-sol with effort low for paid work, '
-        'openai-oauth:gpt-6.1-sol with effort xhigh for review, '
+        'openai-oauth:gpt-6.1-sol with effort low for routine-reviewer, '
+        'openai-oauth:gpt-6.1-sol with effort xhigh for adversarial-reviewer, '
         'or openai-oauth:gpt-6.1-terra with effort low when appropriate. '
         'A reused worker keeps its current model and effort.',
         file=sys.stderr,
@@ -39,9 +40,14 @@ if not isinstance(model, str) or not model.strip() or model.strip().lower() in {
     sys.exit(2)
 
 label = payload.get('label')
-if action == 'spawn' and isinstance(label, str) and label.strip().lower() == 'reviewer':
-    if model.strip() != 'openai-oauth:gpt-6.1-sol' or payload.get('effort') != 'xhigh':
-        print('Use openai-oauth:gpt-6.1-sol with effort xhigh for reviewer and retry.', file=sys.stderr)
+review_effort = {
+    'routine-reviewer': 'low',
+    'adversarial-reviewer': 'xhigh',
+    'reviewer': 'xhigh',
+}.get(label.strip().lower()) if isinstance(label, str) else None
+if action == 'spawn' and review_effort is not None:
+    if model.strip() != 'openai-oauth:gpt-6.1-sol' or payload.get('effort') != review_effort:
+        print(f'Use openai-oauth:gpt-6.1-sol with effort {review_effort} for {label.strip()} and retry.', file=sys.stderr)
         sys.exit(2)
     sys.exit(0)
 

@@ -53,6 +53,57 @@ class SwarmModelGateTests(unittest.TestCase):
                 self.assertEqual(result.returncode, 2, result.stderr)
                 self.assertIn('xhigh', result.stderr)
 
+    def test_review_tiers_accept_only_their_sol_effort(self):
+        for label, effort in (
+            ('routine-reviewer', 'low'),
+            ('adversarial-reviewer', 'xhigh'),
+            ('reviewer', 'xhigh'),
+            (' ROUTINE-REVIEWER ', 'low'),
+            (' Adversarial-Reviewer ', 'xhigh'),
+        ):
+            with self.subTest(label=label, effort=effort):
+                result = run_hook('swarm', {
+                    'action': 'spawn', 'label': label,
+                    'model': 'openai-oauth:gpt-6.1-sol', 'effort': effort,
+                })
+                self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_review_tiers_reject_wrong_effort_or_provider(self):
+        for label, expected in (
+            ('routine-reviewer', 'low'),
+            ('adversarial-reviewer', 'xhigh'),
+            ('reviewer', 'xhigh'),
+        ):
+            for effort in (None, 'none', 'low', 'medium', 'high', 'xhigh', 'max'):
+                if effort == expected:
+                    continue
+                with self.subTest(label=label, effort=effort):
+                    result = run_hook('swarm', {
+                        'action': 'spawn', 'label': label,
+                        'model': 'openai-oauth:gpt-6.1-sol', 'effort': effort,
+                    })
+                    self.assertEqual(result.returncode, 2, result.stderr)
+                    self.assertIn(expected, result.stderr)
+            for model, effort in (
+                ('openai-oauth:gpt-6.1-terra', 'low'),
+                ('x5-copilot:x5-airun-code-large', 'max'),
+                ('another-profile:gpt-6.1-sol', expected),
+            ):
+                with self.subTest(label=label, model=model):
+                    result = run_hook('swarm', {
+                        'action': 'spawn', 'label': label,
+                        'model': model, 'effort': effort,
+                    })
+                    self.assertEqual(result.returncode, 2, result.stderr)
+                    self.assertIn('openai-oauth:gpt-6.1-sol', result.stderr)
+
+    def test_x5_precheck_is_not_an_independent_reviewer(self):
+        result = run_hook('swarm', {
+            'action': 'spawn', 'label': 'review-precheck',
+            'model': 'x5-copilot:x5-airun-code-large', 'effort': 'max',
+        })
+        self.assertEqual(result.returncode, 0, result.stderr)
+
     def test_paid_workers_require_low_effort(self):
         for model in ('openai-oauth:gpt-6.1-sol', 'openai-oauth:gpt-6.1-terra'):
             for effort in (None, 'none', 'medium', 'high', 'xhigh', 'max'):

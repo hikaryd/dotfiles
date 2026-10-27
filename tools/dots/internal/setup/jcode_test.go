@@ -121,13 +121,35 @@ func TestJcodeInstalledGateRunsFromQuotedPath(t *testing.T) {
 		t.Fatal(err)
 	}
 	hooks := config["hooks"].(map[string]any)["pre_tool"].([]any)
-	command := exec.Command("/bin/sh", "-c", hooks[0].(string))
-	command.Env = append(os.Environ(), "JCODE_HOOK_TOOL_NAME=swarm")
-	command.Stdin = strings.NewReader(`{"action":"spawn","label":"reviewer","model":"inherit"}`)
-	output, err := command.CombinedOutput()
-	var exit *exec.ExitError
-	if !errors.As(err, &exit) || exit.ExitCode() != 2 || !strings.Contains(string(output), "gpt-6.1-sol") {
-		t.Fatalf("installed gate did not reject inherited reviewer: %v %s", err, output)
+	for _, test := range []struct {
+		name    string
+		payload string
+		code    int
+	}{
+		{"inherited", `{"action":"spawn","label":"reviewer","model":"inherit"}`, 2},
+		{"routine", `{"action":"spawn","label":"routine-reviewer","model":"openai-oauth:gpt-6.1-sol","effort":"low"}`, 0},
+		{"routine cannot escalate silently", `{"action":"spawn","label":"routine-reviewer","model":"openai-oauth:gpt-6.1-sol","effort":"xhigh"}`, 2},
+		{"adversarial", `{"action":"spawn","label":"adversarial-reviewer","model":"openai-oauth:gpt-6.1-sol","effort":"xhigh"}`, 0},
+		{"adversarial cannot downgrade", `{"action":"spawn","label":"adversarial-reviewer","model":"openai-oauth:gpt-6.1-sol","effort":"low"}`, 2},
+		{"legacy reviewer", `{"action":"spawn","label":"reviewer","model":"openai-oauth:gpt-6.1-sol","effort":"xhigh"}`, 0},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			command := exec.Command("/bin/sh", "-c", hooks[0].(string))
+			command.Env = append(os.Environ(), "JCODE_HOOK_TOOL_NAME=swarm")
+			command.Stdin = strings.NewReader(test.payload)
+			output, err := command.CombinedOutput()
+			code := 0
+			if err != nil {
+				var exit *exec.ExitError
+				if !errors.As(err, &exit) {
+					t.Fatal(err)
+				}
+				code = exit.ExitCode()
+			}
+			if code != test.code || code == 2 && !strings.Contains(string(output), "gpt-6.1-sol") {
+				t.Fatalf("installed gate returned %d, want %d: %s", code, test.code, output)
+			}
+		})
 	}
 }
 
