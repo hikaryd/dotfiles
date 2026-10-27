@@ -44,6 +44,16 @@ config/pi/*.bak-*
 /config/jcode/auth.json
 /config/jcode/**/web-search.json
 /config/jcode/**/.env*
+/config/jcode/**/*.headers
+/config/jcode/nebula/
+/config/jcode/mcp-remote-auth/
+/config/jcode/mcp.local.json
+/config/jcode/mcp.private.json
+/.mcp.json
+/opencode.json
+/opencode.jsonc
+/config/opencode/opencode.json
+/config/opencode/opencode.jsonc
 # These reproducibility inputs override the personal global package-lock ignore.
 !/config/jcode/package-lock.json
 
