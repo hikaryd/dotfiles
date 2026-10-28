@@ -29,11 +29,11 @@ model = payload.get('model')
 if not isinstance(model, str) or not model.strip() or model.strip().lower() in {'inherit', 'coordinator'}:
     print(
         'Choose an explicit model and effort for this delegation and retry. '
-        'Use x5-copilot:x5-airun-code-large with effort max for well-specified work, '
-        'openai-oauth:gpt-6.1-sol with effort low for paid work, '
+        'Use x5-copilot:x5-airun-code-large with effort max for very simple mechanical work, '
+        'openai-oauth:gpt-6.1-terra with effort low for normal implementation, '
+        'openai-oauth:gpt-6.1-sol with effort low for unresolved design or integration, '
         'openai-oauth:gpt-6.1-sol with effort low for routine-reviewer, '
-        'openai-oauth:gpt-6.1-sol with effort xhigh for adversarial-reviewer, '
-        'or openai-oauth:gpt-6.1-terra with effort low when appropriate. '
+        'or openai-oauth:gpt-6.1-sol with effort xhigh for adversarial-reviewer. '
         'A reused worker keeps its current model and effort.',
         file=sys.stderr,
     )
