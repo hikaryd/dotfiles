@@ -131,6 +131,30 @@ func readRows[T any](r *Runtime, args ...string) ([]T, string, error) {
 	}
 	return rows, out, nil
 }
+func sameWindowTopology(a, b string) bool {
+	var left, right []map[string]json.RawMessage
+	if json.Unmarshal([]byte(a), &left) != nil || json.Unmarshal([]byte(b), &right) != nil || len(left) == 0 || len(left) != len(right) {
+		return false
+	}
+	// OSC window titles animate independently of topology. Keep the first captured name.
+	for _, rows := range [][]map[string]json.RawMessage{left, right} {
+		for _, row := range rows {
+			raw := bytes.TrimSpace(row["window_name"])
+			var name string
+			if len(raw) < 2 || raw[0] != '"' || json.Unmarshal(raw, &name) != nil || !cleanText(name, 512) {
+				return false
+			}
+			delete(row, "window_name")
+		}
+	}
+	x, err := json.Marshal(left)
+	if err != nil {
+		return false
+	}
+	y, err := json.Marshal(right)
+	return err == nil && bytes.Equal(x, y)
+}
+
 func (r *Runtime) Capture() (Snapshot, error) {
 	v := Snapshot{Version: 1}
 	roots := map[string]int{}
@@ -211,7 +235,7 @@ func (r *Runtime) Capture() (Snapshot, error) {
 		if e != nil {
 			return v, e
 		}
-		if again != q.raw {
+		if again != q.raw && !(q.args[0] == "list-windows" && sameWindowTopology(q.raw, again)) {
 			return v, errors.New("rmux changed during capture, keeping last good snapshot")
 		}
 	}
