@@ -142,8 +142,7 @@ cask "mos"
 cask "karabiner-elements"
 cask "duongductrong/snapzy/snapzy"
 cask "abue-ammar/tinycast/tinycast" # Native launcher; Option+A
-cask "logi-options+"
-cask "logitech-options"
+cask "openlogi"
 cask "sf-symbols" # Apple's symbol browser app, not a terminal font
 
 # Шрифты Ghostty
