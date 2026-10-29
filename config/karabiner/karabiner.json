@@ -55,6 +55,27 @@
                                                  ]
                                           }
                                    ]
+                            },
+                            {
+                                   "identifiers": {
+                                          "is_keyboard": true,
+                                          "is_pointing_device": true,
+                                          "product_id": 33398,
+                                          "vendor_id": 9306
+                                   },
+                                   "ignore": false,
+                                   "simple_modifications": [
+                                          {
+                                                 "from": {
+                                                        "key_code": "right_option"
+                                                 },
+                                                 "to": [
+                                                        {
+                                                               "apple_vendor_top_case_key_code": "keyboard_fn"
+                                                        }
+                                                 ]
+                                          }
+                                   ]
                             }
                      ],
                      "name": "Default",
