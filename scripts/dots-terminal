@@ -26,6 +26,15 @@ fi
 PATH="$HOME/.local/bin:/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:${PATH:-/usr/bin:/bin}"
 export PATH
 if [ "$#" -gt 0 ]; then exec "$rmux" "$@"; fi
+state_dir="${XDG_STATE_HOME:-$HOME/.local/state}/rmux"
+if [ -f "$state_dir/enabled" ] && [ ! -L "$state_dir/enabled" ]; then
+  version=
+  IFS= read -r version < "$state_dir/enabled" || :
+  helper="$HOME/.local/bin/dots-tools"
+  if [ "$version" = v1 ] && [ -x "$helper" ]; then
+    "$helper" rmux-state restore --state-dir "$state_dir" --rmux-bin "$rmux" --config "$config" || exit "$?"
+  fi
+fi
 if "$rmux" has-session 2>/dev/null; then
   # Existing daemons may have loaded tmux.conf before rmux was configured.
   # Source bindings once, without replacing panes or resetting runtime styles.

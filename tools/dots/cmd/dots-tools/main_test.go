@@ -8,6 +8,19 @@ import (
 	"testing"
 )
 
+func TestRmuxStateDispatchDoesNotApplyOnHelp(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	code, out, diagnostic := captureDispatch(t, t.TempDir(), "dots-tools", []string{"rmux-state", "--help"})
+	if code != 0 || !strings.Contains(out, "save|restore|status|install") || diagnostic != "" {
+		t.Fatalf("dispatch: %d %q %q", code, out, diagnostic)
+	}
+	entries, _ := os.ReadDir(home)
+	if len(entries) != 0 {
+		t.Fatal("help changed HOME")
+	}
+}
+
 func captureDispatch(t *testing.T, root, name string, args []string) (int, string, string) {
 	t.Helper()
 	outR, outW, err := os.Pipe()

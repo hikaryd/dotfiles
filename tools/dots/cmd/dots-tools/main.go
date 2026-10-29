@@ -12,6 +12,7 @@ import (
 	"dots/native/internal/desktop"
 	"dots/native/internal/palette"
 	"dots/native/internal/proxy"
+	"dots/native/internal/rmuxstate"
 	"dots/native/internal/setup"
 	"dots/native/internal/uicli"
 	"dots/native/internal/vpn"
@@ -47,11 +48,13 @@ func dispatch(root, name string, args []string) int {
 		return runVPN(root, args)
 	}
 	if len(args) == 0 || args[0] == "-h" || args[0] == "--help" || args[0] == "help" {
-		fmt.Println("Usage: dots-tools desktop|setup|agents|proxy|palette|vpn|anime|ui <command> [args]")
+		fmt.Println("Usage: dots-tools desktop|setup|agents|proxy|palette|vpn|anime|ui|rmux-state <command> [args]")
 		fmt.Println("Aliases: dots, dots-nu, ai_helper, dots-vpn")
 		return 0
 	}
 	switch args[0] {
+	case "rmux-state":
+		return rmuxstate.Run(args[1:], os.Stdout, os.Stderr)
 	case "anime":
 		return anime.Run(root, args[1:])
 	case "ui":

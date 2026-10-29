@@ -79,4 +79,36 @@ LAUNCH_EXIT=23 sh "$root/scripts/dots-terminal" > "$work/output"
 status=$?
 set -e
 [[ $status -eq 23 ]]
+mkdir -p "$HOME/.local/state/rmux"
+cat > "$HOME/.local/bin/dots-tools" <<'SH'
+#!/bin/sh
+/usr/bin/env | /usr/bin/sort
+printf 'STATE_ARG=<%s>\n' "$@"
+exit "${RESTORE_EXIT:-0}"
+SH
+chmod +x "$HOME/.local/bin/dots-tools"
+printf 'v1\n%s\n' "$HOME/.local/bin/dots-tools" > "$HOME/.local/state/rmux/enabled"
+sh "$root/scripts/dots-terminal" > "$work/output"
+grep -Fx 'STATE_ARG=<restore>' "$work/output"
+grep -Fx "STATE_ARG=<$HOME/.local/state/rmux>" "$work/output"
+grep -Fx "STATE_ARG=<$HOME/.config/rmux/rmux.conf>" "$work/output"
+check_clean
+sh "$root/scripts/dots-terminal" new-session -s 'literal ; spaces' > "$work/output"
+grep -Fx 'RMUX_ARG=<literal ; spaces>' "$work/output"
+if grep -F 'STATE_ARG=' "$work/output"; then printf 'FAIL explicit command restored state\n' >&2; exit 1; fi
+set +e
+RESTORE_EXIT=29 sh "$root/scripts/dots-terminal" > "$work/output"
+status=$?
+set -e
+[[ $status -eq 29 ]]
+if grep -F 'RMUX_ARG=' "$work/output"; then printf 'FAIL restore error still created session\n' >&2; exit 1; fi
+rm "$HOME/.local/bin/dots-tools"
+sh "$root/scripts/dots-terminal" > "$work/output"
+grep -Fx 'RMUX_ARG=<new-session>' "$work/output"
+export XDG_CONFIG_HOME="$HOME/active config" XDG_STATE_HOME="$HOME/active state"
+mkdir -p "$XDG_CONFIG_HOME/rmux" "$XDG_STATE_HOME/rmux"
+touch "$XDG_CONFIG_HOME/rmux/rmux.conf"
+sh "$root/scripts/dots-terminal" > "$work/output"
+grep -Fx "RMUX_ARG=<$XDG_CONFIG_HOME/rmux/rmux.conf>" "$work/output"
+if grep -F 'STATE_ARG=' "$work/output"; then printf 'FAIL inactive marker restored state\n' >&2; exit 1; fi
 printf 'PASS GUI launcher: rmux attach/create, no legacy fallback, clean context, arguments and exit status\n'
