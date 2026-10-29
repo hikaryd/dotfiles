@@ -1,5 +1,12 @@
 Include ~/dots/config/ssh/phone-owner.local.conf
 
+Host maimai-pc
+    HostName 100.86.201.94
+    User maimai
+    IdentityFile ~/.ssh/maimai_pc
+    IdentitiesOnly yes
+    ForwardAgent no
+
 Host *
     ForwardAgent yes
     AddKeysToAgent yes
