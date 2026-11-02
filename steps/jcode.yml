@@ -9,6 +9,10 @@
       description: Install Ponytail skills for Jcode
       stdout: true
       stderr: true
+    - command: DISABLE_TELEMETRY=1 npx --yes skills@1.7.4 add https://github.com/heydamir/unslop/tree/a6f121eee5f29c2f74976b75456feae8b66afb3a --global --agent universal --skill unslop --yes
+      description: Install Unslop UI design skill for Jcode
+      stdout: true
+      stderr: true
     - command: |
         set -eu
         umask 077
