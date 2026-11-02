@@ -9,6 +9,16 @@
       description: Install Ponytail skills for Jcode
       stdout: true
       stderr: true
+    - command: |
+        set -eu
+        umask 077
+        config_dir="${JCODE_HOME:-$HOME/.jcode}"
+        mkdir -p "$config_dir"
+        guidance='At the start of every new Jcode session, before responding or starting task work, load the installed `ponytail` skill with `skill_manage` (`action: "load", name: "ponytail"`). Apply `full` mode unless the user chooses another level or disables Ponytail. This also applies to swarm workers.'
+        grep -Fqx "$guidance" "$config_dir/prompt-overlay.md" 2>/dev/null || printf '\n%s\n' "$guidance" >> "$config_dir/prompt-overlay.md"
+      description: Load Ponytail automatically in every Jcode session
+      stdout: true
+      stderr: true
     - command: scripts/jcode-install.sh
       description: Set up Codex-only jcode and local Neo4j
       stdout: true
