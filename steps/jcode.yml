@@ -9,10 +9,6 @@
       description: Install Ponytail skills for Jcode
       stdout: true
       stderr: true
-    - command: DISABLE_TELEMETRY=1 npx --yes skills@1.7.4 add https://github.com/theclaymethod/unslop/tree/17ed39c9d0b522f44190ff0c6233867eadee192a --global --agent universal --skill unslop --yes
-      description: Install Unslop skill for Jcode
-      stdout: true
-      stderr: true
     - command: scripts/jcode-install.sh
       description: Set up Codex-only jcode and local Neo4j
       stdout: true
