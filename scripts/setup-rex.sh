@@ -12,6 +12,7 @@ if [[ ! -x "$HOME/.local/bin/dots-tools" ]]; then
 fi
 
 domain=com.superlogical.rex
+defaults write "$domain" Workspace.tabStyle -string horizontal
 defaults write "$domain" Workspace.terminalStartupCommand -string "\"$HOME/.local/bin/dots-tools\" desktop nu"
 defaults write "$domain" Workspace.terminalFontName -string SFMono-Regular
 defaults write "$domain" Workspace.terminalFontPointSize -float 15

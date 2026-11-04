@@ -37,6 +37,7 @@ STUB
   HOME="$home" bash scripts/setup-rex.sh
   grep -Fx "write com.superlogical.rex Workspace.terminalStartupCommand -string \"$home/.local/bin/dots-tools\" desktop nu" "$log"
   grep -Fx 'write com.superlogical.rex Workspace.terminalFontPointSize -float 15' "$log"
+  grep -Fx 'write com.superlogical.rex Workspace.tabStyle -string horizontal' "$log"
   grep -Fx 'write com.superlogical.rex Workspace.terminalCellHeightPercent -float 12' "$log"
   grep -Fx "do -C client:test client.theme.import path=$home/.config/rex/ayu-dark" "$REX_CALLS"
   HOME="$home" REX_IMPORT_EXIT=1 bash scripts/setup-rex.sh | grep -F 'Ayu import pending:'
