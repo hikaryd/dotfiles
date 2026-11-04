@@ -70,6 +70,24 @@ func TestNativeSelectorControlNavigation(t *testing.T) {
 	}
 }
 
+func TestNativeSelectorRussianSearchIsNotControlNavigation(t *testing.T) {
+	for _, tc := range []struct{ query, want string }{{"т", "тема\n"}, {"з", "заметка\n"}} {
+		t.Run(tc.query, func(t *testing.T) {
+			cmd := command(t, "select", "--title", "Search")
+			cmd.Stdin = strings.NewReader("тема\nзаметка\n")
+			var output bytes.Buffer
+			cmd.Stdout = &output
+			p := testpty.Start(t, cmd)
+			p.Screen("Search")
+			p.Send(tc.query + "\r")
+			p.Wait(0)
+			if output.String() != tc.want {
+				t.Fatalf("search selected %q, want %q", output.String(), tc.want)
+			}
+		})
+	}
+}
+
 func TestNativeSecretInputPasteClearResizeAndCancel(t *testing.T) {
 	for _, cancel := range []bool{false, true} {
 		cmd := command(t, "input", "--secret", "--title", "Credential")

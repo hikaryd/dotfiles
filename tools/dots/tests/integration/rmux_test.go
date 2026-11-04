@@ -116,6 +116,26 @@ func TestRmuxRealTerminalWorkflow(t *testing.T) {
 		}
 	}()
 	await("native task title", func() bool { return ctl("display-message", "-p", "-t", pane, "#{pane_title}") == "Задача rmux" })
+	ctl("set-window-option", "-t", pane, "automatic-rename", "on")
+	for _, title := range []struct{ input, want string }{
+		{"Задача агента · +1838 -586 · last ~1m20s", "Задача агента"},
+		{"Новая задача · +1 -0 · work ~10s", "Новая задача"},
+		{"Обычное название", "Обычное название"},
+		{strings.Repeat("長", 30), strings.Repeat("長", 20)},
+	} {
+		ctl("send-keys", "-t", pane, "printf '\\033]0;"+title.input+"\\007'", "Enter")
+		await("concise agent tab title", func() bool {
+			return ctl("display-message", "-p", "-t", pane, "#{window_name}") == title.want
+		})
+	}
+	ctl("rename-window", "-t", pane, "manual")
+	ctl("send-keys", "-t", pane, "printf '\\033]0;Не перезаписывать · +1\\007'", "Enter")
+	await("manual name source title", func() bool {
+		return ctl("display-message", "-p", "-t", pane, "#{pane_title}") == "Не перезаписывать · +1"
+	})
+	if got := ctl("display-message", "-p", "-t", pane, "#{window_name}"); got != "manual" {
+		t.Fatalf("agent overwrote manual tab name: %q", got)
+	}
 	// Use the real profile's popup binding, with a bounded test command replacing
 	// only the external dots executable at the PATH boundary.
 	f.write(filepath.Join(f.bin, "dots"), "#!/bin/sh\n[ -z \"$DOTS_SOURCE_PANE\" ] || printf '%s\\n' \"$DOTS_SOURCE_PANE\" > \"$HOME/popup-source\"\nexec /bin/sleep 30\n", 0700)
