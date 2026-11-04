@@ -99,28 +99,38 @@ rex.action{
 bind("shift+[KeyL]", "dots_last_session")
 local function tool(name, title, key, command)
   local function run(ctx)
-    if type(ctx) ~= "table" or type(ctx.session_id) ~= "string" or ctx.session_id == "" then
+    if type(ctx) ~= "table" or type(ctx.session_id) ~= "string" or ctx.session_id == "" or type(ctx.block_id) ~= "string" or ctx.block_id == "" then
       error("Missing tool session context", 0)
+    end
+    local source, err = rex.session.describe_block{ session_id = ctx.session_id, block_id = ctx.block_id }
+    if not source then error(err or "Missing tool window context", 0) end
+    local block = type(source) == "table" and source.block
+    if type(block) ~= "table" or block.block_id ~= ctx.block_id or type(block.window_id) ~= "string" or block.window_id == "" then
+      error("Missing tool window context", 0)
     end
     local process, err = rex.block.call("com.superlogical.terminal", "process", { block_id = ctx.block_id })
     if not process then error(err, 0) end
     local cwd = (process.foreground or {}).cwd or (process.child or {}).cwd
     if not cwd then error("Cannot determine the current pane's directory", 0) end
-    local window
-    window, err = rex.session.new_window{
-      window_label = title,
-      focus = false,
+    local layer
+    layer, err = rex.session.new_layer{
+      session_id = ctx.session_id,
+      window_id = block.window_id,
+      bounds = { 0.05, 0.05, 0.9, 0.9 },
+      focus = true,
       layout = rex.layout.block{
         flavor = "com.superlogical.terminal.shell",
+        label = title,
         options = {
           shell = "none", command = command, cwd = cwd,
           path_prepend = { home .. "/.local/bin", "/opt/homebrew/bin", "/usr/local/bin" },
+          exit = { on_completion = true },
         },
       },
     }
-    if not window then error(err, 0) end
-    rex.client.queue("session.select", { session_id = ctx.session_id, window_id = window.window_id })
-    return window
+    if not layer then error(err, 0) end
+    rex.client.queue("session.select", { session_id = ctx.session_id, window_id = block.window_id })
+    return layer
   end
   rex.action{
     name = name,

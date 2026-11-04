@@ -31,10 +31,11 @@ rex = {
     if description_throws then error(description_throws, 0) end
     return description, description_error
   end, close_window = function(args) return close("session.close_window", args) end,
-  new_window = function(args)
+  new_window = function() error("Tools must not create tabs") end,
+  new_layer = function(args)
     created = args
     if window_error then return nil, window_error end
-    return { window_id = "new", block_ids = { "tool" } }
+    return { layer_id = "floating", block_ids = { "tool" } }
   end },
 }
 dofile("config/rex/init.lua")
@@ -134,12 +135,17 @@ end
 description = { block = { block_id = "source" } }
 fails_close(ctx, { target = "window" }, "window context", 0, 1)
 local home = assert(os.getenv("HOME"))
+reset()
 process = { foreground = { cwd = "/repo with spaces/'$(literal)'" } }
 for _, name in ipairs({ "git", "clip" }) do
   queued = nil
-  assert(actions[name].run(ctx).window_id == "new")
-  assert(queued.action == "session.select" and queued.args.session_id == "session" and queued.args.window_id == "new")
-  assert(created.focus == false and created.layout.options.cwd == process.foreground.cwd)
+  assert(actions[name].run(ctx).layer_id == "floating")
+  assert(queued.action == "session.select" and queued.args.session_id == "session" and queued.args.window_id == "source-window")
+  assert(created.session_id == "session" and created.window_id == "source-window")
+  assert(equal(created.bounds, { 0.05, 0.05, 0.9, 0.9 }))
+  assert(created.focus == true and created.layout.options.cwd == process.foreground.cwd)
+  assert(created.layout.label == (name == "git" and "Lazygit" or "Clipboard"))
+  assert(created.layout.options.exit.on_completion == true)
   assert(created.layout.options.shell == "none")
   local argv = created.layout.options.command
   if name == "git" then assert(argv[1] == "lazygit") else
@@ -156,6 +162,15 @@ created, queued = nil, nil
 local ok, err = pcall(actions.git.run, { block_id = "source" })
 assert(not ok and tostring(err):find("Missing tool session context", 1, true))
 assert(not created and not queued)
+for _, bad in ipairs({ true, {}, { block = false }, { block = {} }, { block = { block_id = "other", window_id = "source-window" } }, { block = { block_id = "source" } }, { block = { block_id = "source", window_id = "" } }, { block = { block_id = "source", window_id = 42 } } }) do
+  description, created, queued = bad, nil, nil
+  fails("window context")
+  assert(not created and not queued)
+end
+description, description_error = nil, "source description failed"
+fails(description_error)
+assert(not created)
+reset()
 process, process_error = nil, "source pane disappeared"
 fails(process_error)
 assert(not created)

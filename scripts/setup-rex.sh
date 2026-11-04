@@ -14,6 +14,9 @@ fi
 domain=com.superlogical.rex
 defaults write "$domain" Workspace.tabStyle -string horizontal
 defaults write "$domain" Workspace.appearance -string dark
+defaults write "$domain" Workspace.interfaceStyle -string blendTheme
+defaults write "$domain" Workspace.usesPaneGlass -bool true
+defaults write "$domain" Workspace.showsPaneHeaders -bool false
 defaults write "$domain" Workspace.terminalImproveTextContrast -bool true
 defaults write "$domain" Workspace.terminalStartupCommand -string "\"$HOME/.local/bin/dots-tools\" desktop nu"
 defaults write "$domain" Workspace.terminalFontName -string SFMono-Regular
