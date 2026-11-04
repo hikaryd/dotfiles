@@ -13,9 +13,6 @@ $env.PATH = ($env.PATH | prepend [
   ($nu.home-dir | path join ".bun/bin")
   "/opt/homebrew/bin" "/opt/homebrew/sbin" "/usr/local/bin"
 ] | uniq)
-if ($env.REX_BIN_DIR? | default "") != "" {
-  $env.PATH = ($env.PATH | prepend $env.REX_BIN_DIR | uniq)
-}
 $env.config = ($env.config | merge {
   show_banner: false
   table: {mode: light, index_mode: auto, header_on_separator: false, missing_value_symbol: "—"}

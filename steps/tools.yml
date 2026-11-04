@@ -3,23 +3,10 @@
     ~/.agents/skills/peekaboo:
       path: config/peekaboo/skill
       create: true
-    ~/.config/rex/init.lua:
-      path: config/rex/init.lua
-      create: true
-      force: false
     ~/.local/bin/dots-tools:
       path: build/bin/dots-tools
       create: true
       force: false
-    ~/.config/rex/ayu-dark:
-      path: config/rex/ayu-dark
-      create: true
-      force: false
-    ~/.local/bin/rex:
-      path: /Applications/Rex Beta.app/Contents/Helpers/Rex Server.rex/Contents/MacOS/rex
-      create: true
-      force: false
-      if: test -x '/Applications/Rex Beta.app/Contents/Helpers/Rex Server.rex/Contents/MacOS/rex'
     # Ghostty terminal
     ~/.config/ghostty/config:
       path: config/ghostty/config
@@ -81,14 +68,6 @@
       create: true
       force: true
 - shell:
-    - command: bash scripts/setup-rex-last-session.sh
-      description: Install Rex last-session helper
-      stdout: true
-      stderr: true
-    - command: bash scripts/setup-rex.sh
-      description: Configure Rex typography, Nushell and activity indicators
-      stdout: true
-      stderr: true
     - command: ./install -c steps/anicli.yml
       description: Install Russian anime CLI and AniLiberty launcher
       stdout: true
