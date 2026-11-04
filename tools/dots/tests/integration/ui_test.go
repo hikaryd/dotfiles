@@ -48,6 +48,10 @@ func TestNativeSelectorControlNavigation(t *testing.T) {
 		{"ctrl-p", "\x1b[B\x10", "first\n"},
 		{"csi-u-ctrl-n", "\x1b[110;5u", "second\n"},
 		{"csi-u-ctrl-p", "\x1b[B\x1b[112;5u", "first\n"},
+		{"modify-other-keys-ctrl-n", "\x1b[27;5;110~", "second\n"},
+		{"modify-other-keys-ctrl-p", "\x1b[B\x1b[27;5;112~", "first\n"},
+		{"ss3-ctrl-n-is-not-navigation", "\x1bO27;5;110~", "first\n"},
+		{"ss3-ctrl-p-is-not-navigation", "\x1b[B\x1bO27;5;112~", "second\n"},
 		{"pasted-controls-are-not-navigation", "\x1b[200~\x0e\x10\x1b[201~", "first\n"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {

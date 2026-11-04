@@ -58,6 +58,8 @@ keybind = ctrl+key_h=text:\x08
 keybind = ctrl+key_j=text:\x0a
 keybind = ctrl+key_k=text:\x0b
 keybind = ctrl+key_l=text:\x0c
+keybind = ctrl+key_n=text:\x0e
+keybind = ctrl+key_p=text:\x10
 keybind = ctrl+key_v=text:\x16
 keybind = ctrl+key_w=text:\x17
 keybind = ctrl+shift+key_h=csi:104;6u

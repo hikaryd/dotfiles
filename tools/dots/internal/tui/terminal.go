@@ -121,6 +121,14 @@ func Keys(ctx context.Context, input *os.File) <-chan Key {
 						send(Key{Name: "up"})
 					case "B", "110;5u":
 						send(Key{Name: "down"})
+					case "27;5;112~":
+						if second == '[' {
+							send(Key{Name: "up"})
+						}
+					case "27;5;110~":
+						if second == '[' {
+							send(Key{Name: "down"})
+						}
 					case "C":
 						send(Key{Name: "right"})
 					case "D":

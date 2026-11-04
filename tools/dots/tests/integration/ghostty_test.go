@@ -11,6 +11,20 @@ import (
 	"time"
 )
 
+func TestGhosttyControlNavigationUsesPhysicalKeys(t *testing.T) {
+	_, source, _, _ := runtime.Caller(0)
+	root := filepath.Clean(filepath.Join(filepath.Dir(source), "../../../.."))
+	data, err := os.ReadFile(filepath.Join(root, "config/ghostty/config"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, binding := range []string{`keybind = ctrl+key_n=text:\x0e`, `keybind = ctrl+key_p=text:\x10`} {
+		if !strings.Contains(string(data), binding+"\n") {
+			t.Fatalf("missing layout-independent navigation: %s", binding)
+		}
+	}
+}
+
 // Ghostty appends Nushell's --execute bootstrap to a command explicitly marked
 // as Nushell. The outer command is a multiplexer, not Nu, so that bootstrap
 // breaks the default GUI launch before any shell can start.
