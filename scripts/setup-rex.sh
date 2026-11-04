@@ -13,6 +13,8 @@ fi
 
 domain=com.superlogical.rex
 defaults write "$domain" Workspace.tabStyle -string horizontal
+defaults write "$domain" Workspace.appearance -string dark
+defaults write "$domain" Workspace.terminalImproveTextContrast -bool true
 defaults write "$domain" Workspace.terminalStartupCommand -string "\"$HOME/.local/bin/dots-tools\" desktop nu"
 defaults write "$domain" Workspace.terminalFontName -string SFMono-Regular
 defaults write "$domain" Workspace.terminalFontPointSize -float 15
@@ -41,8 +43,10 @@ if [[ -x "$rex" && -f "$theme" ]] && command -v jq >/dev/null; then
     [.clients[] | select(.info.kind == "app" and .info.platform == "macos" and .connection_state == "connected")]
     | if length == 1 then .[0].client_id else empty end') || client=""
 fi
-if [[ -n "$client" ]] && "$rex" do -C "$client" client.theme.import "path=$theme"; then
-  printf '%s\n' 'Rex Ayu theme imported.'
+if [[ -n "$client" ]] && "$rex" do -C "$client" client.theme.import "path=$theme" &&
+  "$rex" do -C "$client" client.appearance.switch_mode mode=dark &&
+  "$rex" do -C "$client" client.theme.change name=ayu-dark; then
+  printf '%s\n' 'Rex Ayu theme imported and selected.'
 else
-  printf '%s\n' 'Ayu import pending: open Rex, enable local Remote Control in Settings > Server, then rerun bash scripts/setup-rex.sh.'
+  printf '%s\n' 'Ayu setup pending: open Rex, enable local Remote Control in Settings > Server, then rerun bash scripts/setup-rex.sh.'
 fi
