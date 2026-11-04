@@ -69,6 +69,7 @@
 	diffFilter = delta --color-only
 [user]
 	name = Tronin, Egor
+	email = egor.tronin@x5.ru
 
 [include]
 	path = ~/.config/git/identity-private.inc

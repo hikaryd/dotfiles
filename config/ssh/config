@@ -1,5 +1,13 @@
 Include ~/dots/config/ssh/phone-owner.local.conf
 
+Host router
+    HostName 192.168.31.1
+    User root
+    IdentityFile ~/.ssh/id_rsa_router
+    IdentitiesOnly yes
+    HostKeyAlgorithms +ssh-rsa
+    PubkeyAcceptedAlgorithms +ssh-rsa
+
 Host maimai-pc
     HostName 100.86.201.94
     User maimai
