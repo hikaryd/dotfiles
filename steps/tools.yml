@@ -81,6 +81,10 @@
       create: true
       force: true
 - shell:
+    - command: bash scripts/setup-rex-last-session.sh
+      description: Install Rex last-session helper
+      stdout: true
+      stderr: true
     - command: bash scripts/setup-rex.sh
       description: Configure Rex typography, Nushell and activity indicators
       stdout: true

@@ -2,12 +2,24 @@
 set -euo pipefail
 root=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 cd "$root"
+(
+  uname() { echo Linux; }
+  swiftc() { echo 'unexpected compiler invocation' >&2; return 1; }
+  export -f uname swiftc
+  bash scripts/setup-rex-last-session.sh | grep -F 'skipping.'
+)
+if [[ $(uname -s) == Darwin ]]; then
+  swift_sandbox=$(mktemp -d "${TMPDIR:-/tmp}/rex-history-test.XXXXXX")
+  trap 'rm -rf "$swift_sandbox"' EXIT
+  swiftc -D TEST tools/rex-last-session/main.swift -o "$swift_sandbox/selftest"
+  REX_TEST_DIR="$swift_sandbox/state" "$swift_sandbox/selftest"
+fi
 "${LUA_BIN:-lua}" tests/test-rex.lua
 "${NU_BIN:-nu}" --no-config-file -c 'source config/nushell/config.nu; if ($env.PATH | first) == "" { error make {msg: "empty PATH"} }'
 REX_BIN_DIR='/rex server/Current/bin' "${NU_BIN:-nu}" --no-config-file -c 'source config/nushell/config.nu; if ($env.PATH | first) != $env.REX_BIN_DIR { error make {msg: "Rex PATH precedence lost"} }'
 if [[ -d /Applications/Rex\ Beta.app || -d /Applications/Rex.app ]]; then
   sandbox=$(mktemp -d "${TMPDIR:-/tmp}/rex-prefs-test.XXXXXX")
-  trap 'rm -rf "$sandbox"' EXIT
+  trap 'rm -rf "$sandbox" "${swift_sandbox:-}"' EXIT
   log="$sandbox/preferences"
   defaults() { printf '%s\n' "$*" >> "$log"; }
   export -f defaults

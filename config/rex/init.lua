@@ -68,6 +68,35 @@ rex.bind("ctrl+shift+[ArrowLeft]", "client.tab.move", { direction = "backward" }
 rex.bind("ctrl+shift+[ArrowRight]", "client.tab.move", { direction = "forward" })
 
 local home = assert(os.getenv("HOME"))
+local function session_id(id)
+  if type(id) ~= "string" then return false end
+  local uuid = id:match("^session:(%x%x%x%x%x%x%x%x%-%x%x%x%x%-%x%x%x%x%-%x%x%x%x%-%x%x%x%x%x%x%x%x%x%x%x%x)$")
+  return uuid ~= nil
+end
+rex.action{
+  name = "dots_last_session", title = "Last session", category = "Dots",
+  args = { type = "object", additionalProperties = false },
+  run = function(ctx)
+    if type(ctx) ~= "table" or not session_id(ctx.session_id) or type(ctx.client_id) ~= "string" or ctx.client_id == "" then error("Missing last-session context", 0) end
+    local result, err = rex.call("session.list", {})
+    if type(result) ~= "table" or type(result.sessions) ~= "table" then error(err or "Cannot list sessions", 0) end
+    local argv = { home .. "/.local/bin/dots-rex-last-session", "target", ctx.session_id }
+    local live = {}
+    for _, session in ipairs(result.sessions) do
+      if type(session) ~= "table" or not session_id(session.session_id) then error("Malformed session list", 0) end
+      live[session.session_id] = true
+      argv[#argv + 1] = session.session_id
+    end
+    if not live[ctx.session_id] then error("Current session is closed", 0) end
+    local output
+    output, err = rex.exec(argv, { timeout = 3 })
+    if not output or not output.ok or type(output.stdout) ~= "string" then error(err or (output and output.stderr) or "Last-session helper failed", 0) end
+    local target = output.stdout:match("^%s*(.-)%s*$")
+    if not session_id(target) or target == ctx.session_id or not live[target] then error("Invalid last-session target", 0) end
+    rex.client.queue("session.select", { session_id = target })
+  end,
+}
+bind("shift+[KeyL]", "dots_last_session")
 local function tool(name, title, key, command)
   local function run(ctx)
     if type(ctx) ~= "table" or type(ctx.session_id) ~= "string" or ctx.session_id == "" then

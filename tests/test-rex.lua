@@ -1,5 +1,6 @@
 local bindings, actions = {}, {}
 local process, process_error, window_error, created, queued
+local sessions, exec_result, exec_error, exec_args
 local description, description_error, description_throws, describes
 local closes, close_error, close_throws = {}, nil, nil
 local ctx = { session_id = "session", block_id = "source" }
@@ -10,7 +11,8 @@ local function close(method, args)
   return { revision = 1 }
 end
 rex = {
-  call = function(method, args) assert(method == "block.close") return close(method, args) end,
+  call = function(method, args) if method == "session.list" then return sessions end assert(method == "block.close") return close(method, args) end,
+  exec = function(argv, options) exec_args = { argv, options } return exec_result, exec_error end,
   bind = function(key, action, args)
     assert(not bindings[key], "duplicate binding: " .. key)
     bindings[key] = { action = action, args = args }
@@ -47,7 +49,7 @@ for key, action in pairs({
   ["[Space]"] = "pane.focus_previous", ["[Enter]"] = "pane.focus_previous", ["shift+[KeyO]"] = "client.palette.toggle",
   ["shift+[KeyP]"] = "pane.go_to_directory", ["shift+[KeyF]"] = "client.find.open",
   ["shift+[KeyB]"] = "client.sidebar.activity.toggle", ["shift+[KeyV]"] = "client.sidebar.activity.toggle",
-  ["[KeyG]"] = "git", ["shift+[KeyY]"] = "clip",
+  ["[KeyG]"] = "git", ["shift+[KeyY]"] = "clip", ["shift+[KeyL]"] = "dots_last_session",
 }) do expect(prefix .. key, action) end
 expect(prefix .. "ctrl+[KeyA]", "pane.send_key", { key = "ctrl+a" })
 expect(prefix .. "[KeyW]", "dots_close", { target = "window" })
@@ -79,11 +81,11 @@ for key, binding in pairs(expected) do
   count = count + 1
   assert(equal(bindings[key], binding), key)
 end
-assert(count == 60)
+assert(count == 61)
 for key in pairs(bindings) do assert(expected[key], "unexpected binding: " .. key) end
 count = 0
-for name in pairs(actions) do count = count + 1 assert(name == "dots_close" or name == "git" or name == "clip") end
-assert(count == 3)
+for name in pairs(actions) do count = count + 1 assert(name == "dots_close" or name == "git" or name == "clip" or name == "dots_last_session") end
+assert(count == 4)
 assert(equal(actions.dots_close.args.properties.target.enum, { "pane", "window" }))
 local function reset()
   closes, queued, describes = {}, nil, 0
@@ -168,4 +170,33 @@ assert(actions.git.run(ctx))
 assert(created.layout.options.cwd == "/fallback")
 window_error = "window creation failed"
 fails(window_error)
+local a = "session:aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+local b = "session:bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"
+local c = "session:cccccccc-cccc-cccc-cccc-cccccccccccc"
+sessions = { sessions = { { session_id = a }, { session_id = b } } }
+exec_result = { ok = true, stdout = b .. "\n" }
+local session_ctx = { session_id = a, client_id = "client:source" }
+queued = nil
+actions.dots_last_session.run(session_ctx)
+assert(equal(queued, { action = "session.select", args = { session_id = b } }))
+assert(equal(exec_args, { { home .. "/.local/bin/dots-rex-last-session", "target", a, a, b }, { timeout = 3 } }))
+local function fails_last(context)
+  queued = nil
+  local success = pcall(actions.dots_last_session.run, context)
+  assert(not success and not queued)
+end
+fails_last(nil)
+fails_last({ session_id = a, client_id = false })
+exec_result = { ok = false, stderr = "no history" }
+fails_last(session_ctx)
+exec_result = nil
+exec_error = "missing helper"
+fails_last(session_ctx)
+exec_error = nil
+for _, target in ipairs({ "garbage", a, c }) do
+  exec_result = { ok = true, stdout = target }
+  fails_last(session_ctx)
+end
+sessions = { sessions = { { session_id = b } } }
+fails_last(session_ctx)
 print("PASS Rex bindings and actions")
