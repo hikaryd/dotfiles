@@ -27,7 +27,8 @@ PATH="$HOME/.local/bin:/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:${PAT
 export PATH
 if [ "$#" -gt 0 ]; then exec "$rmux" "$@"; fi
 state_dir="${XDG_STATE_HOME:-$HOME/.local/state}/rmux"
-if [ -f "$state_dir/enabled" ] && [ ! -L "$state_dir/enabled" ]; then
+# A live server must be attached, not restored over or marked safe for autosave.
+if [ -f "$state_dir/enabled" ] && [ ! -L "$state_dir/enabled" ] && ! "$rmux" has-session 2>/dev/null; then
   version=
   IFS= read -r version < "$state_dir/enabled" || :
   helper="$HOME/.local/bin/dots-tools"

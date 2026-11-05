@@ -93,6 +93,11 @@ grep -Fx 'STATE_ARG=<restore>' "$work/output"
 grep -Fx "STATE_ARG=<$HOME/.local/state/rmux>" "$work/output"
 grep -Fx "STATE_ARG=<$HOME/.config/rmux/rmux.conf>" "$work/output"
 check_clean
+HAS_SESSION=0 RESTORE_EXIT=29 sh "$root/scripts/dots-terminal" > "$work/output"
+grep -Fx 'RMUX_ARG=<attach-session>' "$work/output"
+grep -Fx "PROFILE_SOURCE=<$HOME/.config/rmux/rmux.conf>" "$work/output"
+if grep -F 'STATE_ARG=' "$work/output"; then printf 'FAIL live server triggered state restore\n' >&2; exit 1; fi
+check_clean
 sh "$root/scripts/dots-terminal" new-session -s 'literal ; spaces' > "$work/output"
 grep -Fx 'RMUX_ARG=<literal ; spaces>' "$work/output"
 if grep -F 'STATE_ARG=' "$work/output"; then printf 'FAIL explicit command restored state\n' >&2; exit 1; fi
