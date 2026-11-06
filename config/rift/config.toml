@@ -131,6 +131,7 @@ app_rules = [
   { app_name = "Outlook", workspace = "w" },
 
   # "d": терминал
+  { app_id = "com.superlogical.rex", workspace = "d" },
   { app_name = "Ghostty", workspace = "d" },
   { app_id = "com.raphaelamorim.rio", workspace = "d" },
 ]
