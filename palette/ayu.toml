@@ -1,67 +1,67 @@
-# Ayu Theme — единый источник цветов для всех конфигов
-# https://github.com/ayu-theme
+# Vesper dark: https://github.com/advtszn/dotfiles (853097851ea2cd7965c1939dd870f24ec3148681)
+# Legacy Ayu paths and Mirage variant remain for compatibility.
 #
 # Запуск: dots-tools palette [--variant dark|mirage]
 
 [meta]
-name = "ayu"
+name = "vesper"
 default_variant = "dark"
 
 # ─── Dark ────────────────────────────────────────────────────────────────────
 
 [dark.editor]
-bg      = "#0d1017"
-fg      = "#bfbdb6"
-line    = "#161a24"
-panel   = "#141821"
+bg      = "#101010"
+fg      = "#ffffff"
+line    = "#1c1c1c"
+panel   = "#181818"
 
 [dark.ui]
-fg      = "#858d9c"
-bg      = "#0d1017"
-line    = "#1b1f29"
-selection = "#273747"
-border    = "#303847"
+fg      = "#a0a0a0"
+bg      = "#101010"
+line    = "#232323"
+selection = "#232323"
+border    = "#282828"
 
 [dark.syntax]
-tag      = "#39bae6"
-func     = "#ffb454"
-entity   = "#59c2ff"
-string   = "#aad94c"
-regexp   = "#95e6cb"
-markup   = "#f07178"
-keyword  = "#ff8f40"
-special  = "#e6c08a"
-comment  = "#546178"
-constant = "#d2a6ff"
-operator = "#f29668"
+tag      = "#ffc799"
+func     = "#ffc799"
+entity   = "#ffc799"
+string   = "#99ffe4"
+regexp   = "#50b5aa"
+markup   = "#ff8080"
+keyword  = "#b0b0b0"
+special  = "#ffc799"
+comment  = "#8b8b8b"
+constant = "#ffc799"
+operator = "#b0b0b0"
 
 [dark.terminal]
-black          = "#11151c"
-red            = "#ea6c73"
-green          = "#7fd962"
-yellow         = "#f9af4f"
-blue           = "#53bdfa"
-magenta        = "#cda1fa"
-cyan           = "#90e1c6"
-white          = "#c7c7c7"
-bright_black   = "#686868"
-bright_red     = "#f07178"
-bright_green   = "#aad94c"
-bright_yellow  = "#ffb454"
-bright_blue    = "#59c2ff"
-bright_magenta = "#d2a6ff"
-bright_cyan    = "#95e6cb"
+black          = "#181818"
+red            = "#ff8080"
+green          = "#50b5aa"
+yellow         = "#ffc799"
+blue           = "#b0b0b0"
+magenta        = "#ffc799"
+cyan           = "#50b5aa"
+white          = "#dadada"
+bright_black   = "#505050"
+bright_red     = "#ff8080"
+bright_green   = "#99ffe4"
+bright_yellow  = "#ffcfa8"
+bright_blue    = "#b0b0b0"
+bright_magenta = "#ffcfa8"
+bright_cyan    = "#99ffe4"
 bright_white   = "#ffffff"
 
 [dark.vcs]
-added    = "#70bf56"
-modified = "#73b8ff"
-removed  = "#f26d78"
+added    = "#99ffe4"
+modified = "#ffc799"
+removed  = "#ff8080"
 
 [dark.common]
-accent = "#73d0ff"
-warning = "#e6b450"
-error  = "#f07178"
+accent = "#ffc799"
+warning = "#ffc799"
+error  = "#ff8080"
 
 # ─── Mirage ──────────────────────────────────────────────────────────────────
 

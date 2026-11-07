@@ -1,26 +1,26 @@
 gui:
   theme:
     activeBorderColor:
-      - "#73d0ff"
+      - "#ffc799"
       - bold
     inactiveBorderColor:
-      - "#303847"
+      - "#282828"
     optionsTextColor:
-      - "#39bae6"
+      - "#ffc799"
     selectedLineBgColor:
-      - "#273747"
+      - "#232323"
     selectedRangeBgColor:
-      - "#273747"
+      - "#232323"
     cherryPickedCommitBgColor:
-      - "#273747"
+      - "#232323"
     cherryPickedCommitFgColor:
-      - "#73d0ff"
+      - "#ffc799"
     unstagedChangesColor:
-      - "#f07178"
+      - "#ff8080"
     defaultFgColor:
-      - "#bfbdb6"
+      - "#ffffff"
     searchingActiveBorderColor:
-      - "#e6b450"
+      - "#ffc799"
 git:
   # Keep remote updates explicit instead of fetching on every startup.
   autoFetch: false

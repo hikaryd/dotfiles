@@ -1,4 +1,4 @@
-// Package tui owns the shared Ayu presentation and terminal lifecycle of dots
+// Package tui owns the shared presentation and terminal lifecycle of dots
 // tools. Its renderers are pure; raw terminal state is always restored.
 package tui
 
@@ -16,15 +16,15 @@ const (
 	Bold      = "\x1b[1m"
 	Faint     = "\x1b[2m"
 	Unbold    = "\x1b[22m"
-	Dim       = "\x1b[38;2;101;117;139m"
-	Text      = "\x1b[38;2;191;189;182m"
-	Accent    = "\x1b[38;2;115;208;255m"
-	Green     = "\x1b[38;2;149;230;203m"
-	Yellow    = "\x1b[38;2;230;180;80m"
-	Red       = "\x1b[38;2;240;113;120m"
-	Purple    = "\x1b[38;2;212;191;255m"
-	Border    = "\x1b[38;2;39;55;71m"
-	Highlight = "\x1b[30;48;2;230;180;80m"
+	Dim       = "\x1b[38;2;160;160;160m"
+	Text      = "\x1b[38;2;255;255;255m"
+	Accent    = "\x1b[38;2;255;199;153m"
+	Green     = "\x1b[38;2;153;255;228m"
+	Yellow    = "\x1b[38;2;255;199;153m"
+	Red       = "\x1b[38;2;255;128;128m"
+	Purple    = "\x1b[38;2;255;199;153m"
+	Border    = "\x1b[38;2;40;40;40m"
+	Highlight = "\x1b[30;48;2;255;199;153m"
 )
 
 func Plain(value string) string { return terminalText(value, false) }

@@ -54,13 +54,13 @@ blinking = false
 mode = "nativetab"
 hide-if-single = true
 unfocused-split-opacity = 0.94
-unfocused-split-fill = "#0d1017"
+unfocused-split-fill = "#101010"
 
 [effects]
 custom-mouse-cursor = false
 # Animate only cursor movement, not the entire idle window.
 trail-cursor = true
-trail-cursor-color = "#73d0ff"
+trail-cursor-color = "#ffc799"
 trail-cursor-opacity = 0.35
 trail-cursor-decay = [45, 120]
 trail-cursor-start-threshold = 2

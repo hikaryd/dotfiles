@@ -16,42 +16,42 @@ set hideremotes 0
 set showlocalchanges 1
 set datetimeformat {%Y-%m-%d %H:%M:%S}
 set limitdiffs 1
-set uicolor grey85
+set uicolor #181818
 set want_ttk 1
-set bgcolor white
-set fgcolor black
-set uifgcolor black
-set uifgdisabledcolor #999
-set colors {"#00ff00" red blue magenta darkgrey brown orange}
-set diffcolors {"#c30000" "#009800" blue}
-set mergecolors {red blue "#00ff00" purple brown "#009090" magenta "#808000" "#009000" "#ff0080" cyan "#b07070" "#70b0f0" "#70f0b0" "#f0b070" "#ff70b0"}
-set markbgcolor #e0e0ff
+set bgcolor #101010
+set fgcolor #ffffff
+set uifgcolor #ffffff
+set uifgdisabledcolor #8b8b8b
+set colors {"#99ffe4" #ff8080 #b0b0b0 #ffc799 #8b8b8b #ffcfa8 #50b5aa}
+set diffcolors {"#ff8080" "#99ffe4" #ffc799}
+set mergecolors {#ff8080 #b0b0b0 "#99ffe4" #ffc799 #ffcfa8 "#50b5aa" #ffc799 "#b0b0b0" "#99ffe4" "#ff8080" #50b5aa "#ffc799" "#b0b0b0" "#99ffe4" "#ffcfa8" "#ff8080"}
+set markbgcolor #232323
 set diffcontext 3
-set selectbgcolor gray85
-set foundbgcolor yellow
-set currentsearchhitbgcolor orange
+set selectbgcolor #232323
+set foundbgcolor #ffc799
+set currentsearchhitbgcolor #ffcfa8
 set extdifftool meld
 set perfile_attrs 0
-set headbgcolor #00ff00
+set headbgcolor #99ffe4
 set headfgcolor black
 set headoutlinecolor black
-set remotebgcolor #ffddaa
-set tagbgcolor yellow
+set remotebgcolor #ffcfa8
+set tagbgcolor #ffc799
 set tagfgcolor black
 set tagoutlinecolor black
 set reflinecolor black
-set filesepbgcolor #aaaaaa
-set filesepfgcolor black
-set linehoverbgcolor #ffff80
+set filesepbgcolor #282828
+set filesepfgcolor #ffffff
+set linehoverbgcolor #ffc799
 set linehoverfgcolor black
 set linehoveroutlinecolor black
-set mainheadcirclecolor yellow
-set workingfilescirclecolor red
-set indexcirclecolor #00ff00
-set circlecolors {white blue gray blue blue}
-set linkfgcolor blue
+set mainheadcirclecolor #ffc799
+set workingfilescirclecolor #ff8080
+set indexcirclecolor #99ffe4
+set circlecolors {#ffffff #b0b0b0 #8b8b8b #b0b0b0 #b0b0b0}
+set linkfgcolor #ffc799
 set circleoutlinecolor black
-set diffbgcolors {"#fff3f3" "#f0fff0"}
+set diffbgcolors {"#232323" "#181818"}
 set web_browser xdg-open
 set geometry(main) 941x1098+965+59
 set geometry(state) normal

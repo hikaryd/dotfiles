@@ -63,25 +63,25 @@ bindkey '^[e' edit-command-line
 # --- Quiet Ayu — поиск и подсветка ввода ---
 typeset -A ZSH_HIGHLIGHT_STYLES
 ZSH_HIGHLIGHT_MAXLENGTH=512
-ZSH_HIGHLIGHT_STYLES[command]='fg=#73d0ff'
-ZSH_HIGHLIGHT_STYLES[builtin]='fg=#73d0ff'
-ZSH_HIGHLIGHT_STYLES[alias]='fg=#73d0ff'
-ZSH_HIGHLIGHT_STYLES[function]='fg=#73d0ff'
-ZSH_HIGHLIGHT_STYLES[unknown-token]='fg=#f07178'
-ZSH_HIGHLIGHT_STYLES[path]='fg=#bfbdb6,underline'
-ZSH_HIGHLIGHT_STYLES[single-quoted-argument]='fg=#95e6cb'
-ZSH_HIGHLIGHT_STYLES[double-quoted-argument]='fg=#95e6cb'
-ZSH_HIGHLIGHT_STYLES[dollar-quoted-argument]='fg=#95e6cb'
-ZSH_HIGHLIGHT_STYLES[commandseparator]='fg=#858d9c'
-ZSH_HIGHLIGHT_STYLES[redirection]='fg=#858d9c'
-ZSH_HIGHLIGHT_STYLES[globbing]='fg=#e6b450'
-ZSH_HIGHLIGHT_STYLES[assign]='fg=#bfbdb6'
-ZSH_HIGHLIGHT_STYLES[reserved-word]='fg=#73d0ff'
-ZSH_HIGHLIGHT_STYLES[comment]='fg=#858d9c'
-ZSH_HIGHLIGHT_STYLES[arg0]='fg=#73d0ff'
+ZSH_HIGHLIGHT_STYLES[command]='fg=#ffc799'
+ZSH_HIGHLIGHT_STYLES[builtin]='fg=#ffc799'
+ZSH_HIGHLIGHT_STYLES[alias]='fg=#ffc799'
+ZSH_HIGHLIGHT_STYLES[function]='fg=#ffc799'
+ZSH_HIGHLIGHT_STYLES[unknown-token]='fg=#ff8080'
+ZSH_HIGHLIGHT_STYLES[path]='fg=#ffffff,underline'
+ZSH_HIGHLIGHT_STYLES[single-quoted-argument]='fg=#99ffe4'
+ZSH_HIGHLIGHT_STYLES[double-quoted-argument]='fg=#99ffe4'
+ZSH_HIGHLIGHT_STYLES[dollar-quoted-argument]='fg=#99ffe4'
+ZSH_HIGHLIGHT_STYLES[commandseparator]='fg=#a0a0a0'
+ZSH_HIGHLIGHT_STYLES[redirection]='fg=#a0a0a0'
+ZSH_HIGHLIGHT_STYLES[globbing]='fg=#ffc799'
+ZSH_HIGHLIGHT_STYLES[assign]='fg=#ffffff'
+ZSH_HIGHLIGHT_STYLES[reserved-word]='fg=#ffc799'
+ZSH_HIGHLIGHT_STYLES[comment]='fg=#a0a0a0'
+ZSH_HIGHLIGHT_STYLES[arg0]='fg=#ffc799'
 
 # Подсказка слабее ввода, но остаётся читаемой.
-ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=#858d9c'
+ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=#a0a0a0'
 # Completion-based suggestions spawn a nested completion PTY for novel input.
 # History-only suggestions stay asynchronous and avoid input/Ctrl+C stalls.
 ZSH_AUTOSUGGEST_STRATEGY=(history)
@@ -120,7 +120,7 @@ else
   autoload -Uz add-zsh-hook _dots-prompt-find-git-dir _dots-prompt-precmd _dots-prompt-preexec
   add-zsh-hook preexec _dots-prompt-preexec
   add-zsh-hook precmd _dots-prompt-precmd
-  PROMPT='%F{#858d9c}󰀵 %f%F{#bfbdb6}%5~ %f'$'\n''%F{#73d0ff}>%f '
+  PROMPT='%F{#a0a0a0}󰀵 %f%F{#ffffff}%5~ %f'$'\n''%F{#ffc799}>%f '
 fi
 
 # These integrations must exist before ZLE draws its first editable line.

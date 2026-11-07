@@ -159,7 +159,7 @@ func TestRioCursorTrailIsVisibleAndShort(t *testing.T) {
 		t.Fatal(err)
 	}
 	effects := config.Effects
-	if !effects.Trail || effects.Color != "#73d0ff" || effects.Opacity <= 0 || effects.Opacity > 0.4 || effects.Decay[0] <= 0 || effects.Decay[0] > effects.Decay[1] || effects.Decay[1] > 140 {
+	if !effects.Trail || effects.Color != "#ffc799" || effects.Opacity <= 0 || effects.Opacity > 0.4 || effects.Decay[0] <= 0 || effects.Decay[0] > effects.Decay[1] || effects.Decay[1] > 140 {
 		t.Fatalf("Rio needs a visible short trail, not a long full-screen animation: %+v", effects)
 	}
 }

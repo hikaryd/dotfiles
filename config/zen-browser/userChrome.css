@@ -62,38 +62,38 @@ browser[type="content-primary"],
  * SF Mono остаётся шрифтом кода/терминалов, не текстом всех приложений. */
 :root {
   color-scheme: dark;
-  --toolbar-bgcolor: #0d1017 !important;
-  --toolbar-color: #bfbdb6 !important;
-  --lwt-accent-color: #0d1017 !important;
-  --lwt-text-color: #bfbdb6 !important;
-  --toolbar-field-background-color: #141821 !important;
-  --toolbar-field-color: #bfbdb6 !important;
-  --toolbar-field-focus-background-color: #141821 !important;
-  --toolbar-field-focus-color: #bfbdb6 !important;
-  --toolbar-field-focus-border-color: #73d0ff !important;
-  --toolbarbutton-icon-fill: #858d9c !important;
-  --tab-selected-bgcolor: #273747 !important;
-  --tab-selected-textcolor: #bfbdb6 !important;
-  --tab-line-color: #73d0ff !important;
-  --chrome-content-separator-color: #303847 !important;
+  --toolbar-bgcolor: #101010 !important;
+  --toolbar-color: #ffffff !important;
+  --lwt-accent-color: #101010 !important;
+  --lwt-text-color: #ffffff !important;
+  --toolbar-field-background-color: #181818 !important;
+  --toolbar-field-color: #ffffff !important;
+  --toolbar-field-focus-background-color: #181818 !important;
+  --toolbar-field-focus-color: #ffffff !important;
+  --toolbar-field-focus-border-color: #ffc799 !important;
+  --toolbarbutton-icon-fill: #a0a0a0 !important;
+  --tab-selected-bgcolor: #232323 !important;
+  --tab-selected-textcolor: #ffffff !important;
+  --tab-line-color: #ffc799 !important;
+  --chrome-content-separator-color: #282828 !important;
 }
 
 #navigator-toolbox {
   font-family: -apple-system, BlinkMacSystemFont, sans-serif !important;
-  color: #bfbdb6 !important;
-  background-color: #0d1017 !important;
+  color: #ffffff !important;
+  background-color: #101010 !important;
 }
 
 .tabbrowser-tab[selected] .tab-background {
-  background-color: #273747 !important;
+  background-color: #232323 !important;
   border-radius: 8px !important;
 }
 
 #urlbar-background {
-  background-color: #141821 !important;
-  border-color: #303847 !important;
+  background-color: #181818 !important;
+  border-color: #282828 !important;
 }
 
 #urlbar[focused] #urlbar-background {
-  border-color: #73d0ff !important;
+  border-color: #ffc799 !important;
 }

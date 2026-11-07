@@ -17,8 +17,8 @@
     {
       "type": "title",
       "color": {
-        "user": "#73d0ff",
-        "host": "#858d9c"
+        "user": "#ffc799",
+        "host": "#a0a0a0"
       }
     },
     {
@@ -29,78 +29,78 @@
       "type": "os",
       "key": "╭─ ",
       "format": "{3} ({12})",
-      "keyColor": "#73d0ff"
+      "keyColor": "#ffc799"
     },
     {
       "type": "host",
       "key": "├─󰟀 ",
-      "keyColor": "#73d0ff"
+      "keyColor": "#ffc799"
     },
     {
       "type": "kernel",
       "key": "├─󰒔 ",
       "format": "{1} {2}",
-      "keyColor": "#73d0ff"
+      "keyColor": "#ffc799"
     },
     {
       "type": "shell",
       "key": "├─$ ",
       "format": "{1} {4}",
-      "keyColor": "#73d0ff"
+      "keyColor": "#ffc799"
     },
     {
       "type": "packages",
       "key": "├─ ",
-      "keyColor": "#73d0ff"
+      "keyColor": "#ffc799"
     },
     {
       "type": "uptime",
       "key": "╰─󰔚 ",
-      "keyColor": "#73d0ff"
+      "keyColor": "#ffc799"
     },
     "break",
     {
       "type": "display",
       "key": "╭─󰹑 ",
-      "keyColor": "#73d0ff",
+      "keyColor": "#ffc799",
       "compactType": "original"
     },
     {
       "type": "de",
       "key": "├─󰧨 ",
-      "keyColor": "#73d0ff"
+      "keyColor": "#ffc799"
     },
     {
       "type": "wm",
       "key": "├─ ",
-      "keyColor": "#73d0ff"
+      "keyColor": "#ffc799"
     },
     {
       "type": "theme",
       "key": "├─󰉼 ",
-      "keyColor": "#73d0ff"
+      "keyColor": "#ffc799"
     },
     {
       "type": "icons",
       "key": "├─ ",
-      "keyColor": "#73d0ff"
+      "keyColor": "#ffc799"
     },
     {
       "type": "cursor",
       "key": "├─󰳽 ",
-      "keyColor": "#73d0ff"
+      "keyColor": "#ffc799"
     },
     {
       "type": "font",
       "key": "├─ ",
       "format": "{2}",
-      "keyColor": "#73d0ff"
+      "keyColor": "#ffc799"
     },
     {
       "type": "terminal",
       "key": "╰─ ",
       "format": "{3}",
-      "keyColor": "#73d0ff"
+      "keyColor": "#ffc799"
     },
     "break",
     {

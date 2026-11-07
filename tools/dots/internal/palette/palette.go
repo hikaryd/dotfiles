@@ -13,7 +13,7 @@ import (
 	"github.com/pelletier/go-toml/v2"
 )
 
-var toolNames = []string{"ghostty", "rio", "starship", "nushell", "sketchybar", "tmux", "fresh", "lazygit", "thorium", "yazi", "jcode"}
+var toolNames = []string{"ghostty", "rex", "rio", "starship", "nushell", "sketchybar", "tmux", "fresh", "lazygit", "thorium", "yazi", "jcode"}
 
 type palette map[string]map[string]string
 
@@ -26,7 +26,7 @@ type generator struct {
 // Run implements dots-tools palette [--variant dark|mirage] [--tool TOOL] [--dry-run].
 func Run(root string, args []string) int { return run(root, args, os.Stdout, os.Stderr) }
 
-const usage = "usage: dots-tools palette [-h] [--variant {dark,mirage}]\n                          [--tool {ghostty,rio,starship,nushell,sketchybar,tmux,fresh,lazygit,thorium,yazi,jcode}]\n                          [--dry-run]\n"
+const usage = "usage: dots-tools palette [-h] [--variant {dark,mirage}]\n                          [--tool {ghostty,rex,rio,starship,nushell,sketchybar,tmux,fresh,lazygit,thorium,yazi,jcode}]\n                          [--dry-run]\n"
 
 func run(root string, args []string, out, stderr io.Writer) int {
 	variant, tool, dry := "dark", "", false
@@ -165,22 +165,41 @@ func replace(text, pattern, replacement string) string {
 
 func (g generator) generate(name string) error {
 	switch name {
-	case "ghostty":
+	case "ghostty", "rex":
+		var lines []string
+		for _, field := range []struct{ name, section, key string }{
+			{"background", "editor", "bg"}, {"foreground", "editor", "fg"},
+			{"selection-background", "ui", "selection"}, {"selection-foreground", "editor", "fg"},
+			{"cursor-color", "common", "accent"}, {"unfocused-split-fill", "editor", "bg"},
+		} {
+			value, err := g.color(field.section, field.key)
+			if err != nil {
+				return err
+			}
+			lines = append(lines, field.name+" = "+strings.TrimPrefix(value, "#"))
+		}
+		for i, key := range []string{"black", "red", "green", "yellow", "blue", "magenta", "cyan", "white", "bright_black", "bright_red", "bright_green", "bright_yellow", "bright_blue", "bright_magenta", "bright_cyan", "bright_white"} {
+			value, err := g.color("terminal", key)
+			if err != nil {
+				return err
+			}
+			lines = append(lines, fmt.Sprintf("palette = %d=%s", i, value))
+		}
+		if name == "rex" {
+			rex := strings.Join(lines[:5], "\n") + "\n" + strings.Join(lines[6:], "\n") + "\n"
+			if err := g.write("rex/ayu-dark", rex, true); err != nil {
+				return err
+			}
+			fmt.Fprintf(g.out, "  rex: %s\n", g.path("rex/ayu-dark"))
+			return nil
+		}
 		path := g.path("ghostty/config")
 		text, err := readText(path)
 		if err != nil {
 			return err
 		}
-		bg, err := g.color("editor", "bg")
-		if err != nil {
-			return err
-		}
-		theme := "Ayu"
-		if g.variant == "mirage" {
-			theme = "Ayu Mirage"
-		}
-		text = replace(text, `(?m)^theme\s*=\s*.*$`, "theme = "+theme)
-		text = replace(text, `(?m)^background\s*=\s*.*$`, "background = "+strings.TrimLeft(bg, "#"))
+		text = replace(text, `(?m)^[ \t]*(theme|background|foreground|selection-background|selection-foreground|cursor-color|unfocused-split-fill|palette)[ \t]*=.*\n?`, "")
+		text = strings.Join(lines, "\n") + "\n" + text
 		if err := os.WriteFile(path, []byte(text), 0666); err != nil {
 			return err
 		}

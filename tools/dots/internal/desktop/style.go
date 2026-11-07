@@ -37,7 +37,7 @@ func readStyle() string {
 	return s
 }
 
-var presentation = [][2]string{{"status-left", "#[fg=#bfbdb6] PRESENTATION "}, {"window-status-format", " #I terminal "}, {"window-status-current-format", "#[fg=#73d0ff,bold] #I terminal "}}
+var presentation = [][2]string{{"status-left", "#[fg=#ffffff] PRESENTATION "}, {"window-status-format", " #I terminal "}, {"window-status-current-format", "#[fg=#ffc799,bold] #I terminal "}}
 
 const snapshotOption = "@dots-style-snapshot"
 

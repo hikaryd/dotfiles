@@ -68,10 +68,10 @@ alias create_mr='"$DOTS_ROOT/scripts/ai_helper" --mode mr'
 alias nvim-bench='hyperfine "nvim --startuptime /tmp/startup.log +qall" --warmup 3 --runs 10'
 
 export FZF_DEFAULT_OPTS=" \
-  --color=bg+:#273747,bg:#0d1017,spinner:#73d0ff,hl:#73d0ff \
-  --color=fg:#bfbdb6,header:#858d9c,info:#858d9c,pointer:#73d0ff \
-  --color=marker:#95e6cb,fg+:#bfbdb6,prompt:#73d0ff,hl+:#73d0ff \
-  --color=selected-bg:#273747,border:#303847 \
+  --color=bg+:#232323,bg:#101010,spinner:#ffc799,hl:#ffc799 \
+  --color=fg:#ffffff,header:#a0a0a0,info:#a0a0a0,pointer:#ffc799 \
+  --color=marker:#99ffe4,fg+:#ffffff,prompt:#ffc799,hl+:#ffc799 \
+  --color=selected-bg:#232323,border:#282828 \
   --border='rounded' --preview-window='border-rounded' \
   --prompt='> ' --marker='>' --pointer='›' --separator='─' --scrollbar='│'"
 

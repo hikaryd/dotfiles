@@ -4,23 +4,48 @@ return {
 		priority = 1000,
 		lazy = false,
 		config = function()
-			-- Quiet Ayu Glass: прозрачный редактор, непрозрачные всплывающие окна.
+			-- Keep transparent editor and opaque popups.
 			local colors = {
-				bg = "#0d1017",
-				fg = "#bfbdb6",
-				muted = "#858d9c",
-				border = "#303847",
-				selection = "#273747",
-				accent = "#73d0ff",
-				error = "#f07178",
-				warn = "#e6b450",
-				success = "#aad94c",
-				strings = "#95e6cb",
+				bg = "#101010",
+				fg = "#ffffff",
+				muted = "#a0a0a0",
+				border = "#282828",
+				selection = "#232323",
+				accent = "#ffc799",
+				error = "#ff8080",
+				warn = "#ffc799",
+				success = "#99ffe4",
+				strings = "#99ffe4",
 			}
+			local palette = require("ayu.colors")
+			local generate = palette.generate
+			palette.generate = function(...)
+				generate(...)
+				for key, value in pairs({
+					bg = colors.bg, fg = colors.fg, ui = colors.muted, accent = colors.accent,
+					tag = colors.accent, func = colors.accent, entity = colors.accent,
+					string = colors.strings, regexp = "#50b5aa", markup = colors.error,
+					keyword = "#b0b0b0", special = colors.accent, comment = "#8b8b8b",
+					constant = colors.accent, operator = "#b0b0b0", error = colors.error,
+					lsp_parameter = colors.fg, lsp_inlay_hint = colors.muted,
+					line = "#1c1c1c", panel_bg = "#181818", panel_shadow = colors.bg,
+					panel_border = colors.border, gutter_normal = colors.border, gutter_active = colors.muted,
+					selection_bg = colors.selection, selection_inactive = colors.selection, selection_border = colors.border,
+					guide_active = colors.muted, guide_normal = colors.border,
+					vcs_added = colors.success, vcs_modified = colors.accent, vcs_removed = colors.error,
+					vcs_added_bg = colors.selection, vcs_removed_bg = colors.selection,
+					fg_idle = colors.muted, warning = colors.warn,
+				}) do palette[key] = value end
+				vim.g.terminal_color_background = colors.bg
+				vim.g.terminal_color_foreground = colors.fg
+				for i, color in ipairs({ "#181818", "#ff8080", "#50b5aa", "#ffc799", "#b0b0b0", "#ffc799", "#50b5aa", "#dadada", "#505050", "#ff8080", "#99ffe4", "#ffcfa8", "#b0b0b0", "#ffcfa8", "#99ffe4", "#ffffff" }) do
+					vim.g["terminal_color_" .. (i - 1)] = color
+				end
+			end
 
 			require("ayu").setup({
 				mirage = false,
-				terminal = true,
+				terminal = false,
 				overrides = {
 					Normal = { fg = colors.fg, bg = "NONE" },
 					NormalNC = { fg = colors.fg, bg = "NONE" },
@@ -36,7 +61,7 @@ return {
 					Directory = { fg = colors.accent },
 					Title = { fg = colors.accent, bold = true },
 					Number = { fg = colors.warn },
-					Keyword = { fg = colors.warn },
+					Keyword = { fg = "#b0b0b0" },
 					LineNr = { fg = colors.muted },
 					CursorLine = { bg = colors.bg },
 					CursorLineNr = { fg = colors.accent, bold = true },

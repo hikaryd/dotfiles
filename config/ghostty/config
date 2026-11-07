@@ -1,10 +1,31 @@
+background = 101010
+foreground = ffffff
+selection-background = 232323
+selection-foreground = ffffff
+cursor-color = ffc799
+unfocused-split-fill = 101010
+palette = 0=#181818
+palette = 1=#ff8080
+palette = 2=#50b5aa
+palette = 3=#ffc799
+palette = 4=#b0b0b0
+palette = 5=#ffc799
+palette = 6=#50b5aa
+palette = 7=#dadada
+palette = 8=#505050
+palette = 9=#ff8080
+palette = 10=#99ffe4
+palette = 11=#ffcfa8
+palette = 12=#b0b0b0
+palette = 13=#ffcfa8
+palette = 14=#99ffe4
+palette = 15=#ffffff
 # Терминалы открывают постоянные сессии rmux.
 command = shell:"$HOME/.local/bin/dots-terminal"
 # The outer command is rmux, not Nu. Nushell runs in its panes, so Ghostty
 # must not append its Nushell --execute bootstrap to the mux CLI.
 shell-integration = none
 
-theme = Ayu
 
 # Нейтральная рабочая типографика; иконки — отдельным fallback.
 font-family = SF Mono
@@ -14,15 +35,10 @@ adjust-cell-height = 12%
 # Операторы остаются отдельными символами, без декоративных лигатур.
 font-feature = -calt, -liga, -dlig
 
-background = 0d1017
-foreground = bfbdb6
 # Контракт цветового пространства для macOS-шейдера курсора.
 window-colorspace = display-p3
 alpha-blending = native
-selection-background = 273747
-selection-foreground = bfbdb6
 unfocused-split-opacity = 0.94
-unfocused-split-fill = 0d1017
 background-opacity = 0.94
 # Графитовое стекло: blur убирает детали за окном, оставляя ощущение глубины.
 background-blur = 18
@@ -36,7 +52,6 @@ title =
 
 cursor-style = bar
 cursor-style-blink = false
-cursor-color = 73d0ff
 cursor-text = cell-background
 cursor-opacity = 1
 
