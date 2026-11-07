@@ -34,6 +34,7 @@ defaults write "$domain" Workspace.showsKeySequenceHints -bool true
 defaults write "$domain" Workspace.showsProgramStatusInTabs -bool true
 defaults write "$domain" Workspace.showsProcessesInActivity -bool true
 defaults write "$domain" Workspace.showsProgramActivityNotifications -bool true
+defaults write "$domain" Workspace.notificationPosition -string top-right
 defaults write "$domain" Workspace.showsProgramActivityDockBadge -bool true
 defaults write "$domain" Workspace.playsProgramActivitySounds -bool false
 printf '%s\n' 'Rex preferences saved. Reopen the app to apply them.'

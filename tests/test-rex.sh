@@ -57,6 +57,7 @@ STUB
   grep -Fx 'write com.superlogical.rex Workspace.showsPaneHeaders -bool false' "$log"
   grep -Fx 'write com.superlogical.rex Workspace.terminalImproveTextContrast -bool true' "$log"
   grep -Fx 'write com.superlogical.rex Workspace.terminalCellHeightPercent -float 12' "$log"
+  grep -Fx 'write com.superlogical.rex Workspace.notificationPosition -string top-right' "$log"
   grep -Fx "do -C client:test client.theme.import path=$home/.config/rex/ayu-dark" "$REX_CALLS"
   grep -Fx 'do -C client:test client.appearance.switch_mode mode=dark' "$REX_CALLS"
   grep -Fx 'do -C client:test client.theme.change name=ayu-dark' "$REX_CALLS"
