@@ -40,6 +40,9 @@ func TestJcodeTrackedModelRouting(t *testing.T) {
 	if provider["default_provider"] != "openai" || provider["default_model"] != "gpt-6.1-sol" || provider["openai_reasoning_effort"] != "high" || agents["swarm_model"] != "openai-oauth:gpt-6.1-terra" || agents["swarm_effort"] != "low" || agents["swarm_root_effort"] != "high" || agents["swarm_deep_root_effort"] != "high" || features["swarm"] != true {
 		t.Fatal("tracked defaults do not match the model routing policy")
 	}
+	if agents["swarm_max_concurrent_agents"] != int64(10) {
+		t.Fatal("tracked swarm concurrency limit must be 10")
+	}
 	if _, exists := config["providers"]; exists {
 		t.Fatal("shared settings contain private provider profiles")
 	}
@@ -65,7 +68,7 @@ func TestJcodeApplyInstallsTrackedWorkerDefaults(t *testing.T) {
 		t.Fatal(err)
 	}
 	agents, provider := config["agents"].(map[string]any), config["provider"].(map[string]any)
-	if agents["swarm_model"] != "openai-oauth:gpt-6.1-terra" || agents["swarm_effort"] != "low" {
+	if agents["swarm_model"] != "openai-oauth:gpt-6.1-terra" || agents["swarm_effort"] != "low" || agents["swarm_max_concurrent_agents"] != int64(10) {
 		t.Fatal("installed worker must use Terra low")
 	}
 	if provider["default_model"] != "gpt-6.1-sol" || provider["openai_reasoning_effort"] != "high" {
