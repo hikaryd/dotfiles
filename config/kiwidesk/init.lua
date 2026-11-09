@@ -47,6 +47,32 @@ KiwiDesk.bind("cmd+shift+q", function()
 end)
 KiwiDesk.bind("ctrl+alt+shift+r", function() KiwiDesk.reload_config() end)
 
+local function chat_pocket(bundles, launch)
+  local target
+  for _, window in ipairs(KiwiDesk.get_state().windows) do
+    if bundles[(window.bundle_id or ""):lower()] and
+      (not target or (window.pocket and not target.pocket) or
+        (window.pocket == target.pocket and window.id < target.id)) then
+      target = window
+    end
+  end
+  if not target then
+    -- shortcut: opening a closed/hidden app needs another press after its window appears.
+    KiwiDesk.exec("open -b " .. launch)
+  elseif target.pocket == "out" then
+    KiwiDesk.pocket(target.id)
+  else
+    if not target.pocket then KiwiDesk.pocket(target.id) end
+    KiwiDesk.focus_window(target.id)
+  end
+end
+KiwiDesk.bind("ctrl+alt+t", function()
+  chat_pocket({ ["ru.keepcoder.telegram"] = true, ["com.tdesktop.telegram"] = true }, "ru.keepcoder.Telegram")
+end)
+KiwiDesk.bind("ctrl+alt+r", function()
+  chat_pocket({ ["ru.unlimitedtech.express.desktop"] = true }, "ru.unlimitedtech.express.desktop")
+end)
+
 app_rules = {
   ["net.waterfox.waterfox"] = "1",
   ["org.chromium.Thorium"] = "1",

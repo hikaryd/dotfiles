@@ -12,7 +12,7 @@ local function api(namespace, names)
   end
   return object
 end
-KiwiDesk = api("KiwiDesk", "set_fallback_space set_gap_global set_space_transition set_refusal_sound set_mode_cue set_mode_cycle move_to_space make_floating focus swap resize toggle_floating toggle_maximized cycle_mode exec reload_config")
+KiwiDesk = api("KiwiDesk", "set_fallback_space set_gap_global set_space_transition set_refusal_sound set_mode_cue set_mode_cycle move_to_space make_floating focus swap resize toggle_floating toggle_maximized cycle_mode exec reload_config pocket focus_window")
 KiwiDesk.set_mode = function(space, mode)
   assert(not modes[space], "duplicate space")
   modes[space] = mode
@@ -131,6 +131,35 @@ assert(#calls == 2, "a late settings title must apply on focus")
 calls = {}
 events.focus_change(100)
 assert(#calls == 0, "unknown window must not move the focused window")
+windows, workspace_state = {}, {}
+local function chat_press(key, expected)
+  calls = {}
+  bindings[key]()
+  assert(#calls == #expected, key .. ": wrong action count")
+  for i, action in ipairs(expected) do
+    assert(#calls[i] == #action)
+    for j, value in ipairs(action) do assert(calls[i][j] == value, key .. ": wrong action") end
+  end
+end
+for _, chat in ipairs({
+  { "ctrl+alt+t", "ru.keepcoder.telegram", "ru.keepcoder.Telegram" },
+  { "ctrl+alt+t", "COM.TDESKTOP.TELEGRAM", "ru.keepcoder.Telegram" },
+  { "ctrl+alt+r", "ru.unlimitedtech.express.desktop", "ru.unlimitedtech.express.desktop" },
+}) do
+  local key, bundle, launch = table.unpack(chat)
+  assert(bindings[key], "missing chat pocket key: " .. key)
+  windows = { { id = 99, bundle_id = bundle }, { id = 10, bundle_id = "example.unrelated" } }
+  chat_press(key, { { "KiwiDesk.pocket", 99 }, { "KiwiDesk.focus_window", 99 } })
+  windows[1].pocket = "out"
+  chat_press(key, { { "KiwiDesk.pocket", 99 } })
+  windows[1].pocket = "pocketed"
+  table.insert(windows, 1, { id = 20, bundle_id = bundle })
+  chat_press(key, { { "KiwiDesk.focus_window", 99 } })
+  windows = { { id = 105, bundle_id = bundle }, { id = 42, bundle_id = bundle } }
+  chat_press(key, { { "KiwiDesk.pocket", 42 }, { "KiwiDesk.focus_window", 42 } })
+  windows = { { id = 10 }, { id = 20, bundle_id = "example.unrelated" } }
+  chat_press(key, { { "KiwiDesk.exec", "open -b " .. launch } })
+end
 windows, workspace_state = {}, {}
 assert(settings["KiwiDesk.set_gap_global"][1] == 0)
 assert(settings["space_bar.set_reserve"][1] and settings["space_bar.set_visibility"][1] == "always")
