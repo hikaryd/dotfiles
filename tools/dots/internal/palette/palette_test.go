@@ -206,6 +206,31 @@ func TestCustomPaletteGolden(t *testing.T) {
 	}
 }
 
+func TestKiwideskCustomPalettePreservesInit(t *testing.T) {
+	root := fixture(t)
+	mustWrite(t, filepath.Join(root, "palette/ayu.toml"), mustRead(t, "testdata/custom.toml"))
+	dir := filepath.Join(root, "config/kiwidesk")
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		t.Fatal(err)
+	}
+	initPath := filepath.Join(dir, "init.lua")
+	init := []byte("return 'keep me'\n")
+	mustWrite(t, initPath, init)
+	want := mustRead(t, "testdata/golden/custom/config/kiwidesk/theme.lua")
+	for pass := 0; pass < 2; pass++ {
+		var out, stderr bytes.Buffer
+		if code := run(root, []string{"--tool", "kiwidesk"}, &out, &stderr); code != 0 {
+			t.Fatalf("pass %d: exit %d: %s", pass, code, &stderr)
+		}
+		if got := mustRead(t, filepath.Join(dir, "theme.lua")); !bytes.Equal(got, want) {
+			t.Fatalf("pass %d: theme = %q, want %q", pass, got, want)
+		}
+		if got := mustRead(t, initPath); !bytes.Equal(got, init) {
+			t.Fatalf("pass %d: init.lua changed", pass)
+		}
+	}
+}
+
 func TestCLIOptionsAndDryRun(t *testing.T) {
 	for _, tc := range []struct {
 		name string

@@ -1,5 +1,13 @@
 ---
 - link:
+    ~/.config/KiwiDesk/init.lua:
+      path: config/kiwidesk/init.lua
+      create: true
+      force: true
+    ~/.config/KiwiDesk/theme.lua:
+      path: config/kiwidesk/theme.lua
+      create: true
+      force: true
     ~/.config/sketchybar:
       path: config/sketchybar
       create: true
