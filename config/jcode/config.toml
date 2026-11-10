@@ -52,14 +52,6 @@ relevance_keep_threshold = 0.6499999761581421
 stall_window = 5
 topic_shift_threshold = 0.44999998807907104
 
-[dictation]
-command = ''
-key = 'off'
-mode = 'send'
-recorder = ''
-timeout_secs = 90
-vocabulary = []
-
 [display]
 active_sessions_manager = false
 animation_fps = 60
@@ -149,7 +141,7 @@ speed_increase = 'alt+up'
 swarm_panel_focus = 'alt+n'
 todo_card_toggle = 'alt+x'
 typing_scroll_lock_toggle = 'alt+s'
-voice_input = 'ctrl+space'
+voice_input = ''
 workspace_down = 'alt+j'
 workspace_left = 'alt+h'
 workspace_right = 'alt+l'
@@ -166,7 +158,7 @@ enabled = false
 turn_complete = true
 turn_complete_min_secs = 120
 turn_complete_only_when_unfocused = true
-turn_complete_sound = 'Glass'
+turn_complete_sound = ''
 turn_complete_todo_min_secs = 30
 
 [power]

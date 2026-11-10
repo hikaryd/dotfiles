@@ -38,13 +38,8 @@ func jcodeApply(root string) error {
 	if err != nil {
 		return err
 	}
-	voicePath := filepath.Join(dataDir, "voice/server.py")
 	gatePath := filepath.Join(dataDir, "swarm-model-gate.py")
 	priorGate, err := regularOptional(gatePath)
-	if err != nil {
-		return err
-	}
-	priorVoice, err := regularOptional(voicePath)
 	if err != nil {
 		return err
 	}
@@ -66,6 +61,7 @@ func jcodeApply(root string) error {
 		return errors.New("private jcode providers must not be in shared settings")
 	}
 	current = merge(current, settings)
+	delete(current, "dictation")
 	policyPath := absolute(filepath.Join(root, "config/jcode/swarm-routing-next"))
 	policy, err := os.ReadFile(policyPath)
 	if err != nil || len(strings.TrimSpace(string(policy))) == 0 {
@@ -107,7 +103,7 @@ func jcodeApply(root string) error {
 		return errors.New("invalid jcode MCP template")
 	}
 	managed, ok := desired["mcpServers"].(map[string]any)
-	names := []string{"serena", "context7", "deepwiki", "code-graph", "neo4j-cypher", "neo4j-memory", "piweb", "agent-voice"}
+	names := []string{"serena", "context7", "deepwiki", "code-graph", "neo4j-cypher", "neo4j-memory", "piweb"}
 	if !ok || len(managed) != len(names) {
 		return errors.New("jcode MCP template must define all managed servers")
 	}
@@ -141,10 +137,6 @@ func jcodeApply(root string) error {
 	if err != nil || len(gateSource) == 0 {
 		return errors.New("cannot read swarm model gate")
 	}
-	voiceSource, err := os.ReadFile(filepath.Join(root, "config/jcode/agent-voice.py"))
-	if err != nil || len(voiceSource) == 0 {
-		return errors.New("cannot read agent voice MCP source")
-	}
 	password, err := jcodeNeo4jPassword(dataDir)
 	if err != nil {
 		return err
@@ -153,6 +145,7 @@ func jcodeApply(root string) error {
 	replacer := strings.NewReplacer("@NODE@", node, "@DATA@", dataDir, "@HOME@", home(), "@PATH@", path, "@NEO4J_PASSWORD@", password)
 	managed = replaceJcodeTokens(managed, replacer).(map[string]any)
 	delete(servers, "pilens")
+	delete(servers, "agent-voice")
 	for _, name := range names {
 		servers[name] = managed[name]
 	}
@@ -212,7 +205,6 @@ func jcodeApply(root string) error {
 	}
 	if err = commit([]change{
 		{path: gatePath, data: gateSource, mode: 0600, backup: privateBackup("jcode", gatePath), backupPrivate: true, expect: true, expected: priorGate},
-		{path: voicePath, data: voiceSource, mode: 0600, backup: privateBackup("jcode", voicePath), backupPrivate: true, expect: true, expected: priorVoice},
 		{path: mcpPath, data: encode(currentMCP), mode: 0600, backup: privateBackup("jcode", mcpPath), backupPrivate: true, expect: true, expected: priorMCP},
 		{path: configPath, data: config, mode: 0600, backup: privateBackup("jcode", configPath), backupPrivate: true, expect: true, expected: priorConfig},
 		{path: filepath.Join(configDir, "swarm-prompt.md"), link: policyPath, backup: privateBackup("jcode", filepath.Join(configDir, "swarm-prompt.md")), backupPrivate: true},
