@@ -66,12 +66,6 @@ local function app_pocket(bundles, launch)
     KiwiDesk.focus_window(target.id)
   end
 end
-KiwiDesk.bind("ctrl+alt+t", function()
-  app_pocket({ ["ru.keepcoder.telegram"] = true, ["com.tdesktop.telegram"] = true }, "open -b ru.keepcoder.Telegram")
-end)
-KiwiDesk.bind("ctrl+alt+r", function()
-  app_pocket({ ["ru.unlimitedtech.express.desktop"] = true }, "open -b ru.unlimitedtech.express.desktop")
-end)
 KiwiDesk.bind("ctrl+alt+s", function()
   app_pocket({ ["rocks.spotifast.spotifast"] = true }, '"$HOME/.local/bin/spotifast-app"')
 end)
