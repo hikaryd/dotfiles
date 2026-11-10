@@ -76,7 +76,7 @@ press("alt+space", "KiwiDesk.toggle_floating")
 press("cmd+shift+f", "KiwiDesk.toggle_floating")
 press("alt+f", "KiwiDesk.toggle_maximized")
 press("cmd+shift+j", "KiwiDesk.cycle_mode")
-assert(not bindings["ctrl+alt+s"], "saving a profile must not mask future Lua settings")
+press("ctrl+alt+s", "KiwiDesk.exec", '"$HOME/.local/bin/spotifast-app"')
 press("cmd+shift+q", "KiwiDesk.exec", [[osascript -e 'tell application id "com.kiwicanopy.kiwidesk" to quit']])
 press("ctrl+alt+shift+r", "KiwiDesk.reload_config")
 assert(not bindings["cmd+shift+h"] and not bindings["cmd+shift+l"], "unsupported joins must not pretend to work")
@@ -142,9 +142,10 @@ local function chat_press(key, expected)
   end
 end
 for _, chat in ipairs({
-  { "ctrl+alt+t", "ru.keepcoder.telegram", "ru.keepcoder.Telegram" },
-  { "ctrl+alt+t", "COM.TDESKTOP.TELEGRAM", "ru.keepcoder.Telegram" },
-  { "ctrl+alt+r", "ru.unlimitedtech.express.desktop", "ru.unlimitedtech.express.desktop" },
+  { "ctrl+alt+t", "ru.keepcoder.telegram", "open -b ru.keepcoder.Telegram" },
+  { "ctrl+alt+t", "COM.TDESKTOP.TELEGRAM", "open -b ru.keepcoder.Telegram" },
+  { "ctrl+alt+r", "ru.unlimitedtech.express.desktop", "open -b ru.unlimitedtech.express.desktop" },
+  { "ctrl+alt+s", "ROCKS.SPOTIFAST.SPOTIFAST", '"$HOME/.local/bin/spotifast-app"' },
 }) do
   local key, bundle, launch = table.unpack(chat)
   assert(bindings[key], "missing chat pocket key: " .. key)
@@ -158,7 +159,7 @@ for _, chat in ipairs({
   windows = { { id = 105, bundle_id = bundle }, { id = 42, bundle_id = bundle } }
   chat_press(key, { { "KiwiDesk.pocket", 42 }, { "KiwiDesk.focus_window", 42 } })
   windows = { { id = 10 }, { id = 20, bundle_id = "example.unrelated" } }
-  chat_press(key, { { "KiwiDesk.exec", "open -b " .. launch } })
+  chat_press(key, { { "KiwiDesk.exec", launch } })
 end
 windows, workspace_state = {}, {}
 assert(settings["KiwiDesk.set_gap_global"][1] == 0)

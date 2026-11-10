@@ -47,7 +47,7 @@ KiwiDesk.bind("cmd+shift+q", function()
 end)
 KiwiDesk.bind("ctrl+alt+shift+r", function() KiwiDesk.reload_config() end)
 
-local function chat_pocket(bundles, launch)
+local function app_pocket(bundles, launch)
   local target
   for _, window in ipairs(KiwiDesk.get_state().windows) do
     if bundles[(window.bundle_id or ""):lower()] and
@@ -58,7 +58,7 @@ local function chat_pocket(bundles, launch)
   end
   if not target then
     -- shortcut: opening a closed/hidden app needs another press after its window appears.
-    KiwiDesk.exec("open -b " .. launch)
+    KiwiDesk.exec(launch)
   elseif target.pocket == "out" then
     KiwiDesk.pocket(target.id)
   else
@@ -67,10 +67,13 @@ local function chat_pocket(bundles, launch)
   end
 end
 KiwiDesk.bind("ctrl+alt+t", function()
-  chat_pocket({ ["ru.keepcoder.telegram"] = true, ["com.tdesktop.telegram"] = true }, "ru.keepcoder.Telegram")
+  app_pocket({ ["ru.keepcoder.telegram"] = true, ["com.tdesktop.telegram"] = true }, "open -b ru.keepcoder.Telegram")
 end)
 KiwiDesk.bind("ctrl+alt+r", function()
-  chat_pocket({ ["ru.unlimitedtech.express.desktop"] = true }, "ru.unlimitedtech.express.desktop")
+  app_pocket({ ["ru.unlimitedtech.express.desktop"] = true }, "open -b ru.unlimitedtech.express.desktop")
+end)
+KiwiDesk.bind("ctrl+alt+s", function()
+  app_pocket({ ["rocks.spotifast.spotifast"] = true }, '"$HOME/.local/bin/spotifast-app"')
 end)
 
 app_rules = {
