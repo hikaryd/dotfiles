@@ -14,6 +14,7 @@ if [[ $(uname -s) == Darwin ]]; then
   swiftc -D TEST tools/rex-last-session/main.swift -o "$swift_sandbox/selftest"
   REX_TEST_DIR="$swift_sandbox/state" "$swift_sandbox/selftest"
 fi
+bash tests/test-rex-installer.sh
 "${LUA_BIN:-lua}" tests/test-rex.lua
 "${NU_BIN:-nu}" --no-config-file -c 'source config/nushell/config.nu; if ($env.PATH | first) == "" { error make {msg: "empty PATH"} }'
 REX_BIN_DIR='/rex server/Current/bin' "${NU_BIN:-nu}" --no-config-file -c 'source config/nushell/config.nu; if ($env.PATH | first) != $env.REX_BIN_DIR { error make {msg: "Rex PATH precedence lost"} }'

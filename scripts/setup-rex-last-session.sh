@@ -12,10 +12,21 @@ agents="$HOME/Library/LaunchAgents"
 cache="$HOME/Library/Caches/dots-rex-last-session"
 mkdir -p "$bin" "$agents" "$cache"
 chmod 700 "$cache"
+source_file="$root/tools/rex-last-session/main.swift"
+helper="$bin/dots-rex-last-session"
+marker="$helper.sha256"
+installed_plist="$agents/local.dots.rex-last-session.plist"
+fingerprint=$(shasum -a 256 "$source_file" | cut -d ' ' -f 1)
+rebuild=0
+if [[ ! -x $helper || ! -f $marker || $(< "$marker") != "$fingerprint" ]]; then rebuild=1; fi
 tmp=$(mktemp "$bin/.dots-rex-last-session.XXXXXX")
 plist=$(mktemp "$agents/.local.dots.rex-last-session.XXXXXX")
-trap 'rm -f "$tmp" "$plist"' EXIT
-swiftc "$root/tools/rex-last-session/main.swift" -o "$tmp"
+new_marker=$(mktemp "$bin/.dots-rex-last-session.sha256.XXXXXX")
+trap 'rm -f "$tmp" "$plist" "$new_marker"' EXIT
+if (( rebuild )); then
+  swiftc "$source_file" -o "$tmp"
+  printf '%s\n' "$fingerprint" > "$new_marker"
+fi
 /usr/bin/plutil -create xml1 "$plist"
 /usr/bin/plutil -insert Label -string local.dots.rex-last-session "$plist"
 /usr/bin/plutil -insert ProgramArguments -json '[]' "$plist"
@@ -28,10 +39,29 @@ swiftc "$root/tools/rex-last-session/main.swift" -o "$tmp"
 touch "$cache/watcher.log"
 chmod 600 "$cache/watcher.log"
 domain="gui/$(id -u)"
-if launchctl print "$domain/local.dots.rex-last-session" >/dev/null 2>&1; then
-  launchctl bootout "$domain/local.dots.rex-last-session"
+loaded=0
+running=0
+if status=$(launchctl print "$domain/local.dots.rex-last-session" 2>/dev/null); then
+  loaded=1
+  if grep -Eq '^[[:space:]]*state = running[[:space:]]*$' <<< "$status" &&
+     grep -Eq '^[[:space:]]*pid = [1-9][0-9]*[[:space:]]*$' <<< "$status"; then running=1; fi
 fi
-mv -f "$tmp" "$bin/dots-rex-last-session"
-mv -f "$plist" "$agents/local.dots.rex-last-session.plist"
-launchctl bootstrap "$domain" "$agents/local.dots.rex-last-session.plist"
+plist_changed=0
+if ! cmp -s "$plist" "$installed_plist"; then plist_changed=1; fi
+if (( loaded && (rebuild || plist_changed) )); then
+  launchctl bootout "$domain/local.dots.rex-last-session"
+  loaded=0
+  running=0
+fi
+if (( rebuild )); then
+  rm -f "$marker"
+  mv -f "$tmp" "$helper"
+fi
+if (( plist_changed )); then mv -f "$plist" "$installed_plist"; fi
+if (( ! loaded )); then
+  launchctl bootstrap "$domain" "$installed_plist"
+elif (( ! running )); then
+  launchctl kickstart "$domain/local.dots.rex-last-session"
+fi
+if (( rebuild )); then mv -f "$new_marker" "$marker"; fi
 printf 'Run %s request-access and grant Accessibility permission in System Settings.\n' "$bin/dots-rex-last-session"
