@@ -35,14 +35,9 @@ decorations = "disabled"
 colorspace = "display-p3"
 
 [fonts]
-family = "SF Mono"
+family = "Hack Nerd Font Mono"
 size = 15
 features = ["-calt", "-liga", "-dlig"]
-# Nerd Font private-use glyphs, without replacing normal SF Mono text.
-symbol-map = [
-  { start = "E000", end = "F533", font-family = "Symbols Nerd Font Mono" },
-  { start = "F0001", end = "F1AF0", font-family = "Symbols Nerd Font Mono" },
-]
 
 [cursor]
 shape = "beam"

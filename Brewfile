@@ -147,6 +147,5 @@ cask "abue-ammar/tinycast/tinycast" # Native launcher; Option+A
 cask "openlogi"
 cask "sf-symbols" # Apple's symbol browser app, not a terminal font
 
-# Шрифты Ghostty
-cask "font-symbols-only-nerd-font"
-cask "font-sf-mono"
+# Шрифт терминалов
+cask "font-hack-nerd-font"

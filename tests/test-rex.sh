@@ -50,6 +50,8 @@ STUB
   HOME="$home" bash scripts/setup-rex.sh
   grep -Fx "write com.superlogical.rex Workspace.terminalStartupCommand -string \"$home/.local/bin/dots-tools\" desktop nu" "$log"
   grep -Fx 'write com.superlogical.rex Workspace.terminalFontPointSize -float 15' "$log"
+  grep -Fx 'write com.superlogical.rex Workspace.terminalFontName -string HackNFM-Regular' "$log"
+  grep -Fx 'write com.superlogical.rex Workspace.terminalFallbackFontNames -array' "$log"
   grep -Fx 'write com.superlogical.rex Workspace.tabStyle -string horizontal' "$log"
   grep -Fx 'write com.superlogical.rex Workspace.appearance -string dark' "$log"
   grep -Fx 'write com.superlogical.rex Workspace.interfaceStyle -string blendTheme' "$log"

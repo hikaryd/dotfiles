@@ -27,9 +27,7 @@ command = shell:"$HOME/.local/bin/dots-terminal"
 shell-integration = none
 
 
-# Нейтральная рабочая типографика; иконки — отдельным fallback.
-font-family = SF Mono
-font-family = Symbols Nerd Font Mono
+font-family = Hack Nerd Font Mono
 font-size = 15
 adjust-cell-height = 12%
 # Операторы остаются отдельными символами, без декоративных лигатур.

@@ -19,9 +19,9 @@ defaults write "$domain" Workspace.usesPaneGlass -bool true
 defaults write "$domain" Workspace.showsPaneHeaders -bool false
 defaults write "$domain" Workspace.terminalImproveTextContrast -bool true
 defaults write "$domain" Workspace.terminalStartupCommand -string "\"$HOME/.local/bin/dots-tools\" desktop nu"
-defaults write "$domain" Workspace.terminalFontName -string SFMono-Regular
+defaults write "$domain" Workspace.terminalFontName -string HackNFM-Regular
 defaults write "$domain" Workspace.terminalFontPointSize -float 15
-defaults write "$domain" Workspace.terminalFallbackFontNames -array 'Symbols Nerd Font Mono'
+defaults write "$domain" Workspace.terminalFallbackFontNames -array
 defaults write "$domain" Workspace.terminalAllowsLigatures -bool false
 defaults write "$domain" Workspace.terminalCellHeightPercent -float 12
 defaults write "$domain" Workspace.terminalPaddingX -float 18

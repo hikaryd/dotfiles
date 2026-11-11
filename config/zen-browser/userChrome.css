@@ -58,8 +58,7 @@ browser[type="content-primary"],
 }
 
 /* Quiet Ayu: только интерфейс браузера, не стили веб-страниц.
- * Токены согласованы с palette/ayu.toml; UI использует системный sans-serif,
- * SF Mono остаётся шрифтом кода/терминалов, не текстом всех приложений. */
+ * Токены согласованы с palette/ayu.toml; UI использует системный sans-serif. */
 :root {
   color-scheme: dark;
   --toolbar-bgcolor: #101010 !important;
