@@ -1,0 +1,10 @@
+{
+  "proxy_url": "",
+  "browser_proxy_url": "",
+  "claude_version": "2.1.322",
+  "workspaces": [],
+  "browser_base_image": "moby/buildkit:buildx-stable-1",
+  "browser_memory_mb": 1024,
+  "browser_cpus": 2,
+  "browser_port": 5909
+}
