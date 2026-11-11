@@ -262,6 +262,14 @@ def main(config, root, state, arguments):
             prepare(config, root, state)
         elif action == "start":
             start(config, root, state)
+            viewer_url = "vnc://127.0.0.1:{}".format(options(config)[4])
+            try:
+                subprocess.run(["/usr/bin/open", "-b", "com.apple.ScreenSharing", viewer_url],
+                               stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                               check=True, timeout=10, close_fds=True)
+            except (OSError, subprocess.SubprocessError):
+                raise RuntimeError("Browser is running, but Screen Sharing could not be opened. Connect manually to " + viewer_url) from None
+            print("Screen Sharing opened for the isolated browser.")
         elif action == "stop":
             cleanup()
             print("Browser and firewall stopped. Persistent profile retained.")

@@ -16,6 +16,57 @@ HERE = Path(__file__).resolve().parent
 
 
 class BrowserTests(unittest.TestCase):
+    def test_start_opens_local_viewer_after_success(self):
+        config = {'proxy_url': 'http://private-user:private-password@192.0.2.1:8080', 'browser_port': 5917}
+        with tempfile.TemporaryDirectory() as temp, mock.patch.object(browser, 'start') as start, \
+                mock.patch.object(browser.subprocess, 'run') as run:
+            run.side_effect = lambda *args, **kwargs: start.assert_called_once()
+            browser.main(config, HERE, Path(temp), ['start'])
+            run.assert_called_once_with(['/usr/bin/open', '-b', 'com.apple.ScreenSharing', 'vnc://127.0.0.1:5917'],
+                                        stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                                        check=True, timeout=10, close_fds=True)
+            self.assertNotIn('private-', str(run.call_args))
+
+    def test_failed_start_never_opens_viewer(self):
+        with tempfile.TemporaryDirectory() as temp, \
+                mock.patch.object(browser, 'start', side_effect=RuntimeError('guard failed')), \
+                mock.patch.object(browser.subprocess, 'run') as run:
+            with self.assertRaisesRegex(RuntimeError, 'guard failed'):
+                browser.main({'proxy_url': 'http://192.0.2.1:8080'}, HERE, Path(temp), ['start'])
+            run.assert_not_called()
+
+    def test_viewer_failure_keeps_browser_and_reports_local_fallback(self):
+        for error in (OSError('unavailable'), subprocess.CalledProcessError(1, ['open']),
+                      subprocess.TimeoutExpired(['open'], 10)):
+            with self.subTest(error=type(error).__name__), tempfile.TemporaryDirectory() as temp, \
+                    mock.patch.object(browser, 'start'), mock.patch.object(browser, 'cleanup') as cleanup, \
+                    mock.patch.object(browser.subprocess, 'run', side_effect=error):
+                with self.assertRaisesRegex(RuntimeError, 'Browser is running.*vnc://127.0.0.1:5909'):
+                    browser.main({'proxy_url': 'http://192.0.2.1:8080'}, HERE, Path(temp), ['start'])
+                cleanup.assert_not_called()
+
+    def test_reused_browser_opens_viewer_without_restarting(self):
+        config = {'proxy_url': 'http://192.0.2.1:8080'}
+        guard = {'Id': 'guard-id', 'HostConfig': {'PortBindings': {'5900/tcp': [{'HostPort': '5909'}]}}}
+        existing = {'State': {'Running': True}, 'Config': {'User': '1000:1000'},
+                    'HostConfig': {'NetworkMode': 'container:guard-id', 'ReadonlyRootfs': True,
+                                   'CapDrop': ['ALL'], 'Memory': 1024 * 1024 * 1024, 'NanoCpus': 2000000000}}
+        with tempfile.TemporaryDirectory() as temp, mock.patch.object(browser, 'owned', return_value=existing), \
+                mock.patch.object(browser, 'guard_ready', return_value=guard), \
+                mock.patch.object(browser, 'cleanup') as cleanup, mock.patch.object(browser, 'docker') as docker, \
+                mock.patch.object(browser.subprocess, 'run') as run:
+            (Path(temp) / 'browser.json').write_text(json.dumps({
+                'proxy': browser.hashlib.sha256(config['proxy_url'].encode()).hexdigest(),
+                'port': 5909, 'automatic_auth': 1}))
+            browser.main(config, HERE, Path(temp), ['start'])
+            run.assert_called_once()
+            cleanup.assert_not_called()
+            docker.assert_not_called()
+            run.reset_mock()
+            with self.assertRaisesRegex(RuntimeError, 'configuration changed'):
+                browser.main(dict(config, browser_port=5917), HERE, Path(temp), ['start'])
+            run.assert_not_called()
+
     def test_firefox_auth_scope(self):
         node = shutil.which('node')
         if not node:
