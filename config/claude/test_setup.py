@@ -2,6 +2,7 @@ import concurrent.futures
 import contextlib
 import json
 import os
+import shutil
 from pathlib import Path
 import socket
 import socketserver
@@ -62,6 +63,20 @@ def running_relay(url, directory):
 
 
 class SetupTests(unittest.TestCase):
+    @unittest.skipUnless(sys.platform == 'darwin' and shutil.which('npm') and shutil.which('node'), 'requires macOS and npm')
+    def test_real_npm_reads_distinct_isolated_configs(self):
+        with tempfile.TemporaryDirectory(dir=HERE) as temporary:
+            directory = Path(temporary).resolve()
+            with mock.patch.object(launcher, 'HOME', directory), mock.patch.object(launcher, 'TMP', directory):
+                env = launcher.environment('http://127.0.0.1:1', 1)
+            self.assertNotEqual(env['NPM_CONFIG_USERCONFIG'], env['NPM_CONFIG_GLOBALCONFIG'])
+            self.assertEqual(Path(env['NPM_CONFIG_GLOBALCONFIG']).read_text().strip(), '')
+            command = [shutil.which('node'), str(Path(shutil.which('npm')).resolve()), 'config', 'get', 'userconfig']
+            result = subprocess.run(guard.sandbox_argv(guard.make_profile(1, [directory], [HERE / 'npm-globalrc']), command),
+                                    env=env, cwd=directory, stdin=subprocess.DEVNULL, capture_output=True, text=True, timeout=20)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual(result.stdout.strip(), '/dev/null')
+
     def test_missing_proxy_never_starts_service_or_install(self):
         with mock.patch.object(launcher, "relay") as start, mock.patch.object(subprocess, "run") as run:
             with self.assertRaises(ValueError):
@@ -96,8 +111,10 @@ class SetupTests(unittest.TestCase):
             self.assertTrue((base / "home/.claude/skills/ponytail").is_symlink())
             self.assertFalse((base / "home/.claude/skills/chief-of-staff").exists())
             self.assertFalse((base / "home/.claude/agents").exists())
-            self.assertEqual((base / "runtime/browser-start.sh").stat().st_mode & 0o777, 0o644)
-            self.assertEqual((base / "runtime/firewall.sh").stat().st_mode & 0o777, 0o644)
+            for name in ("browser-start.sh", "firewall.sh", "firefox-prefs.js", "firefox.cfg", "test_firefox_live.py"):
+                self.assertEqual((base / "runtime" / name).stat().st_mode & 0o777, 0o644)
+            self.assertEqual((base / "runtime/launcher.py").stat().st_mode & 0o777, 0o600)
+            self.assertEqual((base / "runtime").stat().st_mode & 0o777, 0o700)
             settings = home / ".config/claude-guard/settings.json"
             self.assertEqual(settings.stat().st_mode & 0o777, 0o600)
             self.assertEqual(json.loads(settings.read_text())["proxy_url"], "")

@@ -2,6 +2,9 @@ import json
 import os
 from pathlib import Path
 import socket
+import shutil
+import subprocess
+import tempfile
 import time
 import unittest
 from unittest import mock
@@ -13,6 +16,71 @@ HERE = Path(__file__).resolve().parent
 
 
 class BrowserTests(unittest.TestCase):
+    def test_firefox_auth_scope(self):
+        node = shutil.which('node')
+        if not node:
+            self.skipTest('requires installed Node.js')
+        subprocess.run([node, str(HERE / 'test_firefox_auth.js'), str(HERE / 'firefox.cfg')], check=True, timeout=15)
+
+    def test_proxy_credentials_use_stdin_only(self):
+        config = {'proxy_url': 'http://canary%40user:p%22%5C%3A%40@192.0.2.1:8080'}
+        for ready in (True, False):
+            with self.subTest(ready=ready), tempfile.TemporaryDirectory() as temp, \
+                    mock.patch.object(browser, 'owned', side_effect=lambda kind, name: None if kind == 'container' else {'owned': True}), \
+                    mock.patch.object(browser, 'start_guard'), mock.patch.object(browser, 'cleanup') as cleanup, \
+                    mock.patch.object(browser.time, 'sleep'), mock.patch.object(browser, 'docker') as docker, \
+                    mock.patch.object(browser.subprocess, 'Popen') as popen:
+                popen.return_value.poll.return_value = None
+                def result(arguments, **kwargs):
+                    if arguments[:2] == ['exec', browser.BROWSER] and not ready:
+                        raise RuntimeError('not ready')
+                    return ''
+                docker.side_effect = result
+                if ready:
+                    browser.start(config, HERE, Path(temp))
+                    self.assertEqual(json.loads((Path(temp) / 'browser.json').read_text())['automatic_auth'], 1)
+                else:
+                    with self.assertRaisesRegex(RuntimeError, 'readiness timed out'):
+                        browser.start(config, HERE, Path(temp))
+                    self.assertFalse((Path(temp) / 'browser.json').exists())
+                    self.assertEqual(cleanup.call_count, 2)
+                payload = popen.return_value.stdin.write.call_args.args[0].decode().splitlines()
+                self.assertEqual(len(payload), 2)
+                self.assertEqual(json.loads(payload[1]), {'username': 'canary@user', 'password': 'p"\\:@'})
+                for call in docker.call_args_list:
+                    self.assertNotIn('canary', str(call))
+                self.assertNotIn('canary', str(popen.call_args))
+                popen.return_value.stdin.close.assert_called_once()
+                created = next(call.args[0] for call in docker.call_args_list if call.args[0][0] == 'create')
+                self.assertIn('none', created[created.index('--log-driver') + 1:])
+                self.assertTrue(any('dst=/usr/lib/firefox/mozilla.cfg,readonly' in value for value in created))
+
+    @unittest.skipUnless(os.environ.get('CLAUDE_GUARD_DOCKER_TESTS') == '1', 'requires opted-in Docker tests')
+    def test_profile_volume_keeps_browser_ownership(self):
+        volume = 'claude-profile-test-' + uuid.uuid4().hex[:12]
+        browser.docker(['volume', 'create', volume])
+        try:
+            common = ['run', '--rm', '--pull', 'never', '--network', 'none', '--read-only',
+                      '--cap-drop', 'ALL', '--security-opt', 'no-new-privileges',
+                      '--mount', 'type=volume,src={},dst=/profile,volume-nocopy'.format(volume), '--entrypoint', '/bin/sh']
+            browser.docker(common + ['--cap-add', 'CHOWN', 'moby/buildkit:buildx-stable-1', '-c', 'chown 1000:1000 /profile'])
+            result = browser.docker(common + ['--user', '1000:1000', 'moby/buildkit:buildx-stable-1', '-c',
+                                             'mkdir /profile/firefox && stat -c "%u:%g" /profile'])
+            self.assertEqual(result, '1000:1000')
+            self.assertEqual(Path(browser.__file__).read_text().count('src={},dst=/profile,volume-nocopy'), 2)
+        finally:
+            browser.docker(['volume', 'rm', volume])
+
+    def test_missing_volume_is_not_an_inspection_failure(self):
+        with mock.patch.object(browser.subprocess, 'run') as run:
+            run.return_value.returncode = 1
+            run.return_value.stdout = '[]'
+            run.return_value.stderr = 'Error response from daemon: get dots-claude-browser-profile: no such volume'
+            self.assertIsNone(browser.owned('volume', browser.VOLUME))
+            run.return_value.stderr = 'Error response from daemon: permission denied'
+            with self.assertRaises(RuntimeError):
+                browser.owned('volume', browser.VOLUME)
+
     def test_docker_is_pinned_to_local_socket(self):
         with mock.patch.object(browser.subprocess, 'run') as run:
             run.return_value.returncode = 0

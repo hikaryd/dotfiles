@@ -7,7 +7,8 @@ import sys
 SOURCE = Path(__file__).resolve().parent
 FILES = ("guard.py", "launcher.py", "relay.py", "browser.py", "firewall.sh", "browser-start.sh",
          "session-hook.py", "session-context.txt", "test_guard.py", "test_setup.py", "test_browser.py", "test_browser_network.py",
-         "install_local.py", "settings.example.json")
+         "install_local.py", "settings.example.json", "npm-globalrc", "firefox-prefs.js", "firefox.cfg",
+         "test_firefox_auth.js", "test_firefox_live.py")
 EXCLUDED_SKILLS = {"chief-of-staff", "claude-handoff", "peekaboo"}
 MARKER = "dots-claude-guard-v1\n"
 
@@ -47,7 +48,8 @@ def install(home):
         write_owned(marker, MARKER)
     runtime = base / "runtime"
     for name in FILES:
-        write_owned(runtime / name, (SOURCE / name).read_text(), 0o644 if name.endswith(".sh") else 0o600)
+        container_readable = name.endswith((".sh", ".js", ".cfg")) or name == "test_firefox_live.py"
+        write_owned(runtime / name, (SOURCE / name).read_text(), 0o644 if container_readable else 0o600)
     config = home / ".config/claude-guard/settings.json"
     if not config.exists():
         defaults = json.loads((SOURCE / "settings.example.json").read_text())

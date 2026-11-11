@@ -96,7 +96,7 @@ def environment(url, port):
     env.update({"DISABLE_AUTOUPDATER": "1", "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
                 "CLAUDE_CODE_CERT_STORE": "bundled", "CLAUDE_CONFIG_DIR": str(HOME / ".claude"),
                 "NODE_USE_ENV_PROXY": "1", "NPM_CONFIG_USERCONFIG": "/dev/null",
-                "NPM_CONFIG_GLOBALCONFIG": "/dev/null", "NPM_CONFIG_REGISTRY": "https://registry.npmjs.org",
+                "NPM_CONFIG_GLOBALCONFIG": str(ROOT / "npm-globalrc"), "NPM_CONFIG_REGISTRY": "https://registry.npmjs.org",
                 "NPM_CONFIG_CACHE": str(HOME / ".npm")})
     return env
 

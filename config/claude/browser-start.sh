@@ -8,6 +8,10 @@ IFS= read -r password
 [ "${#password}" -eq 8 ] || exit 2
 x11vnc -storepasswd "$password" "$HOME/.vnc/passwd" >/dev/null 2>&1
 unset password
+mkdir -m 700 /run/guard
+IFS= read -r proxy_auth
+printf '%s' "$proxy_auth" > /run/guard/proxy-auth.json
+unset proxy_auth
 Xvfb :99 -screen 0 1440x900x24 -nolisten tcp >/tmp/xvfb.log 2>&1 &
 xvfb=$!
 wm= vnc= browser=
@@ -30,7 +34,12 @@ x11vnc -display :99 -rfbport 5900 -rfbauth "$HOME/.vnc/passwd" -forever -shared 
 vnc=$!
 firefox --no-remote --profile "$HOME/firefox" about:blank >/tmp/firefox.log 2>&1 &
 browser=$!
-sleep 2
-kill -0 "$xvfb" "$vnc" "$browser"
+attempt=0
+while [ ! -f /run/guard/auth-ready ]; do
+    kill -0 "$xvfb" "$vnc" "$browser"
+    attempt=$((attempt + 1))
+    [ "$attempt" -lt 80 ] || exit 1
+    sleep 0.1
+done
 touch /tmp/browser-ready
 wait "$browser"

@@ -8,6 +8,7 @@ import secrets
 import string
 import subprocess
 import time
+from urllib.parse import unquote
 
 from guard import validate_proxy
 
@@ -30,26 +31,6 @@ addgroup -g 1000 browser
 adduser -D -u 1000 -G browser -h /home/browser browser
 mkdir -p /home/browser /profile /usr/lib/firefox/defaults/pref
 chown 1000:1000 /home/browser /profile
-printf '%s\n' 'pref("general.config.filename", "mozilla.cfg");' 'pref("general.config.obscure_value", 0);' > /usr/lib/firefox/defaults/pref/guard.js
-cat > /usr/lib/firefox/mozilla.cfg <<'EOF'
-// Managed browser proxy, kernel firewall is the boundary.
-lockPref("network.proxy.type", 1);
-lockPref("network.proxy.http", getenv("GUARD_PROXY_HOST"));
-lockPref("network.proxy.http_port", parseInt(getenv("GUARD_PROXY_PORT"), 10));
-lockPref("network.proxy.ssl", getenv("GUARD_PROXY_HOST"));
-lockPref("network.proxy.ssl_port", parseInt(getenv("GUARD_PROXY_PORT"), 10));
-lockPref("network.proxy.share_proxy_settings", true);
-lockPref("network.proxy.no_proxies_on", "");
-lockPref("network.proxy.allow_hijacking_localhost", true);
-lockPref("network.proxy.proxy_over_tls", getenv("GUARD_PROXY_TLS") === "1");
-lockPref("network.trr.mode", 5);
-lockPref("media.peerconnection.enabled", false);
-lockPref("network.http.http3.enable", false);
-lockPref("network.dns.disablePrefetch", true);
-lockPref("network.prefetch-next", false);
-lockPref("datareporting.healthreport.uploadEnabled", false);
-lockPref("toolkit.telemetry.enabled", false);
-EOF
 unset http_proxy https_proxy HTTP_PROXY HTTPS_PROXY
 '''
 
@@ -59,7 +40,7 @@ def docker(arguments, input_text=None, missing=False):
                             capture_output=True, text=True, close_fds=True)
     if result.returncode:
         absent_network = arguments[:2] == ["network", "inspect"] and "not found" in result.stderr
-        if missing and ("No such" in result.stderr or absent_network):
+        if missing and ("no such" in result.stderr.lower() or absent_network):
             return None
         raise RuntimeError("Docker operation failed. No direct-network fallback. Check Docker Desktop and cached images")
     return result.stdout.strip()
@@ -184,7 +165,7 @@ def prepare(config, root, state):
                 "--network", "container:" + GUARD, "--cap-drop", "ALL", "--cap-add", "CHOWN",
                 "--cap-add", "DAC_OVERRIDE", "--cap-add", "FOWNER", "--cap-add", "SETUID", "--cap-add", "SETGID",
                 "--security-opt", "no-new-privileges", "--log-driver", "none", "--entrypoint", "/bin/sh",
-                "--mount", "type=volume,src={},dst=/profile".format(VOLUME), image, "-c", "exec sleep infinity"])
+                "--mount", "type=volume,src={},dst=/profile,volume-nocopy".format(VOLUME), image, "-c", "exec sleep infinity"])
         guard_ready()
         docker(["exec", "-i", BUILD, "/bin/sh", "-eu", "-c", BOOTSTRAP], input_text=url + "\n")
         docker(["stop", BUILD])
@@ -207,7 +188,7 @@ def start(config, root, state):
                 or host.get("CapAdd") or existing["Config"].get("User") != "1000:1000"):
             raise RuntimeError("Running browser is no longer in the expected sandbox")
         saved = json.loads(record.read_text()) if record.exists() else {}
-        if (saved.get("proxy") != digest or saved.get("port") != port
+        if (saved.get("proxy") != digest or saved.get("port") != port or saved.get("automatic_auth") != 1
                 or guard["HostConfig"]["PortBindings"]["5900/tcp"][0].get("HostPort") != str(port)
                 or host.get("Memory") != memory * 1024 * 1024 or host.get("NanoCpus") != int(cpus * 1000000000)):
             raise RuntimeError("Browser configuration changed. Run claude-browser stop before restarting")
@@ -238,12 +219,16 @@ def start(config, root, state):
                 "--tmpfs", "/run:rw,nosuid,nodev,size=16m,mode=1777", "-i", "--entrypoint", "/bin/sh",
                 "--env", "HOME=/profile", "--env", "GUARD_PROXY_HOST=" + proxy.hostname,
                 "--env", "GUARD_PROXY_PORT=" + str(proxy.port), "--env", "GUARD_PROXY_TLS=" + str(int(proxy.scheme == "https")),
-                "--mount", "type=volume,src={},dst=/profile".format(VOLUME),
+                "--mount", "type=volume,src={},dst=/profile,volume-nocopy".format(VOLUME),
                 "--mount", "type=bind,src={},dst=/browser-start.sh,readonly".format(root / "browser-start.sh"),
+                "--mount", "type=bind,src={},dst=/usr/lib/firefox/defaults/pref/guard.js,readonly".format(root / "firefox-prefs.js"),
+                "--mount", "type=bind,src={},dst=/usr/lib/firefox/mozilla.cfg,readonly".format(root / "firefox.cfg"),
                 IMAGE, "/browser-start.sh"])
         process = subprocess.Popen(DOCKER + ["start", "-ai", BROWSER], stdin=subprocess.PIPE,
                                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True, close_fds=True)
-        process.stdin.write(password.encode() + b"\n")
+        authentication = json.dumps({"username": unquote(proxy.username or ""),
+                                     "password": unquote(proxy.password or "")}, ensure_ascii=True)
+        process.stdin.write((password + "\n" + authentication + "\n").encode())
         process.stdin.close()
         for _ in range(100):
             if process.poll() is not None:
@@ -255,11 +240,11 @@ def start(config, root, state):
                 time.sleep(0.1)
         else:
             raise RuntimeError("Browser readiness timed out")
-        record.write_text(json.dumps({"proxy": digest, "port": port}) + "\n")
+        record.write_text(json.dumps({"proxy": digest, "port": port, "automatic_auth": 1}) + "\n")
         record.chmod(0o600)
         print("Connect Screen Sharing to vnc://127.0.0.1:{}".format(port))
         print("VNC password file: " + str(password_file))
-        print("Proxy authentication, if required, is entered inside Firefox.")
+        print("Proxy authentication is supplied automatically from private settings.")
     except BaseException:
         cleanup()
         raise
