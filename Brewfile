@@ -140,7 +140,3 @@ cask "karabiner-elements"
 cask "duongductrong/snapzy/snapzy"
 cask "abue-ammar/tinycast/tinycast" # Native launcher; Option+A
 cask "openlogi"
-cask "sf-symbols" # Apple's symbol browser app, not a terminal font
-
-# Шрифт терминалов
-cask "font-hack-nerd-font"

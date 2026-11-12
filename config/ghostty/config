@@ -27,7 +27,7 @@ command = shell:"$HOME/.local/bin/dots-terminal"
 shell-integration = none
 
 
-font-family = Hack Nerd Font Mono
+# Встроенный JetBrains Mono с Nerd-иконками: отдельный шрифт не нужен.
 font-size = 15
 adjust-cell-height = 12%
 # Операторы остаются отдельными символами, без декоративных лигатур.
