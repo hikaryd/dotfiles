@@ -84,7 +84,3 @@ config/git/private.inc
 /package.json
 /docs
 /tests
-
-# Claude proxy credentials and machine-local settings stay outside Git.
-/config/claude/settings.json
-/config/claude/*.private.json

@@ -1,5 +1,0 @@
-- shell:
-    - command: bash scripts/claude-install.sh
-      description: Prepare proxy-only native Claude and on-demand Linux browser (offline)
-      stdout: true
-      stderr: true

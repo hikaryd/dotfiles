@@ -1,5 +1,5 @@
 .DEFAULT_GOAL := test
-.PHONY: test test-go test-integration test-node test-runner test-list test-claude
+.PHONY: test test-go test-integration test-node test-runner test-list
 
 test:
 	./scripts/test.sh all
@@ -18,6 +18,3 @@ test-runner:
 
 test-list:
 	./scripts/test.sh --list
-
-test-claude:
-	/usr/bin/python3 -m unittest discover -s config/claude -p 'test_*.py' -v
