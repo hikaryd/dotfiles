@@ -54,6 +54,7 @@ brew "nklmilojevic/sofka/sofka"
 brew "fzf"
 brew "atuin" # Локальная история; без аккаунта, sync и daemon
 brew "fzf-tab"
+brew "kevengoncalves/tap/lig"
 brew "tmux"
 brew "rmux" # Default multiplexer in Ghostty
 brew "zsh"

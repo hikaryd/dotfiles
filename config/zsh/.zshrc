@@ -1,3 +1,9 @@
+# >>> lig pre >>>
+if [[ -o interactive && -t 0 && -t 1 ]] && (( $+commands[lig] )); then
+  eval "$(lig init zsh pre)"
+fi
+# <<< lig pre <<<
+
 # =============================================================================
 # ZSH Configuration — migrated from nushell, optimized for performance
 # =============================================================================
@@ -175,3 +181,9 @@ fi
 
 # opencode
 export PATH=/Users/tronin.egor/.opencode/bin:$PATH
+
+# >>> lig post >>>
+if [[ -o interactive && -t 0 && -t 1 ]] && (( $+commands[lig] )); then
+  eval "$(lig init zsh post)"
+fi
+# <<< lig post <<<
