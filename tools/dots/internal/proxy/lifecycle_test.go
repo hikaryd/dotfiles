@@ -17,7 +17,7 @@ import (
 )
 
 func TestMain(m *testing.M) {
-	startupSettle = 150 * time.Millisecond
+	startupSettle = 500 * time.Millisecond
 	if os.Getenv("DOTS_PROXY_CLI") == "1" {
 		os.Exit(Run("", os.Args[1:]))
 	}
