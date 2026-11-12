@@ -7,32 +7,7 @@
                      "complex_modifications": {
                             "parameters": {
                                    "basic.simultaneous_threshold_milliseconds": 20
-                            },
-                            "rules": [
-                                   {
-                                          "description": "Caps Lock switches local RU/EN in Screen Sharing",
-                                          "manipulators": [
-                                                 {
-                                                        "type": "basic",
-                                                        "from": { "key_code": "f13", "modifiers": { "optional": ["fn", "caps_lock"] } },
-                                                        "to": [{ "select_input_source": { "input_source_id": "^com\\.apple\\.keylayout\\.ABC$" } }],
-                                                        "conditions": [
-                                                               { "type": "frontmost_application_if", "bundle_identifiers": ["^com\\.apple\\.ScreenSharing$", "^com\\.tigervnc\\.tigervnc$"] },
-                                                               { "type": "input_source_if", "input_sources": [{ "input_source_id": "^com\\.apple\\.keylayout\\.Russian$" }] }
-                                                        ]
-                                                 },
-                                                 {
-                                                        "type": "basic",
-                                                        "from": { "key_code": "f13", "modifiers": { "optional": ["fn", "caps_lock"] } },
-                                                        "to": [{ "select_input_source": { "input_source_id": "^com\\.apple\\.keylayout\\.Russian$" } }],
-                                                        "conditions": [
-                                                               { "type": "frontmost_application_if", "bundle_identifiers": ["^com\\.apple\\.ScreenSharing$", "^com\\.tigervnc\\.tigervnc$"] },
-                                                               { "type": "input_source_if", "input_sources": [{ "input_source_id": "^com\\.apple\\.keylayout\\.ABC$" }] }
-                                                        ]
-                                                 }
-                                          ]
-                                   }
-                            ]
+                            }
                      },
                      "devices": [
                             {
