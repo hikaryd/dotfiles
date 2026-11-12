@@ -97,7 +97,6 @@ app_rules = [
   { app_name = "Keet", workspace = "2" },
 
   # "3": мессенджер/почта/музыка/видео-комнаты
-  { app_id = "com.tdesktop.Telegram", workspace = "3" },
   { app_id = "ru.keepcoder.Telegram", workspace = "3" },
   { app_id = "ru.unlimitedtech.express.desktop", workspace = "3" },
   { app_name = "Proton Mail", workspace = "3" },

@@ -129,7 +129,7 @@ brew "bat-extras"
 
 # Приложения
 cask "vorssaint" # Батарея, системный монитор и управление звуком в одном menu bar app
-cask "telegram-desktop"
+cask "telegram" # Swift client
 cask "crmne/tap/spotifast"
 brew "kcat"
 cask "1password"
