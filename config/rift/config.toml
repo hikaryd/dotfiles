@@ -106,6 +106,7 @@ app_rules = [
   { app_name = "Psst", workspace = "3" },
   # "4": документы/ноуты
   { app_name = "Pages", workspace = "4" },
+  { app_name = "Tuta", workspace = "4" },
   { app_name = "UpNote", workspace = "4" },
 
   # "e": системные
