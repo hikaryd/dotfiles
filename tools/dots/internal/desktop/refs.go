@@ -1,7 +1,6 @@
 package desktop
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/url"
@@ -237,16 +236,3 @@ func jsonExit(v any, pretty bool) int {
 }
 func object(v any) map[string]any { m, _ := v.(map[string]any); return m }
 func str(v any) string            { s, _ := v.(string); return s }
-func array(v any) []any           { a, _ := v.([]any); return a }
-func number(v any) int {
-	switch n := v.(type) {
-	case float64:
-		return int(n)
-	case int:
-		return n
-	case json.Number:
-		i, _ := strconv.Atoi(string(n))
-		return i
-	}
-	return 0
-}

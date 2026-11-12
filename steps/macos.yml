@@ -1,27 +1,7 @@
 ---
 - link:
-    ~/.config/KiwiDesk/init.lua:
-      path: config/kiwidesk/init.lua
-      create: true
-      force: true
-    ~/.config/KiwiDesk/theme.lua:
-      path: config/kiwidesk/theme.lua
-      create: true
-      force: true
-    ~/.config/sketchybar:
-      path: config/sketchybar
-      create: true
-      force: true
     ~/.config/rift/config.toml:
       path: config/rift/config.toml
-      create: true
-      force: true
-    ~/.config/aerospace/aerospace.toml:
-      path: config/aerospace/aerospace.toml
-      create: true
-      force: true
-    ~/.config/glide/glide.toml:
-      path: config/glide/glide.toml
       create: true
       force: true
 
@@ -33,7 +13,7 @@
     - description: "Prefer key repeat over the accent menu"
       command: >-
         defaults write NSGlobalDomain ApplePressAndHoldEnabled -bool false
-    - description: "Enable separate Spaces per display (required for aerospace)"
+    - description: "Enable separate Spaces per display"
       command: defaults write com.apple.spaces spans-displays -bool false
     - description: "Disable auto-rearrange Spaces by recent use"
       command: defaults write com.apple.dock mru-spaces -bool false

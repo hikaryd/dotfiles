@@ -104,7 +104,7 @@ func render(name string, ctx map[string]any) (string, error) {
 	if err := t.Execute(&out, ctx); err != nil {
 		return "", err
 	}
-	if name == "fresh" || name == "thorium" {
+	if name == "fresh" {
 		var formatted bytes.Buffer
 		if err := json.Indent(&formatted, bytes.TrimSpace(out.Bytes()), "", "  "); err != nil {
 			return "", fmt.Errorf("invalid generated %s JSON", name)

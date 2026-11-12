@@ -1,8 +1,0 @@
-gui: # trailing comment
-  showIcons: true
-
-  nerdFontsVersion: "3"
-# Outside gui
-customCommands:
-  - key: "a"
-    command: 'echo "keep me"'

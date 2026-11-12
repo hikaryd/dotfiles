@@ -7,7 +7,6 @@ import (
 	"path/filepath"
 
 	"dots/native/internal/agents"
-	"dots/native/internal/anime"
 	"dots/native/internal/bootstrap"
 	"dots/native/internal/desktop"
 	"dots/native/internal/palette"
@@ -47,13 +46,11 @@ func dispatch(root, name string, args []string) int {
 		return runVPN(root, args)
 	}
 	if len(args) == 0 || args[0] == "-h" || args[0] == "--help" || args[0] == "help" {
-		fmt.Println("Usage: dots-tools desktop|setup|agents|proxy|palette|vpn|anime|ui <command> [args]")
+		fmt.Println("Usage: dots-tools desktop|setup|agents|proxy|palette|vpn|ui <command> [args]")
 		fmt.Println("Aliases: dots, dots-nu, ai_helper, dots-vpn")
 		return 0
 	}
 	switch args[0] {
-	case "anime":
-		return anime.Run(root, args[1:])
 	case "ui":
 		return uicli.Run(args[1:])
 	case "desktop":

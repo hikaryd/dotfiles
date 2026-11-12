@@ -13,7 +13,7 @@ import (
 	"github.com/pelletier/go-toml/v2"
 )
 
-var toolNames = []string{"ghostty", "rex", "rio", "starship", "nushell", "sketchybar", "tmux", "fresh", "lazygit", "thorium", "yazi", "jcode", "kiwidesk"}
+var toolNames = []string{"ghostty", "starship", "nushell", "tmux", "fresh", "lazygit", "yazi", "jcode"}
 
 type palette map[string]map[string]string
 
@@ -26,7 +26,7 @@ type generator struct {
 // Run implements dots-tools palette [--variant dark|mirage] [--tool TOOL] [--dry-run].
 func Run(root string, args []string) int { return run(root, args, os.Stdout, os.Stderr) }
 
-const usage = "usage: dots-tools palette [-h] [--variant {dark,mirage}]\n                          [--tool {ghostty,rex,rio,starship,nushell,sketchybar,tmux,fresh,lazygit,thorium,yazi,jcode,kiwidesk}]\n                          [--dry-run]\n"
+const usage = "usage: dots-tools palette [-h] [--variant {dark,mirage}]\n                          [--tool {ghostty,starship,nushell,tmux,fresh,lazygit,yazi,jcode}]\n                          [--dry-run]\n"
 
 func run(root string, args []string, out, stderr io.Writer) int {
 	variant, tool, dry := "dark", "", false
@@ -165,7 +165,7 @@ func replace(text, pattern, replacement string) string {
 
 func (g generator) generate(name string) error {
 	switch name {
-	case "ghostty", "rex":
+	case "ghostty":
 		var lines []string
 		for _, field := range []struct{ name, section, key string }{
 			{"background", "editor", "bg"}, {"foreground", "editor", "fg"},
@@ -184,14 +184,6 @@ func (g generator) generate(name string) error {
 				return err
 			}
 			lines = append(lines, fmt.Sprintf("palette = %d=%s", i, value))
-		}
-		if name == "rex" {
-			rex := strings.Join(lines[:5], "\n") + "\n" + strings.Join(lines[6:], "\n") + "\n"
-			if err := g.write("rex/ayu-dark", rex, true); err != nil {
-				return err
-			}
-			fmt.Fprintf(g.out, "  rex: %s\n", g.path("rex/ayu-dark"))
-			return nil
 		}
 		path := g.path("ghostty/config")
 		text, err := readText(path)

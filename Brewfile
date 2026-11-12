@@ -2,14 +2,12 @@
 tap "koekeishiya/formulae"
 tap "acsandmann/tap"
 tap "asmvik/formulae"
-tap "nikitabobko/tap"
 tap "duongductrong/snapzy", "https://github.com/duongductrong/Snapzy"
 tap "abue-ammar/tinycast"
 tap "homebrew-zathura/zathura"
 tap "ajrosen/tap"
 tap "openclaw/tap"
 tap "crmne/tap"
-tap "kiwicanopy/tap"
 
 # Основные системные пакеты
 brew "coreutils"
@@ -125,7 +123,6 @@ brew "sesh"
 brew "acsandmann/tap/rift"
 brew "fastfetch"    
 brew "ffmpeg"    
-brew "mpv" # Player for anicli-ru / AniLiberty
 
 # Дополнения для bat
 brew "bat-extras" 
@@ -137,8 +134,6 @@ cask "crmne/tap/spotifast"
 brew "kcat"
 cask "1password"
 cask "1password-cli"
-cask "nikitabobko/tap/aerospace"
-cask "kiwicanopy/tap/kiwidesk"
 cask "ghostty"
 cask "mos"       
 cask "karabiner-elements"

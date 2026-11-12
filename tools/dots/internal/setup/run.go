@@ -14,7 +14,7 @@ func Run(root string, args []string) int {
 		return 2
 	}
 	if args[0] == "--help" || args[0] == "-h" || len(args) == 2 && (args[1] == "--help" || args[1] == "-h") {
-		fmt.Println("usage: dots-tools setup jcode-apply|jcode-neo4j-init|jevgrep-apply|waterfox-apply|tinycast-hotkey|managed-links|json-keys|cleanup [args]")
+		fmt.Println("usage: dots-tools setup jcode-apply|jcode-neo4j-init|jevgrep-apply|tinycast-hotkey|managed-links|json-keys|cleanup [args]")
 		return 0
 	}
 	if args[0] == "json-keys" && len(args) != 2 {
@@ -40,8 +40,6 @@ func Run(root string, args []string) int {
 		_, err = jcodeNeo4jPassword(data)
 	case "jevgrep-apply":
 		err = jevgrepApply(root)
-	case "waterfox-apply":
-		err = waterfoxApply(root)
 	case "tinycast-hotkey":
 		err = tinycastHotkey()
 	case "managed-links":

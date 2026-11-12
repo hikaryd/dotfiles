@@ -95,7 +95,6 @@ cd "$BASEDIR" || die "не удалось перейти в $BASEDIR"
 # ─── план ────────────────────────────────────────────────────────────
 step "План отката (репозиторий: $BASEDIR)"
 printf '   · симлинки из steps/*.yml (только наши)\n'
-printf '   · Zen конфиги → бэкап\n'
 printf '   · TPM, yazi-плагины → бэкап\n'
 printf '   · git excludesFile, macOS defaults, шелл по умолчанию, /etc/shells\n'
 if [[ $REMOVE_PACKAGES -eq 1 ]]; then
@@ -139,20 +138,7 @@ if [[ $DRY -eq 0 ]]; then
   done
 fi
 
-# ─── 3. скопированные конфиги → бэкап ────────────────────────────────
-step "Zen"
-ZEN_PROFILES="$HOME/Library/Application Support/zen/Profiles"
-if [[ -d $ZEN_PROFILES ]]; then
-  for profile_dir in "$ZEN_PROFILES"/*/; do
-    [[ -f $profile_dir/prefs.js ]] || continue
-    backup_move "${profile_dir%/}/user.js"
-    backup_move "${profile_dir%/}/chrome/userChrome.css"
-    rmdir "${profile_dir%/}/chrome" 2>/dev/null || true
-  done
-else
-  ok "Zen-профили не найдены"
-fi
-
+# ─── 3. плагины → бэкап ──────────────────────────────────────────────
 step "TPM и yazi-плагины"
 backup_move "$HOME/.tmux/plugins"
 # после снятия симлинков в ~/.config/yazi остаются плагины ya pkg и state

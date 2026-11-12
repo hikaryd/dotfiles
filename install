@@ -58,7 +58,7 @@ run_dotbot() {
 
 if [[ -n $SELECTED_CONFIG ]]; then
 	case "$SELECTED_CONFIG" in
-		steps/terminal.yml|steps/tools.yml|steps/anicli.yml|steps/jcode.yml|steps/jevgrep.yml|steps/macos.yml)
+		steps/terminal.yml|steps/tools.yml|steps/jcode.yml|steps/jevgrep.yml|steps/macos.yml)
 			"$BASEDIR/scripts/build-go-tools.sh" ;;
 	esac
 	run_dotbot "$SELECTED_CONFIG"

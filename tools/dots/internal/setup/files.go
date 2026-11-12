@@ -80,13 +80,6 @@ func resolve(p string) (string, error) {
 	}
 	return "", errors.New("too many symbolic links")
 }
-func readOptional(p string) ([]byte, error) {
-	b, e := os.ReadFile(p)
-	if os.IsNotExist(e) {
-		return nil, nil
-	}
-	return b, e
-}
 func object(b []byte) (map[string]any, error) {
 	var d map[string]any
 	dec := json.NewDecoder(bytes.NewReader(b))

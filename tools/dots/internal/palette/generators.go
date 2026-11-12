@@ -62,27 +62,15 @@ func (g generator) generateTool(name string) error {
 		}
 	case "yazi":
 		return g.yazi()
-	case "rio", "nushell", "sketchybar", "fresh", "thorium", "jcode", "kiwidesk":
+	case "nushell", "fresh", "jcode":
 		switch name {
-		case "rio":
-			relative = "rio/themes/ayu.toml"
-			mkdir = true
 		case "nushell":
 			relative = "nushell/ayu.nu"
-		case "sketchybar":
-			relative = "sketchybar/colors.sh"
-			mkdir = true
 		case "fresh":
 			relative = "fresh/themes/ayu-" + g.variant + ".json"
 			mkdir = true
-		case "thorium":
-			relative = "thorium/ayu-" + g.variant + "/manifest.json"
-			mkdir = true
 		case "jcode":
 			relative = "jcode/theme.toml"
-			mkdir = true
-		case "kiwidesk":
-			relative = "kiwidesk/theme.lua"
 			mkdir = true
 		}
 		content, err := render(name, ctx)

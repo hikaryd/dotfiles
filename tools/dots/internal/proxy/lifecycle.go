@@ -13,6 +13,9 @@ import (
 	"time"
 )
 
+// A launched xray that survives this long is treated as started.
+var startupSettle = 1500 * time.Millisecond
+
 func (c *controller) readPID() (int, error) {
 	s, err := readText(c.path("xray.pid"))
 	if errors.Is(err, os.ErrNotExist) {
@@ -214,7 +217,7 @@ func (c *controller) start(server object) error {
 	select {
 	case <-done:
 		return errors.New("\nxray failed to start (process exited; diagnostic output withheld because it may contain credentials).")
-	case <-time.After(1500 * time.Millisecond):
+	case <-time.After(startupSettle):
 	}
 	if err := atomicWrite(c.path("xray.pid"), []byte(strconv.Itoa(cmd.Process.Pid)+"\n"), 0600); err != nil {
 		cleanup()
