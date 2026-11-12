@@ -73,32 +73,6 @@ func TestFailedDiscoveryPreservesRegistry(t *testing.T) {
 	}
 }
 
-func TestIncompleteWorkspaceCannotMatchFallback(t *testing.T) {
-	f := newFixture(t)
-	path := f.root
-	key := "fixture-import"
-	entry := session{Source: "tmux", Name: "project", Path: &path, ImportKey: &key}
-	snapshot := map[string]any{"workspaces": []any{map[string]any{"workspace_id": "w1", "label": "project", "tokens": map[string]any{"dots_session_id": "pending:" + key}}}, "panes": []any{map[string]any{"workspace_id": "w1", "cwd": path}}}
-	id, err := existingWorkspace(entry, snapshot, nil)
-	if err == nil || id != "" {
-		t.Fatalf("incomplete workspace accepted: %q %v", id, err)
-	}
-}
-
-func TestUnmarkedPartialWorkspaceCannotMatchFallback(t *testing.T) {
-	path := t.TempDir()
-	entry := session{Source: "tmux", Name: "project", Path: &path}
-	snapshot := map[string]any{"workspaces": []any{map[string]any{"workspace_id": "w1", "label": "project"}}, "panes": []any{map[string]any{"workspace_id": "w1", "cwd": path}}, "tabs": []any{map[string]any{"workspace_id": "w1", "number": 1, "label": "first", "pane_count": 1}}}
-	windows := []layoutWindow{{label: "first", panes: []layoutPane{{}}}, {label: "second", panes: []layoutPane{{}}}}
-	if id, err := existingWorkspace(entry, snapshot, windows); err == nil || id != "" {
-		t.Fatalf("partial reuse: %q %v", id, err)
-	}
-	windows = windows[:1]
-	if id, err := existingWorkspace(entry, snapshot, windows); err != nil || id != "w1" {
-		t.Fatalf("complete reuse: %q %v", id, err)
-	}
-}
-
 func TestNuCacheFollowsRelocatedRoot(t *testing.T) {
 	f := newFixture(t)
 	f.fake("nu", allRule("NU\n", 0))

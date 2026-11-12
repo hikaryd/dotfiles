@@ -240,26 +240,11 @@ func localPorts(ctx context.Context, projects []project) (map[string][]portRow, 
 		}
 		cwd = parseLsof(r.out)
 	}
-	paneIDs := map[string]string{}
 	paneProjects := map[int]string{}
 	for _, p := range projects {
 		for _, pane := range p.Panes {
-			paneIDs[pane.Pane] = p.ID
 			if pane.pid > 1 {
 				paneProjects[pane.pid] = p.ID
-			}
-		}
-	}
-	if inHerdr() {
-		for pane, id := range paneIDs {
-			r, e := herdrCallContext(ctx, "pane.process_info", map[string]any{"pane_id": pane}, "pane", "process-info", "--pane", pane)
-			if e != nil {
-				warnings = append(warnings, "Herdr pane process attribution unavailable")
-				break
-			}
-			pid := number(object(r["process_info"])["shell_pid"])
-			if pid > 0 {
-				paneProjects[pid] = id
 			}
 		}
 	}

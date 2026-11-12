@@ -14,7 +14,7 @@ import (
 )
 
 // Exercise the actual Rio shell command, not a copy of its environment filter.
-// GUI apps opened from a Herdr pane must not masquerade as another Herdr pane.
+// GUI apps opened from a tmux pane must not masquerade as that pane.
 func TestLegacyRioShellStartsOutsideInheritedMuxSession(t *testing.T) {
 	_, source, _, _ := runtime.Caller(0)
 	root := filepath.Clean(filepath.Join(filepath.Dir(source), "../../../.."))
@@ -31,11 +31,11 @@ func TestLegacyRioShellStartsOutsideInheritedMuxSession(t *testing.T) {
 	if err := toml.Unmarshal(data, &config); err != nil {
 		t.Fatal(err)
 	}
-	markers := []string{"HERDR_ENV", "HERDR_BIN_PATH", "HERDR_SOCKET_PATH", "HERDR_WORKSPACE_ID", "HERDR_TAB_ID", "HERDR_PANE_ID", "HERDR_ACTIVE_PANE_ID", "TMUX"}
+	markers := []string{"TMUX", "TMUX_PANE", "DOTS_SOURCE_PANE", "DOTS_MUX_CLIENT"}
 	for _, inherited := range []bool{false, true} {
 		name := "clean"
 		if inherited {
-			name = "opened-from-herdr"
+			name = "opened-from-pane"
 		}
 		t.Run(name, func(t *testing.T) {
 			home := t.TempDir()
@@ -50,14 +50,7 @@ func TestLegacyRioShellStartsOutsideInheritedMuxSession(t *testing.T) {
 			if err := os.WriteFile(filepath.Join(bin, "dots-terminal"), adapter, 0755); err != nil {
 				t.Fatal(err)
 			}
-			rmuxConfig := filepath.Join(home, ".config/rmux")
-			if err := os.MkdirAll(rmuxConfig, 0755); err != nil {
-				t.Fatal(err)
-			}
-			if err := os.WriteFile(filepath.Join(rmuxConfig, "rmux.conf"), nil, 0644); err != nil {
-				t.Fatal(err)
-			}
-			if err := os.WriteFile(filepath.Join(bin, "rmux"), []byte("#!/bin/sh\n[ \"${1:-}\" = has-session ] && exit 1\nprintf 'DOTS_MUX=rmux\\n'\nexec /usr/bin/env\n"), 0755); err != nil {
+			if err := os.WriteFile(filepath.Join(bin, "tmux"), []byte("#!/bin/sh\n[ \"${1:-}\" = has-session ] && exit 1\nprintf 'DOTS_MUX=tmux\\n'\nexec /usr/bin/env\n"), 0755); err != nil {
 				t.Fatal(err)
 			}
 			// The full race suite starts many instrumented subprocesses together.
@@ -89,8 +82,8 @@ func TestLegacyRioShellStartsOutsideInheritedMuxSession(t *testing.T) {
 			if env["KEEP_ME"] != "unchanged" || env["TERM"] != "rio" || env["HOME"] != home {
 				t.Fatal("Rio shell discarded unrelated environment")
 			}
-			if env["DOTS_MUX"] != "rmux" {
-				t.Fatal("Legacy Rio config must use the current rmux-only launcher")
+			if env["DOTS_MUX"] != "tmux" {
+				t.Fatal("Legacy Rio config must use the tmux launcher")
 			}
 		})
 	}
@@ -117,26 +110,6 @@ func TestRioUsesCalibratedBlurWithoutGlassRim(t *testing.T) {
 	// draws a bright rim over wallpaper even when the mux paints a dark canvas.
 	if config.Window.Blur != true || config.Window.Opacity != 0.75 || config.Window.OpacityCells {
 		t.Fatalf("Rio must keep ordinary calibrated blur, no glass material, and solid UI fills: %+v", config.Window)
-	}
-	// Powerline rounded caps are opaque foreground glyphs. Their adjacent
-	// background fills must also stay opaque, while the Herdr base canvas
-	// must use the terminal default to keep the wallpaper visible.
-	data, err = os.ReadFile(filepath.Join(root, "config/herdr/config.toml"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	var herdr struct {
-		Theme struct {
-			Custom struct {
-				PanelBg string `toml:"panel_bg"`
-			} `toml:"custom"`
-		} `toml:"theme"`
-	}
-	if err := toml.Unmarshal(data, &herdr); err != nil {
-		t.Fatal(err)
-	}
-	if herdr.Theme.Custom.PanelBg != "reset" {
-		t.Fatalf("Herdr must use the translucent terminal background: panel_bg=%q", herdr.Theme.Custom.PanelBg)
 	}
 }
 

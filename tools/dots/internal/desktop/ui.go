@@ -129,7 +129,6 @@ const helpText = `
   dots private init|check    приватные файлы без вывода секретов
   dots tmux-style --current применить текущий профиль tmux
   dots ghostty-reload        перечитать конфиг Ghostty
-  dots herdr-status         краткий статус Herdr
   dots notify --test        тест уведомления
   dots nu [args...]          запустить Nushell
 
@@ -144,7 +143,7 @@ const helpText = `
   Поиск по команде или описанию; ↑/↓ / Ctrl+N/P выбор
   Enter открыть · Esc/Ctrl+C отмена; Ctrl+L — очистить поиск
   zsh Ctrl+O — меню; Ctrl+R — история Atuin
-  rmux/tmux/Herdr prefix = Ctrl+A: O меню, P проекты, T сессии
+  tmux prefix = Ctrl+A: O меню, P проекты, T сессии
   F refs, Y clipboard, V status
 
 Приватность

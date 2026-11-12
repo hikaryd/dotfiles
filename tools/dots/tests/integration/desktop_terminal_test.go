@@ -90,12 +90,12 @@ func TestNativeMenuConfigUsesKnownPath(t *testing.T) {
 	offset := len(p.Text())
 	p.Send("\r")
 	p.After(offset, "Редактировать конфиг")
-	p.Send("rmux")
-	p.Screen("Поиск › rmux")
+	p.Send("tmux")
+	p.Screen("Поиск › tmux")
 	p.Send("\r")
 	p.Wait(0)
 	calls := f.calls()
-	if len(calls) != 1 || calls[0].Name != "nvim" || !reflect.DeepEqual(calls[0].Args, []string{filepath.Join(f.root, "config/rmux/rmux.conf")}) {
+	if len(calls) != 1 || calls[0].Name != "nvim" || !reflect.DeepEqual(calls[0].Args, []string{filepath.Join(f.root, "config/tmux/tmux.conf")}) {
 		t.Fatalf("argv %+v", calls)
 	}
 }
@@ -191,13 +191,13 @@ func TestNativeProjectsAndSessionsCanCancelWithoutOpening(t *testing.T) {
 		}
 	}
 	f = newFixture(t)
-	f.fake("herdr", allRule(`{"result":{"snapshot":{"workspaces":[{"workspace_id":"ws-fixture","label":"Fixture","tab_count":1,"pane_count":1}],"panes":[]}}}`, 0))
+	f.fake("tmux", fakeRule{Args: []string{"list-sessions"}, Prefix: true, Output: "$1\t1\tFixture\n"}, fakeRule{Args: []string{"list-panes"}, Prefix: true})
 	f.fake("sesh", allRule("[]", 0))
 	p = f.terminal("sessions", "open")
 	p.Screen("Session / workspace")
 	p.Send("\x1b")
 	p.Wait(0)
-	if len(f.calls()) != 2 {
+	if len(f.calls()) != 3 {
 		t.Fatalf("cancel opened session %+v", f.calls())
 	}
 }
@@ -227,14 +227,15 @@ func TestNativeStatusCancelsInitialSubprocess(t *testing.T) {
 
 func TestNativeSessionsControlNavigation(t *testing.T) {
 	for _, tc := range []struct{ name, keys, workspace string }{
-		{"next", "\x0e", "ws-second"},
-		{"previous", "\x1b[B\x10", "ws-first"},
+		{"next", "\x0e", "$2"},
+		{"previous", "\x1b[B\x10", "$1"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			f := newFixture(t)
-			f.fake("herdr",
-				fakeRule{Args: []string{"api", "snapshot"}, Output: `{"result":{"snapshot":{"workspaces":[{"workspace_id":"ws-first","label":"Alpha","tab_count":1,"pane_count":1},{"workspace_id":"ws-second","label":"Beta","tab_count":1,"pane_count":1}],"panes":[]}}}`},
-				fakeRule{Args: []string{"workspace", "focus", tc.workspace}, Output: `{"result":{}}`},
+			f.fake("tmux",
+				fakeRule{Args: []string{"list-sessions"}, Prefix: true, Output: "$1\t1\tAlpha\n$2\t1\tBeta\n"},
+				fakeRule{Args: []string{"list-panes"}, Prefix: true},
+				fakeRule{Args: []string{"attach-session", "-t", tc.workspace}},
 			)
 			f.fake("sesh", allRule("[]", 0))
 			p := f.terminal("sessions", "open")
@@ -242,7 +243,7 @@ func TestNativeSessionsControlNavigation(t *testing.T) {
 			p.Send(tc.keys + "\r")
 			p.Wait(0)
 			calls := f.calls()
-			if len(calls) != 3 || calls[2].Name != "herdr" || !reflect.DeepEqual(calls[2].Args, []string{"workspace", "focus", tc.workspace}) {
+			if len(calls) != 4 || calls[3].Name != "tmux" || !reflect.DeepEqual(calls[3].Args, []string{"attach-session", "-t", tc.workspace}) {
 				t.Fatalf("wrong workspace selected: %+v", calls)
 			}
 		})
@@ -253,14 +254,14 @@ func TestNativeSessionsDefaultPickerIsLiveAndAllIsExplicit(t *testing.T) {
 	for _, all := range []bool{false, true} {
 		t.Run(map[bool]string{false: "live", true: "all"}[all], func(t *testing.T) {
 			f := newFixture(t)
-			f.fake("herdr", allRule(`{"result":{"snapshot":{"workspaces":[{"workspace_id":"w1","label":"Live","tab_count":1,"pane_count":1}],"panes":[]}}}`, 0))
+			f.fake("tmux", fakeRule{Args: []string{"list-sessions"}, Prefix: true, Output: "$1\t1\tLive\n"}, fakeRule{Args: []string{"list-panes"}, Prefix: true})
 			rows := fmt.Sprintf(`[{"Src":"zoxide","Name":"History","Path":%q},{"Src":"config","Name":"Saved","Path":%q},{"Src":"tmux","Name":"Old","Path":%q}]`, f.home, f.home, f.home)
 			f.fake("sesh", allRule(rows, 0))
 			args := []string{"sessions", "open"}
 			want := "1/1 rows"
 			if all {
 				args = append(args, "--all")
-				want = "4/4 rows"
+				want = "3/3 rows"
 			}
 			p := f.terminal(args...)
 			p.Screen(want)

@@ -4,44 +4,13 @@ set -eu
 # Ghostty may retain Nushell integration in an already-running app. This exact
 # bootstrap belongs inside Nu, not on a multiplexer command line.
 if [ "$#" -eq 2 ] && [ "$1" = --execute ] && [ "$2" = 'use ghostty *' ]; then shift 2; fi
-for name in $(/usr/bin/env | /usr/bin/awk -F= '/^(HERDR_|TMUX|RMUX|DOTS_SOURCE_PANE=|DOTS_MUX_CLIENT=)/ { print $1 }'); do
+for name in $(/usr/bin/env | /usr/bin/awk -F= '/^(TMUX|DOTS_SOURCE_PANE=|DOTS_MUX_CLIENT=)/ { print $1 }'); do
   unset "$name"
 done
-rmux=${DOTS_RMUX_BIN:-}
-if [ -z "$rmux" ]; then
-  for candidate in "$HOME/.local/bin/rmux" /opt/homebrew/bin/rmux /usr/local/bin/rmux; do
-    if [ -x "$candidate" ]; then rmux=$candidate; break; fi
-  done
-fi
-config="${XDG_CONFIG_HOME:-$HOME/.config}/rmux/rmux.conf"
-if [ ! -x "$rmux" ]; then
-  printf 'rmux is not installed; install it before opening Ghostty.\n' >&2
-  exit 127
-fi
-if [ ! -f "$config" ]; then
-  printf 'rmux config is missing: %s\n' "$config" >&2
-  exit 78
-fi
 # Popup jobs inherit the server environment, not dots-nu's expanded pane PATH.
 PATH="$HOME/.local/bin:/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:${PATH:-/usr/bin:/bin}"
 export PATH
-if [ "$#" -gt 0 ]; then exec "$rmux" "$@"; fi
-state_dir="${XDG_STATE_HOME:-$HOME/.local/state}/rmux"
-# A live server must be attached, not restored over or marked safe for autosave.
-if [ -f "$state_dir/enabled" ] && [ ! -L "$state_dir/enabled" ] && ! "$rmux" has-session 2>/dev/null; then
-  version=
-  IFS= read -r version < "$state_dir/enabled" || :
-  helper="$HOME/.local/bin/dots-tools"
-  if [ "$version" = v1 ] && [ -x "$helper" ]; then
-    "$helper" rmux-state restore --state-dir "$state_dir" --rmux-bin "$rmux" --config "$config" || exit "$?"
-  fi
-fi
-if "$rmux" has-session 2>/dev/null; then
-  # Existing daemons may have loaded tmux.conf before rmux was configured.
-  # Source bindings once, without replacing panes or resetting runtime styles.
-  if [ "$("$rmux" show-options -gqv @dots-rmux-profile 2>/dev/null)" != dots-native-v2 ]; then
-    "$rmux" source-file "$config" || exit "$?"
-  fi
-  exec "$rmux" attach-session
-fi
-exec "$rmux" -f "$config" new-session -A -s main
+if [ "$#" -gt 0 ]; then exec tmux "$@"; fi
+# Attach the most recent session; "main" exists only to start an empty server.
+if tmux has-session 2>/dev/null; then exec tmux attach-session; fi
+exec tmux new-session -s main

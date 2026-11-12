@@ -7,18 +7,13 @@ import (
 )
 
 func TestStatusReusesPaneSnapshot(t *testing.T) {
-	for _, backend := range []string{"tmux", "rmux"} {
+	for _, backend := range []string{"tmux"} {
 		t.Run(backend, func(t *testing.T) {
 			f := newFixture(t)
 			project := f.repo("project with spaces")
 			f.registry(project)
-			prefix := []string{}
-			if backend == "rmux" {
-				f.env = append(f.env, "RMUX=/tmp/status-fixture.sock,42,0")
-				prefix = []string{"-S", "/tmp/status-fixture.sock"}
-			}
 			args := func(format string) []string {
-				return append(append([]string{}, prefix...), "list-panes", "-a", "-F", format)
+				return []string{"list-panes", "-a", "-F", format}
 			}
 			f.fake(backend,
 				fakeRule{Args: args("#{session_id}\t#{session_name}\t#{window_id}\t#{pane_id}\t#{session_attached}\t#{pane_current_command}\t#{pane_active}\t#{pane_pid}\t#{pane_current_path}"), Output: "$1\tproject\t@1\t%1\t1\tzsh\t1\t10\t" + project + "\n"},

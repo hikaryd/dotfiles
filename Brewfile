@@ -56,7 +56,6 @@ brew "atuin" # Локальная история; без аккаунта, sync 
 brew "fzf-tab"
 brew "kevengoncalves/tap/lig"
 brew "tmux"
-brew "rmux" # Default multiplexer in Ghostty
 brew "zsh"
 brew "zsh-autosuggestions"
 brew "zsh-syntax-highlighting"

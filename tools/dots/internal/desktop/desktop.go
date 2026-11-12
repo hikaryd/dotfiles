@@ -49,11 +49,6 @@ func Run(root string, args []string) int {
 			return usageError(command)
 		}
 		return ghosttyReload()
-	case "herdr-status":
-		if len(args) > 0 {
-			return usageError(command)
-		}
-		return herdrStatus()
 	case "status":
 		return statusRun(args)
 	case "doctor":
@@ -80,7 +75,7 @@ func commandHelp(command string) int {
 		printMenuHelp()
 		return 0
 	}
-	help := map[string]string{"projects": "list [--json] | refresh | open [target]", "sessions": "list [--json] | open [target]", "clip": "[json|compact|base64|jwt|time|redact] [--stdin] [--stdout|--write] [--keys KEY,...]", "refs": "[--pane ID] [--lines 1..5000] [--stdin] [--list|--json]", "private": "[init|check]", "style": "[glass|focus|presentation|status]", "tmux-style": "glass|focus|presentation|--current", "status": "[--all] [--json|--interactive]", "doctor": "[--json] [--strict]", "notify": "[--test] [--status 0..255] [--seconds N] [--pane ID]", "herdr-status": "", "ghostty-reload": "", "menu": "", "ports": ""}
+	help := map[string]string{"projects": "list [--json] | refresh | open [target]", "sessions": "list [--json] | open [target]", "clip": "[json|compact|base64|jwt|time|redact] [--stdin] [--stdout|--write] [--keys KEY,...]", "refs": "[--pane ID] [--lines 1..5000] [--stdin] [--list|--json]", "private": "[init|check]", "style": "[glass|focus|presentation|status]", "tmux-style": "glass|focus|presentation|--current", "status": "[--all] [--json|--interactive]", "doctor": "[--json] [--strict]", "notify": "[--test] [--status 0..255] [--seconds N] [--pane ID]", "ghostty-reload": "", "menu": "", "ports": ""}
 	if s, ok := help[command]; ok {
 		fmt.Printf("usage: dots %s %s\n", command, s)
 		return 0
@@ -129,7 +124,7 @@ func menu(root string) int {
 		endScreen()
 		return Run(root, []string{"style", style})
 	case "config":
-		configs := [][2]string{{"zsh", "config/zsh/.zshrc"}, {"rmux", "config/rmux/rmux.conf"}, {"tmux", "config/tmux/tmux.conf"}, {"ghostty", "config/ghostty/config"}, {"nvim", "config/nvim/init.lua"}, {"sesh", "config/sesh/sesh.toml"}, {"atuin", "config/atuin/config.toml"}}
+		configs := [][2]string{{"zsh", "config/zsh/.zshrc"}, {"tmux", "config/tmux/tmux.conf"}, {"ghostty", "config/ghostty/config"}, {"nvim", "config/nvim/init.lua"}, {"sesh", "config/sesh/sesh.toml"}, {"atuin", "config/atuin/config.toml"}}
 		key, err := pickMenu("Редактировать конфиг", configs)
 		if err != nil {
 			return fail("dots config", err)

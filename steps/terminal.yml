@@ -64,11 +64,6 @@
       path: config/tmux/tmux.conf
       create: true
       force: true
-    # Native rmux in Ghostty.
-    ~/.config/rmux/rmux.conf:
-      path: config/rmux/rmux.conf
-      create: true
-      force: false
     # Git
     ~/.gitconfig:
       path: config/git/.gitconfig

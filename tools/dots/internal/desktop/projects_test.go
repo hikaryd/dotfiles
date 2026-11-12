@@ -161,31 +161,16 @@ func TestSessionIdentityMapping(t *testing.T) {
 	if sessionKey("config", "name", p) == sessionKey("config", "name", q) {
 		t.Fatal("directory identity collision")
 	}
-	snapshot := map[string]any{"workspaces": []any{map[string]any{"workspace_id": "w1", "label": "name", "tokens": map[string]any{"dots_session_id": key}}}, "panes": []any{map[string]any{"workspace_id": "w1", "cwd": q}}}
-	entry := session{Source: "tmux", Name: "name", Path: &p, ImportKey: &key}
-	id, e := existingWorkspace(entry, snapshot, nil)
-	if e != nil || id != "w1" {
-		t.Fatalf("mapping %s %v", id, e)
-	}
-	snapshot["workspaces"] = append(array(snapshot["workspaces"]), map[string]any{"workspace_id": "w2", "label": "name", "tokens": map[string]any{"dots_session_id": key}})
-	if _, e = existingWorkspace(entry, snapshot, nil); e == nil {
-		t.Fatal("ambiguous imports accepted")
-	}
-	entry.ImportKey = nil
-	snapshot = map[string]any{"workspaces": []any{map[string]any{"workspace_id": "w3", "label": "name"}}, "panes": []any{}, "tabs": []any{map[string]any{"workspace_id": "w3", "number": 2, "label": "logs", "pane_count": float64(1)}, map[string]any{"workspace_id": "w3", "number": 1, "label": "editor", "pane_count": float64(2)}}}
-	id, e = existingWorkspace(entry, snapshot, []layoutWindow{{label: "editor", panes: make([]layoutPane, 2)}, {label: "logs", panes: make([]layoutPane, 1)}})
-	if e != nil || id != "w3" {
-		t.Fatalf("layout mapping %s %v", id, e)
-	}
 }
 func TestSessionsCLIInventoryAndFocusPreference(t *testing.T) {
 	f := newFixture(t)
 	p := f.repo("project")
-	snapshot := map[string]any{"result": map[string]any{"snapshot": map[string]any{"workspaces": []any{map[string]any{"workspace_id": "w1", "label": "same", "tab_count": 2, "pane_count": 3}}, "panes": []any{map[string]any{"workspace_id": "w1", "cwd": p}}}}}
-	b, _ := json.Marshal(snapshot)
-	f.fake("herdr", fakeRule{Args: []string{"api", "snapshot"}, Output: string(b)}, fakeRule{Args: []string{"workspace", "focus", "w1"}, Output: `{"result":{}}`})
-	rows := []map[string]string{{"Src": "tmux", "Name": "same", "Path": p}, {"Src": "tmux", "Name": "same", "Path": p}, {"Src": "unknown", "Name": "bad", "Path": p}, {"Src": "zoxide", "Name": "bad\nname", "Path": p}}
-	b, _ = json.Marshal(rows)
+	f.env = append(f.env, "TMUX=/tmp/tmux-1/default,42,0")
+	f.fake("tmux", fakeRule{Args: []string{"list-sessions", "-F", sessionFormat}, Output: "$1\t2\tsame\n"},
+		fakeRule{Args: []string{"list-panes", "-a", "-F", panePathFormat}, Output: "$1\t" + p + "\n"},
+		fakeRule{Args: []string{"switch-client", "-t", "$1"}})
+	rows := []map[string]string{{"Src": "tmux", "Name": "same", "Path": p}, {"Src": "zoxide", "Name": "same", "Path": p}, {"Src": "unknown", "Name": "bad", "Path": p}, {"Src": "zoxide", "Name": "bad\nname", "Path": p}}
+	b, _ := json.Marshal(rows)
 	f.fake("sesh", fakeRule{Args: []string{"list", "-j"}, Output: string(b)})
 	out, err, code := f.run("", "sessions", "list", "--json")
 	var entries []session
@@ -197,7 +182,7 @@ func TestSessionsCLIInventoryAndFocusPreference(t *testing.T) {
 		t.Fatal(err)
 	}
 	calls := f.calls()
-	if !reflect.DeepEqual(calls[len(calls)-1].Args, []string{"workspace", "focus", "w1"}) {
+	if !reflect.DeepEqual(calls[len(calls)-1].Args, []string{"switch-client", "-t", "$1"}) {
 		t.Fatalf("focus %+v", calls)
 	}
 	_, err, code = f.run("", "sessions", "open", "missing")
@@ -205,51 +190,12 @@ func TestSessionsCLIInventoryAndFocusPreference(t *testing.T) {
 		t.Fatalf("bad target %d %s", code, err)
 	}
 }
-func TestSessionsImportFreshLayout(t *testing.T) {
-	f := newFixture(t)
-	p := f.repo("project")
-	b, _ := json.Marshal([]map[string]string{{"Src": "tmux", "Name": "fixture", "Path": p}})
-	f.fake("sesh", allRule(string(b), 0))
-	f.fake("tmux", fakeRule{Args: []string{"list-windows"}, Prefix: true, Output: "fixture\t@2\t2\tlogs\nfixture\t@1\t1\teditor\n"}, fakeRule{Args: []string{"list-panes"}, Prefix: true, Output: "fixture\t@1\t1\t" + p + "\nfixture\t@1\t0\t" + p + "\nfixture\t@2\t0\t/missing-fixture-path\n"})
-	f.fake("herdr", fakeRule{Args: []string{"api", "snapshot"}, Output: `{"result":{"snapshot":{"workspaces":[],"panes":[]}}}`}, fakeRule{Args: []string{"workspace", "create"}, Prefix: true, Output: `{"result":{"workspace":{"workspace_id":"w1"},"tab":{"tab_id":"w1:t1"},"root_pane":{"pane_id":"w1:p1"}}}`}, fakeRule{Args: []string{"workspace", "report-metadata"}, Prefix: true}, fakeRule{Args: []string{"tab", "rename"}, Prefix: true, Output: `{"result":{}}`}, fakeRule{Args: []string{"pane", "split"}, Prefix: true, Output: `{"result":{}}`}, fakeRule{Args: []string{"tab", "create"}, Prefix: true, Output: `{"result":{"root_pane":{"pane_id":"w1:p3"}}}`}, fakeRule{Args: []string{"workspace", "focus"}, Prefix: true, Output: `{"result":{}}`})
-	out, err, code := f.run("", "sessions", "open", "fixture")
-	if code != 0 || !strings.Contains(out, "процессы tmux не переносились") {
-		t.Fatalf("import %d %q %q", code, out, err)
-	}
-	calls := f.calls()
-	split, metadata, tab := false, false, false
-	for _, c := range calls {
-		if c.Name == "tmux" && !has(c.Args[0], "list-panes", "list-windows") {
-			t.Fatal("mutated tmux")
-		}
-		if c.Name == "herdr" {
-			if len(c.Args) > 1 && c.Args[0] == "pane" && c.Args[1] == "split" {
-				split = true
-				if !reflect.DeepEqual(c.Args, []string{"pane", "split", "w1:p1", "--direction", "right", "--cwd", p, "--no-focus"}) {
-					t.Fatal(c.Args)
-				}
-			}
-			if len(c.Args) > 1 && c.Args[1] == "report-metadata" {
-				metadata = true
-			}
-			if len(c.Args) > 1 && c.Args[0] == "tab" && c.Args[1] == "create" {
-				tab = true
-				if !has(p, c.Args...) {
-					t.Fatal("missing fallback cwd")
-				}
-			}
-		}
-	}
-	if !split || !metadata || !tab {
-		t.Fatalf("missing import operation %+v", calls)
-	}
-}
 
 func TestSeshSkipsNonObjectRows(t *testing.T) {
 	f := newFixture(t)
 	p := f.repo("project")
 	rows, _ := json.Marshal([]any{"noise", nil, float64(3), map[string]string{"Src": "config", "Name": "valid", "Path": p}})
-	f.fake("herdr", allRule(`{"result":{"snapshot":{"workspaces":[],"panes":[]}}}`, 0))
+	f.fake("tmux", fakeRule{Args: []string{"list-sessions"}, Prefix: true, Code: 1, Stderr: "no server running on /tmp/tmux-1/default\n"})
 	f.fake("sesh", allRule(string(rows), 0))
 	out, err, code := f.run("", "sessions", "list", "--json")
 	var entries []session

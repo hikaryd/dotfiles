@@ -6,29 +6,17 @@ work=$(mktemp -d "${TMPDIR:-/tmp}/dots-terminal-test.XXXXXX")
 trap 'rm -rf "$work"' EXIT
 export HOME="$work/home with spaces" PATH=/usr/bin:/bin
 mkdir -p "$HOME/.local/bin"
-mkdir -p "$HOME/.config/rmux"
-touch "$HOME/.config/rmux/rmux.conf"
-cat > "$HOME/.local/bin/herdr" <<'SH'
-#!/bin/sh
-/usr/bin/env | /usr/bin/sort
-printf 'HERDR_ARG=<%s>\n' "$@"
-exit "${LAUNCH_EXIT:-0}"
-SH
-cat > "$HOME/.local/bin/rmux" <<'SH'
+cat > "$HOME/.local/bin/tmux" <<'SH'
 #!/bin/sh
 if [ "${1:-}" = has-session ]; then exit "${HAS_SESSION:-1}"; fi
-if [ "${1:-}" = show-options ]; then printf '%s' "${PROFILE_MARKER:-}"; exit 0; fi
-if [ "${1:-}" = source-file ]; then printf 'PROFILE_SOURCE=<%s>\n' "$2"; exit 0; fi
 /usr/bin/env | /usr/bin/sort
-printf 'RMUX_ARG=<%s>\n' "$@"
+printf 'TMUX_ARG=<%s>\n' "$@"
 exit "${LAUNCH_EXIT:-0}"
 SH
-chmod +x "$HOME/.local/bin/herdr" "$HOME/.local/bin/rmux"
-export DOTS_RMUX_BIN="$HOME/.local/bin/rmux"
-export HERDR_ENV=old HERDR_SOCKET_PATH=/old/socket HERDR_PANE_ID=old HERDR_ACTIVE_PANE_ID=old
-export TMUX=old TMUX_PANE=%99 TMUX_PROGRAM=/old/tmux RMUX=old RMUX_PANE=%99 KEEP_ME=yes TERM=ghostty
+chmod +x "$HOME/.local/bin/tmux"
+export TMUX=old TMUX_PANE=%99 TMUX_PROGRAM=/old/tmux DOTS_SOURCE_PANE=%1 DOTS_MUX_CLIENT=/dev/ttys001 KEEP_ME=yes TERM=ghostty
 check_clean() {
-  if grep -E '^(HERDR_|TMUX|RMUX)' "$work/output" | grep -v '_ARG='; then
+  if grep -E '^(TMUX|DOTS_SOURCE_PANE|DOTS_MUX_CLIENT)' "$work/output" | grep -v '_ARG='; then
     printf 'FAIL GUI launcher retained inherited pane context\n' >&2
     exit 1
   fi
@@ -37,83 +25,25 @@ check_clean() {
   grep -Fx "HOME=$HOME" "$work/output" >/dev/null
 }
 sh "$root/scripts/dots-terminal" > "$work/output"
-grep -Fx 'RMUX_ARG=<new-session>' "$work/output"
-grep -Fx 'RMUX_ARG=<-A>' "$work/output"
-grep -Fx 'RMUX_ARG=<main>' "$work/output"
+grep -Fx 'TMUX_ARG=<new-session>' "$work/output"
+grep -Fx 'TMUX_ARG=<main>' "$work/output"
 check_clean
 grep -Fx "PATH=$HOME/.local/bin:/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:/usr/bin:/bin" "$work/output" >/dev/null
 HAS_SESSION=0 sh "$root/scripts/dots-terminal" > "$work/output"
-grep -Fx 'RMUX_ARG=<attach-session>' "$work/output"
-grep -Fx "PROFILE_SOURCE=<$HOME/.config/rmux/rmux.conf>" "$work/output"
-HAS_SESSION=0 PROFILE_MARKER=dots-native-v2 sh "$root/scripts/dots-terminal" > "$work/output"
-if grep -F 'PROFILE_SOURCE=' "$work/output"; then
-  printf 'FAIL an active native profile was needlessly reloaded\n' >&2
-  exit 1
-fi
+grep -Fx 'TMUX_ARG=<attach-session>' "$work/output"
+if grep -F 'TMUX_ARG=<main>' "$work/output"; then printf 'FAIL live server got an extra main session\n' >&2; exit 1; fi
+check_clean
 sh "$root/scripts/dots-terminal" --execute 'use ghostty *' > "$work/output"
-grep -Fx 'RMUX_ARG=<new-session>' "$work/output"
-if grep -F 'RMUX_ARG=<--execute>' "$work/output"; then
-  printf 'FAIL Ghostty Nushell bootstrap was forwarded to rmux\n' >&2
+grep -Fx 'TMUX_ARG=<new-session>' "$work/output"
+if grep -F 'TMUX_ARG=<--execute>' "$work/output"; then
+  printf 'FAIL Ghostty Nushell bootstrap was forwarded to tmux\n' >&2
   exit 1
 fi
-sh "$root/scripts/dots-terminal" new-session -s 'project with spaces' > "$work/output"
-grep -Fx 'RMUX_ARG=<project with spaces>' "$work/output"
-set +e
-DOTS_RMUX_BIN="$work/missing" sh "$root/scripts/dots-terminal" > "$work/output" 2> "$work/error"
-status=$?
-set -e
-[[ $status -eq 127 ]] || { printf 'FAIL missing rmux returned %s, expected 127\n' "$status" >&2; exit 1; }
-[[ ! -s "$work/output" ]] || { printf 'FAIL removed backend was invoked\n' >&2; exit 1; }
-grep -F 'rmux' "$work/error"
-mv "$HOME/.config/rmux/rmux.conf" "$work/saved.conf"
-set +e
-sh "$root/scripts/dots-terminal" > "$work/output" 2> "$work/error"
-status=$?
-set -e
-[[ $status -eq 78 ]] || { printf 'FAIL missing config returned %s, expected 78\n' "$status" >&2; exit 1; }
-[[ ! -s "$work/output" ]] || { printf 'FAIL removed backend was invoked\n' >&2; exit 1; }
-grep -F 'rmux' "$work/error"
-mv "$work/saved.conf" "$HOME/.config/rmux/rmux.conf"
+sh "$root/scripts/dots-terminal" new-session -s 'literal ; spaces' > "$work/output"
+grep -Fx 'TMUX_ARG=<literal ; spaces>' "$work/output"
 set +e
 LAUNCH_EXIT=23 sh "$root/scripts/dots-terminal" > "$work/output"
 status=$?
 set -e
 [[ $status -eq 23 ]]
-mkdir -p "$HOME/.local/state/rmux"
-cat > "$HOME/.local/bin/dots-tools" <<'SH'
-#!/bin/sh
-/usr/bin/env | /usr/bin/sort
-printf 'STATE_ARG=<%s>\n' "$@"
-exit "${RESTORE_EXIT:-0}"
-SH
-chmod +x "$HOME/.local/bin/dots-tools"
-printf 'v1\n%s\n' "$HOME/.local/bin/dots-tools" > "$HOME/.local/state/rmux/enabled"
-sh "$root/scripts/dots-terminal" > "$work/output"
-grep -Fx 'STATE_ARG=<restore>' "$work/output"
-grep -Fx "STATE_ARG=<$HOME/.local/state/rmux>" "$work/output"
-grep -Fx "STATE_ARG=<$HOME/.config/rmux/rmux.conf>" "$work/output"
-check_clean
-HAS_SESSION=0 RESTORE_EXIT=29 sh "$root/scripts/dots-terminal" > "$work/output"
-grep -Fx 'RMUX_ARG=<attach-session>' "$work/output"
-grep -Fx "PROFILE_SOURCE=<$HOME/.config/rmux/rmux.conf>" "$work/output"
-if grep -F 'STATE_ARG=' "$work/output"; then printf 'FAIL live server triggered state restore\n' >&2; exit 1; fi
-check_clean
-sh "$root/scripts/dots-terminal" new-session -s 'literal ; spaces' > "$work/output"
-grep -Fx 'RMUX_ARG=<literal ; spaces>' "$work/output"
-if grep -F 'STATE_ARG=' "$work/output"; then printf 'FAIL explicit command restored state\n' >&2; exit 1; fi
-set +e
-RESTORE_EXIT=29 sh "$root/scripts/dots-terminal" > "$work/output"
-status=$?
-set -e
-[[ $status -eq 29 ]]
-if grep -F 'RMUX_ARG=' "$work/output"; then printf 'FAIL restore error still created session\n' >&2; exit 1; fi
-rm "$HOME/.local/bin/dots-tools"
-sh "$root/scripts/dots-terminal" > "$work/output"
-grep -Fx 'RMUX_ARG=<new-session>' "$work/output"
-export XDG_CONFIG_HOME="$HOME/active config" XDG_STATE_HOME="$HOME/active state"
-mkdir -p "$XDG_CONFIG_HOME/rmux" "$XDG_STATE_HOME/rmux"
-touch "$XDG_CONFIG_HOME/rmux/rmux.conf"
-sh "$root/scripts/dots-terminal" > "$work/output"
-grep -Fx "RMUX_ARG=<$XDG_CONFIG_HOME/rmux/rmux.conf>" "$work/output"
-if grep -F 'STATE_ARG=' "$work/output"; then printf 'FAIL inactive marker restored state\n' >&2; exit 1; fi
-printf 'PASS GUI launcher: rmux attach/create, no legacy fallback, clean context, arguments and exit status\n'
+printf 'PASS GUI launcher: tmux attach/create, clean context, arguments and exit status\n'

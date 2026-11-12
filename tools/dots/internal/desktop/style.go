@@ -9,7 +9,6 @@ import (
 	"runtime"
 	"strings"
 	"time"
-	"unicode"
 
 	"dots/native/internal/mux"
 )
@@ -215,34 +214,4 @@ func styleRun(args []string) int {
 	fmt.Printf("%s: saved.\n", mode)
 	fmt.Println("Neovim: applies on FocusGained. Presentation does not hide buffer or scrollback contents.")
 	return code
-}
-func herdrStatus() int {
-	style, err := loadStyle()
-	if err != nil {
-		return 1
-	}
-	if style == "presentation" {
-		fmt.Println("PRESENTATION")
-		return 0
-	}
-	id := os.Getenv("HERDR_ACTIVE_WORKSPACE_ID")
-	if id == "" {
-		return 0
-	}
-	r, e := herdrCall("workspace.get", map[string]any{"workspace_id": id}, "workspace", "get", id)
-	if e != nil {
-		return 1
-	}
-	label := str(object(r["workspace"])["label"])
-	label = strings.Map(func(r rune) rune {
-		if unicode.IsPrint(r) {
-			return r
-		}
-		return -1
-	}, label)
-	label = truncate(label, 22)
-	if label != "" {
-		fmt.Println(" " + label)
-	}
-	return 0
 }

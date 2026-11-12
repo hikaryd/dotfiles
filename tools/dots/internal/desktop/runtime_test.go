@@ -51,21 +51,6 @@ func TestTmuxStyleRestoresOnlyOwnedOverrides(t *testing.T) {
 		t.Fatal("presentation override remains")
 	}
 }
-func TestHerdrStatusPresentationAndTruncation(t *testing.T) {
-	f := newFixture(t)
-	f.write(filepath.Join(f.home, ".config/dots/style"), "presentation\n", 0600)
-	f.env = append(f.env, "HERDR_ACTIVE_WORKSPACE_ID=w2")
-	out, _, code := f.run("", "herdr-status")
-	if code != 0 || out != "PRESENTATION\n" || len(f.calls()) != 0 {
-		t.Fatalf("presentation %d %q", code, out)
-	}
-	f.write(filepath.Join(f.home, ".config/dots/style"), "glass\n", 0600)
-	f.fake("herdr", fakeRule{Args: []string{"workspace", "get", "w2"}, Output: `{"result":{"workspace":{"label":"hello\u001b\n世界123456789012345678901234567890"}}}`})
-	out, err, code := f.run("", "herdr-status")
-	if code != 0 || strings.ContainsAny(out, "\x1b") || out != " hello世界123456789012345\n" {
-		t.Fatalf("label %d %q %q", code, out, err)
-	}
-}
 func TestNuCacheOwnershipAndLaunch(t *testing.T) {
 	f := newFixture(t)
 	local := filepath.Join(f.home, ".local/bin")
@@ -135,19 +120,18 @@ func TestNuRejectsSymlinkCache(t *testing.T) {
 		t.Fatalf("unsafe cache accepted %d %s", code, out)
 	}
 }
-func TestDoctorReadOnlyRmuxOnlyFixtureAndStrict(t *testing.T) {
+func TestDoctorReadOnlyFixtureAndStrict(t *testing.T) {
 	f := newFixture(t)
 	f.write(filepath.Join(f.root, "steps/terminal.yml"), "- link:\n    ~/.zshrc:\n      path: config/zsh/.zshrc\n", 0600)
 	f.write(filepath.Join(f.root, "config/zsh/.zshrc"), "# fixture\n", 0600)
 	os.Symlink(filepath.Join(f.root, "config/zsh/.zshrc"), filepath.Join(f.home, ".zshrc"))
 	f.write(filepath.Join(f.root, "config/sesh/sesh.toml"), "enabled = true\n", 0600)
-	f.write(filepath.Join(f.root, "config/rmux/rmux.conf"), "set -g prefix C-a\n", 0600)
 	f.write(filepath.Join(f.home, ".config/atuin/config.toml"), "auto_sync = false\nupdate_check = false\n", 0600)
 	f.write(filepath.Join(f.home, ".config/dots/style"), "glass\n", 0600)
 	f.write(filepath.Join(f.home, ".config/dots/ghostty-style.conf"), "# fixture", 0600)
 	f.registry()
 	f.write(filepath.Join(f.home, ".ssh/id_fixture"), "never-read-fixture-secret", 0600)
-	for _, name := range []string{"zsh", "git", "dots-tools", "tmux", "rmux", "sesh", "nvim", "dots", "zoxide", "eza", "bat", "rg", "fd", "yazi", "lazygit", "atuin"} {
+	for _, name := range []string{"zsh", "git", "dots-tools", "tmux", "sesh", "nvim", "dots", "zoxide", "eza", "bat", "rg", "fd", "yazi", "lazygit", "atuin"} {
 		f.fake(name, allRule("", 0))
 	}
 	out, err, code := f.run("", "doctor", "--json", "--strict")
@@ -181,7 +165,7 @@ func TestStyleUnreadableStateFails(t *testing.T) {
 	if e := os.MkdirAll(filepath.Join(f.home, ".config/dots/style"), 0700); e != nil {
 		t.Fatal(e)
 	}
-	for _, args := range [][]string{{"style", "status"}, {"herdr-status"}, {"tmux-style", "--current"}} {
+	for _, args := range [][]string{{"style", "status"}, {"tmux-style", "--current"}} {
 		_, _, code := f.run("", args...)
 		if code != 1 {
 			t.Errorf("unreadable style accepted %v: %d", args, code)

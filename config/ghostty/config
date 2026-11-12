@@ -20,9 +20,9 @@ palette = 12=#b0b0b0
 palette = 13=#ffcfa8
 palette = 14=#99ffe4
 palette = 15=#ffffff
-# Терминалы открывают постоянные сессии rmux.
+# Терминалы открывают постоянные сессии tmux.
 command = shell:"$HOME/.local/bin/dots-terminal"
-# The outer command is rmux, not Nu. Nushell runs in its panes, so Ghostty
+# The outer command is tmux, not Nu. Nushell runs in its panes, so Ghostty
 # must not append its Nushell --execute bootstrap to the mux CLI.
 shell-integration = none
 
@@ -65,7 +65,7 @@ macos-option-as-alt = false
 keybind = alt+backspace=text:\x1b\x7f
 
 # Ctrl-команды по физическим клавишам: одинаковые коды в латинской и русской раскладках.
-# Для второй клавиши префикса rmux содержит явные русские эквиваленты.
+# Для второй клавиши префикса tmux.conf содержит явные русские эквиваленты.
 keybind = ctrl+key_a=text:\x01
 keybind = ctrl+key_h=text:\x08
 keybind = ctrl+key_j=text:\x0a
@@ -80,7 +80,7 @@ keybind = ctrl+shift+key_j=csi:106;6u
 keybind = ctrl+shift+key_k=csi:107;6u
 keybind = ctrl+shift+key_l=csi:108;6u
 
-# Pass ctrl+number to rmux/tmux (CSI u encoding).
+# Pass ctrl+number to tmux (CSI u encoding).
 keybind = ctrl+1=csi:49;5u
 keybind = ctrl+2=csi:50;5u
 keybind = ctrl+3=csi:51;5u

@@ -106,40 +106,8 @@ func captureRefs(pane string, lines int) (string, string, error) {
 	if lines < 1 || lines > 5000 {
 		return "", "", errors.New("lines должен быть в диапазоне 1..5000.")
 	}
-	if regexp.MustCompile(`^w[A-Za-z0-9]{1,64}:p[A-Za-z0-9]{1,64}$`).MatchString(pane) {
-		r, e := herdrCall("pane.get", map[string]any{"pane_id": pane}, "pane", "get", pane)
-		if e != nil {
-			return "", "", e
-		}
-		p := object(r["pane"])
-		cwd := str(p["foreground_cwd"])
-		if cwd == "" {
-			cwd = str(p["cwd"])
-		}
-		if cwd == "" || strings.ContainsFunc(cwd, control) {
-			return "", "", errors.New("Не удалось определить каталог панели Herdr.")
-		}
-		var s string
-		if os.Getenv("HERDR_SOCKET_PATH") != "" {
-			read, err := herdrCall("pane.read", map[string]any{"pane_id": pane, "source": "recent_unwrapped", "lines": lines, "format": "text", "strip_ansi": true})
-			if err != nil {
-				return "", "", err
-			}
-			var ok bool
-			s, ok = object(read["read"])["text"].(string)
-			if !ok {
-				return "", "", errors.New("Некорректный ответ Herdr")
-			}
-		} else {
-			s, e = command("herdr", "pane", "read", pane, "--source", "recent-unwrapped", "--lines", strconv.Itoa(lines))
-		}
-		if len(s) > maxBytes {
-			return "", "", errors.New("Превышен лимит вывода команды.")
-		}
-		return s, cwd, e
-	}
 	if !regexp.MustCompile(`^%[0-9]+$`).MatchString(pane) {
-		return "", "", errors.New("Нужна tmux pane %id или Herdr pane w…:p…; lines 1..5000.")
+		return "", "", errors.New("Нужна tmux pane %id; lines 1..5000.")
 	}
 	r, e := captureCommand(5*time.Second, 16384, "", nil, mux.Argv("display-message", "-p", "-t", pane, "#{pane_current_path}")...)
 	if e != nil || r.code != 0 {

@@ -22,22 +22,10 @@ vim.keymap.set("n", "<leader>e", function()
 	fyler.open({ kind = "split_left_most" })
 end, { desc = "Open Fyler View" })
 
-local function move_split(key, direction, tmux_action)
-	if vim.env.HERDR_ENV == "1" and not vim.env.RMUX then
-		local previous = vim.api.nvim_get_current_win()
-		vim.cmd("wincmd " .. key)
-		if vim.api.nvim_get_current_win() == previous then
-			vim.fn.jobstart({ "herdr", "pane", "focus", "--direction", direction, "--current" }, { detach = true })
-		end
-	else
-		require("tmux")[tmux_action]()
-	end
-end
-
-map("n", "<leader>h", function() move_split("h", "left", "move_left") end, "Move to left split")
-map("n", "<leader>j", function() move_split("j", "down", "move_bottom") end, "Move to below split")
-map("n", "<leader>k", function() move_split("k", "up", "move_top") end, "Move to above split")
-map("n", "<leader>l", function() move_split("l", "right", "move_right") end, "Move to right split")
+map("n", "<leader>h", function() require("tmux").move_left() end, "Move to left split")
+map("n", "<leader>j", function() require("tmux").move_bottom() end, "Move to below split")
+map("n", "<leader>k", function() require("tmux").move_top() end, "Move to above split")
+map("n", "<leader>l", function() require("tmux").move_right() end, "Move to right split")
 --
 map("n", "<leader>v", "<cmd>vsplit<CR>", "Vertical split window")
 

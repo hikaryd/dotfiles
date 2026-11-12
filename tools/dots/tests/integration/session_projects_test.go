@@ -15,13 +15,11 @@ func TestSessionsProjectDiscoveryKeepsInventoryAndReusesLivePath(t *testing.T) {
 	if err := os.MkdirAll(project, 0700); err != nil {
 		t.Fatal(err)
 	}
-	snapshot, _ := json.Marshal(map[string]any{"result": map[string]any{"snapshot": map[string]any{
-		"workspaces": []any{map[string]any{"workspace_id": "w1", "label": "Renamed workspace", "tab_count": 1, "pane_count": 1}},
-		"panes":      []any{map[string]any{"workspace_id": "w1", "cwd": project}},
-	}}})
 	rows, _ := json.Marshal([]map[string]string{{"Src": "zoxide", "Name": "Sample", "Path": project}})
 	f.fake("sesh", allRule(string(rows), 0))
-	f.fake("herdr", fakeRule{Args: []string{"api", "snapshot"}, Output: string(snapshot)}, fakeRule{Args: []string{"workspace", "focus", "w1"}, Output: `{"result":{}}`})
+	f.fake("tmux", fakeRule{Args: []string{"list-sessions"}, Prefix: true, Output: "$1\t1\tRenamed session\n"},
+		fakeRule{Args: []string{"list-panes"}, Prefix: true, Output: "$1\t" + project + "\n"},
+		fakeRule{Args: []string{"attach-session", "-t", "$1"}})
 	out, diagnostic, status := f.run("", "sessions", "list", "--json")
 	var entries []struct {
 		Source string `json:"source"`
@@ -36,8 +34,8 @@ func TestSessionsProjectDiscoveryKeepsInventoryAndReusesLivePath(t *testing.T) {
 	}
 	calls := f.calls()
 	last := calls[len(calls)-1]
-	if !reflect.DeepEqual(last.Args, []string{"workspace", "focus", "w1"}) {
-		t.Fatalf("project duplicated live workspace: %+v", calls)
+	if !reflect.DeepEqual(last.Args, []string{"attach-session", "-t", "$1"}) {
+		t.Fatalf("project duplicated live session: %+v", calls)
 	}
 }
 
@@ -54,11 +52,11 @@ func TestNativeSessionsCreateProjectByNameWithoutHistory(t *testing.T) {
 				t.Fatal(err)
 			}
 			f.fake("sesh", allRule("[]", 0)) // Project was never visited/zoxide-ranked.
-			f.fake("herdr",
-				fakeRule{Args: []string{"api", "snapshot"}, Output: `{"result":{"snapshot":{"workspaces":[{"workspace_id":"w1","label":"dots","tab_count":1,"pane_count":1}],"panes":[]}}}`},
-				fakeRule{Args: []string{"workspace", "create", "--cwd", project, "--label", filepath.Base(project), "--no-focus"}, Output: `{"result":{"workspace":{"workspace_id":"w2"},"tab":{"tab_id":"w2:t1"},"root_pane":{"pane_id":"w2:p1"}}}`},
-				fakeRule{Args: []string{"workspace", "report-metadata"}, Prefix: true, Output: `{"result":{}}`},
-				fakeRule{Args: []string{"workspace", "focus", "w2"}, Output: `{"result":{}}`},
+			f.fake("tmux",
+				fakeRule{Args: []string{"list-sessions"}, Prefix: true, Output: "$1\t1\tdots\n"},
+				fakeRule{Args: []string{"list-panes"}, Prefix: true},
+				fakeRule{Args: []string{"new-session"}, Prefix: true, Output: "$2\n"},
+				fakeRule{Args: []string{"attach-session", "-t", "$2"}},
 			)
 			if direct {
 				_, diagnostic, status := f.run("", "sessions", "open", filepath.Base(project))
@@ -88,15 +86,15 @@ func TestNativeSessionsCreateProjectByNameWithoutHistory(t *testing.T) {
 			calls := f.calls()
 			created := 0
 			for _, c := range calls {
-				if c.Name == "tmux" {
-					t.Fatal("project creation touched tmux")
-				}
-				if c.Name == "herdr" && len(c.Args) > 1 && c.Args[0] == "workspace" && c.Args[1] == "create" {
+				if c.Name == "tmux" && c.Args[0] == "new-session" {
 					created++
+					if !strings.Contains(strings.Join(c.Args, "\x00"), "-c\x00"+project) {
+						t.Fatalf("session cwd: %q", c.Args)
+					}
 				}
 			}
 			last := calls[len(calls)-1]
-			if created != 1 || !reflect.DeepEqual(last.Args, []string{"workspace", "focus", "w2"}) {
+			if created != 1 || !reflect.DeepEqual(last.Args, []string{"attach-session", "-t", "$2"}) {
 				t.Fatalf("project dispatch: %+v", calls)
 			}
 		})

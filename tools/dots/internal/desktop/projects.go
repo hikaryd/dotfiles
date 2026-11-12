@@ -144,34 +144,6 @@ func sessionName(path string) string {
 func livePanes() ([]pane, error) { return livePanesContext(context.Background()) }
 func livePanesContext(ctx context.Context) ([]pane, error) {
 	panes := []pane{}
-	if inHerdr() {
-		s, e := herdrSnapshotContext(ctx)
-		if e != nil {
-			return nil, e
-		}
-		if array(s["panes"]) == nil {
-			return nil, errors.New("Некорректный снимок рабочих пространств Herdr")
-		}
-		workspaces := map[string]map[string]any{}
-		for _, v := range array(s["workspaces"]) {
-			w := object(v)
-			if id, ok := w["workspace_id"].(string); ok {
-				workspaces[id] = w
-			}
-		}
-		for _, v := range array(s["panes"]) {
-			p := object(v)
-			id := str(p["workspace_id"])
-			w := workspaces[id]
-			cwd, ok := p["cwd"].(string)
-			if w == nil || !ok {
-				continue
-			}
-			active, _ := p["focused"].(bool)
-			panes = append(panes, pane{id, str(w["label"]), str(p["tab_id"]), str(p["pane_id"]), true, cwd, "herdr", active, 0})
-		}
-		return panes, nil
-	}
 	r, e := captureCommandContext(ctx, 5*time.Second, 16*maxBytes, "", nil, mux.Argv("list-panes", "-a", "-F", "#{session_id}\t#{session_name}\t#{window_id}\t#{pane_id}\t#{session_attached}\t#{pane_current_command}\t#{pane_active}\t#{pane_pid}\t#{pane_current_path}")...)
 	if e != nil {
 		return nil, e
@@ -350,18 +322,6 @@ func saveProjects(projects []project) error {
 	return atomicWrite(registryPath(), append(b, '\n'))
 }
 func focusPane(p pane) error {
-	if inHerdr() {
-		return herdrFocus(p.Session)
-	}
-	if mux.IsRmux() {
-		if _, err := command(mux.Argv("select-pane", "-t", p.Pane)...); err != nil {
-			return err
-		}
-		if _, err := command(mux.Argv("select-window", "-t", p.Window)...); err != nil {
-			return err
-		}
-		return rmuxFocus(p.Session)
-	}
 	action := "attach-session"
 	if os.Getenv("TMUX") != "" {
 		action = "switch-client"
@@ -434,42 +394,6 @@ func openProject(target string) error {
 		return focusPane(panes[0])
 	}
 	path := selected.Path
-	if inHerdr() {
-		r, e := herdrCreate(path, filepath.Base(path), "")
-		if e != nil {
-			return e
-		}
-		workspace, e := responseID(r, "workspace", "workspace_id")
-		if e != nil {
-			return e
-		}
-		tab, e := responseID(r, "tab", "tab_id")
-		if e != nil {
-			return e
-		}
-		paneID, e := responseID(r, "root_pane", "pane_id")
-		if e != nil {
-			return e
-		}
-		if e = herdrRename(tab, "editor"); e != nil {
-			return e
-		}
-		for _, label := range []string{"shell", "logs"} {
-			if _, e = herdrCreate(path, label, workspace); e != nil {
-				return e
-			}
-		}
-		if available("nvim") {
-			if _, e = command("herdr", "pane", "run", paneID, "nvim"); e != nil {
-				return e
-			}
-		}
-		if e = herdrFocus(workspace); e != nil {
-			return e
-		}
-		_, e = herdrCall("tab.focus", map[string]any{"tab_id": tab}, "tab", "focus", tab)
-		return e
-	}
 	argv := mux.Argv("new-session", "-d", "-P", "-F", "#{session_id}\t#{window_id}\t#{pane_id}", "-s", sessionName(path), "-n", "editor", "-c", path)
 	if available("nvim") {
 		argv = append(argv, "nvim")
