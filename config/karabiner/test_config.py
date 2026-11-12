@@ -25,9 +25,12 @@ class KeyboardConfigTests(unittest.TestCase):
             self.assertEqual(len(conditions), 2)
             app, layout = conditions
             self.assertEqual(app["type"], "frontmost_application_if")
-            self.assertEqual(app["bundle_identifiers"], [r"^com\.apple\.ScreenSharing$"])
-            for other in ("com.apple.Terminal", "com.apple.ScreenSharing.extra"):
-                self.assertFalse(re.search(app["bundle_identifiers"][0], other))
+            self.assertEqual(app["bundle_identifiers"], [
+                r"^com\.apple\.ScreenSharing$", r"^com\.tigervnc\.tigervnc$"])
+            for supported in ("com.apple.ScreenSharing", "com.tigervnc.tigervnc"):
+                self.assertTrue(any(re.search(pattern, supported) for pattern in app["bundle_identifiers"]))
+            for other in ("com.apple.Terminal", "com.apple.ScreenSharing.extra", "com.tigervnc.tigervnc.extra"):
+                self.assertFalse(any(re.search(pattern, other) for pattern in app["bundle_identifiers"]))
             self.assertEqual(layout, {"type": "input_source_if", "input_sources": [
                 {"input_source_id": r"^com\.apple\.keylayout\." + source + "$"}]})
 
