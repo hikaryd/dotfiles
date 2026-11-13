@@ -63,6 +63,10 @@
       create: true
       force: true
 - shell:
+    - command: bash scripts/claude-statusbar-install.sh
+      description: Install Claude statusbar and configure existing profiles
+      stdout: true
+      stderr: true
     - command: bat cache --build
       description: Build shared Ayu theme cache for Bat
       stdout: true
