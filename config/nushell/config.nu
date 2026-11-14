@@ -7,8 +7,8 @@ $env.DOTS_ZSH_BIN = ($env.DOTS_ZSH_BIN? | default (
   | path join "dots" "zsh-bridge" "bin"
 ))
 $env.PATH = ($env.PATH | prepend [
-  $env.DOTS_ZSH_BIN
   ($nu.home-dir | path join ".local/bin")
+  $env.DOTS_ZSH_BIN
   ($nu.home-dir | path join ".cargo/bin")
   ($nu.home-dir | path join ".bun/bin")
   "/opt/homebrew/bin" "/opt/homebrew/sbin" "/usr/local/bin"

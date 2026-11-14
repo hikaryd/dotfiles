@@ -1,0 +1,5 @@
+- shell:
+    - command: bash tools/claude-setup/install.sh
+      description: Install local Claude guard without credentials or downloads
+      stdout: true
+      stderr: true

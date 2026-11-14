@@ -50,6 +50,10 @@
       path: config/shell/local-proxy.sh
       create: true
       force: true
+    ~/.config/shell/claude-guard.sh:
+      path: config/shell/claude-guard.sh
+      create: true
+      force: true
     # Compiled helpers; secrets stay in ~/.config/xray-pi/.
     ~/.local/bin/dots-tools:
       path: build/bin/dots-tools

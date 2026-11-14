@@ -7,3 +7,5 @@ case ":${PATH}:" in
   *:"$HOME/.cargo/bin":*) ;;
   *) export PATH="$HOME/.cargo/bin:$PATH" ;;
 esac
+
+[[ -r "$HOME/.config/shell/claude-guard.sh" ]] && source "$HOME/.config/shell/claude-guard.sh"

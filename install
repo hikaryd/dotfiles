@@ -83,7 +83,7 @@ run_step() {
 run_step 'steps/dependencies.yml' run_dotbot 'steps/dependencies.yml'
 run_step 'native helpers' "$BASEDIR/scripts/build-go-tools.sh"
 run_step 'palette' "$BASEDIR/build/bin/dots-tools" palette
-for config in terminal editors tools jcode jevgrep macos; do
+for config in terminal editors claude tools jcode jevgrep macos; do
 	run_step "steps/$config.yml" run_dotbot "steps/$config.yml"
 done
 

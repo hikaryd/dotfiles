@@ -1,1 +1,1 @@
-# PATH и общие настройки находятся в config.nu; запуск через dots-nu.
+$env.PATH = ($env.PATH | prepend ($nu.home-dir | path join ".local/bin") | uniq)

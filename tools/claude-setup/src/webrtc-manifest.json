@@ -1,0 +1,7 @@
+{
+  "manifest_version": 3,
+  "name": "WebRTC",
+  "version": "1.0.0",
+  "permissions": ["privacy"],
+  "background": {"service_worker": "policy.js"}
+}

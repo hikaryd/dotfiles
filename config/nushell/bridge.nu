@@ -1,4 +1,7 @@
 # Аргументы идут отдельными argv; приватные определения остаются в private.zsh.
+def --wrapped claude [...args: string] {
+  ^($nu.home-dir | path join ".local/bin/claude") ...$args
+}
 alias zs = ^($env.DOTS_ROOT | path join "scripts/dots-zsh") --run
 
 # Только навигация: TUI получает настоящий терминал, не буферизированный pipeline.

@@ -15,9 +15,9 @@ typeset -g DOTS_PRIVATE_ZSH="${DOTS_PRIVATE_ZSH:-${XDG_CONFIG_HOME:-$HOME/.confi
 # PATH / function and module paths (typeset -U removes duplicates)
 typeset -U path fpath module_path
 path=(
+  "$HOME/.local/bin"
   "$BUN_INSTALL/bin"
   "$HOME/.cargo/bin"
-  "$HOME/.local/bin"
   /opt/homebrew/bin
   /opt/homebrew/sbin
   /usr/local/bin
@@ -77,3 +77,4 @@ export FZF_DEFAULT_OPTS=" \
 
 # Общий локальный VLESS-прокси (xray) для Jevgrep и Spotifast.
 [[ -f "$DOTS_ROOT/config/shell/local-proxy.sh" ]] && source "$DOTS_ROOT/config/shell/local-proxy.sh"
+source "$DOTS_ROOT/config/shell/claude-guard.sh"

@@ -7,3 +7,4 @@ export INFOPATH="$HOMEBREW_PREFIX/share/info:${INFOPATH:-}"
 
 typeset -U path
 path=("$HOMEBREW_PREFIX/bin" "$HOMEBREW_PREFIX/sbin" $path)
+[[ -r "$HOME/.config/shell/claude-guard.sh" ]] && source "$HOME/.config/shell/claude-guard.sh"
