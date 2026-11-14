@@ -88,7 +88,7 @@ def check(config):
     validate_version(config.get("claude_version", ""))
     if len(os.fsencode(STATE / ("relay-" + "0" * 24) / "control.sock")) >= 104:
         raise RuntimeError("Путь домашнего каталога слишком длинный для Unix-сокета relay. Используйте более короткий путь к домашнему каталогу.")
-    for path in (ROOT / "guard.py", ROOT / "relay.py", ROOT / "ssh_proxy.py", ROOT / "host-bin/ps", ROOT / "host-bin/ssh", Path("/usr/bin/sandbox-exec")):
+    for path in (ROOT / "guard.py", ROOT / "relay.py", ROOT / "ssh_proxy.py", ROOT / "bash-env.sh", ROOT / "host-bin/ps", ROOT / "host-bin/ssh", Path("/usr/bin/sandbox-exec")):
         if not path.is_file():
             raise RuntimeError("Не найден необходимый компонент: " + str(path))
     node_tools()
@@ -231,6 +231,7 @@ def environment(url, port, *, host_access=False):
         # Preserve existing Claude state while exposing the real home to its tools.
         env["HOME"] = str(REAL_HOME)
         env["PATH"] = os.pathsep.join([str(ROOT / "host-bin"), str(REAL_HOME / ".local/bin"), env["PATH"]])
+        env["BASH_ENV"] = str(ROOT / "bash-env.sh")
         env["GIT_SSH_COMMAND"] = shlex.quote(str(ROOT / "host-bin/ssh"))
         if os.environ.get("SSH_AUTH_SOCK"):
             env["SSH_AUTH_SOCK"] = os.environ["SSH_AUTH_SOCK"]
@@ -239,7 +240,9 @@ def environment(url, port, *, host_access=False):
 
 def profile(port, working_directory=None, installing=None):
     if working_directory is not None and not installing:
-        return make_host_profile()
+        protected = [ROOT, CONFIG.parent, VERSIONS, BASE / "current", BASE / ".owner"]
+        protected.extend(REAL_HOME / ".local/bin" / name for name in ("claude", "claude-setup", "claude-browser"))
+        return make_host_profile(protected)
     writes = [HOME, TMP]
     protected = [ROOT, CONFIG.parent, STATE, VERSIONS]
     protected.extend(REAL_HOME / ".local/bin" / name for name in ("claude", "claude-setup", "claude-browser"))

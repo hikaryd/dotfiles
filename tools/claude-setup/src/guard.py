@@ -140,8 +140,8 @@ def sandbox_argv(profile, command):
     return [SANDBOX, '-p', profile, '--'] + list(command)
 
 
-def make_host_profile():
-    return '\n'.join([
+def make_host_profile(protected_paths=()):
+    lines = [
         '(version 1)', '(allow default)', '(deny network*)',
         '(deny file-ioctl (ioctl-command {}))'.format(termios.TIOCSTI),
         '(allow network-bind (local tcp "localhost:*"))',
@@ -150,7 +150,16 @@ def make_host_profile():
         '(allow network-bind (local unix-socket (subpath "/")))',
         '(allow network-inbound (local unix-socket (subpath "/")))',
         '(allow network-outbound (remote unix-socket (subpath "/")))',
-    ]) + '\n'
+    ]
+    for path in protected_paths:
+        path = os.path.abspath(os.fspath(path))
+        lines.append('(deny file-write* (subpath {}))'.format(_quote(path)))
+        lines.append('(deny file-write* (literal {}))'.format(_quote(path)))
+        parent = os.path.dirname(path)
+        while parent != '/':
+            lines.append('(deny file-write-unlink (literal {}))'.format(_quote(parent)))
+            parent = os.path.dirname(parent)
+    return '\n'.join(lines) + '\n'
 
 
 def proxy_env(url, home, tmp):

@@ -11,7 +11,7 @@ import tempfile
 SOURCE = Path(__file__).resolve().parent
 FILES = ("guard.py", "launcher.py", "donut.py", "relay.py", "ssh_proxy.py",
          "session-hook.py", "install_local.py", "settings.example.json",
-         "npm-globalrc", "webrtc-manifest.json", "webrtc-policy.js")
+         "npm-globalrc", "webrtc-manifest.json", "webrtc-policy.js", "bash-env.sh")
 MARKER = "dots-claude-guard-v1\n"
 
 
