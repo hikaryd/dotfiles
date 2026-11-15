@@ -16,7 +16,7 @@ import warnings
 
 import donut
 from guard import close_extra_fds, make_host_profile, make_profile, proxy_env, sandbox_argv, validate_proxy, validate_stdio
-from relay import fingerprint
+from relay import fingerprint, validate_direct_hosts
 from install_local import open_private, write_owned
 
 ROOT = Path(__file__).resolve().parent
@@ -69,6 +69,22 @@ def configure():
     print("Настройки сохранены.")
 
 
+def configure_direct():
+    if not sys.stdin.isatty() or not sys.stdout.isatty():
+        raise ValueError("configure-direct требует интерактивный терминал")
+    config = settings()
+    try:
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", getpass.GetPassWarning)
+            value = getpass.getpass("Direct HTTPS hosts через запятую (пусто: сохранить, -: очистить): ")
+    except getpass.GetPassWarning:
+        raise ValueError("Не удалось отключить отображение ввода, настройки не изменены") from None
+    hosts = config.get("direct_https_hosts", []) if not value else ([] if value == "-" else [item.strip() for item in value.split(",")])
+    config["direct_https_hosts"] = list(validate_direct_hosts(hosts))
+    write_owned(CONFIG, json.dumps(config, indent=2) + "\n")
+    print("Настройки сохранены.")
+
+
 def node_tools():
     node, npm = shutil.which("node"), shutil.which("npm")
     if not node or not npm:
@@ -81,6 +97,7 @@ def node_tools():
 
 
 def check(config):
+    validate_direct_hosts(config.get("direct_https_hosts", []))
     try:
         validate_proxy(config.get("proxy_url", ""))
     except (ValueError, TypeError):
@@ -131,9 +148,10 @@ def control(command="status", state=None):
             return result
 
 
-def relay(url):
+def relay(url, direct_hosts=()):
     validate_proxy(url)
-    digest = fingerprint(url)
+    direct_hosts = validate_direct_hosts(direct_hosts)
+    digest = fingerprint(url, direct_hosts)
     private_relay_state(STATE)
     with open_private(STATE / "launch.lock") as lock:
         fcntl.flock(lock, fcntl.LOCK_EX)
@@ -159,7 +177,7 @@ def relay(url):
                                            stdin=subprocess.PIPE, stdout=log, stderr=log,
                                            start_new_session=True, close_fds=True,
                                            env={"HOME": str(REAL_HOME), "PATH": "/usr/bin:/bin"})
-                process.stdin.write(json.dumps({"proxy_url": url}).encode() + b"\n")
+                process.stdin.write(json.dumps({"proxy_url": url, "direct_https_hosts": direct_hosts}).encode() + b"\n")
                 process.stdin.close()
             for _ in range(50):
                 try:
@@ -253,6 +271,7 @@ def profile(port, working_directory=None, installing=None):
 
 def run_claude(arguments, config):
     url = config.get("proxy_url", "")
+    direct_hosts = validate_direct_hosts(config.get("direct_https_hosts", []))
     validate_proxy(url)
     cwd = Path.cwd().resolve(strict=True)
     current = BASE / "current"
@@ -261,7 +280,7 @@ def run_claude(arguments, config):
         raise RuntimeError("Refusing Claude executable outside installed versions")
     if arguments and arguments[0] in ("install", "update"):
         raise ValueError("Use claude-setup install for guarded updates")
-    port = relay(url)
+    port = relay(url, direct_hosts)
     command = sandbox_argv(profile(port, working_directory=cwd), [str(binary)] + arguments)
     env = environment(url, port, host_access=True)
     close_extra_fds()
@@ -270,6 +289,7 @@ def run_claude(arguments, config):
 
 def install_claude(config):
     url = config.get("proxy_url", "")
+    direct_hosts = validate_direct_hosts(config.get("direct_https_hosts", []))
     validate_proxy(url)
     version = validate_version(config.get("claude_version", ""))
     node, npm = node_tools()
@@ -277,7 +297,7 @@ def install_claude(config):
     with open_private(STATE / "install.lock") as lock:
         fcntl.flock(lock, fcntl.LOCK_EX)
         if not destination.exists():
-            port = relay(url)
+            port = relay(url, direct_hosts)
             stage = Path(tempfile.mkdtemp(prefix="claude-stage-", dir=str(TMP)))
             try:
                 argv = [node, str(Path(npm).resolve()), "install", "--prefix", str(stage),
@@ -339,10 +359,13 @@ def main():
         close_extra_fds()
         mode, *arguments = sys.argv[1:]
         if mode == "claude-setup" and arguments in ([], ["--help"], ["-h"]):
-            print("Использование: claude-setup configure|settings|check|install|relay-stop")
+            print("Использование: claude-setup configure|configure-direct|settings|check|install|relay-stop")
             return
         if mode == "claude-setup" and arguments == ["configure"]:
             configure()
+            return
+        if mode == "claude-setup" and arguments == ["configure-direct"]:
+            configure_direct()
             return
         if mode == "claude-setup" and arguments == ["settings"]:
             print(CONFIG)
@@ -355,7 +378,7 @@ def main():
             run_browser(arguments)
             return
         if mode == "claude-setup" and arguments not in (["install"], ["check"]):
-            print("Использование: claude-setup configure|settings|check|install|relay-stop", file=sys.stderr)
+            print("Использование: claude-setup configure|configure-direct|settings|check|install|relay-stop", file=sys.stderr)
             sys.exit(2)
         config = settings()
         if mode == "claude":
