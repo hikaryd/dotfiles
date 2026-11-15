@@ -131,6 +131,7 @@ def make_profile(relay_port, write_roots, protected_paths, terminals=(), *, work
         lines.append('(deny file-write* (subpath {}))'.format(_quote(os.path.join(home, path))))
     for path in ('/Network', '/Volumes', os.path.join(home, 'Library/CloudStorage')):
         lines.append('(deny file-read* (subpath {}))'.format(_quote(os.path.realpath(path))))
+    lines.append('(deny file-read* (literal "/private/etc/localtime") (literal "/etc/localtime"))')
     return '\n'.join(lines) + '\n'
 
 
@@ -160,6 +161,7 @@ def make_host_profile(protected_paths=()):
         while parent != '/':
             lines.append('(deny file-write-unlink (literal {}))'.format(_quote(parent)))
             parent = os.path.dirname(parent)
+    lines.append('(deny file-read* (literal "/private/etc/localtime") (literal "/etc/localtime"))')
     return '\n'.join(lines) + '\n'
 
 

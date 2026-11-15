@@ -76,7 +76,7 @@ def configure_direct():
     try:
         with warnings.catch_warnings():
             warnings.simplefilter("error", getpass.GetPassWarning)
-            value = getpass.getpass("Direct HTTPS hosts через запятую (пусто: сохранить, -: очистить): ")
+            value = getpass.getpass("Direct HTTPS host[:port] через запятую (пусто: сохранить, -: очистить): ")
     except getpass.GetPassWarning:
         raise ValueError("Не удалось отключить отображение ввода, настройки не изменены") from None
     hosts = config.get("direct_https_hosts", []) if not value else ([] if value == "-" else [item.strip() for item in value.split(",")])
@@ -105,7 +105,7 @@ def check(config):
     validate_version(config.get("claude_version", ""))
     if len(os.fsencode(STATE / ("relay-" + "0" * 24) / "control.sock")) >= 104:
         raise RuntimeError("Путь домашнего каталога слишком длинный для Unix-сокета relay. Используйте более короткий путь к домашнему каталогу.")
-    for path in (ROOT / "guard.py", ROOT / "relay.py", ROOT / "ssh_proxy.py", ROOT / "bash-env.sh", ROOT / "host-bin/ps", ROOT / "host-bin/ssh", Path("/usr/bin/sandbox-exec")):
+    for path in (ROOT / "guard.py", ROOT / "relay.py", ROOT / "bash-env.sh", ROOT / "host-bin/ps", ROOT / "host-bin/ssh", Path("/usr/bin/sandbox-exec")):
         if not path.is_file():
             raise RuntimeError("Не найден необходимый компонент: " + str(path))
     node_tools()

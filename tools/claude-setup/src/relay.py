@@ -19,26 +19,37 @@ from guard import validate_proxy
 from install_local import open_private
 
 
+def unsafe_ip(ip):
+    return (ip.is_loopback or ip.is_link_local or ip.is_unspecified or ip.is_multicast
+            or ip.is_reserved or getattr(ip, "ipv4_mapped", None))
+
+
 def validate_direct_hosts(value):
     if not isinstance(value, (list, tuple)) or len(value) > 32:
         raise ValueError("Invalid direct HTTPS hosts")
     hosts = []
     for host in value:
-        if not isinstance(host, str) or len(host) > 253 or not host.isascii():
+        if not isinstance(host, str) or len(host) > 261 or not host.isascii():
+            raise ValueError("Invalid direct HTTPS hosts")
+        match = re.fullmatch(r"(\[[0-9A-Fa-f:.]+\]|[A-Za-z0-9.-]+)(?::([0-9]{1,5}))?", host)
+        if not match:
+            raise ValueError("Invalid direct HTTPS hosts")
+        host, port = match.groups()
+        if port is not None and (str(int(port)) != port or not 1 <= int(port) <= 65535):
             raise ValueError("Invalid direct HTTPS hosts")
         host = host.lower()
-        labels = host.split(".")
-        if len(labels) < 2 or any(not re.fullmatch(r"[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?", label) for label in labels):
-            raise ValueError("Invalid direct HTTPS hosts")
+        literal = host[1:-1] if host.startswith("[") else host
         try:
-            ipaddress.ip_address(host)
+            ip = ipaddress.ip_address(literal)
         except ValueError:
-            pass
+            labels = host.split(".")
+            if (len(host) > 253 or len(labels) < 2 or labels[-1].isdigit()
+                    or any(not re.fullmatch(r"[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?", label) for label in labels)):
+                raise ValueError("Invalid direct HTTPS hosts") from None
         else:
-            raise ValueError("Invalid direct HTTPS hosts")
-        if labels[-1].isdigit():
-            raise ValueError("Invalid direct HTTPS hosts")
-        hosts.append(host)
+            if str(ip) != literal or (ip.version == 6) != host.startswith("[") or unsafe_ip(ip):
+                raise ValueError("Invalid direct HTTPS hosts")
+        hosts.append(host + (":" + port if port and port != "443" else ""))
     return tuple(sorted(set(hosts)))
 
 
@@ -48,8 +59,18 @@ def fingerprint(url, direct_hosts=()):
     return hashlib.sha256(data).hexdigest()
 
 
-def parse_request(header):
+def parse_request(header, direct_hosts=None):
     lines = header[:-4].split(b"\r\n")
+    if direct_hosts is not None:
+        first = re.fullmatch(rb"CONNECT ([!-~]+) HTTP/1\.[01]", lines[0]) if lines else None
+        if not first:
+            return None, {}
+        try:
+            candidate = validate_direct_hosts([first.group(1).decode("ascii")])[0]
+        except ValueError:
+            return None, {}
+        if candidate not in direct_hosts:
+            return None, {}
     if not lines or not re.fullmatch(rb"[!#$%&'*+.^_`|~0-9A-Za-z-]+ [!-~]+ HTTP/1\.[01]", lines[0]):
         raise ValueError("Invalid request")
     method, target, version = lines[0].split(b" ")
@@ -69,27 +90,15 @@ def parse_request(header):
         raise ValueError("Invalid request")
     if not 1 <= int(match.group(2)) <= 65535:
         raise ValueError("Invalid request")
-    if match.group(2) != b"443":
-        return None, fields
     authority = match.group(1).decode("ascii")
-    if authority.startswith("["):
-        try:
-            ipaddress.IPv6Address(authority[1:-1])
-        except ValueError:
-            raise ValueError("Invalid request") from None
-        return None, fields
-    try:
-        ipaddress.IPv4Address(authority)
-    except ValueError:
-        pass
-    else:
-        return None, fields
     if "." not in authority and re.fullmatch(r"[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?", authority):
         return None, fields
     try:
-        host = validate_direct_hosts([match.group(1).decode("ascii")])[0]
+        host = validate_direct_hosts([target.decode("ascii")])[0]
     except ValueError:
-        raise ValueError("Invalid request") from None
+        return None, fields
+    if direct_hosts is not None and host not in direct_hosts:
+        return None, fields
     if ((version == b"HTTP/1.1" and b"host" not in fields)
             or (b"host" in fields and fields[b"host"].lower() != target.lower()) or b"transfer-encoding" in fields
             or fields.get(b"content-length", b"0") != b"0"):
@@ -97,21 +106,28 @@ def parse_request(header):
     return host, fields
 
 
-async def direct_connection(host):
+async def direct_connection(endpoint):
     loop = asyncio.get_running_loop()
-    answers = await loop.getaddrinfo(host, 443, type=socket.SOCK_STREAM)
+    match = re.fullmatch(r"(\[[^]]+\]|[^:]+)(?::([0-9]+))?", endpoint)
+    host, port = match.group(1), int(match.group(2) or 443)
+    host = host[1:-1] if host.startswith("[") else host
+    try:
+        ip = ipaddress.ip_address(host)
+    except ValueError:
+        answers = await loop.getaddrinfo(host, port, type=socket.SOCK_STREAM)
+    else:
+        answers = [(socket.AF_INET if ip.version == 4 else socket.AF_INET6, None, None, None, (host, port))]
     if not answers:
         raise OSError("No addresses")
     for family, _, _, _, address in answers:
         if family not in (socket.AF_INET, socket.AF_INET6):
             raise OSError("Unsafe address")
         ip = ipaddress.ip_address(address[0])
-        if (ip.is_loopback or ip.is_link_local or ip.is_unspecified or ip.is_multicast
-                or ip.is_reserved or getattr(ip, "ipv4_mapped", None)):
+        if unsafe_ip(ip):
             raise OSError("Unsafe address")
     for family, _, _, _, address in answers:
         try:
-            return await asyncio.open_connection(address[0], 443, family=family, flags=socket.AI_NUMERICHOST)
+            return await asyncio.open_connection(address[0], port, family=family, flags=socket.AI_NUMERICHOST)
         except OSError:
             continue
     raise OSError("Connection failed")
@@ -174,7 +190,7 @@ async def serve(url, state, direct_hosts=()):
                     header = await asyncio.wait_for(reader.readuntil(b"\r\n\r\n"), 10)
                     if len(header) > 16384:
                         raise ValueError("Invalid request")
-                    host, fields = parse_request(header)
+                    host, fields = parse_request(header, direct_hosts)
                 except (ValueError, asyncio.LimitOverrunError, asyncio.IncompleteReadError, asyncio.TimeoutError):
                     writer.write(b"HTTP/1.1 400 Bad Request\r\nConnection: close\r\n\r\n")
                     await writer.drain()
