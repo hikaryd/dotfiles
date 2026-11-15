@@ -148,11 +148,7 @@ def _install(home):
     install_host_ps(runtime)
     for name in FILES:
         write_owned(runtime / name, (SOURCE / name).read_text())
-    proxy_command = shlex.join([sys.executable, "-I", str(runtime / "ssh_proxy.py")]).replace("%", "%%") + " '%h' '%p'"
-    ssh_command = shlex.join(["/usr/bin/ssh", "-o", "ProxyCommand=" + proxy_command,
-                              "-o", "ProxyUseFdpass=yes", "-o", "CanonicalizeHostname=no",
-                              "-o", "ControlPath=none"])
-    write_owned(runtime / "host-bin/ssh", '#!/bin/sh\nexec ' + ssh_command + ' "$@"\n', 0o700)
+    write_owned(runtime / "host-bin/ssh", '#!/bin/sh\nexec /usr/bin/ssh "$@"\n', 0o700)
     config = home / ".config/claude-guard/settings.json"
     if not config.exists():
         defaults = json.loads((SOURCE / "settings.example.json").read_text())

@@ -147,6 +147,7 @@ def make_host_profile(protected_paths=()):
         '(allow network-bind (local tcp "localhost:*"))',
         '(allow network-inbound (local tcp "localhost:*"))',
         '(allow network-outbound (remote tcp "localhost:*"))',
+        '(allow network-outbound (remote tcp "*:22"))',
         '(allow network-bind (local unix-socket (subpath "/")))',
         '(allow network-inbound (local unix-socket (subpath "/")))',
         '(allow network-outbound (remote unix-socket (subpath "/")))',
