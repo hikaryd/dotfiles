@@ -176,7 +176,7 @@ async def serve(url, state, direct_hosts=()):
 
     async def client(reader, writer):
         task = asyncio.current_task()
-        if len(active) >= 128:
+        if stopped.is_set() or len(active) >= 128:
             writer.close()
             return
         active.add(task)
@@ -266,10 +266,11 @@ async def serve(url, state, direct_hosts=()):
     finally:
         for server in servers:
             server.close()
-            await server.wait_closed()
         for task in list(active):
             task.cancel()
         await asyncio.gather(*list(active), return_exceptions=True)
+        for server in servers:
+            await server.wait_closed()
         control_path.unlink(missing_ok=True)
         lock.close()
 
