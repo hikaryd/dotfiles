@@ -100,7 +100,7 @@ def parse_request(header, direct_hosts=None):
     if direct_hosts is not None and host not in direct_hosts:
         return None, fields
     if ((version == b"HTTP/1.1" and b"host" not in fields)
-            or (b"host" in fields and fields[b"host"].lower() != target.lower()) or b"transfer-encoding" in fields
+            or (b"host" in fields and validate_direct_hosts([fields[b"host"].decode("ascii")])[0] != host) or b"transfer-encoding" in fields
             or fields.get(b"content-length", b"0") != b"0"):
         raise ValueError("Invalid request")
     return host, fields
