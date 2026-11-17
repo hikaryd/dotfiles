@@ -1,23 +1,23 @@
 background = 101010
-foreground = ffffff
-selection-background = 232323
-selection-foreground = ffffff
+foreground = ececec
+selection-background = 2a2a2a
+selection-foreground = ececec
 cursor-color = ffc799
 unfocused-split-fill = 101010
-palette = 0=#181818
+palette = 0=#1c1c1c
 palette = 1=#ff8080
-palette = 2=#50b5aa
+palette = 2=#8fd3a5
 palette = 3=#ffc799
-palette = 4=#b0b0b0
-palette = 5=#ffc799
-palette = 6=#50b5aa
-palette = 7=#dadada
-palette = 8=#505050
-palette = 9=#ff8080
-palette = 10=#99ffe4
-palette = 11=#ffcfa8
-palette = 12=#b0b0b0
-palette = 13=#ffcfa8
+palette = 4=#8fb4e0
+palette = 5=#c8a8e0
+palette = 6=#6fd1c4
+palette = 7=#cfcfcf
+palette = 8=#5c5c5c
+palette = 9=#ffa3a3
+palette = 10=#b3e8c2
+palette = 11=#ffd9b8
+palette = 12=#b0cdef
+palette = 13=#dcc5ef
 palette = 14=#99ffe4
 palette = 15=#ffffff
 # Терминалы открывают постоянные сессии tmux.
@@ -48,8 +48,18 @@ window-padding-y = 14
 
 title =
 
+split-divider-color = 282828
+# Тусклый текст (подсказки, autosuggest) читается, но остаётся вторичным.
+faint-opacity = 0.6
+# Иконка Dock в цветах палитры.
+macos-icon = custom-style
+macos-icon-frame = chrome
+macos-icon-ghost-color = ffc799
+macos-icon-screen-color = 101010,1c1c1c
+
 cursor-style = bar
 cursor-style-blink = false
+adjust-cursor-thickness = 2
 cursor-text = cell-background
 cursor-opacity = 1
 

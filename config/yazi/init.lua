@@ -21,13 +21,13 @@ pcall(function()
     inverse_separator = { open = "", close = "" },
 
     style_a = { fg = "#ffc799", bg = "#101010", bg_mode = { normal = "#101010", select = "#101010", un_set = "#101010" } },
-    style_b = { bg = "#232323", fg = "#ffffff" },
-    style_c = { bg = "reset", fg = "#ffffff" },
+    style_b = { bg = "#232323", fg = "#ececec" },
+    style_c = { bg = "reset", fg = "#ececec" },
 
     permissions_t_fg = "#99ffe4",
     permissions_r_fg = "#ffc799",
     permissions_w_fg = "#ff8080",
-    permissions_x_fg = "#50b5aa",
+    permissions_x_fg = "#6fd1c4",
     permissions_s_fg = "#a0a0a0",
 
     tab_width = 20,
@@ -35,7 +35,7 @@ pcall(function()
     copied    = { icon = "", fg = "#99ffe4" },
     cut       = { icon = "", fg = "#ff8080" },
     files     = { icon = "", fg = "#ffc799" },
-    filtereds = { icon = "", fg = "#ffc799" },
+    filtereds = { icon = "", fg = "#c8a8e0" },
     total     = { icon = "󰮍", fg = "#ffc799" },
     success   = { icon = "", fg = "#99ffe4" },
     failed    = { icon = "", fg = "#ff8080" },

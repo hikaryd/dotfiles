@@ -10,10 +10,10 @@
 			<key>settings</key>
 			<dict>
 				<key>background</key><string>#101010</string>
-				<key>foreground</key><string>#ffffff</string>
+				<key>foreground</key><string>#ececec</string>
 				<key>caret</key><string>#ffc799</string>
-				<key>lineHighlight</key><string>#1c1c1c</string>
-				<key>selection</key><string>#232323</string>
+				<key>lineHighlight</key><string>#1a1a1a</string>
+				<key>selection</key><string>#2a2a2a</string>
 				<key>invisibles</key><string>#a0a0a0</string>
 			</dict>
 		</dict>
@@ -39,7 +39,7 @@
 			<key>scope</key><string>string.regexp, constant.character.escape</string>
 			<key>settings</key>
 			<dict>
-				<key>foreground</key><string>#50b5aa</string>
+				<key>foreground</key><string>#6fd1c4</string>
 			</dict>
 		</dict>
 		<dict>
@@ -47,7 +47,7 @@
 			<key>scope</key><string>constant.numeric, constant.language, constant.character, constant.other</string>
 			<key>settings</key>
 			<dict>
-				<key>foreground</key><string>#ffc799</string>
+				<key>foreground</key><string>#c8a8e0</string>
 			</dict>
 		</dict>
 		<dict>
@@ -103,7 +103,7 @@
 			<key>scope</key><string>variable, variable.parameter, variable.other</string>
 			<key>settings</key>
 			<dict>
-				<key>foreground</key><string>#ffffff</string>
+				<key>foreground</key><string>#ececec</string>
 			</dict>
 		</dict>
 		<dict>
@@ -120,7 +120,7 @@
 			<key>scope</key><string>support.constant, constant.other.color</string>
 			<key>settings</key>
 			<dict>
-				<key>foreground</key><string>#ffc799</string>
+				<key>foreground</key><string>#c8a8e0</string>
 			</dict>
 		</dict>
 		<dict>
@@ -128,7 +128,7 @@
 			<key>scope</key><string>punctuation, meta.brace, meta.delimiter</string>
 			<key>settings</key>
 			<dict>
-				<key>foreground</key><string>#ffffff</string>
+				<key>foreground</key><string>#ececec</string>
 			</dict>
 		</dict>
 		<dict>

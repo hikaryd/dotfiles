@@ -74,14 +74,14 @@ ZSH_HIGHLIGHT_STYLES[builtin]='fg=#ffc799'
 ZSH_HIGHLIGHT_STYLES[alias]='fg=#ffc799'
 ZSH_HIGHLIGHT_STYLES[function]='fg=#ffc799'
 ZSH_HIGHLIGHT_STYLES[unknown-token]='fg=#ff8080'
-ZSH_HIGHLIGHT_STYLES[path]='fg=#ffffff,underline'
+ZSH_HIGHLIGHT_STYLES[path]='fg=#ececec,underline'
 ZSH_HIGHLIGHT_STYLES[single-quoted-argument]='fg=#99ffe4'
 ZSH_HIGHLIGHT_STYLES[double-quoted-argument]='fg=#99ffe4'
 ZSH_HIGHLIGHT_STYLES[dollar-quoted-argument]='fg=#99ffe4'
 ZSH_HIGHLIGHT_STYLES[commandseparator]='fg=#a0a0a0'
 ZSH_HIGHLIGHT_STYLES[redirection]='fg=#a0a0a0'
 ZSH_HIGHLIGHT_STYLES[globbing]='fg=#ffc799'
-ZSH_HIGHLIGHT_STYLES[assign]='fg=#ffffff'
+ZSH_HIGHLIGHT_STYLES[assign]='fg=#ececec'
 ZSH_HIGHLIGHT_STYLES[reserved-word]='fg=#ffc799'
 ZSH_HIGHLIGHT_STYLES[comment]='fg=#a0a0a0'
 ZSH_HIGHLIGHT_STYLES[arg0]='fg=#ffc799'
@@ -126,7 +126,7 @@ else
   autoload -Uz add-zsh-hook _dots-prompt-find-git-dir _dots-prompt-precmd _dots-prompt-preexec
   add-zsh-hook preexec _dots-prompt-preexec
   add-zsh-hook precmd _dots-prompt-precmd
-  PROMPT='%F{#a0a0a0}󰀵 %f%F{#ffffff}%5~ %f'$'\n''%F{#ffc799}>%f '
+  PROMPT='%F{#a0a0a0}󰀵 %f%F{#ececec}%5~ %f'$'\n''%F{#ffc799}>%f '
 fi
 
 # These integrations must exist before ZLE draws its first editable line.

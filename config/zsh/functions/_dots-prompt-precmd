@@ -29,8 +29,8 @@ fi
 branch="${branch//\%/%%}"
 virtualenv="${virtualenv//\%/%%}"
 
-prompt_line='%F{#a0a0a0}󰀵 %f%F{#ffffff}%5~ %f'
-[[ -n "$branch" ]] && prompt_line+="%F{#a0a0a0}${branch} %f"
+prompt_line='%F{#a0a0a0}󰀵 %f%F{#ececec}%5~ %f'
+[[ -n "$branch" ]] && prompt_line+="%F{#c8a8e0}󰘬 ${branch} %f"
 [[ -n "$virtualenv" ]] && prompt_line+="%F{#99ffe4}${virtualenv} %f"
 [[ -n "$duration" ]] && prompt_line+="%F{#a0a0a0}${duration} %f"
 # Только builtin read: профиль меняется на следующем prompt без перезапуска.
@@ -38,7 +38,7 @@ local dots_style='glass'
 local style_file="${XDG_CONFIG_HOME:-$HOME/.config}/dots/style"
 [[ -r "$style_file" ]] && IFS= read -r dots_style < "$style_file"
 if [[ "$dots_style" == presentation ]]; then
-  prompt_line='%F{#ffffff}PRESENTATION%f '
+  prompt_line='%F{#ececec}PRESENTATION%f '
   [[ -n "$duration" ]] && prompt_line+="%F{#a0a0a0}${duration} %f"
 fi
 # Состояние команды различимо и символом, и цветом; без внешних процессов.

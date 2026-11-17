@@ -19,36 +19,36 @@ set limitdiffs 1
 set uicolor #181818
 set want_ttk 1
 set bgcolor #101010
-set fgcolor #ffffff
-set uifgcolor #ffffff
+set fgcolor #ececec
+set uifgcolor #ececec
 set uifgdisabledcolor #8b8b8b
-set colors {"#99ffe4" #ff8080 #b0b0b0 #ffc799 #8b8b8b #ffcfa8 #50b5aa}
+set colors {"#99ffe4" #8fb4e0 #ffc799 #c8a8e0 #ff8080 #8fd3a5 #6fd1c4}
 set diffcolors {"#ff8080" "#99ffe4" #ffc799}
-set mergecolors {#ff8080 #b0b0b0 "#99ffe4" #ffc799 #ffcfa8 "#50b5aa" #ffc799 "#b0b0b0" "#99ffe4" "#ff8080" #50b5aa "#ffc799" "#b0b0b0" "#99ffe4" "#ffcfa8" "#ff8080"}
+set mergecolors {#ff8080 #8fb4e0 "#99ffe4" #ffc799 #c8a8e0 "#6fd1c4" #8fd3a5 "#ffd9b8" "#b0cdef" "#dcc5ef" #ffa3a3 "#b3e8c2" "#8fb4e0" "#99ffe4" "#c8a8e0" "#ffc799"}
 set markbgcolor #232323
 set diffcontext 3
-set selectbgcolor #232323
+set selectbgcolor #2a2a2a
 set foundbgcolor #ffc799
-set currentsearchhitbgcolor #ffcfa8
+set currentsearchhitbgcolor #ffd9b8
 set extdifftool meld
 set perfile_attrs 0
 set headbgcolor #99ffe4
 set headfgcolor black
 set headoutlinecolor black
-set remotebgcolor #ffcfa8
+set remotebgcolor #ffd9b8
 set tagbgcolor #ffc799
 set tagfgcolor black
 set tagoutlinecolor black
 set reflinecolor black
 set filesepbgcolor #282828
-set filesepfgcolor #ffffff
+set filesepfgcolor #ececec
 set linehoverbgcolor #ffc799
 set linehoverfgcolor black
 set linehoveroutlinecolor black
 set mainheadcirclecolor #ffc799
 set workingfilescirclecolor #ff8080
 set indexcirclecolor #99ffe4
-set circlecolors {#ffffff #b0b0b0 #8b8b8b #b0b0b0 #b0b0b0}
+set circlecolors {#ececec #b0b0b0 #8b8b8b #b0b0b0 #b0b0b0}
 set linkfgcolor #ffc799
 set circleoutlinecolor black
 set diffbgcolors {"#232323" "#181818"}

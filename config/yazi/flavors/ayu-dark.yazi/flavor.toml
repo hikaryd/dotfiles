@@ -6,7 +6,7 @@
 cwd = { fg = "#ffc799" }
 
 find_keyword  = { fg = "#ffc799", bold = true, italic = true, underline = true }
-find_position = { fg = "#ffc799", bold = true, italic = true }
+find_position = { fg = "#c8a8e0", bold = true, italic = true }
 
 symlink_target = { fg = "#a0a0a0", italic = true }
 
@@ -27,21 +27,21 @@ syntect_theme = ""
 
 [tabs]
 active   = { fg = "#ffc799", bg = "#101010", bold = true }
-inactive = { fg = "#a0a0a0", bg = "#1c1c1c" }
+inactive = { fg = "#a0a0a0", bg = "#1a1a1a" }
 sep_inner = { open = "", close = "" }
 sep_outer = { open = "", close = "" }
 
 [mode]
 normal_main = { fg = "#ffc799", bg = "#101010", bold = true }
-normal_alt  = { fg = "#ffc799", bg = "#1c1c1c" }
+normal_alt  = { fg = "#ffc799", bg = "#1a1a1a" }
 select_main = { fg = "#ffc799", bg = "#101010", bold = true }
-select_alt  = { fg = "#ffc799", bg = "#1c1c1c" }
+select_alt  = { fg = "#ffc799", bg = "#1a1a1a" }
 unset_main  = { fg = "#ff8080", bg = "#101010", bold = true }
-unset_alt   = { fg = "#ff8080", bg = "#1c1c1c" }
+unset_alt   = { fg = "#ff8080", bg = "#1a1a1a" }
 
 [indicator]
-parent  = { fg = "#ffffff", bg = "#232323" }
-current = { fg = "#ffffff", bg = "#232323" }
+parent  = { fg = "#ececec", bg = "#2a2a2a" }
+current = { fg = "#ececec", bg = "#2a2a2a" }
 preview = { underline = true }
 padding = { open = "", close = "" }
 
@@ -53,34 +53,34 @@ perm_sep   = { fg = "#a0a0a0" }
 perm_type  = { fg = "#99ffe4" }
 perm_read  = { fg = "#ffc799" }
 perm_write = { fg = "#ff8080" }
-perm_exec  = { fg = "#50b5aa" }
-progress_label  = { fg = "#ffffff", bold = true }
-progress_normal = { fg = "#ffc799", bg = "#1c1c1c" }
+perm_exec  = { fg = "#6fd1c4" }
+progress_label  = { fg = "#ececec", bold = true }
+progress_normal = { fg = "#ffc799", bg = "#1a1a1a" }
 progress_error  = { fg = "#101010", bg = "#ff8080" }
 
 [which]
 cols            = 3
 mask            = { bg = "#181818" }
-cand            = { fg = "#50b5aa" }
+cand            = { fg = "#6fd1c4" }
 rest            = { fg = "#a0a0a0" }
-desc            = { fg = "#ffffff" }
+desc            = { fg = "#ececec" }
 separator       = "  "
 separator_style = { fg = "#a0a0a0" }
 
 [confirm]
 border  = { fg = "#ffc799" }
 title   = { fg = "#ffc799", bold = true }
-body    = { fg = "#ffffff" }
+body    = { fg = "#ececec" }
 list    = { fg = "#ffc799" }
 btn_yes = { fg = "#ffc799", bg = "#101010", bold = true }
-btn_no  = { fg = "#ffffff", bg = "#1c1c1c" }
+btn_no  = { fg = "#ececec", bg = "#1a1a1a" }
 btn_labels = [ "  [Y]es  ", "  (N)o  " ]
 
 [spot]
 border   = { fg = "#ffc799" }
 title    = { fg = "#ffc799", bold = true }
 tbl_col  = { fg = "#ffc799" }
-tbl_cell = { fg = "#ffc799", bg = "#232323" }
+tbl_cell = { fg = "#ffc799", bg = "#2a2a2a" }
 
 [notify]
 title_info  = { fg = "#99ffe4" }
@@ -93,18 +93,18 @@ icon_error = ""
 [pick]
 border   = { fg = "#ffc799" }
 active   = { fg = "#ffc799", bold = true }
-inactive = { fg = "#ffffff" }
+inactive = { fg = "#ececec" }
 
 [input]
 border   = { fg = "#ffc799" }
-title    = { fg = "#ffffff" }
-value    = { fg = "#ffffff" }
-selected = { fg = "#ffffff", bg = "#232323" }
+title    = { fg = "#ececec" }
+value    = { fg = "#ececec" }
+selected = { fg = "#ececec", bg = "#2a2a2a" }
 
 [cmp]
 border   = { fg = "#ffc799" }
-active   = { fg = "#ffffff", bg = "#232323" }
-inactive = { fg = "#ffffff" }
+active   = { fg = "#ececec", bg = "#2a2a2a" }
+inactive = { fg = "#ececec" }
 icon_file    = ""
 icon_folder  = ""
 icon_command = ""
@@ -115,16 +115,16 @@ title   = { fg = "#ffc799", bold = true }
 hovered = { fg = "#ffc799", underline = true }
 
 [help]
-on      = { fg = "#50b5aa" }
+on      = { fg = "#6fd1c4" }
 run     = { fg = "#b0b0b0" }
-desc    = { fg = "#ffffff" }
-hovered = { fg = "#ffffff", bg = "#232323", bold = true }
+desc    = { fg = "#ececec" }
+hovered = { fg = "#ececec", bg = "#2a2a2a", bold = true }
 footer  = { fg = "#ffc799", bg = "#101010" }
 
 [filetype]
 rules = [
 	{ mime = "image/*", fg = "#ffc799" },
-	{ mime = "{audio,video}/*", fg = "#ffc799" },
+	{ mime = "{audio,video}/*", fg = "#c8a8e0" },
 	{ mime = "application/{zip,rar,7z*,tar,gzip,xz,zstd,bzip*,lzma,compress,archive,cpio,arj,xar,ms-cab*}", fg = "#ff8080" },
 	{ mime = "application/{pdf,doc,rtf}", fg = "#ffc799" },
 	{ mime = "vfs/{absent,stale}", fg = "#a0a0a0" },

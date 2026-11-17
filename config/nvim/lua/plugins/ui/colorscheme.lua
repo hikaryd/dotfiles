@@ -7,10 +7,10 @@ return {
 			-- Keep transparent editor and opaque popups.
 			local colors = {
 				bg = "#101010",
-				fg = "#ffffff",
+				fg = "#ececec",
 				muted = "#a0a0a0",
 				border = "#282828",
-				selection = "#232323",
+				selection = "#2a2a2a",
 				accent = "#ffc799",
 				error = "#ff8080",
 				warn = "#ffc799",
@@ -24,7 +24,7 @@ return {
 				for key, value in pairs({
 					bg = colors.bg, fg = colors.fg, ui = colors.muted, accent = colors.accent,
 					tag = colors.accent, func = colors.accent, entity = colors.accent,
-					string = colors.strings, regexp = "#50b5aa", markup = colors.error,
+					string = colors.strings, regexp = "#6fd1c4", markup = colors.error,
 					keyword = "#b0b0b0", special = colors.accent, comment = "#8b8b8b",
 					constant = colors.accent, operator = "#b0b0b0", error = colors.error,
 					lsp_parameter = colors.fg, lsp_inlay_hint = colors.muted,
@@ -38,7 +38,7 @@ return {
 				}) do palette[key] = value end
 				vim.g.terminal_color_background = colors.bg
 				vim.g.terminal_color_foreground = colors.fg
-				for i, color in ipairs({ "#181818", "#ff8080", "#50b5aa", "#ffc799", "#b0b0b0", "#ffc799", "#50b5aa", "#dadada", "#505050", "#ff8080", "#99ffe4", "#ffcfa8", "#b0b0b0", "#ffcfa8", "#99ffe4", "#ffffff" }) do
+				for i, color in ipairs({ "#1c1c1c", "#ff8080", "#8fd3a5", "#ffc799", "#8fb4e0", "#c8a8e0", "#6fd1c4", "#cfcfcf", "#5c5c5c", "#ffa3a3", "#b3e8c2", "#ffd9b8", "#b0cdef", "#dcc5ef", "#99ffe4", "#ffffff" }) do
 					vim.g["terminal_color_" .. (i - 1)] = color
 				end
 			end
@@ -76,15 +76,15 @@ return {
 					FloatTitle = { fg = colors.accent, bg = colors.bg, bold = true },
 					DiagnosticError = { fg = colors.error },
 					DiagnosticWarn = { fg = colors.warn },
-					DiagnosticInfo = { fg = colors.accent },
-					DiagnosticHint = { fg = colors.strings },
+					DiagnosticInfo = { fg = "#8fb4e0" },
+					DiagnosticHint = { fg = "#c8a8e0" },
 					DiagnosticOk = { fg = colors.success },
-					MiniIconsBlue = { fg = colors.accent },
+					MiniIconsBlue = { fg = "#8fb4e0" },
 					MiniIconsCyan = { fg = colors.strings },
 					MiniIconsGreen = { fg = colors.success },
 					MiniIconsGrey = { fg = colors.muted },
 					MiniIconsOrange = { fg = colors.warn },
-					MiniIconsPurple = { fg = colors.accent },
+					MiniIconsPurple = { fg = "#c8a8e0" },
 					MiniIconsRed = { fg = colors.error },
 					MiniIconsYellow = { fg = colors.warn },
 					FylerNormal = { link = "Normal" },

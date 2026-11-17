@@ -36,7 +36,10 @@ func readStyle() string {
 	return s
 }
 
-var presentation = [][2]string{{"status-left", "#[fg=#ffffff] PRESENTATION "}, {"window-status-format", " #I terminal "}, {"window-status-current-format", "#[fg=#ffc799,bold] #I terminal "}}
+var presentation = [][2]string{{"status-left", "#{?client_prefix,#[fg=#99ffe4],#[fg=#ececec]} PRESENTATION "}, {"window-status-format", " #I terminal "}, {"window-status-current-format", "#[fg=#ffc799,bold] #I terminal#{?window_zoomed_flag, +,} "}}
+
+// Значения прошлых версий: выход из presentation после обновления восстанавливает строку.
+var legacyPresentation = map[string]string{"status-left": "#[fg=#ffffff] PRESENTATION ", "window-status-current-format": "#[fg=#ffc799,bold] #I terminal "}
 
 const snapshotOption = "@dots-style-snapshot"
 
@@ -104,7 +107,7 @@ func tmuxStyle(mode string) error {
 				if e != nil {
 					return e
 				}
-				if current == p[1] {
+				if current == p[1] || current == legacyPresentation[p[0]] {
 					if e = set(p[0], previous); e != nil {
 						return e
 					}

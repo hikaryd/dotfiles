@@ -1,26 +1,33 @@
 gui:
+  border: rounded
+  nerdFontsVersion: "3"
   theme:
     activeBorderColor:
       - "#ffc799"
       - bold
     inactiveBorderColor:
-      - "#282828"
+      - "#5c5c5c"
+    searchingActiveBorderColor:
+      - "#c8a8e0"
+      - bold
     optionsTextColor:
-      - "#ffc799"
+      - "#8fb4e0"
     selectedLineBgColor:
-      - "#232323"
-    selectedRangeBgColor:
+      - "#2a2a2a"
+    inactiveViewSelectedLineBgColor:
       - "#232323"
     cherryPickedCommitBgColor:
-      - "#232323"
+      - "#2a2a2a"
     cherryPickedCommitFgColor:
-      - "#ffc799"
+      - "#99ffe4"
+    markedBaseCommitBgColor:
+      - "#2a2a2a"
+    markedBaseCommitFgColor:
+      - "#8fb4e0"
     unstagedChangesColor:
       - "#ff8080"
     defaultFgColor:
-      - "#ffffff"
-    searchingActiveBorderColor:
-      - "#ffc799"
+      - "#ececec"
 git:
   # Keep remote updates explicit instead of fetching on every startup.
   autoFetch: false
