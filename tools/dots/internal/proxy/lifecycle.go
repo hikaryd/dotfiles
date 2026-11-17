@@ -13,7 +13,7 @@ import (
 	"time"
 )
 
-// A launched xray that survives this long is treated as started.
+// Если xray прожил столько, считаем его запущенным.
 var startupSettle = 1500 * time.Millisecond
 
 func (c *controller) readPID() (int, error) {
@@ -45,7 +45,7 @@ func pidRunning(pid int) bool {
 	return err == nil || errors.Is(err, syscall.EPERM)
 }
 
-// splitCommand accepts the escaped spaces/quotes printed by ps without invoking a shell.
+// splitCommand разбирает экранированные пробелы и кавычки из ps без shell.
 func splitCommand(command string) []string {
 	var args []string
 	var word strings.Builder
@@ -109,7 +109,7 @@ func ownsCommand(command, config string) bool {
 			if args[i+1] == config {
 				return true
 			}
-			// Some ps implementations show spaces in argv without escaping them.
+			// Некоторые ps не экранируют пробелы в argv.
 			for j := i + 2; j < len(args); j++ {
 				if strings.Join(args[i+1:j+1], " ") == config {
 					return true
@@ -130,7 +130,7 @@ func (c *controller) owned(pid int) bool {
 	return ownsCommand(strings.TrimSpace(string(b)), c.path("config.json"))
 }
 
-// flock is released by the kernel on process exit; only the controller, never xray, inherits it.
+// flock снимает ядро при выходе; наследует его только контроллер, не xray.
 func (c *controller) lock() (func(), error) {
 	return c.lockFile("controller.lock", 5*time.Second)
 }
@@ -199,7 +199,7 @@ func (c *controller) start(server object) error {
 	}
 	fmt.Fprintf(c.out, "\nConfig saved: %s\nServer: %s\nAddress: %s:%v\nTransport: %s, Security: %s\n", c.path("config.json"), value(server, "name", ""), value(server, "address", ""), server["port"], value(server, "type", ""), value(server, "security", ""))
 	cmd := exec.Command(bin, "run", "-c", c.path("config.json"))
-	// Disconnect from the controlling terminal and discard potentially secret-bearing xray errors.
+	// Отвязка от терминала; ошибки xray могут содержать секреты, отбрасываем.
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setsid: true}
 	if err := cmd.Start(); err != nil {
 		return errors.New("xray failed to start (process launch failed).")

@@ -132,8 +132,8 @@ func streamAnthropic(w http.ResponseWriter, r io.Reader, model string) error {
 	if finish == "" {
 		return errStream
 	}
-	// OpenAI interleaves tools, but Anthropic SDK callbacks require exactly
-	// one active block. Keep text incremental; serialize bounded tool payloads.
+	// OpenAI перемешивает tools, а колбэкам Anthropic SDK нужен ровно один активный
+	// блок. Текст отдаём по мере поступления, вызовы tools — целиком.
 	if textIndex >= 0 {
 		if err := emit("content_block_stop", map[string]any{"index": textIndex}); err != nil {
 			return err

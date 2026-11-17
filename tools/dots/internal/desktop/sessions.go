@@ -70,8 +70,8 @@ func sessionInventory() ([]session, error) {
 	return entries, nil
 }
 
-// Project candidates are discovered directly, not inferred from zoxide history.
-// This is a shallow scan: caches, files and nested repositories are not sessions.
+// Проекты ищем напрямую, а не по истории zoxide. Скан неглубокий: кэши,
+// файлы и вложенные репозитории сессиями не считаются.
 func devProjects() ([]session, error) {
 	root := filepath.Join(home(), "Documents", "dev")
 	rows, err := os.ReadDir(root)
@@ -151,7 +151,7 @@ func sessionsRun(args []string) int {
 			if len(live) == 1 {
 				matches = live
 			} else if len(live) == 0 {
-				// A project may also have a sesh/zoxide entry for the same path.
+				// У проекта может быть и запись sesh/zoxide с тем же путём.
 				for _, i := range matches {
 					if entries[i].Source != "project" {
 						continue
@@ -176,8 +176,7 @@ func sessionsRun(args []string) int {
 	} else {
 		frame := desktopFrame("Session / workspace")
 		if !o.flag("--all") {
-			// Show live sessions initially, and discover new projects on search.
-			// Keep the full import/history inventory behind --all.
+			// Сначала живые сессии, новые проекты — при поиске. Импорт и история — через --all.
 			live := []session{}
 			for _, s := range entries {
 				if s.Source == "tmux" {

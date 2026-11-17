@@ -19,7 +19,7 @@ func replaceStarshipPalette(text, content string) string {
 		offset := start[1] + section[0]
 		if !strings.HasPrefix(text[offset:], "[palettes.") {
 			end = offset
-			// Keep the separator before the next unrelated table byte-for-byte.
+			// Разделитель перед следующей таблицей сохраняем побайтно.
 			for end > start[1] && text[end-1] == '\n' {
 				end--
 			}
@@ -32,8 +32,8 @@ func replaceStarshipPalette(text, content string) string {
 	return text[:start[0]] + content + text[end:]
 }
 
-// Use YAML coordinates to locate keys, preserving unrelated formatting for
-// block mappings. Flow mappings are serialized structurally instead.
+// Ключи ищем по координатам YAML, не трогая остальное форматирование блоков.
+// Flow mappings сериализуются заново.
 func replaceLazygitTheme(text, themeBlock string) (string, error) {
 	var doc yaml.Node
 	if err := yaml.Unmarshal([]byte(text), &doc); err != nil {
@@ -105,7 +105,7 @@ func replaceLazygitTheme(text, themeBlock string) (string, error) {
 		themeBlock = strings.Join(parts, "")
 	}
 	if oldKey == nil {
-		// The first child starts after the gui header; use the actual root key's line.
+		// Первый потомок идёт после заголовка gui, берём строку самого корневого ключа.
 		for i := 0; i < len(root.Content); i += 2 {
 			if root.Content[i].Value == "gui" {
 				n := root.Content[i].Line

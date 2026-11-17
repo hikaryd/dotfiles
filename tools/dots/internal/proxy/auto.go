@@ -36,8 +36,8 @@ func medianLatency(samples []time.Duration) time.Duration {
 	return samples[len(samples)/2]
 }
 
-// Identity is the actual tunnel configuration, not a label or raw URL. A
-// subscription can advertise the same route several times under different names.
+// Идентичность — реальная конфигурация туннеля, не метка и не URL: подписка
+// может повторять один маршрут под разными именами.
 func (c *controller) serverKey(server object) string {
 	cfg, err := c.config(server)
 	if err != nil {
@@ -47,7 +47,7 @@ func (c *controller) serverKey(server object) string {
 }
 
 func (c *controller) candidates() ([]object, error) {
-	// Autostart must never prompt or consume the caller's stdin, including first run.
+	// Автозапуск никогда не спрашивает и не читает stdin, даже при первом запуске.
 	if _, err := os.Stat(c.path("servers.json")); errors.Is(err, os.ErrNotExist) {
 		if _, err := os.Stat(c.path("subscription_url.txt")); err != nil {
 			return nil, errors.New("No proxy servers configured. Run dots-proxy --set-sub or --set-vless first.")
@@ -60,7 +60,7 @@ func (c *controller) candidates() ([]object, error) {
 	seen := map[string]bool{}
 	unique := make([]object, 0, len(servers))
 	for _, server := range servers {
-		// Reparse older caches too: fragment text must not leak into transport.
+		// Старые кэши тоже перечитываем: текст fragment не должен попасть в транспорт.
 		if raw := value(server, "raw_url", ""); raw != "" {
 			if parsed, err := parseVLESS(raw); err == nil {
 				server = parsed
@@ -78,8 +78,8 @@ func (c *controller) candidates() ([]object, error) {
 	return unique, nil
 }
 
-// A previous selection is a hint, not proof of availability. Recheck it live
-// even after a long idle period or changes to other subscription entries.
+// Прошлый выбор — подсказка, а не доказательство. Проверяем вживую, даже
+// после простоя или изменения других записей подписки.
 func cachedSelection(cache selection, keys []string, now time.Time) int {
 	if cache.Version != 1 || now.Before(cache.Checked) ||
 		!allowedCountry(cache.Country) || cache.Latency <= 0 {
@@ -99,9 +99,9 @@ type probeResult struct {
 	err error
 }
 
-// Stream completed checks so startup need not wait for every route. The caller
-// must cancel and drain results when it stops early, reaping all probe children.
-// The worker limit bounds xray processes, sockets and upstream load.
+// Результаты идут потоком, чтобы старт не ждал все маршруты. При раннем выходе
+// вызывающий отменяет и вычитывает канал, чтобы собрать все дочерние пробы.
+// Лимит воркеров ограничивает процессы xray, сокеты и нагрузку на upstream.
 func probeRoutes(ctx context.Context, servers []object, workers int, probe func(context.Context, object) (measurement, error)) <-chan probeResult {
 	results := make(chan probeResult)
 	jobs := make(chan int)
@@ -140,7 +140,7 @@ func probeRoutes(ctx context.Context, servers []object, workers int, probe func(
 	return results
 }
 
-// Exhaustive ranking is reserved for an explicit --auto, not startup.
+// Полный рейтинг только по явному --auto, не при старте.
 func benchmark(ctx context.Context, servers []object, workers int, probe func(context.Context, object) (measurement, error)) []probeResult {
 	var results []probeResult
 	for result := range probeRoutes(ctx, servers, workers, probe) {
@@ -185,7 +185,7 @@ func (c *controller) autoStart(force bool) error {
 	if ctx == nil {
 		ctx = context.Background()
 	}
-	// Serialize selections independently of the short process-control lock.
+	// Выборы сериализуются отдельно от короткой блокировки управления процессом.
 	unlock, err := c.lockFile("selection.lock", 6*time.Minute)
 	if err != nil {
 		return err
@@ -216,7 +216,7 @@ func (c *controller) autoStart(force bool) error {
 						if err := c.activate(servers[i]); err != nil {
 							return err
 						}
-						// Validate the restarted listener, not just the temporary tunnel.
+						// Проверяем перезапущенный listener, а не только временный туннель.
 						m, err = c.measureRoute(ctx, c.proxyURL(), 1)
 					}
 					if err == nil && c.matchesRunning(servers[i]) {
@@ -239,7 +239,7 @@ func (c *controller) autoStart(force bool) error {
 		ranked := benchmark(probeCtx, servers, 4, func(ctx context.Context, server object) (measurement, error) {
 			return c.probeServer(ctx, server, 3)
 		})
-		// Feed the same activation/fallback loop in latency order for --auto.
+		// Для --auto тот же цикл активации, по возрастанию задержки.
 		ready := make(chan probeResult, len(ranked))
 		for _, result := range ranked {
 			c.reportProbe(servers[result.index], result)
@@ -273,7 +273,7 @@ func (c *controller) autoStart(force bool) error {
 			fmt.Fprintln(c.out, "Candidate could not start; trying the next verified route.")
 			continue
 		}
-		// Validate the real listener too, not just the isolated benchmark tunnel.
+		// Проверяем и настоящий listener, не только изолированный туннель замера.
 		live, err := c.measureRoute(ctx, c.proxyURL(), 1)
 		if err != nil || !c.matchesRunning(servers[best.index]) {
 			if live.Country == "RU" && c.matchesRunning(servers[best.index]) {

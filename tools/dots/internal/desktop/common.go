@@ -29,7 +29,7 @@ func home() string {
 	if u, err := user.Current(); err == nil && u.HomeDir != "" {
 		return u.HomeDir
 	}
-	// A missing account directory must never turn private paths into cwd paths.
+	// Без каталога аккаунта приватные пути не должны стать путями от cwd.
 	return "/nonexistent"
 }
 func envOr(key, fallback string) string {
@@ -78,7 +78,7 @@ func cleanText(s string) bool {
 	return s != "" && !strings.ContainsFunc(s, func(r rune) bool { return r < 32 || r == 127 })
 }
 func control(r rune) bool {
-	// unicode.C omits unassigned code points; Python's category C includes them.
+	// unicode.C не включает неназначенные кодовые точки, категория C в Python — включает.
 	return !unicode.In(r, unicode.L, unicode.M, unicode.N, unicode.P, unicode.S, unicode.Z)
 }
 func printable(s string) string {
@@ -158,7 +158,7 @@ type commandResult struct {
 	code     int
 }
 
-// Captured errors never contain argv or stderr, which may carry credentials.
+// В ошибках нет argv и stderr: там могут быть учётные данные.
 func captureCommand(timeout time.Duration, limit int, input string, env []string, args ...string) (commandResult, error) {
 	return captureCommandContext(context.Background(), timeout, limit, input, env, args...)
 }

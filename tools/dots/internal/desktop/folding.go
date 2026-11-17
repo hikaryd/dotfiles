@@ -5,9 +5,9 @@ import (
 	"unicode"
 )
 
-// Full case folding expands these characters into several runes. SimpleFold
-// handles all remaining equivalence classes, including final sigma and Kelvin.
-// Do not normalize accents: Python str.casefold does not perform NFC or NFKC.
+// Полный case folding раскрывает эти символы в несколько рун. Остальные классы,
+// включая финальную сигму и Кельвин, покрывает SimpleFold. Акценты не
+// нормализуем: str.casefold в Python не делает NFC/NFKC.
 var foldExpansions = map[rune]string{
 	'ß': "ss", 'İ': "i\u0307", 'ŉ': "ʼn", 'ǰ': "j\u030c",
 	'ΐ': "ι\u0308\u0301", 'ΰ': "υ\u0308\u0301", 'և': "եւ",

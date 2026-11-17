@@ -34,8 +34,8 @@ func copyFields(dst, src object, fields ...string) {
 	}
 }
 
-// VLESS subscriptions use urllib-style permissive unquoting: malformed
-// percent escapes remain literal, and invalid UTF-8 decodes with replacement.
+// Подписки VLESS декодируются нестрого, как urllib: битые %-escape остаются
+// как есть, неверный UTF-8 заменяется.
 func unquoteComponent(s string, plus bool) string {
 	var b strings.Builder
 	for i := 0; i < len(s); i++ {
@@ -225,7 +225,7 @@ func (c *controller) config(s object) (object, error) {
 	return object{
 		"log":      object{"loglevel": "warning"},
 		"inbounds": []any{object{"port": c.port, "listen": "127.0.0.1", "protocol": "http", "tag": "http-in", "settings": object{"timeout": 300}}},
-		"routing": object{"rules": rules},
+		"routing":  object{"rules": rules},
 		"outbounds": []any{
 			object{"protocol": "vless", "settings": object{"vnext": []any{object{"address": s["address"], "port": port, "users": []any{user}}}}, "streamSettings": streamSettings(s), "tag": "proxy"},
 			object{"protocol": "freedom", "tag": "direct"}, object{"protocol": "blackhole", "tag": "block"},
@@ -299,7 +299,7 @@ func decodePayload(raw []byte) string {
 		}
 		return r
 	}, text)
-	// Python's b64decode(validate=False) ignores non-alphabet characters.
+	// Как b64decode(validate=False) в Python: лишние символы игнорируются.
 	padded := compact + strings.Repeat("=", (4-len(compact)%4)%4)
 	padded = strings.Map(func(r rune) rune {
 		if r >= 'A' && r <= 'Z' || r >= 'a' && r <= 'z' || r >= '0' && r <= '9' || r == '+' || r == '/' || r == '=' {

@@ -1,4 +1,4 @@
-// Package beatapi provides a single-user loopback API for BeatAPI models.
+// Package beatapi — локальный API к моделям BeatAPI для одного пользователя.
 package beatapi
 
 import (
@@ -16,13 +16,13 @@ import (
 )
 
 const defaultPort = 6446
-const maxConfig = 128 << 10 // Covers JSON escaping of both accepted 8 KiB keys.
+const maxConfig = 128 << 10 // С запасом на JSON-экранирование двух ключей по 8 KiB.
 const label = "local.dots.beatapi-proxy"
 const jevModel = "jev-1.14"
 const legacyJevModel = "jev-1.14-free"
 const openRouterModel = "liquid/d1-ultra"
 
-// Config is private on disk; never format it in diagnostics.
+// Config приватен, в диагностику не выводится.
 type Config struct {
 	APIKey           string `json:"api_key"`
 	OpenRouterAPIKey string `json:"openrouter_api_key,omitempty"`
@@ -60,9 +60,9 @@ func validAPIKey(key string) bool {
 }
 func (c Config) address() string { return net.JoinHostPort("127.0.0.1", strconv.Itoa(c.Port)) }
 
-// checkPath trusts the deliberately configured HOME/XDG base, but rejects
-// symlinks in every descendant component, not only the final file. macOS also
-// owns /var and /tmp aliases; resolving those permits ordinary temporary paths.
+// checkPath доверяет базе HOME/XDG, но отвергает ссылки в любом компоненте
+// ниже неё, а не только в конечном файле. Системные алиасы macOS /var и /tmp
+// разрешаются, чтобы обычные временные пути работали.
 func checkPath(path string) error {
 	path, err := filepath.Abs(path)
 	if err != nil {

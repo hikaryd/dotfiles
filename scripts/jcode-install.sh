@@ -3,7 +3,7 @@
 set -euo pipefail
 umask 077
 root=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
-if [[ $# -ne 0 ]]; then echo 'Usage: scripts/jcode-install.sh' >&2; exit 2; fi
+if [[ $# -ne 0 ]]; then echo 'Использование: scripts/jcode-install.sh' >&2; exit 2; fi
 for cmd in node npm uv docker go gopls; do command -v "$cmd" >/dev/null || { echo "jcode: $cmd required" >&2; exit 1; }; done
 docker info >/dev/null
 node=${JCODE_NODE_BIN:-$(command -v node)}

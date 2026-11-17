@@ -160,8 +160,8 @@ type staged struct {
 	copied    bool
 }
 
-// All inputs and replacements are staged before publication. Each rename is atomic;
-// failure rolls back earlier publications, including moved directories and links.
+// Всё готовится до публикации. Каждый rename атомарен; при сбое откатываются
+// предыдущие шаги, включая перенесённые каталоги и ссылки.
 func commit(changes []change) (err error) {
 	var stagedFiles []*staged
 	seenPaths := map[string]bool{}
@@ -229,7 +229,7 @@ func commit(changes []change) (err error) {
 		}
 		stagedFiles = append(stagedFiles, s)
 	}
-	// Complete type/source validation before creating any staging files.
+	// Проверка типов и источников до создания промежуточных файлов.
 	for _, s := range stagedFiles {
 		c := s.change
 		if err = os.MkdirAll(filepath.Dir(c.path), 0700); err != nil {
@@ -278,7 +278,7 @@ func commit(changes []change) (err error) {
 			}
 		}
 	}
-	// Verify every original before mutating the first one.
+	// Проверяем все оригиналы до изменения первого.
 	for _, s := range stagedFiles {
 		i, e := os.Lstat(s.path)
 		if s.info == nil {
@@ -337,8 +337,8 @@ func commit(changes []change) (err error) {
 				return errors.New("backup destination already exists")
 			}
 			if s.info.Mode().IsRegular() {
-				// Copy the rollback image, then atomically replace the live path.
-				// Moving the live file first would expose a missing-file window.
+				// Сначала копия для отката, затем атомарная замена: перенос живого файла
+				// дал бы окно, когда файла нет.
 				f, e := os.OpenFile(s.old, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0600)
 				if e != nil {
 					return e
@@ -379,8 +379,8 @@ func commit(changes []change) (err error) {
 		s.temp = ""
 		s.committed = true
 	}
-	// Publication is complete. A cleanup failure must never delete newly
-	// installed files after an earlier rollback image has already been removed.
+	// Публикация завершена. Сбой очистки не должен удалить новые файлы, когда
+	// копия для отката уже удалена.
 	finalized = true
 	for _, s := range stagedFiles {
 		if s.moved && s.backup == "" {

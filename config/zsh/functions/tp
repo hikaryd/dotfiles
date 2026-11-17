@@ -1,8 +1,8 @@
 local branch="$1"
-[[ -z "$branch" ]] && { echo "Usage: tp <branch-name>"; return 1; }
+[[ -z "$branch" ]] && { echo "Использование: tp <branch-name>"; return 1; }
 
 local base=$(git branch --show-current 2>/dev/null)
-[[ -z "$base" ]] && { echo "Not in a git repo"; return 1; }
+[[ -z "$base" ]] && { echo "Не git-репозиторий"; return 1; }
 
 local repo_root=$(git rev-parse --show-toplevel 2>/dev/null)
 local repo_name=$(basename "$repo_root")

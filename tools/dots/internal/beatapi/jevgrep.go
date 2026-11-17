@@ -69,7 +69,7 @@ func (c *cli) connectJevgrep(cfg Config) error {
 	defer cancel()
 	cmd := exec.CommandContext(ctx, binary, "auth", "--provider", "custom", "--base-url", baseURL, "--model", jevModel, "--stdin")
 	cmd.Stdin = strings.NewReader("local\n")
-	// Real provider keys never enter jg argv, environment or stdin.
+	// Настоящие ключи провайдера не попадают в argv, окружение и stdin jg.
 	runErr := cmd.Run()
 	after, readErr := os.ReadFile(path)
 	if runErr == nil && readErr == nil && privateFile(path) == nil && matches(after) {

@@ -87,7 +87,7 @@ func (h *handler) requestOpenRouter(ctx context.Context, fields map[string]json.
 			}
 		}
 	}
-	// Buffer before canceling the attempt or exposing any bytes to the caller.
+	// Буферизуем до отмены попытки и до отдачи байтов вызывающему.
 	res.Body = io.NopCloser(bytes.NewReader(b))
 	return res, nil
 }

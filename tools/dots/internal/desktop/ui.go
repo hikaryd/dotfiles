@@ -15,7 +15,7 @@ type menuAction struct {
 	key, group, description string
 }
 
-// One source for the preview and the picker's exact-match whitelist.
+// Один источник для превью и белого списка точных совпадений.
 var menuActions = []menuAction{
 	{"sessions", "Работа", "Рабочие пространства / проект по имени"},
 	{"projects", "Работа", "Проекты и worktree"},
@@ -47,7 +47,7 @@ func menuTitle(context string) string {
 
 func menuContext() string {
 	style, err := loadStyle()
-	// If privacy state cannot be read, omit context rather than expose it.
+	// Не удалось прочитать режим приватности — контекст не показываем.
 	if err != nil || style == "presentation" {
 		return ""
 	}
@@ -91,7 +91,7 @@ func printMenuHelp() {
 	frame := desktopFrame("Меню")
 	frame.Width, _ = tui.Size(os.Stdout)
 	frame.Color = tui.ColorEnabled(os.Stdout)
-	frame.Body = "usage: dots menu [--preview [--plain]]\n\nПоиск по команде или описанию; " + menuKeys + "\nCtrl+L — очистить поиск\n\ndots menu --preview         показать меню без запуска действий\ndots menu --preview --plain обычный текст без цвета"
+	frame.Body = "Использование: dots menu [--preview [--plain]]\n\nПоиск по команде или описанию; " + menuKeys + "\nCtrl+L — очистить поиск\n\ndots menu --preview         показать меню без запуска действий\ndots menu --preview --plain обычный текст без цвета"
 	fmt.Print(frame.Render())
 }
 func printHelp() {
@@ -103,50 +103,43 @@ func printHelp() {
 
 const helpText = `
 Работа
-  dots menu                 поиск действий
-  dots sessions open        Живые сессии; поиск проекта из ~/Documents/dev
-  dots sessions open NAME   Открыть/создать сессию по имени проекта
-  dots sessions open --all  Импорт: tmux / сохранённые / история каталогов
-  dots projects open        проекты и worktree
-  dots projects list        inventory; --json для скриптов
-  dots projects refresh     обновить приватный inventory
+  dots menu                  поиск действий
+  dots sessions open         живые сессии и проекты из ~/Documents/dev
+  dots sessions open NAME    открыть или создать сессию проекта
+  dots sessions open --all   ещё tmux, сохранённые и история каталогов
+  dots projects open         проекты и worktree
+  dots projects list         список проектов; --json для скриптов
+  dots projects refresh      обновить приватный список
 
 Инструменты
-  dots refs                 ссылки / ID / file:line из панели
-                            --list или --json без открытия
-  dots clip                 JSON / Base64 / JWT / time / redact
-                            запись с подтверждением
+  dots refs                  ссылки, ID и file:line из панели; --list, --json
+  dots clip                  JSON, Base64, JWT, время, redact; запись с подтверждением
 
 Проверки
-  dots status [--all]        Git / процессы / порты; --json
-                            --interactive: r / o / q
-  dots ports                TCP listeners · без kill
-  dots doctor [--strict]    диагностика; --json
+  dots status [--all]        Git, процессы, порты; --json, --interactive (r/o/q)
+  dots ports                 TCP listeners, без kill
+  dots doctor [--strict]     диагностика; --json
 
 Настройка
   dots style glass|focus|presentation
-  dots style status         текущий профиль
-  dots private init|check    приватные файлы без вывода секретов
-  dots tmux-style --current применить текущий профиль tmux
+  dots style status          текущий профиль
+  dots private init|check    приватные файлы, без вывода секретов
+  dots tmux-style --current  применить профиль к tmux
   dots ghostty-reload        перечитать конфиг Ghostty
-  dots notify --test        тест уведомления
+  dots notify --test         тестовое уведомление
   dots nu [args...]          запустить Nushell
 
 Примеры
   dots menu --preview --plain
   dots clip json --stdout
-  dots projects list --json
   dots refs --stdin --json
   dots <команда> --help      все аргументы команды
 
 Клавиши
-  Поиск по команде или описанию; ↑/↓ / Ctrl+N/P выбор
-  Enter открыть · Esc/Ctrl+C отмена; Ctrl+L — очистить поиск
-  zsh Ctrl+O — меню; Ctrl+R — история Atuin
-  tmux prefix = Ctrl+A: O меню, P проекты, T сессии
-  F refs, Y clipboard, V status
+  ↑/↓ или Ctrl+N/P выбор, Enter открыть, Esc/Ctrl+C отмена, Ctrl+L очистить
+  zsh: Ctrl+O меню, Ctrl+R история Atuin
+  tmux (prefix Ctrl+A): O меню, P проекты, T сессии, F refs, Y clipboard, V status
 
 Приватность
-  Presentation скрывает контекст меню / prompt / status.
-  Содержимое clipboard и scrollback остаётся видимым.
-  Существующие проекты и сессии не перезапускаются.`
+  presentation скрывает контекст в меню, prompt и status. Clipboard и
+  scrollback остаются видны. Открытые проекты и сессии не перезапускаются.`

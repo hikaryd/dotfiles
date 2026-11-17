@@ -1,9 +1,9 @@
 # Kafka producer через kcat с SSL
-# Usage: kafka-produce <creds.json> <brokers> <topic> [message]
+# Использование: kafka-produce <creds.json> <brokers> <topic> [message]
 
 local creds_file="$1" brokers="$2" topic="$3" message="${4:-}"
 if [[ -z "$creds_file" || -z "$brokers" || -z "$topic" ]]; then
-  echo "Usage: kafka-produce <creds_file> <brokers> <topic> [message]"
+  echo "Использование: kafka-produce <creds_file> <brokers> <topic> [message]"
   return 1
 fi
 

@@ -15,16 +15,16 @@ DOTBOT_ARGS=()
 while [[ $# -gt 0 ]]; do
 	case $1 in
 		-c|--config|--config-file)
-			[[ $# -ge 2 ]] || { echo "install: $1 requires a config path" >&2; exit 2; }
-			[[ -z $SELECTED_CONFIG ]] || { echo "install: config specified more than once" >&2; exit 2; }
-			[[ -n $2 ]] || { echo "install: $1 requires a non-empty config path" >&2; exit 2; }
+			[[ $# -ge 2 ]] || { echo "install: $1 требует путь к конфигу" >&2; exit 2; }
+			[[ -z $SELECTED_CONFIG ]] || { echo "install: конфиг указан дважды" >&2; exit 2; }
+			[[ -n $2 ]] || { echo "install: $1 требует непустой путь" >&2; exit 2; }
 			SELECTED_CONFIG=$2
 			shift 2
 			;;
 		--config=*|--config-file=*)
-			[[ -z $SELECTED_CONFIG ]] || { echo "install: config specified more than once" >&2; exit 2; }
+			[[ -z $SELECTED_CONFIG ]] || { echo "install: конфиг указан дважды" >&2; exit 2; }
 			SELECTED_CONFIG=${1#*=}
-			[[ -n $SELECTED_CONFIG ]] || { echo "install: config path must not be empty" >&2; exit 2; }
+			[[ -n $SELECTED_CONFIG ]] || { echo "install: пустой путь к конфигу" >&2; exit 2; }
 			shift
 			;;
 		*)
@@ -65,7 +65,7 @@ if [[ -n $SELECTED_CONFIG ]]; then
 	exit 0
 fi
 
-# Keep processing independent steps, but never hide a failed installation.
+# Шаги независимы: продолжаем после сбоя, но итог его показывает.
 FAILED_STEPS=0
 STEP_SUMMARY=()
 run_step() {
@@ -87,7 +87,7 @@ for config in terminal editors claude tools jcode jevgrep macos; do
 	run_step "steps/$config.yml" run_dotbot "steps/$config.yml"
 done
 
-printf '\nInstallation summary:\n'
+printf '\nИтог установки:\n'
 printf '%s\n' "${STEP_SUMMARY[@]}"
-printf 'Failed steps: %s\n' "$FAILED_STEPS"
+printf 'Ошибок: %s\n' "$FAILED_STEPS"
 [[ $FAILED_STEPS -eq 0 ]]

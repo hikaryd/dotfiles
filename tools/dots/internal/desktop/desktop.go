@@ -1,4 +1,4 @@
-// Package desktop implements the desktop group of dots-tools.
+// Package desktop — группа desktop в dots-tools.
 package desktop
 
 import (
@@ -9,8 +9,7 @@ import (
 	"dots/native/internal/tui"
 )
 
-// Run dispatches desktop commands. root is the checkout containing config/ and
-// scripts/ assets; args starts with a desktop command, not the group name.
+// root — checkout с config/ и scripts/; args начинается с команды, не с имени группы.
 func Run(root string, args []string) int {
 	if len(args) == 0 {
 		return menu(root)
@@ -77,7 +76,7 @@ func commandHelp(command string) int {
 	}
 	help := map[string]string{"projects": "list [--json] | refresh | open [target]", "sessions": "list [--json] | open [target]", "clip": "[json|compact|base64|jwt|time|redact] [--stdin] [--stdout|--write] [--keys KEY,...]", "refs": "[--pane ID] [--lines 1..5000] [--stdin] [--list|--json]", "private": "[init|check]", "style": "[glass|focus|presentation|status]", "tmux-style": "glass|focus|presentation|--current", "status": "[--all] [--json|--interactive]", "doctor": "[--json] [--strict]", "notify": "[--test] [--status 0..255] [--seconds N] [--pane ID]", "ghostty-reload": "", "menu": "", "ports": ""}
 	if s, ok := help[command]; ok {
-		fmt.Printf("usage: dots %s %s\n", command, s)
+		fmt.Printf("Использование: dots %s %s\n", command, s)
 		return 0
 	}
 	return usageError(command)

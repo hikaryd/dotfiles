@@ -25,7 +25,7 @@ func (c *controller) fetchSubscription(rawURL string, insecure bool) ([]string, 
 	tr := transport()
 	defer tr.CloseIdleConnections()
 	if insecure {
-		tr.TLSClientConfig = &tls.Config{InsecureSkipVerify: true} // Explicit legacy flag/environment override only.
+		tr.TLSClientConfig = &tls.Config{InsecureSkipVerify: true} // Только по явному флагу или переменной окружения.
 		fmt.Fprintln(c.errOut, "Warning: TLS certificate verification is DISABLED for subscription download. Use this only for trusted self-hosted subscription URLs.")
 	}
 	req, err := http.NewRequest(http.MethodGet, rawURL, nil)

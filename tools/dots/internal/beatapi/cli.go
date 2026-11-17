@@ -23,24 +23,21 @@ import (
 	"dots/native/internal/tui"
 )
 
-const help = `Usage: dots-tools proxy beatapi <command>
-  setup [--stdin]    Save BeatAPI key, enable launchd and connect jg
-  key [--stdin]      Save/rotate the BeatAPI key
-  openrouter-key [--stdin]  Save/rotate OpenRouter key; use d1-ultra first
-  status             Read-only local configuration/service/health checks
-  doctor             One local Jev request, 15s limit; uses provider balance
-  restart            Restart only the BeatAPI LaunchAgent
-  stop               Unload and remove only this LaunchAgent; retain key/jg
-  serve [--config ABSOLUTE_PATH]  Run the API in the foreground
+const help = `Использование: dots-tools proxy beatapi <команда>
+  setup [--stdin]           сохранить ключ BeatAPI, включить launchd, подключить jg
+  key [--stdin]             сменить ключ BeatAPI
+  openrouter-key [--stdin]  сменить ключ OpenRouter
+  status                    проверка конфигурации и сервиса, без запросов к модели
+  doctor                    один запрос к Jev (до 15 с), тратит баланс
+  restart                   перезапустить LaunchAgent
+  stop                      удалить LaunchAgent; ключ и jg остаются
+  serve [--config ПУТЬ]     запустить API в foreground
 
-API: http://127.0.0.1:6446/v1 (no local authorization).
-Only listed model IDs are accepted. jg keeps its local jev-1.14 alias.
-Legacy jev-1.14-free IDs use the same route and may spend provider balance.
-With an OpenRouter key: liquid/d1-ultra first, paid BeatAPI Jev as fallback.
-Without an OpenRouter key: paid BeatAPI Jev directly. Chat stays free-only.
-Outgoing traffic requires the shared dots local HTTP proxy.
-Secret input is hidden. Use --stdin explicitly for a password manager.
-Do not put a key in command arguments. Setup does not verify upstream inference.`
+API: http://127.0.0.1:6446/v1, без локальной авторизации. Принимаются только
+перечисленные модели; jev-1.14-free тоже идёт на платный jev-1.14.
+Jev: с ключом OpenRouter сначала liquid/d1-ultra, затем BeatAPI; без него сразу BeatAPI.
+Чат — только бесплатные модели. Трафик идёт через локальный прокси dots.
+Ключ вводится скрыто или через --stdin, не в аргументах. setup не проверяет модель.`
 
 type cli struct {
 	ctx                        context.Context
@@ -50,7 +47,7 @@ type cli struct {
 	ifConnected                bool
 }
 
-// Run is the beatapi subgroup entry point. It never prints credentials.
+// Run никогда не печатает учётные данные.
 func Run(args []string, in io.Reader, out, errOut io.Writer) int {
 	if len(args) == 0 || (len(args) == 1 && (args[0] == "--help" || args[0] == "-h" || args[0] == "help")) {
 		fmt.Fprintln(out, help)
@@ -62,7 +59,7 @@ func Run(args []string, in io.Reader, out, errOut io.Writer) int {
 	switch command {
 	case "setup", "key", "openrouter-key", "status", "doctor", "restart", "stop", "serve":
 	default:
-		fmt.Fprintln(errOut, "beatapi: unknown command; see --help")
+		fmt.Fprintln(errOut, "beatapi: неизвестная команда, см. --help")
 		return 2
 	}
 	for i := 1; i < len(args); i++ {
@@ -79,7 +76,7 @@ func Run(args []string, in io.Reader, out, errOut io.Writer) int {
 				return 2
 			}
 		default:
-			fmt.Fprintln(errOut, "beatapi: unsupported arguments; see --help")
+			fmt.Fprintln(errOut, "beatapi: неверные аргументы, см. --help")
 			return 2
 		}
 	}
@@ -108,7 +105,7 @@ func Run(args []string, in io.Reader, out, errOut io.Writer) int {
 	c := &cli{ctx: ctx, home: home, base: base, config: config, binary: binary, in: in, out: out, errOut: errOut, ifConnected: ifConnected}
 	err = c.execute(command, stdin)
 	if errors.Is(err, errNotConnected) {
-		return 3 // Wrapper should run the official doctor for a different provider.
+		return 3 // Для другого провайдера обёртка запускает официальный doctor.
 	}
 	if err != nil {
 		if errors.Is(err, tui.ErrCanceled) || ctx.Err() != nil {
@@ -286,7 +283,7 @@ func localHealth(cfg Config) bool {
 	ctx, cancel := context.WithTimeout(context.Background(), 500*time.Millisecond)
 	defer cancel()
 	req, _ := http.NewRequestWithContext(ctx, "GET", "http://"+cfg.address()+"/health", nil)
-	// Never inherit HTTP_PROXY, including while checking a local service.
+	// HTTP_PROXY не наследуем, даже для проверки локального сервиса.
 	transport := &http.Transport{Proxy: nil}
 	defer transport.CloseIdleConnections()
 	client := &http.Client{Transport: transport, CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }}

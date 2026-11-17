@@ -6,9 +6,9 @@ import (
 	"strings"
 )
 
-// Painter updates only changed rows in the alternate screen. It never prints a
-// newline on the bottom row (which would scroll the entire screen) and never
-// clears a whole frame. One synchronized write prevents half-painted frames.
+// Painter перерисовывает только изменённые строки альтернативного экрана.
+// На нижней строке без перевода строки (иначе прокрутка), весь кадр не стирает.
+// Одна синхронная запись — без полуотрисованных кадров.
 type Painter struct {
 	output        *os.File
 	previous      []string
@@ -43,7 +43,7 @@ func (p *Painter) Draw(frame Frame) {
 			continue
 		}
 		fmt.Fprintf(&out, "\x1b[%d;1H\x1b[0m%s", index+1, line)
-		// EL at a pending wrap erases the rightmost cell, not an empty tail.
+		// EL при отложенном переносе стёр бы крайнюю ячейку, а не пустой хвост.
 		if frame.Width <= 0 || Width(line) < frame.Width {
 			out.WriteString("\x1b[K")
 		}

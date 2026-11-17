@@ -215,7 +215,7 @@ func jcodeApply(root string) error {
 	return nil
 }
 
-// jcodeNeo4jPassword never replaces an existing credential or follows symlinks.
+// jcodeNeo4jPassword не заменяет существующий пароль и не идёт по ссылкам.
 func jcodeNeo4jPassword(dataDir string) (string, error) {
 	dir := filepath.Join(dataDir, "neo4j")
 	if info, err := os.Lstat(dir); err == nil {

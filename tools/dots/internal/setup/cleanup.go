@@ -25,8 +25,8 @@ func within(path, base string) bool {
 	return err == nil && rel != ".." && !strings.HasPrefix(rel, ".."+string(os.PathSeparator))
 }
 
-// WalkDir does not follow leaf symlinks, but its starting path/ancestors might.
-// Refuse redirected managed directories as well as redirected parents at apply.
+// WalkDir не идёт по конечным ссылкам, но стартовый путь и предки могут быть
+// ссылками. При apply отказываемся от перенаправленных каталогов и родителей.
 func cleanupParents(path, boundary string) bool {
 	if !within(path, boundary) {
 		return false
@@ -63,8 +63,8 @@ func orphanBytecode(path string) bool {
 		_, err := os.Stat(filepath.Join(parent, stem+".py"))
 		return errors.Is(err, os.ErrNotExist)
 	}
-	// Older custom compileall invocations also left non-PEP-3147 filenames.
-	// Only remove those when the whole source directory has no Python sources.
+	// Старый compileall оставлял имена не по PEP 3147. Удаляем их, только если
+	// в каталоге совсем нет .py.
 	sources, err := filepath.Glob(filepath.Join(parent, "*.py"))
 	return err == nil && len(sources) == 0
 }
@@ -214,7 +214,7 @@ func cleanupPlan(root string, now time.Time) ([]cleanupItem, error) {
 			if within(path, root) {
 				boundary = root
 			}
-			// Removal uses rmdir semantics, never recursive deletion.
+			// Только rmdir, без рекурсивного удаления.
 			add(path, boundary, "empty retired/cache directory", func() bool {
 				info, err := os.Lstat(path)
 				return err == nil && info.IsDir() && info.Mode()&os.ModeSymlink == 0
@@ -259,7 +259,7 @@ func applyCleanup(plan []cleanupItem) error {
 func cleanup(root string, args []string) error {
 	apply := len(args) == 1 && args[0] == "--apply"
 	if len(args) > 1 || len(args) == 1 && !apply && args[0] != "--dry-run" {
-		return errors.New("usage: dots-tools setup cleanup [--dry-run|--apply]")
+		return errors.New("Использование: dots-tools setup cleanup [--dry-run|--apply]")
 	}
 	plan, err := cleanupPlan(root, time.Now())
 	if err != nil {

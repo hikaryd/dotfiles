@@ -1,5 +1,5 @@
 - link:
-    # Shared desktop MCP workflow for Jcode; preserve foreign skills.
+    # Общий desktop MCP для Jcode; чужие навыки не трогаем.
     ~/.agents/skills/peekaboo:
       path: config/peekaboo/skill
       create: true
@@ -7,7 +7,7 @@
       path: build/bin/dots-tools
       create: true
       force: false
-    # Ghostty terminal
+    # Ghostty
     ~/.config/ghostty/config:
       path: config/ghostty/config
       create: true
@@ -16,7 +16,7 @@
       path: config/ghostty/shaders
       create: true
       force: true
-    # Yazi file manager
+    # Yazi
     ~/.config/yazi/yazi.toml:
       path: config/yazi/yazi.toml
       create: true
@@ -37,7 +37,7 @@
       path: config/yazi/keymap.toml
       create: true
       force: true
-    # Custom eza-preview plugin (directory tree preview)
+    # Свой плагин eza-preview: дерево каталога
     ~/.config/yazi/plugins/eza-preview.yazi:
       path: config/yazi/plugins/eza-preview.yazi
       create: true
@@ -47,7 +47,7 @@
       path: config/lazygit/config.yml
       create: true
       force: true
-    # LazyGit uses this native macOS config path when XDG_CONFIG_HOME is unset.
+    # Без XDG_CONFIG_HOME LazyGit читает этот путь macOS.
     ~/Library/Application Support/lazygit/config.yml:
       path: config/lazygit/config.yml
       create: true
@@ -64,42 +64,42 @@
       force: true
 - shell:
     - command: bash scripts/claude-statusbar-install.sh
-      description: Install Claude statusbar and configure existing profiles
+      description: Статусбар Claude во всех профилях
       stdout: true
       stderr: true
     - command: bat cache --build
-      description: Build shared Ayu theme cache for Bat
+      description: Кэш темы Ayu для bat
       stdout: true
       stderr: true
     - command: |
-        # Ensure yazi plugins are installed (via `ya pkg`). Idempotent.
+        # Ставит плагины yazi через `ya pkg`, идемпотентно.
         mkdir -p ~/.config/yazi/plugins
         install_plugin() {
           local pkg="$1" dir="$2"
           local path="$HOME/.config/yazi/plugins/$dir"
-          # Drop a broken symlink (e.g. a stale Nix link) so `ya pkg` can deploy.
+          # Битая ссылка (например, старая из Nix) мешает `ya pkg`.
           [[ -L "$path" && ! -e "$path" ]] && rm -f "$path"
-          # Already present (real dir or valid symlink) → nothing to do.
+          # Уже есть — пропускаем.
           [[ -e "$path" ]] && return 0
           echo "Installing yazi plugin: $dir"
           ya pkg add "$pkg" 2>/dev/null || echo "  (ya pkg failed for $pkg — skipping)"
         }
-        # Official UI / navigation plugins
+        # Официальные плагины UI и навигации
         install_plugin "yazi-rs/plugins:git"          git.yazi
         install_plugin "yazi-rs/plugins:full-border"  full-border.yazi
         install_plugin "yazi-rs/plugins:smart-filter" smart-filter.yazi
         install_plugin "yazi-rs/plugins:jump-to-char" jump-to-char.yazi
         install_plugin "yazi-rs/plugins:smart-enter"  smart-enter.yazi
         install_plugin "yazi-rs/plugins:toggle-pane"  toggle-pane.yazi
-        # Starship prompt in the header (matches the shell prompt)
+        # Starship в заголовке, как в shell
         install_plugin "Rolv-Apneseth/starship"       starship.yazi
-        # Previewers, archive tools, status bar
+        # Превью, архивы, статусная строка
         install_plugin "ndtoan96/ouch"                ouch.yazi
         install_plugin "boydaihungst/mediainfo"       mediainfo.yazi
         install_plugin "Reledia/glow"                 glow.yazi
         install_plugin "boydaihungst/restore"         restore.yazi
         install_plugin "KKV9/compress"                compress.yazi
         install_plugin "imsi32/yatline"               yatline.yazi
-      description: Installing yazi plugins (UI, navigation, previewers, status bar)
+      description: Плагины yazi
       stdout: true
       stderr: true

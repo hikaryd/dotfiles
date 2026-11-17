@@ -5,8 +5,8 @@ import (
 	"path/filepath"
 )
 
-// Compare recorded link destinations even after the old checkout disappears.
-// Never infer ownership merely from a filename or remove foreign cache entries.
+// Сравниваем записанные цели ссылок, даже если старого checkout уже нет.
+// Владение по имени файла не определяем, чужие записи кэша не удаляем.
 func ownedBridgeLink(path, current, previous string) bool {
 	target, err := os.Readlink(path)
 	if err != nil {

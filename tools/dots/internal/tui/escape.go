@@ -6,8 +6,8 @@ import (
 	"unicode/utf8"
 )
 
-// terminalText removes terminal commands, including OSC/DCS payloads and
-// unfinished sequences. Only application-owned SGR may survive in styled bodies.
+// terminalText убирает команды терминала, включая OSC/DCS и незавершённые
+// последовательности. В стилизованном теле остаётся только наш SGR.
 func terminalText(value string, styled bool) string {
 	var out strings.Builder
 	out.Grow(len(value))

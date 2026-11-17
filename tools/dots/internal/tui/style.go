@@ -1,5 +1,5 @@
-// Package tui owns the shared presentation and terminal lifecycle of dots
-// tools. Its renderers are pure; raw terminal state is always restored.
+// Package tui — общий вывод и жизненный цикл терминала для утилит dots.
+// Рендеры чистые, raw-режим терминала всегда восстанавливается.
 package tui
 
 import (
@@ -37,8 +37,8 @@ func Clean(value string) string {
 	}, Plain(value))
 }
 
-// CleanText preserves meaningful line breaks in diagnostics while removing
-// terminal escape sequences and other control characters.
+// CleanText оставляет переводы строк, но убирает escape-последовательности
+// и прочие управляющие символы.
 func CleanText(value string) string {
 	parts := strings.Split(value, "\n")
 	for i := range parts {
@@ -85,10 +85,9 @@ type Frame struct {
 	Intro, Prompt, Action                            string
 	Width, Height                                    int
 	Color                                            bool
-	// InitialIndex is the original row index highlighted when Select opens.
+	// Исходный индекс строки, выделенной при открытии Select.
 	InitialIndex int
-	// SearchOnly contains original row indexes hidden while the query is blank.
-	// Rows become searchable normally as soon as the user types.
+	// Индексы строк, скрытых при пустом запросе; появляются, как только начат ввод.
 	SearchOnly []int
 }
 

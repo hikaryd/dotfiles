@@ -20,9 +20,8 @@ var ErrAction = errors.New("additional screen action")
 
 type Key struct{ Name, Text string }
 
-// Keys normalizes arrows and Ctrl+N/P to down/up, and decodes a standalone Esc,
-// Unicode and bracketed paste. Consumers
-// never interpret pasted text as terminal commands or keyboard shortcuts.
+// Keys сводит стрелки и Ctrl+N/P к down/up, распознаёт одиночный Esc, Unicode
+// и bracketed paste. Вставленный текст не считается командой или сочетанием клавиш.
 func Keys(ctx context.Context, input *os.File) <-chan Key {
 	output := make(chan Key, 32)
 	runes := make(chan rune, 64)
@@ -32,8 +31,8 @@ func Keys(ctx context.Context, input *os.File) <-chan Key {
 		buffer := make([]byte, 4096)
 		for ctx.Err() == nil {
 			n, err := input.Read(buffer)
-			// VMIN=0/VTIME=1 returns a zero-byte tty read on timeout; os.File
-			// reports it as EOF. It is not the end of this terminal session.
+			// VMIN=0/VTIME=1 по таймауту даёт пустое чтение, os.File видит EOF.
+			// Это не конец сессии терминала.
 			if err == io.EOF {
 				continue
 			}
@@ -224,7 +223,7 @@ var screenOwner struct {
 	active bool
 }
 
-// HoldScreen keeps the previous picker visible while its next screen loads.
+// HoldScreen держит прежний экран, пока грузится следующий.
 func HoldScreen() func() {
 	terminal, err := Open()
 	if err != nil {

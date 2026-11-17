@@ -345,7 +345,7 @@ func tuningMain(ctx context.Context, args []string, out, errout io.Writer) int {
 	fs := flag.NewFlagSet("tcp-tuning", flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
 	var peers stringFlags
-	fs.Var(&peers, "peer", "explicit IPv4 /32 peer")
+	fs.Var(&peers, "peer", "пир IPv4 /32")
 	action := ""
 	flags := []string{}
 	for i := 0; i < len(args); i++ {
@@ -361,23 +361,23 @@ func tuningMain(ctx context.Context, args []string, out, errout io.Writer) int {
 	}
 	e := fs.Parse(flags)
 	if errors.Is(e, flag.ErrHelp) {
-		fmt.Fprintln(out, "tcp-tuning {install|apply|cleanup|disable} [--peer IPv4/32]")
+		fmt.Fprintln(out, "Использование: dots-vpn tcp-tuning {install|apply|cleanup|disable} [--peer IPv4/32]\n--peer только с install, нужен root.")
 		return 0
 	}
 	if e != nil || len(fs.Args()) > 0 || !slices.Contains([]string{"install", "apply", "cleanup", "disable"}, action) {
-		fmt.Fprintln(errout, "tcp-tuning: invalid action or arguments")
+		fmt.Fprintln(errout, "tcp-tuning: неверное действие или аргументы")
 		return 2
 	}
 	if peers != nil && action != "install" {
-		fmt.Fprintln(errout, "--peer is only valid with install")
+		fmt.Fprintln(errout, "--peer допустим только с install")
 		return 2
 	}
 	if os.Geteuid() != 0 {
-		fmt.Fprintln(errout, "root is required")
+		fmt.Fprintln(errout, "нужен root")
 		return 2
 	}
 	t := tuning{"/etc/awg-tcp-tuning.json", "/usr/local/libexec/dots-vpn", "/etc/systemd/system/awg-tcp-tuning.service", func(n string, a ...string) (string, error) {
-		// Rollback of an owned route still needs its bounded command window after cancellation.
+		// Откату своего маршрута после отмены всё равно нужно ограниченное время.
 		commandCtx := ctx
 		if n == "ip" && len(a) > 2 && a[2] == "del" {
 			commandCtx = context.WithoutCancel(ctx)

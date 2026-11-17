@@ -1,4 +1,4 @@
-// Package setup implements the installer helpers used by dots-tools setup.
+// Package setup — помощники установщика для dots-tools setup.
 package setup
 
 import (
@@ -7,18 +7,17 @@ import (
 	"path/filepath"
 )
 
-// Run dispatches a setup helper and returns its process exit status.
 func Run(root string, args []string) int {
 	if len(args) == 0 {
-		fmt.Fprintln(os.Stderr, "usage: dots-tools setup COMMAND")
+		fmt.Fprintln(os.Stderr, "Использование: dots-tools setup COMMAND")
 		return 2
 	}
 	if args[0] == "--help" || args[0] == "-h" || len(args) == 2 && (args[1] == "--help" || args[1] == "-h") {
-		fmt.Println("usage: dots-tools setup jcode-apply|jcode-neo4j-init|jevgrep-apply|claude-statusbar-preflight|claude-statusbar-apply|tinycast-hotkey|managed-links|json-keys|cleanup [args]")
+		fmt.Println("Использование: dots-tools setup jcode-apply|jcode-neo4j-init|jevgrep-apply|claude-statusbar-preflight|claude-statusbar-apply|tinycast-hotkey|managed-links|json-keys|cleanup [args]")
 		return 0
 	}
 	if args[0] == "json-keys" && len(args) != 2 {
-		fmt.Fprintln(os.Stderr, "usage: dots-tools setup json-keys filename")
+		fmt.Fprintln(os.Stderr, "Использование: dots-tools setup json-keys filename")
 		return 2
 	}
 	if args[0] != "json-keys" && args[0] != "managed-links" && args[0] != "cleanup" && len(args) != 1 {

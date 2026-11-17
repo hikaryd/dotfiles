@@ -6,16 +6,16 @@
       force: true
 
 - shell:
-    - description: "Set Tinycast launcher hotkey to Option+A"
+    - description: "Tinycast на Option+A"
       command: build/bin/dots-tools setup tinycast-hotkey
-    - description: "Configure Vorssaint battery and sound controls"
+    - description: "Батарея и звук в Vorssaint"
       command: scripts/vorssaint-defaults.sh
-    - description: "Prefer key repeat over the accent menu"
+    - description: "Повтор клавиш вместо меню акцентов"
       command: >-
         defaults write NSGlobalDomain ApplePressAndHoldEnabled -bool false
-    - description: "Enable separate Spaces per display"
+    - description: "Отдельные Spaces на каждом мониторе"
       command: defaults write com.apple.spaces spans-displays -bool false
-    - description: "Disable auto-rearrange Spaces by recent use"
+    - description: "Не переставлять Spaces по недавнему использованию"
       command: defaults write com.apple.dock mru-spaces -bool false
-    - description: "Apply Dock changes"
+    - description: "Перезапустить Dock"
       command: killall Dock

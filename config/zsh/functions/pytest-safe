@@ -1,10 +1,10 @@
 # Low-priority test runner; does not add pytest flags or require pytest-xdist.
-# Usage: pytest-safe [PYTEST_ARGS...] | pytest-safe -- COMMAND [ARGS...]
+# Использование: pytest-safe [PYTEST_ARGS...] | pytest-safe -- COMMAND [ARGS...]
 
 local -a test_command
 case "${1-}" in
   -h|--help)
-    print -r -- 'Usage: pytest-safe [PYTEST_ARGS...] | pytest-safe -- COMMAND [ARGS...]' \
+    print -r -- 'Использование: pytest-safe [PYTEST_ARGS...] | pytest-safe -- COMMAND [ARGS...]' \
       '  pytest-safe -q' \
       '  pytest-safe -- uv run pytest -n auto' \
       '  pytest-safe -- python -m pytest -q' \

@@ -7,8 +7,8 @@ import (
 	"os"
 )
 
-// A missing plist is safe only for an unloaded job. Never overwrite or delete
-// a foreign definition, even when it happens to use our launchd label.
+// Отсутствие plist безопасно только для невыгруженного job. Чужое определение
+// не перезаписываем и не удаляем, даже с нашей меткой launchd.
 func (c *controller) ownedService() ([]string, error) {
 	st, err := os.Lstat(c.servicePath())
 	if errors.Is(err, os.ErrNotExist) {

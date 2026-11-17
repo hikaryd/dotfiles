@@ -1,4 +1,4 @@
-// Package proxy provides the shared local xray controller.
+// Package proxy — общий локальный контроллер xray.
 package proxy
 
 import (
@@ -33,7 +33,6 @@ type controller struct {
 	out, errOut              io.Writer
 }
 
-// Run dispatches independent beatapi and local xray controllers.
 func Run(root string, args []string) int { return run(root, args, os.Stdin, os.Stdout, os.Stderr) }
 
 func run(_ string, args []string, in io.Reader, out, errOut io.Writer) int {
@@ -41,7 +40,7 @@ func run(_ string, args []string, in io.Reader, out, errOut io.Writer) int {
 		return beatapi.Run(args[1:], in, out, errOut)
 	}
 	if len(args) == 0 {
-		fmt.Fprintln(errOut, "usage: dots-tools proxy local|beatapi")
+		fmt.Fprintln(errOut, "Использование: dots-tools proxy local|beatapi")
 		return 2
 	}
 	home, err := os.UserHomeDir()
@@ -49,9 +48,9 @@ func run(_ string, args []string, in io.Reader, out, errOut io.Writer) int {
 		fmt.Fprintln(errOut, "proxy: HOME is not configured")
 		return 2
 	}
-	// Retain the service's legacy name without retaining the removed agent.
+	// Старое имя сервиса остаётся, удалённый агент — нет.
 	if args[0] != "local" && args[0] != "pi" {
-		fmt.Fprintln(errOut, "usage: dots-tools proxy local|beatapi")
+		fmt.Fprintln(errOut, "Использование: dots-tools proxy local|beatapi")
 		return 2
 	}
 	port := 10810
@@ -69,7 +68,7 @@ func run(_ string, args []string, in io.Reader, out, errOut io.Writer) int {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 	c := &controller{ctx: ctx, home: home, dir: filepath.Join(home, ".config", "xray-pi"), port: port, in: bufio.NewReader(in), rawIn: in, out: out, errOut: errOut}
-	// The consumer readiness path must not create/chmod state or acquire locks.
+	// Проверка готовности для потребителей не создаёт состояние, не меняет права и не берёт блокировки.
 	if len(args) == 2 && (args[1] == "--require-ready" || args[1] == "--ensure") {
 		if err := c.requireReady(); err != nil {
 			fmt.Fprintln(errOut, err)
@@ -165,7 +164,7 @@ func (c *controller) prompt(prompt string) (string, error) {
 	if c.interactive() {
 		return tui.SecretInput(c.ctx, tui.Frame{Brand: "dots proxy", Title: prompt, Mode: "LOCAL CONFIG", Tone: tui.Yellow, Intro: "Ввод скрыт. Esc — отмена; Ctrl+L — очистить."}, "")
 	}
-	// Keep the explicit stdin protocol for scripted provisioning.
+	// Явный протокол stdin нужен для скриптовой настройки.
 	fmt.Fprint(c.out, prompt)
 	s, err := c.in.ReadString('\n')
 	if errors.Is(err, io.EOF) && s != "" {

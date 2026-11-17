@@ -12,11 +12,10 @@ import (
 	"unicode/utf8"
 )
 
-// RunVPNHelper handles installer commands after the vpn group or dots-vpn alias.
-// Paths are caller paths, independent of the repository root.
+// Пути берутся от вызывающего, а не от корня репозитория.
 func RunVPNHelper(_ string, args []string) int {
 	usage := func() int {
-		fmt.Fprintln(os.Stderr, "usage: dots-tools vpn {awg-params PATH|tuning-env [PATH]}")
+		fmt.Fprintln(os.Stderr, "Использование: dots-tools vpn {awg-params PATH|tuning-env [PATH]}")
 		return 2
 	}
 	if len(args) == 0 {
@@ -58,7 +57,7 @@ func RunVPNHelper(_ string, args []string) int {
 	return 0
 }
 
-// Use bounded rejection sampling to avoid modulo bias and unbounded retries.
+// Ограниченная выборка с отбрасыванием: без смещения по модулю и бесконечных повторов.
 func vpnRandomRange(low, high int) (int, error) {
 	width := uint64(high - low + 1)
 	limit := (uint64(1) << 32) / width * width
@@ -128,8 +127,8 @@ func createAWGParams(path string) error {
 			return errors.New("AWG parameter retry limit exceeded")
 		}
 	}
-	// Publish a complete, private file without ever replacing a concurrent file
-	// or symlink. Rename would overwrite an entry created after the initial check.
+	// Публикуем готовый приватный файл, не заменяя чужой файл или ссылку,
+	// созданные после проверки: rename бы их перезаписал.
 	f, err := os.CreateTemp(filepath.Dir(path), ".awg-params-*")
 	if err != nil {
 		return errors.New("cannot create private AWG temporary file")
@@ -165,8 +164,8 @@ func vpnTuningEnv(path string) (string, error) {
 		return "", errors.New("VPN tuning environment must be UTF-8")
 	}
 	conf := make(map[string]string)
-	// Match load_conf's universal newlines, whitespace and ordered quote stripping;
-	// do not interpret export, comments after values, escapes or shell expressions.
+	// Как load_conf: любые переводы строк, пробелы и снятие кавычек по порядку.
+	// export, комментарии после значения, экранирование и shell-выражения не разбираем.
 	lines := strings.ReplaceAll(strings.ReplaceAll(string(data), "\r\n", "\n"), "\r", "\n")
 	for _, line := range strings.Split(lines, "\n") {
 		line = strings.TrimSpace(line)

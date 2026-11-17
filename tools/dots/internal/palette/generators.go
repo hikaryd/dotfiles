@@ -62,13 +62,10 @@ func (g generator) generateTool(name string) error {
 		}
 	case "yazi":
 		return g.yazi()
-	case "nushell", "fresh", "jcode":
+	case "nushell", "jcode":
 		switch name {
 		case "nushell":
 			relative = "nushell/ayu.nu"
-		case "fresh":
-			relative = "fresh/themes/ayu-" + g.variant + ".json"
-			mkdir = true
 		case "jcode":
 			relative = "jcode/theme.toml"
 			mkdir = true

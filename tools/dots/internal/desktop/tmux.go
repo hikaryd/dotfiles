@@ -75,7 +75,7 @@ func tmuxFocus(id string) error {
 		return nil
 	}
 	args := []string{"switch-client"}
-	// Popup jobs have no pane of their own; target the client that opened them.
+	// У popup нет своей панели, целимся в клиент, который его открыл.
 	if client := os.Getenv("DOTS_MUX_CLIENT"); client != "" {
 		args = append(args, "-c", client)
 	}
@@ -107,7 +107,7 @@ func openEntry(entry session) error {
 	if len(matches) == 1 {
 		return tmuxFocus(matches[0].Workspace)
 	}
-	// Stable path-derived names avoid collisions across equal repository basenames.
+	// Имена из пути, чтобы не путать репозитории с одинаковым basename.
 	id, err := command(mux.Argv("new-session", "-d", "-P", "-F", "#{session_id}", "-s", sessionName(path), "-c", path)...)
 	if err != nil {
 		return err

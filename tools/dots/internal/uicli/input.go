@@ -8,9 +8,9 @@ import (
 	"golang.org/x/sys/unix"
 )
 
-// stdin may be inherited in blocking mode, where os.File.Close cannot interrupt
-// an in-flight Read. Wait for readiness in bounded intervals instead of leaving
-// a background reader behind on cancellation. This CLI is stdin's sole reader.
+// stdin может быть блокирующим, и os.File.Close не прервёт Read. Поэтому ждём
+// готовности короткими интервалами, чтобы после отмены не оставить фоновое
+// чтение. Других читателей stdin в этом CLI нет.
 func readInput(ctx context.Context) ([]byte, error) {
 	fd := int(os.Stdin.Fd())
 	data := make([]byte, 0, 4096)

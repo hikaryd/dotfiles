@@ -1,4 +1,4 @@
-// dots-tools is the native runtime shared by the dotfiles' command aliases.
+// dots-tools — общий бинарник для команд-псевдонимов dots.
 package main
 
 import (
@@ -16,7 +16,7 @@ import (
 	"dots/native/internal/vpn"
 )
 
-// Set by the build script. DOTS_ROOT overrides it when the checkout is moved.
+// Задаёт скрипт сборки; DOTS_ROOT переопределяет, если checkout перенесён.
 var defaultRoot string
 
 func repositoryRoot() string {
@@ -46,8 +46,8 @@ func dispatch(root, name string, args []string) int {
 		return runVPN(root, args)
 	}
 	if len(args) == 0 || args[0] == "-h" || args[0] == "--help" || args[0] == "help" {
-		fmt.Println("Usage: dots-tools desktop|setup|agents|proxy|palette|vpn|ui <command> [args]")
-		fmt.Println("Aliases: dots, dots-nu, ai_helper, dots-vpn")
+		fmt.Println("Использование: dots-tools desktop|setup|agents|proxy|palette|vpn|ui <команда> [аргументы]")
+		fmt.Println("Псевдонимы: dots, dots-nu, ai_helper, dots-vpn")
 		return 0
 	}
 	switch args[0] {
@@ -66,7 +66,7 @@ func dispatch(root, name string, args []string) int {
 	case "vpn":
 		return runVPN(root, args[1:])
 	default:
-		fmt.Fprintf(os.Stderr, "dots-tools: unknown group %q\n", args[0])
+		fmt.Fprintf(os.Stderr, "dots-tools: неизвестная группа %q\n", args[0])
 		return 2
 	}
 }

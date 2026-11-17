@@ -1,4 +1,4 @@
-// Package vpn implements VPN configuration and isolated diagnostics.
+// Package vpn — конфигурация VPN и изолированная диагностика.
 package vpn
 
 import (
@@ -109,7 +109,7 @@ func readURL(ctx context.Context, client *http.Client, url string, max int64, ag
 	return b, nil
 }
 
-// Each external child gets an owned process group; cancellation never signals the caller's group.
+// У каждого внешнего процесса своя группа; отмена не шлёт сигнал группе вызывающего.
 type child struct {
 	cmd      *exec.Cmd
 	done     chan struct{}
@@ -137,7 +137,7 @@ func (p *child) stop(wait time.Duration) {
 		case <-time.After(wait):
 			_ = syscall.Kill(-p.cmd.Process.Pid, syscall.SIGKILL)
 			<-p.done
-		} // Also remove descendants left behind by a completed leader.
+		} // И потомков, оставшихся после лидера.
 		_ = syscall.Kill(-p.cmd.Process.Pid, syscall.SIGKILL)
 	})
 }
@@ -178,11 +178,20 @@ func safeCommand(ctx context.Context, name string, args ...string) (string, erro
 	return string(b), nil
 }
 
-// Run dispatches arguments following the vpn group (or the dots-vpn alias).
+const help = `Использование: dots-vpn <команда>
+  generate          собрать конфиг sing-box из VPN_ENV (/etc/sing-box/vpn.env) и подписки
+  nodes             выгрузить узлы подписки для замеров (--help)
+  router-setup      настроить роутер; ACTION=install|identify
+  benchmark         замер узлов sing-box (--help)
+  xhttp-benchmark   замер XHTTP через xray (--help)
+  tcp-tuning        install|apply|cleanup|disable настройки TCP (нужен root)
+  awg-params PATH   создать параметры AmneziaWG, если их ещё нет
+  tuning-env [PATH] вывести переменные тюнинга из vpn.env`
+
 func Run(root string, args []string) int { return run(args, os.Stdout, os.Stderr) }
 func run(args []string, out, errout io.Writer) int {
 	if len(args) == 0 {
-		fmt.Fprintln(errout, "usage: dots-vpn {generate|nodes|router-setup|benchmark|xhttp-benchmark|tcp-tuning|awg-params|tuning-env}")
+		fmt.Fprintln(errout, help)
 		return 2
 	}
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM, syscall.SIGHUP)
@@ -212,10 +221,10 @@ func run(args []string, out, errout io.Writer) int {
 	case "tcp-tuning":
 		return tuningMain(ctx, args[1:], out, errout)
 	case "-h", "--help":
-		fmt.Fprintln(out, "usage: dots-vpn {generate|nodes|router-setup|benchmark|xhttp-benchmark|tcp-tuning|awg-params|tuning-env}")
+		fmt.Fprintln(out, help)
 		return 0
 	default:
-		fmt.Fprintln(errout, "unknown VPN command")
+		fmt.Fprintln(errout, "неизвестная команда, см. --help")
 		return 2
 	}
 	if e != nil {

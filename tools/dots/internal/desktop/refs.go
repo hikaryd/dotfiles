@@ -79,7 +79,7 @@ func extractRefs(text, cwd string) ([]reference, error) {
 	for _, s := range regexp.MustCompile(`(?i)\b[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}\b`).FindAllString(text, -1) {
 		add(reference{Kind: "id", Value: s})
 	}
-	// RE2 limits counted repetitions to 1000; enforce path length separately.
+	// RE2 ограничивает повторы до 1000, длину пути проверяем отдельно.
 	paths := regexp.MustCompile(`File "([^"\n]+)", line ([0-9]{1,9})`).FindAllStringSubmatch(text, -1)
 	for _, m := range regexp.MustCompile(`(?:^|[\s"'])([^\s:"'<>]+):([0-9]{1,9})(?::[0-9]+)?\b`).FindAllStringSubmatch(text, -1) {
 		paths = append(paths, m)

@@ -34,8 +34,8 @@ func nameTag(frag string, idx int) string {
 	return fmt.Sprintf("%s #%d", name, idx)
 }
 
-// URI components are decoded once. Like urllib, an unmatched percent sign is
-// literal; only Hysteria authentication requires strictly valid UTF-8.
+// Компоненты URI декодируются один раз. Как в urllib, одиночный % остаётся
+// как есть; строгий UTF-8 нужен только для авторизации Hysteria.
 func uriUnquote(s string) string {
 	var b strings.Builder
 	for i := 0; i < len(s); i++ {

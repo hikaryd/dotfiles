@@ -47,8 +47,8 @@ type jsonPair struct {
 }
 type jsonObject []jsonPair
 
-// Keep object order, reject duplicate keys and escaped lone surrogates, unlike
-// encoding/json's default permissive object/string decoder.
+// В отличие от нестрогого encoding/json: порядок ключей сохраняется, дубли
+// ключей и одиночные суррогаты отвергаются.
 func strictJSON(s string) (any, error) {
 	if e := checkedText(s); e != nil {
 		return nil, e

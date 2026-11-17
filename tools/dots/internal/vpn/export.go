@@ -12,26 +12,26 @@ import (
 	"time"
 )
 
-// Export fresh supported nodes for isolated measurements, without rewriting the
-// gateway configuration, downloading rule sets, or restarting any services.
+// Выгружает свежие узлы для изолированных замеров, не трогая конфиг шлюза,
+// без скачивания rule sets и перезапуска сервисов.
 func exportNodes(ctx context.Context, args []string, out, errout io.Writer) int {
 	flags := flag.NewFlagSet("nodes", flag.ContinueOnError)
 	flags.SetOutput(io.Discard)
 	path := flags.String("output", "", "private output file")
 	confPath := flags.String("env", env("VPN_ENV", "/etc/sing-box/vpn.env"), "subscription environment")
 	usage := func() {
-		fmt.Fprintln(out, "usage: dots-vpn nodes --output FILE [--env FILE]\nDownload a fresh subscription into a private benchmark config; no service changes.")
+		fmt.Fprintln(out, "Использование: dots-vpn nodes --output FILE [--env FILE]\nСкачивает подписку в приватный конфиг для замеров; сервисы не трогает.")
 	}
 	if err := flags.Parse(args); err != nil {
 		if errors.Is(err, flag.ErrHelp) {
 			usage()
 			return 0
 		}
-		fmt.Fprintln(errout, "nodes: invalid arguments; use --help")
+		fmt.Fprintln(errout, "nodes: неверные аргументы, см. --help")
 		return 2
 	}
 	if *path == "" || flags.NArg() != 0 {
-		fmt.Fprintln(errout, "nodes: --output FILE is required")
+		fmt.Fprintln(errout, "nodes: нужен --output FILE")
 		return 2
 	}
 	fail := func() int {

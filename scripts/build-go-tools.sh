@@ -1,26 +1,26 @@
 #!/usr/bin/env bash
-# Build native helpers once; hotkeys execute binaries, never go run/interpreters.
+# Собираем один раз: хоткеи запускают бинарник, а не go run или интерпретатор.
 set -euo pipefail
 
 root=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 case ${1:-} in
   '') ;;
   --vpn-linux) ;;
-  *) printf 'Usage: build-go-tools.sh [--vpn-linux]\n' >&2; exit 2 ;;
+  *) printf 'Использование: build-go-tools.sh [--vpn-linux]\n' >&2; exit 2 ;;
 esac
 
 build_dir="$root/build/bin"
 mkdir -p "$build_dir"
 if [[ ${1:-} == --vpn-linux ]]; then
   arch=${VPN_GOARCH:-amd64}
-  case "$arch" in amd64|arm64) ;; *) printf 'Unsupported VPN_GOARCH\n' >&2; exit 2 ;; esac
+  case "$arch" in amd64|arm64) ;; *) printf 'Неподдерживаемый VPN_GOARCH\n' >&2; exit 2 ;; esac
   temporary=$(mktemp "$build_dir/.dots-vpn-linux.XXXXXX")
   trap 'rm -f "$temporary"' EXIT
   CGO_ENABLED=0 GOOS=linux GOARCH="$arch" go -C "$root/tools/dots" build \
     -trimpath -ldflags='-s -w' -o "$temporary" ./cmd/dots-tools
   chmod 755 "$temporary"
   mv -f "$temporary" "$build_dir/dots-vpn-linux-$arch"
-  printf 'Built %s\n' "$build_dir/dots-vpn-linux-$arch"
+  printf 'Собрано: %s\n' "$build_dir/dots-vpn-linux-$arch"
   exit 0
 fi
 
@@ -39,16 +39,16 @@ for name in dots dots-nu ai_helper dots-vpn; do
   ln -sfn dots-tools "$build_dir/$name"
 done
 mkdir -p "$HOME/.local/bin"
-# Dotbot manages desktop aliases. Only these admin helpers are installed here.
+# Остальные псевдонимы ставит dotbot, здесь только служебные.
 for name in dots-tools dots-vpn; do
   target="$HOME/.local/bin/$name"
   source="$build_dir/$name"
   if [[ -e "$target" || -L "$target" ]]; then
     if [[ ! -L "$target" || $(readlink "$target") != "$source" ]]; then
-      printf 'Existing command preserved: %s\n' "$target" >&2
+      printf 'Чужая команда, не трогаю: %s\n' "$target" >&2
       exit 1
     fi
   fi
   ln -sfn "$source" "$target"
 done
-printf 'Built native helpers: %s\n' "$storage/dots-tools"
+printf 'Собрано: %s\n' "$storage/dots-tools"

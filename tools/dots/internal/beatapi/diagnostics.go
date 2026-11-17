@@ -23,7 +23,7 @@ const openRouterRejectionMessage = "OpenRouter rejected the request; check model
 
 var errNotConnected = errors.New("beatapi: jevgrep is not connected to this API")
 
-// Never reflect upstream messages or headers.
+// Сообщения и заголовки upstream наружу не отдаём.
 func upstreamRejection(status int) string {
 	switch status {
 	case 401:
@@ -47,8 +47,8 @@ func jevgrepMatches(b []byte, cfg Config, model string) bool {
 	if json.Unmarshal(b, &current) != nil {
 		return false
 	}
-	// Identify local jg even when its API configuration is missing or invalid.
-	// This only selects a bounded diagnostic, never an inference destination.
+	// Находим локальный jg даже без валидной API-конфигурации. Это выбирает
+	// только диагностику, но не адрес для инференса.
 	if cfg.Port == 0 {
 		u, err := url.Parse(current.BaseURL)
 		if err != nil {
@@ -76,7 +76,7 @@ func (c *cli) jevgrepConnected(cfg Config) bool {
 	return err == nil && len(b) <= 1<<20 && (jevgrepMatches(b, cfg, jevModel) || jevgrepMatches(b, cfg, legacyJevModel))
 }
 
-// One real synthetic evaluation; unlike jg 0.8, never sleep through Retry-After.
+// Один настоящий тестовый запрос; в отличие от jg 0.8, Retry-After не ждём.
 func (c *cli) doctor(cfg Config) error {
 	if cfg.OpenRouterAPIKey != "" {
 		fmt.Fprintln(c.out, "Checking the Jev route (one local request, 15s limit; OpenRouter first, BeatAPI fallback; uses provider balance)...")

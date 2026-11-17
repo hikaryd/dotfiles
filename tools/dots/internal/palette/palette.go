@@ -1,4 +1,4 @@
-// Package palette generates application themes from palette/ayu.toml.
+// Package palette генерирует темы приложений из palette/ayu.toml.
 package palette
 
 import (
@@ -13,7 +13,7 @@ import (
 	"github.com/pelletier/go-toml/v2"
 )
 
-var toolNames = []string{"ghostty", "starship", "nushell", "tmux", "fresh", "lazygit", "yazi", "jcode"}
+var toolNames = []string{"ghostty", "starship", "nushell", "tmux", "lazygit", "yazi", "jcode"}
 
 type palette map[string]map[string]string
 
@@ -23,10 +23,9 @@ type generator struct {
 	out           io.Writer
 }
 
-// Run implements dots-tools palette [--variant dark|mirage] [--tool TOOL] [--dry-run].
 func Run(root string, args []string) int { return run(root, args, os.Stdout, os.Stderr) }
 
-const usage = "usage: dots-tools palette [-h] [--variant {dark,mirage}]\n                          [--tool {ghostty,starship,nushell,tmux,fresh,lazygit,yazi,jcode}]\n                          [--dry-run]\n"
+const usage = "Использование: dots-tools palette [--variant dark|mirage] [--tool ИМЯ] [--dry-run]\n"
 
 func run(root string, args []string, out, stderr io.Writer) int {
 	variant, tool, dry := "dark", "", false
@@ -56,7 +55,7 @@ func run(root string, args []string, out, stderr io.Writer) int {
 			if hasValue {
 				return argError("--help does not take a value")
 			}
-			fmt.Fprint(out, usage+"\nGenerate configs from ayu palette\n\noptions:\n  -h, --help            show this help message and exit\n  --variant {dark,mirage}\n  --tool TOOL           Generate for one tool only\n  --dry-run             Print what would be done\n")
+			fmt.Fprint(out, usage+"\nГенерирует темы из palette/ayu.toml.\n  --variant  dark (по умолчанию) или mirage\n  --tool     только один: "+strings.Join(toolNames, ", ")+"\n  --dry-run  показать, без записи\n")
 			return 0
 		case "--dry-run":
 			if hasValue {
@@ -105,7 +104,7 @@ func run(root string, args []string, out, stderr io.Writer) int {
 		return fail(err)
 	}
 	var all map[string]palette
-	// meta has a different shape from the variant tables.
+	// У meta другая структура, чем у таблиц вариантов.
 	var document struct {
 		Dark   palette `toml:"dark"`
 		Mirage palette `toml:"mirage"`

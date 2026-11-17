@@ -1,5 +1,5 @@
-// Package uicli exposes the shared terminal UI to thin shell orchestrators.
-// Selection stdout is data, never a decorated frame or a reconstructed label.
+// Package uicli даёт shell-скриптам общий терминальный UI.
+// В stdout выбора только данные, без рамок и пересобранных меток.
 package uicli
 
 import (
@@ -17,11 +17,11 @@ import (
 
 func Run(args []string) int {
 	if len(args) > 0 && oneOf(args[0], "--help", "-h", "help") {
-		fmt.Println("usage: dots-tools ui select|input|confirm|snapshot|message [--brand TEXT] [--title TEXT] [--secret]")
+		fmt.Println("Использование: dots-tools ui select|input|confirm|snapshot|message [--brand TEXT] [--title TEXT] [--secret]")
 		return 0
 	}
 	if len(args) == 0 {
-		fmt.Fprintln(os.Stderr, "usage: dots-tools ui select|input|confirm|snapshot|message [--brand TEXT] [--title TEXT] [--mode TEXT] [--secret] [--value TEXT]")
+		fmt.Fprintln(os.Stderr, "Использование: dots-tools ui select|input|confirm|snapshot|message [--brand TEXT] [--title TEXT] [--mode TEXT] [--secret] [--value TEXT]")
 		return 2
 	}
 	flags := flag.NewFlagSet("ui", flag.ContinueOnError)

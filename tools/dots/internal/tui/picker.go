@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"strings"
 	"time"
-	"unicode"
 
 	"github.com/mattn/go-runewidth"
 )
@@ -46,8 +45,8 @@ func table(rows []string) []string {
 	return result
 }
 
-// Select returns original row indexes. Labels are display-only and cannot turn
-// into commands; search and multi-selection never reorder the caller's data.
+// Select возвращает исходные индексы. Метки только для показа и не становятся
+// командами; поиск и мультивыбор не меняют порядок данных.
 func Select(ctx context.Context, frame Frame, rows []string, query string, multi bool) ([]int, error) {
 	terminal, err := Open()
 	if err != nil {
@@ -275,7 +274,7 @@ func Input(ctx context.Context, frame Frame, value string) (string, error) {
 	return input(ctx, frame, value, false)
 }
 
-// SecretInput never renders the value, including initial values and pasted text.
+// SecretInput не показывает значение, включая начальное и вставленное.
 func SecretInput(ctx context.Context, frame Frame, value string) (string, error) {
 	return input(ctx, frame, value, true)
 }
@@ -346,77 +345,6 @@ func input(ctx context.Context, frame Frame, value string, secret bool) (string,
 				}
 			case "text", "paste":
 				value += Clean(key.Text)
-			}
-		}
-	}
-}
-func Editor(ctx context.Context, frame Frame) (string, error) {
-	terminal, err := Open()
-	if err != nil {
-		return "", err
-	}
-	defer terminal.Close()
-	restore, err := Raw(terminal)
-	if err != nil {
-		return "", err
-	}
-	defer restore()
-	end := Screen(terminal)
-	defer end()
-	ctx, cancel := context.WithCancel(ctx)
-	defer cancel()
-	keys := Keys(ctx, terminal)
-	painter := NewPainter(terminal)
-	ticker := time.NewTicker(150 * time.Millisecond)
-	defer ticker.Stop()
-	value := ""
-	for {
-		width, height := Size(terminal)
-		frame.Width, frame.Height, frame.Color = width, height, ColorEnabled(terminal)
-		lines := strings.Split(value, "\n")
-		start := max(0, len(lines)-max(1, height-6))
-		var body strings.Builder
-		for i := start; i < len(lines); i++ {
-			line := fmt.Sprintf("%3d  %s", i+1, Clean(lines[i]))
-			if i == len(lines)-1 {
-				line += "█"
-			}
-			body.WriteString(line + "\n")
-		}
-		frame.Body = body.String()
-		frame.Footer = "Paste multiline code · Enter newline · Ctrl+D run · Esc cancel"
-		painter.Draw(frame)
-		select {
-		case <-ticker.C:
-			continue
-		case <-ctx.Done():
-			return "", ctx.Err()
-		case key, ok := <-keys:
-			if !ok {
-				return "", ErrCanceled
-			}
-			switch key.Name {
-			case "esc", "ctrl-c":
-				return "", ErrCanceled
-			case "ctrl-d":
-				return value, nil
-			case "enter":
-				value += "\n"
-			case "backspace":
-				runes := []rune(value)
-				if len(runes) > 0 {
-					value = string(runes[:len(runes)-1])
-				}
-			case "text", "paste":
-				value += strings.Map(func(r rune) rune {
-					if r == '\r' {
-						return '\n'
-					}
-					if r == '\n' || r == '\t' || !unicode.IsControl(r) {
-						return r
-					}
-					return -1
-				}, Plain(key.Text))
 			}
 		}
 	}

@@ -443,8 +443,8 @@ func statusRun(args []string) int {
 	return 0
 }
 
-// Keyboard is connected before collection. Refresh subprocesses share ctx and
-// cannot outlive cancellation; only presentation runs on the event-loop thread.
+// Клавиатура подключается до сбора данных. Подпроцессы обновления делят ctx
+// и не переживают отмену; в цикле событий только отрисовка.
 func statusInteractive(all bool) (statusReport, bool, int) {
 	terminal, err := tui.Open()
 	if err != nil {

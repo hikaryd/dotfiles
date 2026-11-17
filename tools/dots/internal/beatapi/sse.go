@@ -10,7 +10,7 @@ import (
 	"strings"
 )
 
-// SSE permits CR, LF and CRLF, including a CRLF split across reader chunks.
+// SSE допускает CR, LF и CRLF, в том числе CRLF на границе чанков.
 func splitSSE() bufio.SplitFunc {
 	skipLF := false
 	return func(data []byte, atEOF bool) (int, []byte, error) {
@@ -32,8 +32,8 @@ func splitSSE() bufio.SplitFunc {
 	}
 }
 
-// readSSE bounds one event, not the entire long-lived response. raw preserves
-// successful events (including id/retry/comments); errors never escape upstream.
+// readSSE ограничивает одно событие, а не весь долгий ответ. raw хранит успешные
+// события (с id, retry, комментариями); ошибки upstream наружу не уходят.
 func readSSE(r io.Reader, consume func(event, data, raw string) error) error {
 	scanner := bufio.NewScanner(r)
 	scanner.Buffer(make([]byte, 4096), 1<<20)

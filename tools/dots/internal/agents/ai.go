@@ -248,7 +248,7 @@ func runAIContext(ctx context.Context, args []string, in io.Reader, out, errout 
 		return 2
 	}
 	if flags.NArg() != 0 || (*mode != "mr" && *mode != "commit" && *mode != "refactor") || (*kind != "openai-compatible" && *kind != "gemini") {
-		fmt.Fprintln(errout, "usage: ai_helper --mode mr|commit|refactor [--provider openai-compatible|gemini]")
+		fmt.Fprintln(errout, "Использование: ai_helper --mode mr|commit|refactor [--provider openai-compatible|gemini]")
 		return 2
 	}
 	fail := func(title string, err error) int {
@@ -322,7 +322,7 @@ func runAIContext(ctx context.Context, args []string, in io.Reader, out, errout 
 		prompt = strings.ReplaceAll(refactorPrompt, "{text}", text)
 		notification = "Исправленный текст скопирован."
 	}
-	// A private transport never consults proxy environment or shared transport state.
+	// Свой transport: без proxy из окружения и без общего состояния.
 	transport := &http.Transport{Proxy: nil}
 	defer transport.CloseIdleConnections()
 	client := &http.Client{Transport: transport, Timeout: 120 * time.Second, CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }}

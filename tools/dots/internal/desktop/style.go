@@ -27,7 +27,7 @@ func loadStyle() (string, error) {
 	return s, nil
 }
 
-// Notification hooks deliberately tolerate unavailable optional style state.
+// Хуки уведомлений намеренно терпят отсутствие необязательного состояния стиля.
 func readStyle() string {
 	s, err := loadStyle()
 	if err != nil {

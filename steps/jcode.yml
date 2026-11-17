@@ -6,11 +6,11 @@
 
 - shell:
     - command: DISABLE_TELEMETRY=1 npx --yes skills@1.7.4 add https://github.com/DietrichGebert/ponytail/tree/v5.3.2 --global --agent universal --skill '*' --yes
-      description: Install Ponytail skills for Jcode
+      description: Навыки Ponytail для Jcode
       stdout: true
       stderr: true
     - command: DISABLE_TELEMETRY=1 npx --yes skills@1.7.4 add https://github.com/heydamir/unslop/tree/a6f121eee5f29c2f74976b75456feae8b66afb3a --global --agent universal --skill unslop --yes
-      description: Install Unslop UI design skill for Jcode
+      description: Навык Unslop для Jcode
       stdout: true
       stderr: true
     - command: |
@@ -20,10 +20,10 @@
         mkdir -p "$config_dir"
         guidance='At the start of every new Jcode session, before responding or starting task work, load the installed `ponytail` skill with `skill_manage` (`action: "load", name: "ponytail"`). Apply `full` mode unless the user chooses another level or disables Ponytail. This also applies to swarm workers.'
         grep -Fqx "$guidance" "$config_dir/prompt-overlay.md" 2>/dev/null || printf '\n%s\n' "$guidance" >> "$config_dir/prompt-overlay.md"
-      description: Load Ponytail automatically in every Jcode session
+      description: Ponytail в каждой сессии Jcode
       stdout: true
       stderr: true
     - command: scripts/jcode-install.sh
-      description: Set up Codex-only jcode and local Neo4j
+      description: Jcode (только Codex) и локальный Neo4j
       stdout: true
       stderr: true

@@ -26,14 +26,6 @@ AGENTS.md
 
 /.playwright-mcp
 
-# Pi credentials and machine-local runtime must never enter the portable config.
-config/pi/auth.json
-config/pi/models-store.json
-config/pi/sessions/
-config/pi/install/
-config/pi/backups/
-config/pi/*.bak-*
-
 # jcode integrations: only source, templates and dependency locks are portable.
 /config/jcode/**/node_modules/
 /config/jcode/**/dist/
@@ -79,8 +71,5 @@ config/git/private.inc
 
 # Compiled native runtime aliases and cross-builds.
 /build/
-/docs/superpowers
-/node_modules
-/package.json
 /docs
 /tests

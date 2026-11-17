@@ -68,7 +68,7 @@ func (c *cli) serviceLoaded() (bool, error) {
 	return false, errors.New("beatapi: cannot inspect own LaunchAgent; no service changed")
 }
 
-// A matching file on disk alone cannot prove ownership of a loaded label.
+// Совпадающий файл на диске не доказывает владение загруженной меткой.
 func (c *cli) matchesLoadedJob(output []byte) bool {
 	return launchd.Matches(output, c.servicePath(), []string{c.binary, "proxy", "beatapi", "serve", "--config", c.config})
 }

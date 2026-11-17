@@ -56,7 +56,7 @@ func (c *controller) launchctl(args ...string) error {
 	}
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
-	// Discard diagnostics: no launchctl/environment output enters proxy logs.
+	// Вывод launchctl и окружения не должен попадать в логи прокси.
 	return exec.CommandContext(ctx, "launchctl", args...).Run()
 }
 func (c *controller) serviceLoaded() (bool, error) {
@@ -124,7 +124,7 @@ func (c *controller) installServiceAt(executable string) error {
 	if err := os.MkdirAll(filepath.Dir(c.servicePath()), 0700); err != nil {
 		return err
 	}
-	// launchd preserves permissions of existing log files.
+	// launchd сохраняет права существующих логов.
 	log, err := os.OpenFile(c.path("supervisor.log"), os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600)
 	if err != nil {
 		return err
@@ -146,7 +146,7 @@ func (c *controller) installServiceAt(executable string) error {
 	return nil
 }
 func (c *controller) uninstallService() error {
-	// --stop remains usable on other platforms where there is no LaunchAgent.
+	// --stop работает и там, где нет LaunchAgent.
 	if runtime.GOOS != "darwin" {
 		return nil
 	}

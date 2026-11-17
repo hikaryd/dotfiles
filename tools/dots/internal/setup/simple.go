@@ -14,7 +14,7 @@ import (
 
 func managedLinks(root string, args []string) error {
 	if len(args) > 1 {
-		return errors.New("usage: managed-links [repository]")
+		return errors.New("Использование: managed-links [repository]")
 	}
 	if len(args) == 1 {
 		root = args[0]
@@ -115,7 +115,7 @@ func managedLinkTargets(root string) ([]string, error) {
 }
 func jsonKeys(args []string) error {
 	if len(args) != 1 {
-		return errors.New("usage: json-keys filename")
+		return errors.New("Использование: json-keys filename")
 	}
 	b, e := os.ReadFile(args[0])
 	if e != nil {
@@ -129,35 +129,11 @@ func jsonKeys(args []string) error {
 	return nil
 }
 func tinycastHotkey() error {
-	// Swift's Codable HotKeyBinding.combo; Carbon optionKey=2048, kVK_ANSI_A=0.
+	// Codable HotKeyBinding.combo из Swift; Carbon optionKey=2048, kVK_ANSI_A=0.
 	const binding = `{"combo":{"_0":{"carbonModifiers":2048,"carbonKeyCode":0}}}`
 	if e := cliQuiet("defaults", "write", "com.tinycast.app", "hotkey.togglePalette", "-string", binding); e != nil {
 		return e
 	}
 	fmt.Println("Tinycast launcher hotkey set to Option+A (restart Tinycast to apply)")
 	return nil
-}
-func instructionBlock(original, settings, begin, end string) (string, error) {
-	block := begin + "\n" + strings.TrimRight(settings, " \t\r\n") + "\n" + end
-	if strings.Contains(original, begin) || strings.Contains(original, end) {
-		if strings.Count(original, begin) != 1 || strings.Count(original, end) != 1 {
-			return "", errors.New("ambiguous managed instruction block")
-		}
-		start, finish := strings.Index(original, begin), strings.Index(original, end)
-		lineMarker := func(index int, marker string) bool {
-			after := index + len(marker)
-			return (index == 0 || original[index-1] == '\n') &&
-				(after == len(original) || original[after] == '\n' || strings.HasPrefix(original[after:], "\r\n"))
-		}
-		if finish < start || !lineMarker(start, begin) || !lineMarker(finish, end) {
-			return "", errors.New("invalid managed instruction block")
-		}
-		parts := strings.SplitN(original, begin, 2)
-		rest := strings.SplitN(parts[1], end, 2)
-		if len(rest) != 2 {
-			return "", errors.New("incomplete managed instruction block")
-		}
-		return parts[0] + block + rest[1], nil
-	}
-	return strings.TrimRight(original, " \t\r\n") + "\n\n" + block + "\n", nil
 }

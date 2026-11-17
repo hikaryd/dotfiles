@@ -20,7 +20,7 @@ const (
 	openAIURL  = "https://api.openai.com/v1/models"
 )
 
-// ISO 3166-1 alpha-2 codes; pseudo/unknown locations must fail closed.
+// Коды ISO 3166-1 alpha-2; псевдо- и неизвестные локации — отказ.
 const isoCountries = " AD AE AF AG AI AL AM AO AQ AR AS AT AU AW AX AZ BA BB BD BE BF BG BH BI BJ BL BM BN BO BQ BR BS BT BV BW BY BZ CA CC CD CF CG CH CI CK CL CM CN CO CR CU CV CW CX CY CZ DE DJ DK DM DO DZ EC EE EG EH ER ES ET FI FJ FK FM FO FR GA GB GD GE GF GG GH GI GL GM GN GP GQ GR GS GT GU GW GY HK HM HN HR HT HU ID IE IL IM IN IO IQ IR IS IT JE JM JO JP KE KG KH KI KM KN KP KR KW KY KZ LA LB LC LI LK LR LS LT LU LV LY MA MC MD ME MF MG MH MK ML MM MN MO MP MQ MR MS MT MU MV MW MX MY MZ NA NC NE NF NG NI NL NO NP NR NU NZ OM PA PE PF PG PH PK PL PM PN PR PS PT PW PY QA RE RO RS RU RW SA SB SC SD SE SG SH SI SJ SK SL SM SN SO SR SS ST SV SX SY SZ TC TD TF TG TH TJ TK TL TM TN TO TR TT TV TW TZ UA UG UM US UY UZ VA VC VE VG VI VN VU WF WS YE YT ZA ZM ZW "
 
 type measurement struct {
@@ -28,7 +28,7 @@ type measurement struct {
 	Latency time.Duration `json:"latency"`
 }
 
-// Only an observed exit country counts; subscription labels and entry IPs do not.
+// Важна только наблюдаемая страна выхода, не метки подписки и не входные IP.
 func allowedCountry(country string) bool {
 	return len(country) == 2 && country[0] >= 'A' && country[0] <= 'Z' &&
 		country[1] >= 'A' && country[1] <= 'Z' && country != "RU" &&
@@ -42,7 +42,7 @@ func measureRoute(ctx context.Context, proxy, countryTarget, apiTarget string, s
 		return result, errors.New("invalid proxy URL")
 	}
 	tr := transport()
-	tr.Proxy = http.ProxyURL(u) // Never inherit NO_PROXY, even for explicit bypasses.
+	tr.Proxy = http.ProxyURL(u) // NO_PROXY не наследуем, даже для явных исключений.
 	defer tr.CloseIdleConnections()
 	client := &http.Client{
 		Transport: tr, Timeout: 5 * time.Second,
@@ -81,7 +81,7 @@ func measureRoute(ctx context.Context, proxy, countryTarget, apiTarget string, s
 	}
 	latencies := make([]time.Duration, 0, samples)
 	for i := 0; i < samples; i++ {
-		// Benchmark fresh CONNECT/TLS requests, not a lucky warm connection.
+		// Меряем новые CONNECT/TLS, а не удачно прогретое соединение.
 		tr.CloseIdleConnections()
 		started := time.Now()
 		resp, err = get(apiTarget)
@@ -90,8 +90,8 @@ func measureRoute(ctx context.Context, proxy, countryTarget, apiTarget string, s
 		}
 		elapsed := time.Since(started)
 		resp.Body.Close()
-		// 401 is the expected unauthenticated OpenAI response. In particular,
-		// 403 (region block / challenge), redirects and 429 are not availability.
+		// 401 — ожидаемый ответ OpenAI без авторизации. 403 (блок региона,
+		// challenge), редиректы и 429 доступностью не считаются.
 		if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusUnauthorized {
 			return result, errors.New("OpenAI unavailable (HTTP " + strconv.Itoa(resp.StatusCode) + ")")
 		}
@@ -146,7 +146,7 @@ func (c *controller) withProbe(ctx context.Context, server object, check func(co
 		return result, errors.New("invalid probe configuration")
 	}
 	cmd := exec.CommandContext(ctx, bin, "run", "-c", dir+"/config.json")
-	// xray output can contain credentials; never attach it to diagnostics.
+	// Вывод xray может содержать учётные данные, в диагностику не попадает.
 	if err := cmd.Start(); err != nil {
 		return result, errors.New("could not start probe xray")
 	}

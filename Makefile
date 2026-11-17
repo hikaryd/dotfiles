@@ -1,5 +1,5 @@
-.DEFAULT_GOAL := test
-.PHONY: test
+.DEFAULT_GOAL := check
+.PHONY: check
 
-test:
-	./scripts/test.sh
+check:
+	cd tools/dots && GOTOOLCHAIN=local go vet ./... && go build ./...

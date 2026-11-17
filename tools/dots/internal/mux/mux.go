@@ -4,7 +4,7 @@ import "os"
 
 func Argv(args ...string) []string { return append([]string{"tmux"}, args...) }
 
-// Popups have no pane of their own, so bindings pass the pane that opened them.
+// У popup нет своей панели, поэтому биндинги передают панель, открывшую его.
 func SourcePane() string {
 	if pane := os.Getenv("DOTS_SOURCE_PANE"); pane != "" {
 		return pane

@@ -1,13 +1,13 @@
 # Kafka consumer через kcat с SSL
-# Usage: kafka-consume <creds.json> <brokers> <topic> [-b] [-g group] [-j] [-s]
+# Использование: kafka-consume <creds.json> <brokers> <topic> [-b] [-g group] [-j] [-s]
 
 local creds_file="$1" brokers="$2" topic="$3"
 if [[ -z "$creds_file" || -z "$brokers" || -z "$topic" ]]; then
-  echo "Usage: kafka-consume <creds_file> <brokers> <topic> [-b] [-g group] [-j] [-s]"
-  echo "  -b  --from-beginning   Read from beginning"
-  echo "  -g  --group <name>     Consumer group"
-  echo "  -j  --json             JSON output"
-  echo "  -s  --skip-metadata    Skip metadata request"
+  echo "Использование: kafka-consume <creds_file> <brokers> <topic> [-b] [-g group] [-j] [-s]"
+  echo "  -b  --from-beginning   читать с начала"
+  echo "  -g  --group <имя>      группа консьюмеров"
+  echo "  -j  --json             вывод в JSON"
+  echo "  -s  --skip-metadata    без запроса метаданных"
   return 1
 fi
 shift 3
@@ -19,7 +19,7 @@ while [[ $# -gt 0 ]]; do
     -g|--group) group="$2"; shift ;;
     -j|--json) json_output=true ;;
     -s|--skip-metadata) skip_metadata=true ;;
-    *) echo "Unknown option: $1"; return 1 ;;
+    *) echo "Неизвестная опция: $1"; return 1 ;;
   esac
   shift
 done

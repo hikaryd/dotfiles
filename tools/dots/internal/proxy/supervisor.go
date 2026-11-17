@@ -20,7 +20,7 @@ type monitorState struct{ failures int }
 
 var errNotReady = errors.New("Proxy is not ready. Install/check the background service: dots-proxy --install-service; dots-proxy --status")
 
-// Read-only identity: unlike process-control helpers, this never repairs PID files.
+// Только чтение: в отличие от управления процессом, PID-файлы не чинит.
 func (c *controller) liveRoute() (int, string, error) {
 	data, err := os.ReadFile(c.path("xray.pid"))
 	if err != nil {
@@ -89,7 +89,7 @@ func (c *controller) requireReady() error {
 
 var errListenerMissing = errors.New("Proxy listener is absent.")
 
-// Socket ownership cannot be inferred from the PID file or the config alone.
+// Владельца сокета нельзя вывести только из PID-файла или конфига.
 func (c *controller) listenerOwned(pid int) error {
 	ctx := c.ctx
 	if ctx == nil {
@@ -123,7 +123,7 @@ func (c *controller) listenerOwned(pid int) error {
 	return nil
 }
 
-// Refuse foreign state before selection can change config or signal anything.
+// Отказ при чужом состоянии — до того, как выбор изменит конфиг или пошлёт сигнал.
 func (c *controller) noForeignListener() (int, error) {
 	data, _ := os.ReadFile(c.path("xray.pid"))
 	pid, _ := strconv.Atoi(strings.TrimSpace(string(data)))
@@ -154,15 +154,15 @@ func (c *controller) withdrawReadiness() error {
 		return errors.New("Could not withdraw proxy readiness.")
 	}
 	if json.Unmarshal(data, &s) != nil {
-		// A malformed cache cannot be a useful recovery hint or readiness proof.
+		// Битый кэш не годится ни как подсказка, ни как доказательство готовности.
 		return os.Remove(c.path("selection.json"))
 	}
-	// Retain the last route as a recovery hint, but it no longer certifies a PID.
+	// Последний маршрут остаётся подсказкой, но PID больше не подтверждает.
 	s.PID = 0
 	return writeJSON(c.path("selection.json"), s)
 }
 
-// Cache I/O must not be able to keep a confirmed unsafe owned child alive.
+// Ошибка I/O кэша не должна оставлять в живых подтверждённо небезопасный процесс.
 func (c *controller) rejectRU() error {
 	withdrawErr := c.withdrawReadiness()
 	if err := c.stop(); err != nil {
@@ -192,7 +192,7 @@ func (c *controller) maintain(state *monitorState) error {
 		}
 		key, liveErr := c.routeKey()
 		if pid <= 1 || liveErr != nil {
-			// An owned process with unreadable/mismatched config is not safe to adopt.
+			// Свой процесс с нечитаемым или чужим конфигом подхватывать нельзя.
 			if c.requireRunning() == nil {
 				return errNotReady
 			}
@@ -234,8 +234,8 @@ func (c *controller) maintain(state *monitorState) error {
 	if err != nil || !recoverRoute {
 		return err
 	}
-	// autoStart owns selection.lock itself and preserves the old process until a
-	// temporary candidate has passed its country/OpenAI check.
+	// autoStart сам держит selection.lock и не трогает старый процесс, пока
+	// временный кандидат не прошёл проверку страны и OpenAI.
 	if err := c.autoStart(false); err != nil {
 		return err
 	}
@@ -262,7 +262,7 @@ func (c *controller) daemon() error {
 			if ctx.Err() != nil {
 				return ctx.Err()
 			}
-			// Deliberately do not print arbitrary errors (subscriptions/credentials).
+			// Произвольные ошибки не печатаем: в них подписки и учётные данные.
 			fmt.Fprintln(c.errOut, "Proxy supervisor: health/recovery failed; retrying in 30 seconds.")
 		}
 		timer := time.NewTimer(healthInterval)

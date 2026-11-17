@@ -1,4 +1,4 @@
-// Package launchd verifies the identity of a loaded job before mutation.
+// Package launchd проверяет загруженный job перед изменением.
 package launchd
 
 import (
@@ -6,8 +6,8 @@ import (
 	"strings"
 )
 
-// Matches compares top-level launchctl print fields, not a same-label plist
-// which may have been replaced after the job was loaded.
+// Matches сравнивает поля launchctl print, а не plist с той же меткой:
+// его могли заменить после загрузки.
 func Matches(output []byte, path string, argv []string) bool {
 	var loadedPath, program string
 	var args []string

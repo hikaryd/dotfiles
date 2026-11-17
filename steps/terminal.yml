@@ -45,7 +45,7 @@
       path: config/bash/.profile
       create: true
       force: true
-    # Shared local proxy for Jevgrep and Spotifast.
+    # Общий локальный прокси для Jevgrep и Spotifast.
     ~/.config/shell/local-proxy.sh:
       path: config/shell/local-proxy.sh
       create: true
@@ -54,7 +54,7 @@
       path: config/shell/claude-guard.sh
       create: true
       force: true
-    # Compiled helpers; secrets stay in ~/.config/xray-pi/.
+    # Собранные утилиты; секреты лежат в ~/.config/xray-pi/.
     ~/.local/bin/dots-tools:
       path: build/bin/dots-tools
       create: true
@@ -156,11 +156,11 @@
       force: true
 - shell:
     - command: chmod +x ~/.config/git/hooks/prepare-commit-msg
-      description: Making git hook executable
+      description: Git hook исполняемый
       stdout: false
       stderr: false
     - command: git config --global core.excludesFile '~/dots/config/git/.gitignore_global'
-      description: Setting global git excludesFile
+      description: Глобальный excludesFile для git
       stdout: true
       stderr: true
     - command: |
@@ -172,7 +172,7 @@
           echo "TPM already present; updating..."
           git -C "$HOME/.tmux/plugins/tpm" pull --ff-only || true
         fi
-      description: Installing tmux plugin manager (TPM)
+      description: Менеджер плагинов tmux (TPM)
       stdout: true
       stderr: true
     - command: |
@@ -182,7 +182,7 @@
         else
           echo "Homebrew zsh already in /etc/shells"
         fi
-      description: Adding Homebrew zsh to available shells
+      description: Homebrew zsh в /etc/shells
       stdout: true
       stderr: true
     - command: |
@@ -192,6 +192,6 @@
         else
           echo "Zsh is already the default shell"
         fi
-      description: Setting zsh as default login shell
+      description: zsh как login shell
       stdout: true
       stderr: true

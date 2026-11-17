@@ -273,15 +273,15 @@ func benchmarkMain(parent context.Context, args []string, out, errout io.Writer)
 	fs.Var(&urls, "url", "")
 	e := fs.Parse(args)
 	if errors.Is(e, flag.ErrHelp) {
-		fmt.Fprintln(out, "benchmark [--config PATH] [--all|--only TAG] [--extra TAG] [--samples 1..5] [--bytes N] [--timeout 1..30] [--max-duration SECONDS] [--url URL]")
+		fmt.Fprintln(out, "Использование: dots-vpn benchmark [--config PATH] [--all|--only TAG] [--extra TAG]\n  [--samples 1..5] [--bytes N] [--timeout 1..30] [--max-duration СЕКУНДЫ] [--url URL]\nЗамер узлов в изолированном sing-box; рабочий конфиг не меняется.\n  --config        конфиг sing-box (по умолчанию /etc/sing-box/config.json)\n  без --all/--only узлы из пула auto, не больше 16\n  --all           все proxy-узлы\n  --only TAG      только указанные теги (можно повторять)\n  --extra TAG     добавить тег к пулу auto\n  --url           источник загрузки, до 4 штук")
 		return 0
 	}
 	bad := func(s string) int { fmt.Fprintln(errout, s); return 2 }
 	if e != nil || len(fs.Args()) > 0 {
-		return bad("invalid benchmark arguments")
+		return bad("неверные аргументы, см. --help")
 	}
 	if *all && len(only) > 0 {
-		return bad("--all and --only are mutually exclusive")
+		return bad("--all и --only несовместимы")
 	}
 	provided := map[string]bool{}
 	fs.Visit(func(f *flag.Flag) { provided[f.Name] = true })
@@ -304,16 +304,16 @@ func benchmarkMain(parent context.Context, args []string, out, errout io.Writer)
 		}
 	}
 	if *samples < 1 || *samples > 5 || *size < 1 || *size > 50000000 || *timeout < 1 || *timeout > 30 {
-		return bad("samples 1..5, bytes 1..50000000, timeout 1..30")
+		return bad("допустимо: samples 1..5, bytes 1..50000000, timeout 1..30")
 	}
 	if provided["max-duration"] && (!finite(*duration) || *duration <= 0 || *duration > 86400) {
-		return bad("max-duration must be positive and at most 86400 seconds")
+		return bad("max-duration: от 0 до 86400 секунд")
 	}
 	if urls == nil {
 		urls = []string{defaultURL}
 	}
 	if len(urls) > 4 {
-		return bad("choose 1..4 download sources")
+		return bad("нужно от 1 до 4 источников --url")
 	}
 	validated := []string{}
 	for _, u := range urls {

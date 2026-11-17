@@ -128,7 +128,7 @@ func prepareNu(root string, args []string) (string, []string, []string, error) {
 	b, _ := os.ReadFile(statePath)
 	_ = json.Unmarshal(b, &state)
 	if state.Bridge == "" {
-		// Earlier cache records already included the absolute bridge path.
+		// Старые записи кэша уже содержат абсолютный путь bridge.
 		var previous [][]json.RawMessage
 		if json.Unmarshal(state.Signature, &previous) == nil && len(previous) > 4 && len(previous[4]) > 0 {
 			_ = json.Unmarshal(previous[4][0], &state.Bridge)
