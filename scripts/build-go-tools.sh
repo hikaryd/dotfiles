@@ -45,7 +45,7 @@ for name in dots-tools dots-vpn; do
   source="$build_dir/$name"
   if [[ -e "$target" || -L "$target" ]]; then
     if [[ ! -L "$target" || $(readlink "$target") != "$source" ]]; then
-      printf 'Чужая команда, не трогаю: %s\n' "$target" >&2
+      printf 'Команда уже существует, не трогаю: %s\n' "$target" >&2
       exit 1
     fi
   fi

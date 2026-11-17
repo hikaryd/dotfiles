@@ -162,7 +162,7 @@ func (c *controller) withdrawReadiness() error {
 	return writeJSON(c.path("selection.json"), s)
 }
 
-// Ошибка I/O кэша не должна оставлять в живых подтверждённо небезопасный процесс.
+// Ошибка I/O кэша не должна оставлять в живых свой процесс, признанный небезопасным.
 func (c *controller) rejectRU() error {
 	withdrawErr := c.withdrawReadiness()
 	if err := c.stop(); err != nil {
@@ -192,7 +192,7 @@ func (c *controller) maintain(state *monitorState) error {
 		}
 		key, liveErr := c.routeKey()
 		if pid <= 1 || liveErr != nil {
-			// Свой процесс с нечитаемым или чужим конфигом подхватывать нельзя.
+			// Свой процесс с нечитаемым или несовпадающим конфигом подхватывать нельзя.
 			if c.requireRunning() == nil {
 				return errNotReady
 			}

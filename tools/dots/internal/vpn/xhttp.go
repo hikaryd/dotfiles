@@ -521,7 +521,7 @@ func xhttpMain(parent context.Context, args []string, out, errout io.Writer) int
 	fs.BoolVar(&a.check, "check-only", false, "")
 	e := fs.Parse(args)
 	if errors.Is(e, flag.ErrHelp) {
-		fmt.Fprintln(out, "Использование: dots-vpn xhttp-benchmark [--source-index N] [--bytes N] [--samples N]\n  [--timeout СЕКУНДЫ] [--max-duration СЕКУНДЫ] [--url HTTPS_URL] [--install-only|--check-only]\nЗамер XHTTP через изолированный xray.\n  --source-index  строка подписки из VPN_ENV, с 0 (по умолчанию 6)\n  --install-only  только скачать и проверить xray\n  --check-only    только разобрать узел, без рукопожатия и замера")
+		fmt.Fprintln(out, "Использование: dots-vpn xhttp-benchmark [--source-index N] [--bytes N] [--samples N]\n  [--timeout СЕКУНДЫ] [--max-duration СЕКУНДЫ] [--url HTTPS_URL] [--install-only|--check-only]\nЗамер XHTTP через изолированный xray.\n  --source-index  строка подписки из VPN_ENV, с 0 (по умолчанию 6)\n  --install-only  только скачать и проверить xray\n  --check-only    скачать xray и подписку, проверить конфиг (xray -test), без рукопожатия и замера\nНужен linux/amd64.")
 		return 0
 	}
 	if e != nil || len(fs.Args()) > 0 || a.install && a.check || a.index < 0 || a.size < 1 || a.size > 50000000 || a.samples < 1 || a.samples > 5 || !finite(a.timeout) || !finite(a.duration) || a.timeout <= 0 || a.timeout > 30 || a.duration <= 0 || a.duration > 86400 {

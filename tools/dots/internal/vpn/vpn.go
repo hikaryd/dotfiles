@@ -200,11 +200,13 @@ func run(args []string, out, errout io.Writer) int {
 	switch args[0] {
 	case "generate":
 		if len(args) > 1 {
+			fmt.Fprintln(errout, help)
 			return 2
 		}
 		e = generate(ctx, env("VPN_ENV", "/etc/sing-box/vpn.env"), env("VPN_ETC", "/etc/sing-box"), out, errout)
 	case "router-setup":
 		if len(args) > 1 {
+			fmt.Fprintln(errout, help)
 			return 2
 		}
 		if action := env("ACTION", "install"); action != "install" && action != "identify" {

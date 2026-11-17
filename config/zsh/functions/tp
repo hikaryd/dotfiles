@@ -15,6 +15,6 @@ cd "$wt_path" || return 1
 # Линк .venv для Python-проекта
 if [[ -f "pyproject.toml" && ! -e ".venv" && -d "$repo_root/.venv" ]]; then
   ln -s "$repo_root/.venv" .venv
-  echo "→ linked .venv"
+  echo "→ подключён .venv"
 fi
-echo "→ cd $wt_path"
+echo "→ перехожу в $wt_path"

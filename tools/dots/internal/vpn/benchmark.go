@@ -273,7 +273,7 @@ func benchmarkMain(parent context.Context, args []string, out, errout io.Writer)
 	fs.Var(&urls, "url", "")
 	e := fs.Parse(args)
 	if errors.Is(e, flag.ErrHelp) {
-		fmt.Fprintln(out, "Использование: dots-vpn benchmark [--config PATH] [--all|--only TAG] [--extra TAG]\n  [--samples 1..5] [--bytes N] [--timeout 1..30] [--max-duration СЕКУНДЫ] [--url URL]\nЗамер узлов в изолированном sing-box; рабочий конфиг не меняется.\n  --config        конфиг sing-box (по умолчанию /etc/sing-box/config.json)\n  без --all/--only узлы из пула auto, не больше 16\n  --all           все proxy-узлы\n  --only TAG      только указанные теги (можно повторять)\n  --extra TAG     добавить тег к пулу auto\n  --url           источник загрузки, до 4 штук")
+		fmt.Fprintln(out, "Использование: dots-vpn benchmark [--config PATH] [--all|--only TAG] [--extra TAG]\n  [--samples 1..5] [--bytes N] [--timeout 1..30] [--max-duration СЕКУНДЫ] [--url URL]\nЗамер узлов в изолированном sing-box; рабочий конфиг не меняется.\n  --config        конфиг sing-box (по умолчанию /etc/sing-box/config.json)\n  без --all/--only узлы из пула auto; без --all не больше 16 узлов, иначе ошибка\n  --all           все proxy-узлы\n  --only TAG      только указанные теги (можно повторять)\n  --extra TAG     добавить тег к пулу auto; с --only и --all игнорируется\n  --url           источник загрузки, до 4 штук\nПо умолчанию samples 2, bytes 10 MB, timeout 20; с --all 1, 1 MB, 10.")
 		return 0
 	}
 	bad := func(s string) int { fmt.Fprintln(errout, s); return 2 }
@@ -307,7 +307,7 @@ func benchmarkMain(parent context.Context, args []string, out, errout io.Writer)
 		return bad("допустимо: samples 1..5, bytes 1..50000000, timeout 1..30")
 	}
 	if provided["max-duration"] && (!finite(*duration) || *duration <= 0 || *duration > 86400) {
-		return bad("max-duration: от 0 до 86400 секунд")
+		return bad("max-duration: больше 0 и не больше 86400 секунд")
 	}
 	if urls == nil {
 		urls = []string{defaultURL}

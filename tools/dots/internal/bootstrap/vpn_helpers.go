@@ -18,7 +18,7 @@ func RunVPNHelper(_ string, args []string) int {
 		fmt.Fprintln(os.Stderr, "Использование: dots-tools vpn {awg-params PATH|tuning-env [PATH]}")
 		return 2
 	}
-	if len(args) == 0 {
+	if len(args) == 0 || len(args) > 1 && strings.HasPrefix(args[1], "-") {
 		return usage()
 	}
 	var err error
