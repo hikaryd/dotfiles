@@ -12,7 +12,7 @@ default_variant = "dark"
 [dark.editor]
 bg      = "#101010"
 fg      = "#ececec"
-line    = "#1a1a1a"
+line    = "#1c1c1c"
 panel   = "#181818"
 
 [dark.ui]
@@ -21,6 +21,8 @@ bg      = "#101010"
 line    = "#232323"
 selection = "#2a2a2a"
 border    = "#282828"
+dim       = "#6c6c6c"
+divider   = "#333333"
 
 [dark.syntax]
 tag      = "#ffc799"
@@ -80,6 +82,8 @@ bg      = "#1f2430"
 line    = "#171b24"
 selection = "#34455a"
 border    = "#414d60"
+dim       = "#5c6773"
+divider   = "#2d3443"
 
 [mirage.syntax]
 tag      = "#5ccfe6"

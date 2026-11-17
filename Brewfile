@@ -62,6 +62,7 @@ brew "starship"
 
 # Git и инструменты разработки
 brew "git"
+brew "git-delta"
 brew "lazygit"
 
 # Разработка - языковые серверы и форматтеры

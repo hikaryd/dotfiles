@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -13,7 +14,7 @@ import (
 	"github.com/pelletier/go-toml/v2"
 )
 
-var toolNames = []string{"ghostty", "starship", "nushell", "tmux", "lazygit", "yazi", "jcode"}
+var toolNames = []string{"ghostty", "starship", "nushell", "tmux", "lazygit", "yazi", "jcode", "nvim", "zsh", "gitk", "fastfetch"}
 
 type palette map[string]map[string]string
 
@@ -129,6 +130,17 @@ func run(root string, args []string, out, stderr io.Writer) int {
 		}
 		if err := g.generate(name); err != nil {
 			return fail(err)
+		}
+	}
+	// bat, delta и превью yazi читают собранный кеш, а не tmtheme.xml напрямую.
+	// bat и delta закреплены за ayu-dark, поэтому кеш пересобирается только для dark.
+	if !dry && variant == "dark" && (tool == "" || tool == "yazi") {
+		if bat, err := exec.LookPath("bat"); err == nil {
+			if output, err := exec.Command(bat, "cache", "--build").CombinedOutput(); err != nil {
+				fmt.Fprintf(stderr, "dots-tools palette: bat cache --build: %v\n%s", err, output)
+			} else {
+				fmt.Fprintln(out, "  bat: cache rebuilt")
+			}
 		}
 	}
 	fmt.Fprintln(out, "Done.")

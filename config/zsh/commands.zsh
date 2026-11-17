@@ -1,6 +1,7 @@
 # Общие команды zsh: без prompt, completion, ZLE и фоновых hooks.
 # Nushell вызывает этот модуль через отдельный zsh -f.
 typeset -g DOTS_ROOT="${DOTS_ROOT:-${${(%):-%x}:A:h:h:h}}"
+source "$DOTS_ROOT/config/zsh/palette.zsh"
 
 # --- Environment ---
 export EDITOR="nvim"
@@ -68,10 +69,10 @@ alias create_mr='"$DOTS_ROOT/scripts/ai_helper" --mode mr'
 alias nvim-bench='hyperfine "nvim --startuptime /tmp/startup.log +qall" --warmup 3 --runs 10'
 
 export FZF_DEFAULT_OPTS=" \
-  --color=bg+:#2a2a2a,bg:#101010,spinner:#ffc799,hl:#ffc799 \
-  --color=fg:#ececec,header:#a0a0a0,info:#a0a0a0,pointer:#ffc799,gutter:#101010,query:#ececec,separator:#282828,scrollbar:#5c5c5c \
-  --color=marker:#99ffe4,fg+:#ececec,prompt:#ffc799,hl+:#ffc799 \
-  --color=selected-bg:#2a2a2a,border:#282828 \
+  --color=bg+:${dots_color[selection]},bg:${dots_color[bg]},spinner:${dots_color[accent]},hl:${dots_color[accent]} \
+  --color=fg:${dots_color[fg]},header:${dots_color[muted]},info:${dots_color[muted]},pointer:${dots_color[accent]},gutter:${dots_color[bg]},query:${dots_color[fg]},separator:${dots_color[border]},scrollbar:${dots_color[dim]} \
+  --color=marker:${dots_color[string]},fg+:${dots_color[fg]},prompt:${dots_color[accent]},hl+:${dots_color[accent]} \
+  --color=selected-bg:${dots_color[selection]},border:${dots_color[border]} \
   --border='rounded' --preview-window='border-rounded' \
   --prompt='> ' --marker='>' --pointer='›' --separator='─' --scrollbar='│'"
 

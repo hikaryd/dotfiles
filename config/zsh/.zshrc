@@ -69,25 +69,25 @@ bindkey '^[e' edit-command-line
 # --- Quiet Ayu — поиск и подсветка ввода ---
 typeset -A ZSH_HIGHLIGHT_STYLES
 ZSH_HIGHLIGHT_MAXLENGTH=512
-ZSH_HIGHLIGHT_STYLES[command]='fg=#ffc799'
-ZSH_HIGHLIGHT_STYLES[builtin]='fg=#ffc799'
-ZSH_HIGHLIGHT_STYLES[alias]='fg=#ffc799'
-ZSH_HIGHLIGHT_STYLES[function]='fg=#ffc799'
-ZSH_HIGHLIGHT_STYLES[unknown-token]='fg=#ff8080'
-ZSH_HIGHLIGHT_STYLES[path]='fg=#ececec,underline'
-ZSH_HIGHLIGHT_STYLES[single-quoted-argument]='fg=#99ffe4'
-ZSH_HIGHLIGHT_STYLES[double-quoted-argument]='fg=#99ffe4'
-ZSH_HIGHLIGHT_STYLES[dollar-quoted-argument]='fg=#99ffe4'
-ZSH_HIGHLIGHT_STYLES[commandseparator]='fg=#a0a0a0'
-ZSH_HIGHLIGHT_STYLES[redirection]='fg=#a0a0a0'
-ZSH_HIGHLIGHT_STYLES[globbing]='fg=#ffc799'
-ZSH_HIGHLIGHT_STYLES[assign]='fg=#ececec'
-ZSH_HIGHLIGHT_STYLES[reserved-word]='fg=#ffc799'
-ZSH_HIGHLIGHT_STYLES[comment]='fg=#a0a0a0'
-ZSH_HIGHLIGHT_STYLES[arg0]='fg=#ffc799'
+ZSH_HIGHLIGHT_STYLES[command]="fg=${dots_color[accent]}"
+ZSH_HIGHLIGHT_STYLES[builtin]="fg=${dots_color[accent]}"
+ZSH_HIGHLIGHT_STYLES[alias]="fg=${dots_color[accent]}"
+ZSH_HIGHLIGHT_STYLES[function]="fg=${dots_color[accent]}"
+ZSH_HIGHLIGHT_STYLES[unknown-token]="fg=${dots_color[error]}"
+ZSH_HIGHLIGHT_STYLES[path]="fg=${dots_color[fg]},underline"
+ZSH_HIGHLIGHT_STYLES[single-quoted-argument]="fg=${dots_color[string]}"
+ZSH_HIGHLIGHT_STYLES[double-quoted-argument]="fg=${dots_color[string]}"
+ZSH_HIGHLIGHT_STYLES[dollar-quoted-argument]="fg=${dots_color[string]}"
+ZSH_HIGHLIGHT_STYLES[commandseparator]="fg=${dots_color[muted]}"
+ZSH_HIGHLIGHT_STYLES[redirection]="fg=${dots_color[muted]}"
+ZSH_HIGHLIGHT_STYLES[globbing]="fg=${dots_color[accent]}"
+ZSH_HIGHLIGHT_STYLES[assign]="fg=${dots_color[fg]}"
+ZSH_HIGHLIGHT_STYLES[reserved-word]="fg=${dots_color[accent]}"
+ZSH_HIGHLIGHT_STYLES[comment]="fg=${dots_color[muted]}"
+ZSH_HIGHLIGHT_STYLES[arg0]="fg=${dots_color[accent]}"
 
 # Подсказка слабее ввода, но остаётся читаемой.
-ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=#a0a0a0'
+ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE="fg=${dots_color[muted]}"
 # Completion-based suggestions spawn a nested completion PTY for novel input.
 # History-only suggestions stay asynchronous and avoid input/Ctrl+C stalls.
 ZSH_AUTOSUGGEST_STRATEGY=(history)
@@ -126,7 +126,7 @@ else
   autoload -Uz add-zsh-hook _dots-prompt-find-git-dir _dots-prompt-precmd _dots-prompt-preexec
   add-zsh-hook preexec _dots-prompt-preexec
   add-zsh-hook precmd _dots-prompt-precmd
-  PROMPT='%F{#a0a0a0}󰀵 %f%F{#ececec}%5~ %f'$'\n''%F{#ffc799}>%f '
+  PROMPT="%F{${dots_color[muted]}}󰀵 %f%F{${dots_color[fg]}}%5~ %f"$'\n'"%F{${dots_color[accent]}}>%f "
 fi
 
 # These integrations must exist before ZLE draws its first editable line.

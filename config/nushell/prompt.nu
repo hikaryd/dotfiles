@@ -41,8 +41,8 @@ if '__DOTS_NU_PROMPT' not-in $env {
 _dots-refresh-prompt
 
 $env.PROMPT_COMMAND = {||
-  let dim = (ansi '#a0a0a0')
-  let text = (ansi '#ececec')
+  let dim = (ansi $theme.dim)
+  let text = (ansi $theme.text)
   let reset = (ansi reset)
   let style_file = (($env.XDG_CONFIG_HOME? | default ($nu.home-dir | path join ".config")) | path join "dots/style")
   let presentation = (try { (open --raw $style_file | str trim) == "presentation" } catch { false })
@@ -61,16 +61,16 @@ $env.PROMPT_COMMAND = {||
     let branch = if ($head | str starts-with 'ref: refs/heads/') {
       $head | str substring 16..
     } else { $head | str substring 0..<7 }
-    let git = if $branch == "" { "" } else { $" (ansi '#c8a8e0')󰘬 (_dots-prompt-text $branch)($reset)" }
+    let git = if $branch == "" { "" } else { $" (ansi $theme.hint)󰘬 (_dots-prompt-text $branch)($reset)" }
     let venv = ($env.VIRTUAL_ENV? | default "" | path basename)
-    let python = if $venv == "" { "" } else { $" (ansi '#99ffe4')(_dots-prompt-text $venv)($reset)" }
+    let python = if $venv == "" { "" } else { $" (ansi $theme.string)(_dots-prompt-text $venv)($reset)" }
     $"($dim)󰀵 ($text)(_dots-prompt-text $directory)($reset)($git)($python)($duration)\n"
   }
 }
 $env.PROMPT_COMMAND_RIGHT = {|| "" }
 $env.PROMPT_INDICATOR = {||
-  if ($env.LAST_EXIT_CODE? | default 0) != 0 { $"(ansi '#ff8080')!(ansi reset) " } else { $"(ansi '#ffc799')>(ansi reset) " }
+  if ($env.LAST_EXIT_CODE? | default 0) != 0 { $"(ansi $theme.error)!(ansi reset) " } else { $"(ansi $theme.accent)>(ansi reset) " }
 }
 $env.PROMPT_INDICATOR_VI_INSERT = $env.PROMPT_INDICATOR
-$env.PROMPT_INDICATOR_VI_NORMAL = $"(ansi '#a0a0a0')<(ansi reset) "
-$env.PROMPT_MULTILINE_INDICATOR = $"(ansi '#a0a0a0')· (ansi reset)"
+$env.PROMPT_INDICATOR_VI_NORMAL = $"(ansi $theme.dim)<(ansi reset) "
+$env.PROMPT_MULTILINE_INDICATOR = $"(ansi $theme.dim)· (ansi reset)"

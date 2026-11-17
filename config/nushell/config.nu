@@ -28,11 +28,11 @@ source prompt.nu
 # Не меняем поведение completion/history, только их стандартные яркие цвета.
 $env.config.menus = ($env.config.menus | each {|menu|
   $menu | merge {style: {
-    text: "#ececec"
-    selected_text: {fg: "#ffc799", bg: "#2a2a2a"}
-    description_text: "#a0a0a0"
-    match_text: {fg: "#ffc799"}
-    selected_match_text: {fg: "#ffc799", bg: "#2a2a2a", attr: b}
+    text: $theme.text
+    selected_text: {fg: $theme.accent, bg: $theme.selection}
+    description_text: $theme.dim
+    match_text: {fg: $theme.accent}
+    selected_match_text: {fg: $theme.accent, bg: $theme.selection, attr: b}
   }}
 })
 

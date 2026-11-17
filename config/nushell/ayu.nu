@@ -29,6 +29,8 @@ let theme = {
   constant: "#c8a8e0"
   operator: "#b0b0b0"
   error: "#ff8080"
+  info: "#8fb4e0"
+  hint: "#c8a8e0"
 }
 
 let scheme = {

@@ -22,9 +22,9 @@ set bgcolor #101010
 set fgcolor #ececec
 set uifgcolor #ececec
 set uifgdisabledcolor #8b8b8b
-set colors {"#99ffe4" #8fb4e0 #ffc799 #c8a8e0 #ff8080 #8fd3a5 #6fd1c4}
-set diffcolors {"#ff8080" "#99ffe4" #ffc799}
-set mergecolors {#ff8080 #8fb4e0 "#99ffe4" #ffc799 #c8a8e0 "#6fd1c4" #8fd3a5 "#ffd9b8" "#b0cdef" "#dcc5ef" #ffa3a3 "#b3e8c2" "#8fb4e0" "#99ffe4" "#c8a8e0" "#ffc799"}
+set colors {"#99ffe4" "#8fb4e0" "#ffc799" "#c8a8e0" "#ff8080" "#8fd3a5" "#6fd1c4"}
+set diffcolors {"#ff8080" "#99ffe4" "#ffc799"}
+set mergecolors {"#ff8080" "#8fb4e0" "#99ffe4" "#ffc799" "#c8a8e0" "#6fd1c4" "#8fd3a5" "#ffd9b8" "#b0cdef" "#dcc5ef" "#ffa3a3" "#b3e8c2" "#8fb4e0" "#99ffe4" "#c8a8e0" "#ffc799"}
 set markbgcolor #232323
 set diffcontext 3
 set selectbgcolor #2a2a2a
@@ -48,7 +48,7 @@ set linehoveroutlinecolor black
 set mainheadcirclecolor #ffc799
 set workingfilescirclecolor #ff8080
 set indexcirclecolor #99ffe4
-set circlecolors {#ececec #b0b0b0 #8b8b8b #b0b0b0 #b0b0b0}
+set circlecolors {"#ececec" "#b0b0b0" "#8b8b8b" "#b0b0b0" "#b0b0b0"}
 set linkfgcolor #ffc799
 set circleoutlinecolor black
 set diffbgcolors {"#232323" "#181818"}

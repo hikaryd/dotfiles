@@ -5,17 +5,18 @@ return {
 		lazy = false,
 		config = function()
 			-- Keep transparent editor and opaque popups.
+			local p = require("core.palette")
 			local colors = {
-				bg = "#101010",
-				fg = "#ececec",
-				muted = "#a0a0a0",
-				border = "#282828",
-				selection = "#2a2a2a",
-				accent = "#ffc799",
-				error = "#ff8080",
-				warn = "#ffc799",
-				success = "#99ffe4",
-				strings = "#99ffe4",
+				bg = p.bg,
+				fg = p.fg,
+				muted = p.muted,
+				border = p.border,
+				selection = p.selection,
+				accent = p.accent,
+				error = p.error,
+				warn = p.warning,
+				success = p.added,
+				strings = p.string,
 			}
 			local palette = require("ayu.colors")
 			local generate = palette.generate
@@ -24,11 +25,11 @@ return {
 				for key, value in pairs({
 					bg = colors.bg, fg = colors.fg, ui = colors.muted, accent = colors.accent,
 					tag = colors.accent, func = colors.accent, entity = colors.accent,
-					string = colors.strings, regexp = "#6fd1c4", markup = colors.error,
-					keyword = "#b0b0b0", special = colors.accent, comment = "#8b8b8b",
-					constant = colors.accent, operator = "#b0b0b0", error = colors.error,
+					string = colors.strings, regexp = p.regexp, markup = colors.error,
+					keyword = p.keyword, special = colors.accent, comment = p.comment,
+					constant = colors.accent, operator = p.operator, error = colors.error,
 					lsp_parameter = colors.fg, lsp_inlay_hint = colors.muted,
-					line = "#1c1c1c", panel_bg = "#181818", panel_shadow = colors.bg,
+					line = p.line, panel_bg = p.panel, panel_shadow = colors.bg,
 					panel_border = colors.border, gutter_normal = colors.border, gutter_active = colors.muted,
 					selection_bg = colors.selection, selection_inactive = colors.selection, selection_border = colors.border,
 					guide_active = colors.muted, guide_normal = colors.border,
@@ -38,7 +39,7 @@ return {
 				}) do palette[key] = value end
 				vim.g.terminal_color_background = colors.bg
 				vim.g.terminal_color_foreground = colors.fg
-				for i, color in ipairs({ "#1c1c1c", "#ff8080", "#8fd3a5", "#ffc799", "#8fb4e0", "#c8a8e0", "#6fd1c4", "#cfcfcf", "#5c5c5c", "#ffa3a3", "#b3e8c2", "#ffd9b8", "#b0cdef", "#dcc5ef", "#99ffe4", "#ffffff" }) do
+				for i, color in ipairs(p.terminal) do
 					vim.g["terminal_color_" .. (i - 1)] = color
 				end
 			end
@@ -61,7 +62,7 @@ return {
 					Directory = { fg = colors.accent },
 					Title = { fg = colors.accent, bold = true },
 					Number = { fg = colors.warn },
-					Keyword = { fg = "#b0b0b0" },
+					Keyword = { fg = p.keyword },
 					LineNr = { fg = colors.muted },
 					CursorLine = { bg = colors.bg },
 					CursorLineNr = { fg = colors.accent, bold = true },
@@ -76,15 +77,15 @@ return {
 					FloatTitle = { fg = colors.accent, bg = colors.bg, bold = true },
 					DiagnosticError = { fg = colors.error },
 					DiagnosticWarn = { fg = colors.warn },
-					DiagnosticInfo = { fg = "#8fb4e0" },
-					DiagnosticHint = { fg = "#c8a8e0" },
+					DiagnosticInfo = { fg = p.info },
+					DiagnosticHint = { fg = p.hint },
 					DiagnosticOk = { fg = colors.success },
-					MiniIconsBlue = { fg = "#8fb4e0" },
+					MiniIconsBlue = { fg = p.info },
 					MiniIconsCyan = { fg = colors.strings },
 					MiniIconsGreen = { fg = colors.success },
 					MiniIconsGrey = { fg = colors.muted },
 					MiniIconsOrange = { fg = colors.warn },
-					MiniIconsPurple = { fg = "#c8a8e0" },
+					MiniIconsPurple = { fg = p.hint },
 					MiniIconsRed = { fg = colors.error },
 					MiniIconsYellow = { fg = colors.warn },
 					FylerNormal = { link = "Normal" },

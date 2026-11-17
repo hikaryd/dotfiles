@@ -24,22 +24,31 @@ func (g generator) generateTool(name string) error {
 		if err := g.write(relative, text, false); err != nil {
 			return err
 		}
-	case "tmux":
-		relative = "tmux/tmux.conf"
-		text, err := readText(g.path(relative))
-		if err != nil {
+	case "tmux", "gitk", "fastfetch":
+		var err error
+		text := ""
+		switch name {
+		case "tmux":
+			relative = "tmux/tmux.conf"
+		case "gitk":
+			relative = "git/gitk"
+		case "fastfetch":
+			relative = "fastfetch/config.jsonc"
+		}
+		if text, err = readText(g.path(relative)); err != nil {
 			return err
 		}
-		border, err := g.color("ui", "border")
-		if err != nil {
-			return err
+		switch name {
+		case "tmux":
+			text, err = replaceLines(text, "set -g ", "'", tmuxLines, ctx)
+		case "gitk":
+			text, err = replaceLines(text, "set ", "", gitkLines, ctx)
+		case "fastfetch":
+			text, err = replaceFastfetch(text, ctx)
 		}
-		accent, err := g.color("common", "accent")
 		if err != nil {
-			return err
+			return fmt.Errorf("%s: %w", name, err)
 		}
-		text = replace(text, `pane-border-style 'fg=#[0-9a-fA-F]+'`, "pane-border-style 'fg="+border+"'")
-		text = replace(text, `pane-active-border-style 'fg=#[0-9a-fA-F]+'`, "pane-active-border-style 'fg="+accent+"'")
 		if err := g.write(relative, text, false); err != nil {
 			return err
 		}
@@ -62,10 +71,14 @@ func (g generator) generateTool(name string) error {
 		}
 	case "yazi":
 		return g.yazi()
-	case "nushell", "jcode":
+	case "nushell", "jcode", "nvim", "zsh":
 		switch name {
 		case "nushell":
 			relative = "nushell/ayu.nu"
+		case "nvim":
+			relative = "nvim/lua/core/palette.lua"
+		case "zsh":
+			relative = "zsh/palette.zsh"
 		case "jcode":
 			relative = "jcode/theme.toml"
 			mkdir = true

@@ -31,6 +31,12 @@ gui:
 git:
   # Keep remote updates explicit instead of fetching on every startup.
   autoFetch: false
+  # delta из gitconfig; --paging=never обязателен: иначе delta запускает less в фоновом PTY
+  # lazygit и процессы копятся. Вторая запись (| в lazygit) — обычный git diff.
+  diffRenderers:
+    - command: delta --{{colorScheme}} --paging=never
+    - type: rawGit
+      name: git
 refresher:
   # Preserve automatic refresh with fewer background Git/filesystem probes.
   refreshInterval: 30

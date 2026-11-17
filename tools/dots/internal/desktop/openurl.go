@@ -198,5 +198,8 @@ func openURLRun(args []string) int {
 	if _, e := command("open", target); e != nil {
 		return fail("open-url", errors.New("не удалось открыть ссылку"))
 	}
+	// Показывает настоящий адрес: у OSC 8 видимый текст может с ним не совпадать.
+	// -l отключает #{} и #(), но стили #[...] tmux всё равно разбирает: ## выводит литеральный #.
+	captureCommand(4*time.Second, 4096, "", nil, mux.Argv("display-message", "-l", "-d", "2500", "-t", pane, "󰌹 "+strings.ReplaceAll(target, "#", "##"))...)
 	return 0
 }

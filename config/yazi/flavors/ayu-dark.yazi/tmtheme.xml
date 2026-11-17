@@ -12,7 +12,7 @@
 				<key>background</key><string>#101010</string>
 				<key>foreground</key><string>#ececec</string>
 				<key>caret</key><string>#ffc799</string>
-				<key>lineHighlight</key><string>#1a1a1a</string>
+				<key>lineHighlight</key><string>#1c1c1c</string>
 				<key>selection</key><string>#2a2a2a</string>
 				<key>invisibles</key><string>#a0a0a0</string>
 			</dict>
