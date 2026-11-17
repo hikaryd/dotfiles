@@ -28,22 +28,29 @@ fi
 [[ -n "${VIRTUAL_ENV:-}" ]] && virtualenv="${VIRTUAL_ENV:t}"
 branch="${branch//\%/%%}"
 virtualenv="${virtualenv//\%/%%}"
+# .zshrc включает PROMPT_SUBST: текст из репозитория (ветка вида $(cmd)) нельзя вставлять
+# в PROMPT напрямую. Ссылка на переменную подставляет значение один раз, без вычисления.
+typeset -g _dots_prompt_branch="$branch" _dots_prompt_venv="$virtualenv"
+if [[ -o prompt_subst ]]; then
+  [[ -n "$branch" ]] && branch='${_dots_prompt_branch}'
+  [[ -n "$virtualenv" ]] && virtualenv='${_dots_prompt_venv}'
+fi
 
-prompt_line='%F{#a0a0a0}󰀵 %f%F{#ececec}%5~ %f'
-[[ -n "$branch" ]] && prompt_line+="%F{#c8a8e0}󰘬 ${branch} %f"
-[[ -n "$virtualenv" ]] && prompt_line+="%F{#99ffe4}${virtualenv} %f"
-[[ -n "$duration" ]] && prompt_line+="%F{#a0a0a0}${duration} %f"
+prompt_line="%F{${dots_color[muted]}}󰀵 %f%F{${dots_color[fg]}}%5~ %f"
+[[ -n "$branch" ]] && prompt_line+="%F{${dots_color[hint]}}󰘬 ${branch} %f"
+[[ -n "$virtualenv" ]] && prompt_line+="%F{${dots_color[string]}}${virtualenv} %f"
+[[ -n "$duration" ]] && prompt_line+="%F{${dots_color[muted]}}${duration} %f"
 # Только builtin read: профиль меняется на следующем prompt без перезапуска.
 local dots_style='glass'
 local style_file="${XDG_CONFIG_HOME:-$HOME/.config}/dots/style"
 [[ -r "$style_file" ]] && IFS= read -r dots_style < "$style_file"
 if [[ "$dots_style" == presentation ]]; then
-  prompt_line='%F{#ececec}PRESENTATION%f '
-  [[ -n "$duration" ]] && prompt_line+="%F{#a0a0a0}${duration} %f"
+  prompt_line="%F{${dots_color[fg]}}PRESENTATION%f "
+  [[ -n "$duration" ]] && prompt_line+="%F{${dots_color[muted]}}${duration} %f"
 fi
 # Состояние команды различимо и символом, и цветом; без внешних процессов.
 if (( command_status )); then
-  PROMPT="${prompt_line}"$'\n''%F{#ff8080}!%f '
+  PROMPT="${prompt_line}"$'\n'"%F{${dots_color[error]}}!%f "
 else
-  PROMPT="${prompt_line}"$'\n''%F{#ffc799}>%f '
+  PROMPT="${prompt_line}"$'\n'"%F{${dots_color[accent]}}>%f "
 fi
