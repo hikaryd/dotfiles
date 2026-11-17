@@ -114,6 +114,7 @@ const helpText = `
 Инструменты
   dots refs                  ссылки, ID и file:line из панели; --list, --json
   dots clip                  JSON, Base64, JWT, время, redact; запись с подтверждением
+  dots open-url              открыть URL под кликом мыши (вызывает tmux)
 
 Проверки
   dots status [--all]        Git, процессы, порты; --json, --interactive (r/o/q)
