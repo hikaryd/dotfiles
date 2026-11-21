@@ -55,13 +55,15 @@ printf 'foreign' > "$HOME/Library/LaunchAgents/local.dots.antigravity-update.pli
 if bash "$root/scripts/agy-install-schedule.sh" 2>/dev/null; then exit 1; fi
 [[ $(cat "$HOME/Library/LaunchAgents/local.dots.antigravity-update.plist") = foreign ]]
 : > "$LOG"
-LOADED=0 bash "$root/scripts/agy-install-update.sh"
-! grep -q '^brew ' "$LOG"
-RUNNING=0 bash "$root/scripts/agy-install-update.sh"
-! grep -q '^brew ' "$LOG"
-INSTALLED=1 bash "$root/scripts/agy-install-update.sh"
-! grep -q 'brew upgrade' "$LOG"
+mkdir -p "$HOME/.config/dots"
+printf 'import sys\nsys.exit(0)\n' > "$HOME/.config/dots/agy-install-manager-update.py"
+printf '#!/bin/bash\necho "$*" >> "$HOME/cli-log"\n' > "$HOME/.local/bin/agy"
+chmod +x "$HOME/.local/bin/agy"
+printf '#!/bin/bash\nexit "${SIGNED:-0}"\n' > "$t/bin/codesign"
+chmod +x "$t/bin/codesign"
 bash "$root/scripts/agy-install-update.sh"
-grep -q '^brew upgrade --cask lbjlaq/antigravity-manager/antigravity-tools$' "$LOG"
-if UPGRADE_STATUS=1 bash "$root/scripts/agy-install-update.sh"; then exit 1; fi
+grep -qx update "$HOME/cli-log"
+rm "$HOME/cli-log"
+SIGNED=1 bash "$root/scripts/agy-install-update.sh"
+[[ ! -e "$HOME/cli-log" ]]
 printf 'all agy setup tests passed\n'
