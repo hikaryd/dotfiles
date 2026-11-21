@@ -1,4 +1,8 @@
 - link:
+    ~/Library/LaunchAgents/local.dots.agy-router.plist:
+      path: config/antigravity/local.dots.agy-router.plist
+      create: true
+      force: false
     ~/Library/LaunchAgents/local.dots.antigravity-manager.plist:
       path: config/antigravity/local.dots.antigravity-manager.plist
       create: true

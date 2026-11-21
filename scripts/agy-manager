@@ -196,10 +196,16 @@ def launch(home, key, arguments):
                NO_PROXY='127.0.0.1,localhost,::1', no_proxy='127.0.0.1,localhost,::1')
     profile = PROFILE
     params = []
+    router = router_socket(home)
+    if router:
+        params.extend(['-D', f'ROUTER_SOCKET={router}'])
+        profile += ' (allow network-outbound (remote unix-socket (literal (param "ROUTER_SOCKET"))))'
+        env['AGY_ROUTER_SOCKET'] = str(router)
+        env['PATH'] = str(Path(__file__).resolve().parent.parent / 'tools/agy-manager/bin') + ':' + env.get('PATH', os.defpath)
     if env.get('SSH_AUTH_SOCK'):
         sock = Path(env['SSH_AUTH_SOCK']).resolve()
         if sock.is_socket() and sock.stat().st_uid == os.getuid():
-            params = ['-D', f'SSH_AGENT={sock}']
+            params.extend(['-D', f'SSH_AGENT={sock}'])
             profile += ' (allow network-outbound (remote unix-socket (literal (param "SSH_AGENT"))))'
     # config/ssh/config selects 1Password even when SSH_AUTH_SOCK points to launchd.
     agent = home / 'Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock'
@@ -216,6 +222,28 @@ def launch(home, key, arguments):
 
 
 LABEL = 'local.dots.antigravity-manager'
+
+
+def router_socket(home):
+    label = 'local.dots.agy-router'
+    domain = f'gui/{os.getuid()}'
+    plist = home / 'Library/LaunchAgents' / (label + '.plist')
+    if not plist.exists():
+        return None
+    ctl = '/bin/launchctl'
+    query = [ctl, 'print', f'{domain}/{label}']
+    result = subprocess.run(query, capture_output=True, text=True, timeout=5)
+    if result.returncode:
+        subprocess.run([ctl, 'bootstrap', domain, str(plist)], capture_output=True, timeout=5)
+        result = subprocess.run(query, capture_output=True, text=True, timeout=5)
+    lines = {line.strip() for line in result.stdout.splitlines()}
+    if not result.returncode and f'path = {plist.resolve()}' in lines and 'program = /usr/bin/nc' in lines:
+        for line in lines:
+            if line.startswith('path = /var/run/com.apple.launchd.') and line.endswith('/Listeners'):
+                sock = Path(line[7:]).resolve()
+                if sock.is_socket() and sock.stat().st_uid == os.getuid() and not sock.stat().st_mode & 0o077:
+                    return sock
+    print('agy: локальный сокет панели роутера недоступен.', file=sys.stderr)
 
 
 def job(home):
