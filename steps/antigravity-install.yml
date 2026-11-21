@@ -13,6 +13,11 @@
       description: Antigravity CLI (официальный установщик)
       stdout: true
       stderr: true
+    - command: scripts/agy-manager --dots-init-proxy
+      description: Первичная настройка UK-прокси в терминале
+      stdin: true
+      stdout: true
+      stderr: true
     - command: test "$HOME/.config/dots/agy-install-update.sh" -ef scripts/agy-install-update.sh && test "$HOME/.config/dots/agy-install-manager-update.py" -ef scripts/agy-install-manager-update.py && bash scripts/agy-install-schedule.sh
       description: Безопасное расписание обновления Antigravity Manager
       stdout: true
