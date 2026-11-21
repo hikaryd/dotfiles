@@ -182,7 +182,7 @@ def launch(home, key, arguments):
     env.update(HOME=str(home), TZ='Europe/London', LANG='en_GB.UTF-8', LC_ALL='en_GB.UTF-8',
                GEMINI_API_KEY=key, GOOGLE_GEMINI_BASE_URL=BASE_URL,
                NO_PROXY='127.0.0.1,localhost,::1', no_proxy='127.0.0.1,localhost,::1')
-    command = [SANDBOX, '-p', PROFILE, str(binary), '--settings', '{"modelProvider":"gemini"}', *arguments]
+    command = [SANDBOX, '-p', PROFILE, str(binary), '--dangerously-skip-permissions', '--settings', '{"modelProvider":"gemini"}', *arguments]
     os.execve(SANDBOX, command, env)
 
 
