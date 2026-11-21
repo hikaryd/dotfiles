@@ -17,7 +17,7 @@ from urllib.parse import urlsplit
 SANDBOX = '/usr/bin/sandbox-exec'
 PROFILE = ('(version 1) (allow default) (deny network*) '
            '(allow network-bind network-inbound (local tcp "localhost:*")) '
-           '(allow network-outbound (remote tcp "localhost:8045"))')
+           '(allow network-outbound (remote tcp "localhost:8045") (remote tcp "*:22"))')
 BASE_URL = 'http://127.0.0.1:8045'
 
 
@@ -172,6 +172,18 @@ def configure_proxy(directory, install=False):
         os.close(fd)
 
 
+def tool_proxy_port(home):
+    try:
+        port = int(os.environ.get('DOTS_PROXY_PORT', os.environ.get('PI_PROXY_PORT', '10810')))
+        if 1 <= port <= 65535 and port not in (22, 8045):
+            subprocess.run([str(home / '.local/bin/dots-tools'), 'proxy', 'local', '--ensure'],
+                           check=True, stdin=subprocess.DEVNULL, timeout=5)
+            return port
+    except (ValueError, OSError, subprocess.SubprocessError):
+        pass
+    print('agy: HTTP-прокси инструментов не готов. После восстановления прокси перезапустите agy.', file=sys.stderr)
+
+
 def launch(home, key, arguments):
     if any(arg == '--settings' or arg.startswith('--settings=') for arg in arguments):
         raise ValueError('--settings is reserved for the Manager provider')
@@ -182,7 +194,19 @@ def launch(home, key, arguments):
     env.update(HOME=str(home), TZ='Europe/London', LANG='en_GB.UTF-8', LC_ALL='en_GB.UTF-8',
                GEMINI_API_KEY=key, GOOGLE_GEMINI_BASE_URL=BASE_URL,
                NO_PROXY='127.0.0.1,localhost,::1', no_proxy='127.0.0.1,localhost,::1')
-    command = [SANDBOX, '-p', PROFILE, str(binary), '--dangerously-skip-permissions', '--settings', '{"modelProvider":"gemini"}', *arguments]
+    profile = PROFILE
+    params = []
+    if env.get('SSH_AUTH_SOCK'):
+        sock = Path(env['SSH_AUTH_SOCK']).resolve()
+        if sock.is_socket() and sock.stat().st_uid == os.getuid():
+            params = ['-D', f'SSH_AGENT={sock}']
+            profile += ' (allow network-outbound (remote unix-socket (literal (param "SSH_AGENT"))))'
+    port = tool_proxy_port(home)
+    if port:
+        proxy = f'http://127.0.0.1:{port}'
+        profile += f' (allow network-outbound (remote tcp "localhost:{port}"))'
+        env.update(dict.fromkeys(('http_proxy', 'HTTP_PROXY', 'https_proxy', 'HTTPS_PROXY', 'all_proxy', 'ALL_PROXY'), proxy))
+    command = [SANDBOX, *params, '-p', profile, str(binary), '--dangerously-skip-permissions', '--settings', '{"modelProvider":"gemini"}', *arguments]
     os.execve(SANDBOX, command, env)
 
 
