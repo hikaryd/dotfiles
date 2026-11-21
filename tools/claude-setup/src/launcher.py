@@ -294,7 +294,9 @@ def run_agy(arguments, config):
         raise RuntimeError("Не найден исполняемый файл ~/.local/bin/agy")
     url = config.get("proxy_url", "")
     port = relay(url)
-    env = dict(os.environ, **UK_ENV, **proxy_variables(local_proxy(url, port)))
+    # With no direct hosts the relay forwards raw bytes, including SOCKS5.
+    proxy = proxy_variables(local_proxy(url, port), config.get('agy_proxy_protocol', 'http'))
+    env = dict(os.environ, **UK_ENV, **proxy)
     env["no_proxy"] = env["NO_PROXY"] = "localhost,127.0.0.1,::1"
     env["PATH"] = str(binary.parent) + os.pathsep + env["PATH"]
     command = sandbox_argv(profile(port, working_directory=Path.cwd()), [str(binary), *arguments])
@@ -373,7 +375,7 @@ def main():
         close_extra_fds()
         mode, *arguments = sys.argv[1:]
         if mode == "claude-setup" and arguments in ([], ["--help"], ["-h"]):
-            print("Использование: claude-setup configure|configure-direct|settings|check|install|relay-stop|agy [args]")
+            print("Использование: claude-setup configure|configure-direct|settings|check|install|relay-stop|agy-protocol http|socks5h|agy [args]")
             return
         if mode == "claude-setup" and arguments == ["configure"]:
             configure()
@@ -390,6 +392,13 @@ def main():
             return
         if mode == "claude-browser":
             run_browser(arguments)
+            return
+        if mode == "claude-setup" and arguments[:1] == ["agy-protocol"]:
+            if arguments[1:] not in (["http"], ["socks5h"]):
+                raise ValueError("Использование: claude-setup agy-protocol http|socks5h")
+            config = settings()
+            config["agy_proxy_protocol"] = arguments[1]
+            write_owned(CONFIG, json.dumps(config, indent=2) + "\n")
             return
         if mode == "claude-setup" and arguments[:1] == ["agy"]:
             run_agy(arguments[1:], settings())

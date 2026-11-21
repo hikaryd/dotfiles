@@ -31,6 +31,15 @@ class AgyTest(unittest.TestCase):
                 self.assertEqual(env['HTTPS_PROXY'], 'http://127.0.0.1:4321')
                 self.assertNotIn('*', env['NO_PROXY'])
                 self.assertEqual((env['HOME'], env['TZ'], env['LC_ALL']), (str(home), 'Europe/London', 'en_GB.UTF-8'))
+                config.update(agy_proxy_protocol='socks5h', proxy_url='http://user:p%40ss@192.0.2.1:8000')
+                launcher.run_agy(args, config)
+                env = execute.call_args.args[2]
+                for key in ('http_proxy', 'https_proxy', 'HTTP_PROXY', 'HTTPS_PROXY', 'ALL_PROXY', 'all_proxy'):
+                    self.assertEqual(env[key], 'socks5h://user:p%40ss@127.0.0.1:4321')
+                execute.reset_mock()
+                with self.assertRaises(ValueError):
+                    launcher.run_agy(args, dict(config, agy_proxy_protocol='direct'))
+                execute.assert_not_called()
                 execute.reset_mock()
                 relay.side_effect = RuntimeError('offline')
                 with self.assertRaisesRegex(RuntimeError, 'offline'):

@@ -165,8 +165,12 @@ def make_host_profile(protected_paths=()):
     return '\n'.join(lines) + '\n'
 
 
-def proxy_variables(url):
-    validate_proxy(url)
+def proxy_variables(url, protocol='http'):
+    proxy = validate_proxy(url)
+    if protocol == 'socks5h':
+        url = proxy._replace(scheme='socks5h').geturl()
+    elif protocol != 'http':
+        raise ValueError('Unsupported local proxy protocol')
     return dict.fromkeys(('http_proxy', 'https_proxy', 'HTTP_PROXY', 'HTTPS_PROXY', 'ALL_PROXY', 'all_proxy'), url)
 
 
