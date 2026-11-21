@@ -17,3 +17,5 @@ src/*
 !src/ssh_proxy.py
 !src/webrtc-manifest.json
 !src/webrtc-policy.js
+!tests/
+!tests/test_agy.py

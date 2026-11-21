@@ -165,14 +165,18 @@ def make_host_profile(protected_paths=()):
     return '\n'.join(lines) + '\n'
 
 
-def proxy_env(url, home, tmp):
+def proxy_variables(url):
     validate_proxy(url)
+    return dict.fromkeys(('http_proxy', 'https_proxy', 'HTTP_PROXY', 'HTTPS_PROXY', 'ALL_PROXY', 'all_proxy'), url)
+
+
+def proxy_env(url, home, tmp):
     home, tmp = _directory(home), _directory(tmp)
     env = {'PATH': '/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin'}
     for key in ('TERM', 'COLORTERM', 'LANG', 'LC_ALL', 'LC_CTYPE'):
         if key in os.environ:
             env[key] = os.environ[key]
-    env.update({'HOME': home, 'TMPDIR': tmp, 'http_proxy': url, 'https_proxy': url, 'HTTP_PROXY': url, 'HTTPS_PROXY': url, 'ALL_PROXY': url, 'all_proxy': url})
+    env.update(proxy_variables(url), HOME=home, TMPDIR=tmp)
     return env
 
 
