@@ -9,3 +9,4 @@ case ":${PATH}:" in
 esac
 
 [[ -r "$HOME/.config/shell/claude-guard.sh" ]] && source "$HOME/.config/shell/claude-guard.sh"
+[[ -r "$HOME/.config/shell/agy-manager.sh" ]] && source "$HOME/.config/shell/agy-manager.sh"

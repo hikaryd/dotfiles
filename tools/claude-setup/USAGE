@@ -32,14 +32,6 @@ configure:
   Вход в аккаунт отдельно, автообновление выключено.
   UK задаётся окружением: TZ=Europe/London, LANG/LC_ALL=en_GB.UTF-8.
 
-Antigravity CLI:
-  В новой оболочке dots запустите agy. Для скриптов: ~/.local/bin/claude-setup agy [args].
-  Guard запускает оригинальный ~/.local/bin/agy с обычным HOME, тем же UK-прокси
-  и локалью, без списка configure-direct. Как у Claude, окружение запуска очищено.
-  Если тот же порт прокси поддерживает SOCKS5: claude-setup agy-protocol socks5h.
-  Имена разрешает прокси. Вернуть режим по умолчанию: claude-setup agy-protocol http.
-  Явный вызов ~/.local/bin/agy и браузер для входа остаются вне этой настройки.
-
 configure-direct (корпоративные адреса мимо прокси):
   Скрытый ввод: точные DNS-имена или IP через запятую, host[:port],
   IPv6 как [адрес]:port, без URL и масок. Порт по умолчанию 443.

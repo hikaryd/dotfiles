@@ -165,22 +165,14 @@ def make_host_profile(protected_paths=()):
     return '\n'.join(lines) + '\n'
 
 
-def proxy_variables(url, protocol='http'):
-    proxy = validate_proxy(url)
-    if protocol == 'socks5h':
-        url = proxy._replace(scheme='socks5h').geturl()
-    elif protocol != 'http':
-        raise ValueError('Unsupported local proxy protocol')
-    return dict.fromkeys(('http_proxy', 'https_proxy', 'HTTP_PROXY', 'HTTPS_PROXY', 'ALL_PROXY', 'all_proxy'), url)
-
-
 def proxy_env(url, home, tmp):
+    validate_proxy(url)
     home, tmp = _directory(home), _directory(tmp)
     env = {'PATH': '/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin'}
     for key in ('TERM', 'COLORTERM', 'LANG', 'LC_ALL', 'LC_CTYPE'):
         if key in os.environ:
             env[key] = os.environ[key]
-    env.update(proxy_variables(url), HOME=home, TMPDIR=tmp)
+    env.update({'HOME': home, 'TMPDIR': tmp, 'http_proxy': url, 'https_proxy': url, 'HTTP_PROXY': url, 'HTTPS_PROXY': url, 'ALL_PROXY': url, 'all_proxy': url})
     return env
 
 

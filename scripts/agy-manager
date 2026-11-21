@@ -1,0 +1,218 @@
+#!/usr/bin/python3 -I
+import ctypes
+import fcntl
+import json
+import os
+from pathlib import Path
+import stat
+import subprocess
+import sys
+import time
+from urllib.parse import urlsplit
+
+SANDBOX = '/usr/bin/sandbox-exec'
+PROFILE = ('(version 1) (allow default) (deny network*) '
+           '(allow network-bind network-inbound (local tcp "localhost:*")) '
+           '(allow network-outbound (remote tcp "localhost:8045"))')
+BASE_URL = 'http://127.0.0.1:8045'
+
+
+APP = '/Applications/Antigravity Tools.app'
+SERVER = APP + '/Contents/MacOS/antigravity-server'
+GUI = APP + '/Contents/MacOS/antigravity-tools'
+
+
+def listener():
+    result = subprocess.run(['/usr/sbin/lsof', '-nP', '-iTCP:8045', '-sTCP:LISTEN', '-Fpn'], capture_output=True, text=True, timeout=5)
+    if result.returncode not in (0, 1) or result.stderr.strip():
+        raise ValueError('Cannot inspect Manager listener')
+    records = result.stdout.splitlines()
+    if not records:
+        return None
+    if len(records) != 3 or not records[0].startswith('p') or not records[1].startswith('f') or records[2] != 'n127.0.0.1:8045':
+        raise ValueError('Port 8045 is not a single loopback Manager listener')
+    try:
+        pid = int(records[0][1:])
+    except ValueError:
+        raise ValueError('Invalid Manager listener') from None
+    buffer = ctypes.create_string_buffer(4096)
+    proc = ctypes.CDLL('/usr/lib/libproc.dylib')
+    if proc.proc_pidpath(pid, buffer, len(buffer)) <= 0:
+        raise ValueError('Cannot verify Manager listener')
+    executable = os.fsdecode(buffer.value)
+    uid = subprocess.run(['/bin/ps', '-p', str(pid), '-o', 'uid='], capture_output=True, text=True, timeout=5, check=True).stdout.strip()
+    if executable not in (SERVER, GUI) or uid != str(os.getuid()):
+        raise ValueError('Port 8045 belongs to another process')
+    return executable
+
+
+def private_json(directory, name):
+    flags = os.O_RDONLY | os.O_NOFOLLOW
+    directory_fd = os.open(directory, flags | os.O_DIRECTORY)
+    try:
+        info = os.fstat(directory_fd)
+        if info.st_uid != os.getuid() or info.st_mode & 0o077:
+            raise ValueError('Manager directory must be owned and private')
+        fd = os.open(name, flags, dir_fd=directory_fd)
+        try:
+            info = os.fstat(fd)
+            if not stat.S_ISREG(info.st_mode) or info.st_uid != os.getuid() or info.st_mode & 0o022:
+                raise ValueError('Manager configuration must be owned and not writable by others')
+            with os.fdopen(fd, encoding='utf-8') as source:
+                fd = -1
+                return json.load(source)
+        finally:
+            if fd != -1:
+                os.close(fd)
+    finally:
+        os.close(directory_fd)
+
+
+def manager_key(config):
+    if not isinstance(config, dict):
+        raise ValueError('Invalid Manager configuration')
+    proxy = config.get('proxy')
+    if not isinstance(proxy, dict) or proxy.get('port') != 8045 or proxy.get('allow_lan_access') is not False or proxy.get('auth_mode') != 'strict':
+        raise ValueError('Manager must use strict authentication on loopback port 8045')
+    upstream = proxy.get('upstream_proxy')
+    pool = proxy.get('proxy_pool')
+    if not isinstance(upstream, dict) or upstream.get('enabled') is not True or not isinstance(upstream.get('url'), str) or not upstream['url'].startswith('socks5h://') or not isinstance(pool, dict) or pool.get('enabled') is not False:
+        raise ValueError('Configure the Manager UK SOCKS5 proxy and disable the proxy pool')
+    url = upstream['url']
+    try:
+        parsed = urlsplit(url)
+        if not (parsed.hostname and parsed.port) or parsed.path or parsed.query or parsed.fragment or any(ord(c) <= 32 for c in url) or '\\' in url:
+            raise ValueError()
+    except ValueError:
+        raise ValueError('Invalid Manager SOCKS5 host or port') from None
+    key = proxy.get('api_key')
+    if not isinstance(key, str) or not key.strip() or '\x00' in key:
+        raise ValueError('Manager local API key is missing')
+    return key
+
+
+def has_account(index):
+    if not isinstance(index, dict):
+        raise ValueError('Invalid Manager account index')
+    accounts = index.get('accounts')
+    if not isinstance(accounts, list):
+        raise ValueError('Invalid Manager account index')
+    return any(isinstance(account, dict) and account.get('id') and not account.get('disabled', False) and not account.get('proxy_disabled', False) for account in accounts)
+
+
+def launch(home, key, arguments):
+    if any(arg == '--settings' or arg.startswith('--settings=') for arg in arguments):
+        raise ValueError('--settings is reserved for the Manager provider')
+    binary = home / '.local/bin/agy'
+    if not binary.is_file() or not os.access(binary, os.X_OK):
+        raise ValueError('Original ~/.local/bin/agy is not installed')
+    env = {key: os.environ[key] for key in ('HOME', 'USER', 'LOGNAME', 'PATH', 'SHELL', 'TERM', 'COLORTERM', 'TMPDIR', 'DISPLAY', 'SSH_AUTH_SOCK') if key in os.environ}
+    env.update(HOME=str(home), TZ='Europe/London', LANG='en_GB.UTF-8', LC_ALL='en_GB.UTF-8',
+               GEMINI_API_KEY=key, GOOGLE_GEMINI_BASE_URL=BASE_URL,
+               NO_PROXY='127.0.0.1,localhost,::1', no_proxy='127.0.0.1,localhost,::1')
+    command = [SANDBOX, '-p', PROFILE, str(binary), '--settings', '{"modelProvider":"gemini"}', *arguments]
+    os.execve(SANDBOX, command, env)
+
+
+LABEL = 'local.dots.antigravity-manager'
+
+
+def job(home):
+    domain = f'gui/{os.getuid()}'
+    target = f'{domain}/{LABEL}'
+    plist = home / 'Library/LaunchAgents' / (LABEL + '.plist')
+    result = subprocess.run(['/bin/launchctl', 'print', target], capture_output=True, text=True, timeout=5)
+    if result.returncode:
+        return domain, target, plist, False
+    lines = {line.strip() for line in result.stdout.splitlines()}
+    if not ({f'path = {plist}', f'path = {plist.resolve()}'} & lines) or 'program = /bin/sh' not in lines or 'exec "$HOME/.local/bin/agy-manager" --dots-service' not in lines:
+        raise ValueError('Refusing to control an unrecognized Manager job')
+    return domain, target, plist, True
+
+
+def wait_listener(expected, seconds=8):
+    deadline = time.monotonic() + seconds
+    while time.monotonic() < deadline:
+        current = listener()
+        if current == expected:
+            return
+        if current is not None and not (expected is None and current == SERVER):
+            raise ValueError('Port 8045 is occupied by another Manager process')
+        time.sleep(0.2)
+    raise ValueError('Manager did not become ready')
+
+
+def ensure_server(home):
+    current = listener()
+    if current == SERVER:
+        return
+    if current is not None:
+        raise ValueError('Manager GUI is running; quit it, then retry agy')
+    domain, target, plist, loaded = job(home)
+    if not loaded:
+        subprocess.run(['/bin/launchctl', 'bootstrap', domain, str(plist)], check=True, capture_output=True, timeout=10)
+    else:
+        subprocess.run(['/bin/launchctl', 'kickstart', target], check=True, capture_output=True, timeout=10)
+    wait_listener(SERVER)
+
+
+def show_login(home):
+    current = listener()
+    if current == GUI:
+        subprocess.run(['/usr/bin/open', '-a', APP], check=True, capture_output=True, timeout=10)
+        return
+    if current != GUI:
+        _, target, _, loaded = job(home)
+        if current == SERVER and not loaded:
+            raise ValueError('Headless Manager is not the owned launch job; stop it manually')
+        if loaded:
+            subprocess.run(['/bin/launchctl', 'bootout', target], check=True, capture_output=True, timeout=10)
+            wait_listener(None)
+    subprocess.run(['/usr/bin/open', '-a', APP], check=True, capture_output=True, timeout=10)
+
+
+def load_state(home):
+    directory = home / '.antigravity_tools'
+    try:
+        index = private_json(directory, 'accounts.json')
+    except FileNotFoundError:
+        return None
+    if not has_account(index):
+        return None
+    return manager_key(private_json(directory, 'gui_config.json'))
+
+
+def service(home):
+    os.umask(0o077)
+    if load_state(home) is None or listener() is not None:
+        return
+    env = {key: os.environ[key] for key in ('HOME', 'USER', 'LOGNAME', 'PATH', 'TMPDIR') if key in os.environ}
+    os.execve(SERVER, [SERVER, '--host', '127.0.0.1', '--port', '8045', '--no-web'], env)
+
+
+def main():
+    home = Path.home()
+    if sys.argv[1:] == ['--dots-service']:
+        service(home)
+        return
+    # Keep the shared lock across exec so scheduled upgrades cannot interrupt a CLI session.
+    lock = os.open(home / 'Library/LaunchAgents/.agy-manager.lock', os.O_CREAT | os.O_RDONLY | os.O_NOFOLLOW, 0o600)
+    fcntl.flock(lock, fcntl.LOCK_SH)
+    os.set_inheritable(lock, True)
+    (home / '.antigravity_tools').mkdir(mode=0o700, exist_ok=True)
+    key = load_state(home)
+    if key is None:
+        show_login(home)
+        print('Sign in to Manager, then quit its window and run agy again.', file=sys.stderr)
+        return
+    ensure_server(home)
+    launch(home, key, sys.argv[1:])
+
+
+if __name__ == '__main__':
+    try:
+        main()
+    except (OSError, ValueError, subprocess.SubprocessError) as error:
+        message = str(error) if type(error) is ValueError else 'Manager setup or local service unavailable'
+        print(f'agy-manager: {message}', file=sys.stderr)
+        sys.exit(1)

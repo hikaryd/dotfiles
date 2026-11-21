@@ -1,0 +1,28 @@
+Antigravity CLI через локальный Manager (macOS)
+
+Запустите ./install. Он ставит оригинальный Antigravity CLI в ~/.local/bin/agy. Brewfile
+ставит Antigravity Tools; dots линкует отдельный ~/.local/bin/agy-manager и
+LaunchAgent, не меняя оригинальный CLI. В новой оболочке dots команда agy
+использует Manager; для скриптов вызывайте ~/.local/bin/agy-manager.
+Ежедневные обновления проверяет local.dots.antigravity-update; обновление
+Manager откладывается, пока открыта сессия agy или окно Manager.
+
+На новой машине откройте Antigravity Tools, войдите в Google-аккаунт и в API
+Proxy задайте порт 8045, только loopback (Allow LAN выключен), Strict auth и
+локальный API key. Отдельно настройте в Manager Upstream Proxy на работающий
+UK SOCKS5-прокси с удалённым DNS (socks5h), отключите Proxy Pool. Не вставляйте
+ключи и URL с паролями в shell history, Git или аргументы команд. Закройте
+Manager после настройки; agy запустит headless job при следующем вызове.
+
+Каталог ~/.antigravity_tools должен принадлежать пользователю и иметь права
+0700, gui_config.json и accounts.json не должны быть доступны для записи
+другим пользователям. Рекомендуемые права файла config: 0600. Не переносите
+Google credentials в dots. При отсутствии аккаунта agy откроет Manager для
+входа, не меняя чужой процесс на порту 8045. После входа закройте Manager и
+повторите agy. Если Manager или UK-прокси недоступен, запрос не переключается
+на прямое соединение с Google.
+
+Аргументы передаются оригинальному CLI, кроме --settings: этот параметр занят
+для modelProvider=gemini. Выбор модели в CLI сохраняется. Явный прямой запуск
+~/.local/bin/agy не защищён этой настройкой. Изолированные тесты:
+  python3 tools/agy-manager/tests/test_agy_manager.py

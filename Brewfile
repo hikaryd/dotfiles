@@ -129,6 +129,7 @@ brew "ffmpeg"
 brew "bat-extras" 
 
 # Приложения
+cask "lbjlaq/antigravity-manager/antigravity-tools" # Локальный API Manager для agy
 cask "vorssaint" # Батарея, системный монитор и управление звуком в одном menu bar app
 cask "telegram" # Swift client
 cask "crmne/tap/spotifast"

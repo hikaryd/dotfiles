@@ -109,6 +109,12 @@ class ManagerTests(unittest.TestCase):
         u.manager_update()
         self.assertFalse(any(x[0] == 'launchctl' for x in self.calls))
 
+    def test_open_agy_session_defers_update(self):
+        with (self.plist.parent / '.agy-manager.lock').open('w') as session:
+            u.fcntl.flock(session, u.fcntl.LOCK_SH)
+            u.manager_update()
+            self.assertFalse(any(x[0] == 'launchctl' for x in self.calls))
+
     def test_foreign_plist_never_stops(self):
         self.plist.write_bytes(plistlib.dumps({'Label': u.LABEL}))
         with self.assertRaises(ValueError):

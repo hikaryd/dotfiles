@@ -3,7 +3,7 @@ def --wrapped claude [...args: string] {
   ^($nu.home-dir | path join ".local/bin/claude") ...$args
 }
 def --wrapped agy [...args: string] {
-  ^($nu.home-dir | path join ".local/bin/claude-setup") agy ...$args
+  ^($nu.home-dir | path join ".local/bin/agy-manager") ...$args
 }
 alias zs = ^($env.DOTS_ROOT | path join "scripts/dots-zsh") --run
 

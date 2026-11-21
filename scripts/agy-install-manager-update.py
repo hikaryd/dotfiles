@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 import ctypes
+import fcntl
 import os
 from pathlib import Path
 import plistlib
@@ -12,7 +13,7 @@ LABEL = 'local.dots.antigravity-manager'
 CASK = 'lbjlaq/antigravity-manager/antigravity-tools'
 SERVER = '/Applications/Antigravity Tools.app/Contents/MacOS/antigravity-server'
 GUI = '/Applications/Antigravity Tools.app/Contents/MacOS/antigravity-tools'
-EXPECTED = {'Label': LABEL, 'ProgramArguments': ['/bin/sh', '-c', 'exec "$HOME/.local/bin/agy-manager" --dots-service'], 'RunAtLoad': True}
+EXPECTED = {'Label': LABEL, 'ProgramArguments': ['/bin/sh', '-c', 'exec "$HOME/.local/bin/agy-manager" --dots-service'], 'RunAtLoad': True, 'Umask': 63}
 
 
 def run(*args):
@@ -37,6 +38,19 @@ def manager_update():
         raise ValueError('cannot check Manager updates')
     if not outdated.stdout.strip():
         return
+    fd = os.open(Path.home() / 'Library/LaunchAgents/.agy-manager.lock', os.O_CREAT | os.O_RDONLY | os.O_NOFOLLOW, 0o600)
+    try:
+        try:
+            fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            print('Manager update deferred: active agy session')
+            return
+        upgrade_idle()
+    finally:
+        os.close(fd)
+
+
+def upgrade_idle():
     domain = f'gui/{os.getuid()}'
     target = f'{domain}/{LABEL}'
     path = Path.home() / 'Library/LaunchAgents' / (LABEL + '.plist')
@@ -53,7 +67,8 @@ def manager_update():
             with path.open('rb') as f:
                 if plistlib.load(f) != EXPECTED:
                     raise ValueError('foreign Manager plist')
-            if f'path = {path}' not in result.stdout or 'program = /bin/sh' not in result.stdout or EXPECTED['ProgramArguments'][2] not in result.stdout:
+            lines = {line.strip() for line in result.stdout.splitlines()}
+            if not ({f'path = {path}', f'path = {path.resolve()}'} & lines) or 'program = /bin/sh' not in lines or EXPECTED['ProgramArguments'][2] not in lines:
                 raise ValueError('foreign loaded Manager job')
             match = re.search(r'^\s*pid = (\d+)\s*$', result.stdout, re.MULTILINE)
             if not match:

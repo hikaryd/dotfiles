@@ -1,4 +1,16 @@
 - link:
+    ~/Library/LaunchAgents/local.dots.antigravity-manager.plist:
+      path: config/antigravity/local.dots.antigravity-manager.plist
+      create: true
+      force: false
+    ~/.local/bin/agy-manager:
+      path: scripts/agy-manager
+      create: true
+      force: false
+    ~/.config/shell/agy-manager.sh:
+      path: config/shell/agy-manager.sh
+      create: true
+      force: true
     ~/.local/bin/spotifast-app:
       path: scripts/spotifast-launch.sh
       create: true

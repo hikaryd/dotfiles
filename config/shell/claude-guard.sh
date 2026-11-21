@@ -5,5 +5,3 @@ case "${PATH-}" in
 esac
 unalias claude 2>/dev/null || :
 claude() { "$HOME/.local/bin/claude" "$@"; }
-unalias agy 2>/dev/null || :
-agy() { "$HOME/.local/bin/claude-setup" agy "$@"; }
