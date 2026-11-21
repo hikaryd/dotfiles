@@ -201,6 +201,11 @@ def launch(home, key, arguments):
         if sock.is_socket() and sock.stat().st_uid == os.getuid():
             params = ['-D', f'SSH_AGENT={sock}']
             profile += ' (allow network-outbound (remote unix-socket (literal (param "SSH_AGENT"))))'
+    # config/ssh/config selects 1Password even when SSH_AUTH_SOCK points to launchd.
+    agent = home / 'Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock'
+    if not agent.is_symlink() and agent.is_socket() and agent.stat().st_uid == os.getuid():
+        params.extend(['-D', f'OP_AGENT={agent}'])
+        profile += ' (allow network-outbound (remote unix-socket (literal (param "OP_AGENT"))))'
     port = tool_proxy_port(home)
     if port:
         proxy = f'http://127.0.0.1:{port}'
