@@ -1,0 +1,15 @@
+- link:
+    ~/.config/dots/agy-install-update.sh:
+      path: scripts/agy-install-update.sh
+      create: true
+      force: false
+
+- shell:
+    - command: bash scripts/agy-install.sh
+      description: Antigravity CLI (официальный установщик)
+      stdout: true
+      stderr: true
+    - command: test "$HOME/.config/dots/agy-install-update.sh" -ef scripts/agy-install-update.sh && bash scripts/agy-install-schedule.sh
+      description: Безопасное расписание обновления Antigravity Manager
+      stdout: true
+      stderr: true
