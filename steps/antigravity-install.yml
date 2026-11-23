@@ -3,8 +3,12 @@
       path: scripts/agy-install-update.sh
       create: true
       force: false
-    ~/.config/dots/agy-install-manager-update.py:
-      path: scripts/agy-install-manager-update.py
+    ~/.local/bin/agy-statusline:
+      path: scripts/agy-statusline
+      create: true
+      force: false
+    ~/.gemini/GEMINI.md:
+      path: config/antigravity/rules/response-style.md
       create: true
       force: false
 
@@ -13,12 +17,26 @@
       description: Antigravity CLI (официальный установщик)
       stdout: true
       stderr: true
+    - command: |
+        uid="$(id -u)"
+        for label in local.dots.agy-router local.dots.antigravity-manager; do
+          launchctl bootout "gui/$uid/$label" 2>/dev/null || true
+          rm -f "$HOME/Library/LaunchAgents/$label.plist"
+        done
+        rm -f "$HOME/.config/dots/agy-install-manager-update.py"
+      description: Очистка устаревших LaunchAgent от локального Antigravity Manager
+      stdout: false
+      stderr: false
     - command: scripts/agy-manager --dots-init-proxy
-      description: Первичная настройка UK-прокси в терминале
+      description: Первичная настройка прокси и API-ключа для agy
       stdin: true
       stdout: true
       stderr: true
-    - command: test "$HOME/.config/dots/agy-install-update.sh" -ef scripts/agy-install-update.sh && test "$HOME/.config/dots/agy-install-manager-update.py" -ef scripts/agy-install-manager-update.py && bash scripts/agy-install-schedule.sh
-      description: Безопасное расписание обновления Antigravity Manager
+    - command: test "$HOME/.config/dots/agy-install-update.sh" -ef scripts/agy-install-update.sh && bash scripts/agy-install-schedule.sh
+      description: Расписание обновления Antigravity CLI
+      stdout: true
+      stderr: true
+    - command: bash scripts/agy-setup.sh
+      description: Плагин Antigravity (навыки, правила, субагент и MCP)
       stdout: true
       stderr: true

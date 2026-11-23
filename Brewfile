@@ -129,7 +129,6 @@ brew "ffmpeg"
 brew "bat-extras" 
 
 # Приложения
-cask "lbjlaq/antigravity-manager/antigravity-tools" # Локальный API Manager для agy
 cask "vorssaint" # Батарея, системный монитор и управление звуком в одном menu bar app
 cask "telegram" # Swift client
 cask "crmne/tap/spotifast"
@@ -137,6 +136,8 @@ brew "kcat"
 cask "1password"
 cask "1password-cli"
 cask "ghostty"
+brew "pg83/tap/shitty" # Терминал; Shitty.app собирает scripts/shitty-app.sh
+cask "font-jetbrains-mono-nerd-font" # Ghostty встраивает этот шрифт, shitty берёт системный
 cask "mos"       
 cask "karabiner-elements"
 cask "duongductrong/snapzy/snapzy"

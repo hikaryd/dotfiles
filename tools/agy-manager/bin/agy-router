@@ -1,4 +1,0 @@
-#!/bin/sh
-set -eu
-case ${1:-/} in /*) ;; *) printf 'usage: agy-router [/path]\n' >&2; exit 2;; esac
-exec /usr/bin/curl -q --silent --show-error --max-time 15 --noproxy '*' --unix-socket "${AGY_ROUTER_SOCKET:?run inside agy-manager}" --url "http://192.168.254.1${1:-/}"

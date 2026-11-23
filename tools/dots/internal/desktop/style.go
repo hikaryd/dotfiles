@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 	"runtime"
 	"strings"
 	"time"
@@ -174,7 +175,43 @@ end tell`
 	fmt.Fprintln(os.Stderr, "Ghostty: profile saved; live reload unavailable (Cmd+Shift+, then Cmd+0).")
 	return 1
 }
-func styleRun(args []string) int {
+
+// Прозрачности у shitty нет, поэтому glass и focus совпадают.
+var shittyPresentation = [][2]string{{"fontsize", "20"}, {"fg", `"#f5f5f5"`}, {"title", `"Presentation"`}}
+
+// Без файла из import shitty не запускается, а необязательного import у него нет.
+// Поэтому конфиг собирается целиком: база из dots и переопределения стиля.
+func writeShittyConfig(root, mode string) error {
+	base, e := os.ReadFile(filepath.Join(root, "config/shitty/shitty.toml"))
+	if os.IsNotExist(e) {
+		fmt.Fprintln(os.Stderr, "Shitty: config/shitty/shitty.toml не найден, конфиг не обновлён.")
+		return nil
+	}
+	if e != nil {
+		return e
+	}
+	text := string(base)
+	if mode == "presentation" {
+		// Повторный ключ shitty принимает молча; чей побеждает, не гарантировано.
+		for _, kv := range shittyPresentation {
+			text = regexp.MustCompile(`(?m)^[ \t]*`+kv[0]+`[ \t]*=.*\n?`).ReplaceAllString(text, "")
+		}
+		text = strings.TrimRight(text, "\n") + "\n\n# dots style presentation\n"
+		for _, kv := range shittyPresentation {
+			text += kv[0] + " = " + kv[1] + "\n"
+		}
+	}
+	if e := atomicWrite(filepath.Join(configHome(), "shitty/shitty.toml"), []byte(text)); e != nil {
+		return e
+	}
+	// SIGUSR1 перечитывает конфиг. Полный путь бандла не задевает чужие процессы st,
+	// для которых SIGUSR1 по умолчанию смертелен.
+	apps := envOr("DOTS_APPLICATIONS_DIR", "/Applications")
+	_, _ = captureCommand(4*time.Second, 4096, "", nil, "pkill", "-USR1", "-f", "^"+regexp.QuoteMeta(apps)+"/Shitty.app/Contents/MacOS/st")
+	return nil
+}
+
+func styleRun(root string, args []string) int {
 	mode := "status"
 	if len(args) == 1 {
 		mode = args[0]
@@ -209,6 +246,11 @@ func styleRun(args []string) int {
 	code := 0
 	if e := tmuxStyle(mode); e != nil {
 		code = fail("tmux style", e)
+	}
+	if e := writeShittyConfig(root, mode); e != nil {
+		if c := fail("Shitty", e); code == 0 {
+			code = c
+		}
 	}
 	reload := ghosttyReload()
 	if code == 0 {

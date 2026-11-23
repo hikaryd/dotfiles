@@ -45,6 +45,15 @@ AGENTS.md
 # These reproducibility inputs override the personal global package-lock ignore.
 !/config/jcode/package-lock.json
 
+# Antigravity private local overlays (never commit).
+/config/antigravity/mcp.private.json
+/config/antigravity/mcp.local.json
+/config/antigravity/rules/private/
+/config/antigravity/skills/private/
+
+# Claude MCP servers with internal endpoints (never commit).
+/config/claude/mcp.private.json
+
 # Machine-local identity, endpoints, and cluster coordinates.
 config/zsh/private.zsh
 config/git/private.inc
@@ -59,6 +68,7 @@ config/git/private.inc
 
 # Private phone owner endpoints; optional local SSH include, never publish.
 /config/ssh/*owner*.conf
+/config/ssh/*.local.conf
 
 # Локальные отчёты, состояние агентов и кэши.
 /.omx/

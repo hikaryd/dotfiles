@@ -14,7 +14,7 @@ import (
 	"github.com/pelletier/go-toml/v2"
 )
 
-var toolNames = []string{"ghostty", "starship", "nushell", "tmux", "lazygit", "yazi", "jcode", "nvim", "zsh", "gitk", "fastfetch"}
+var toolNames = []string{"ghostty", "shitty", "starship", "nushell", "tmux", "lazygit", "yazi", "jcode", "nvim", "zsh", "gitk", "fastfetch"}
 
 type palette map[string]map[string]string
 
@@ -174,41 +174,66 @@ func replace(text, pattern, replacement string) string {
 	return regexp.MustCompile(pattern).ReplaceAllStringFunc(text, func(string) string { return replacement })
 }
 
+type colorField struct{ name, section, key string }
+
+var terminalKeys = []string{"black", "red", "green", "yellow", "blue", "magenta", "cyan", "white", "bright_black", "bright_red", "bright_green", "bright_yellow", "bright_blue", "bright_magenta", "bright_cyan", "bright_white"}
+
 func (g generator) generate(name string) error {
 	switch name {
 	case "ghostty":
-		var lines []string
-		for _, field := range []struct{ name, section, key string }{
-			{"background", "editor", "bg"}, {"foreground", "editor", "fg"},
-			{"selection-background", "ui", "selection"}, {"selection-foreground", "editor", "fg"},
-			{"cursor-color", "common", "accent"}, {"unfocused-split-fill", "editor", "bg"},
-		} {
-			value, err := g.color(field.section, field.key)
-			if err != nil {
-				return err
-			}
-			lines = append(lines, field.name+" = "+strings.TrimPrefix(value, "#"))
-		}
-		for i, key := range []string{"black", "red", "green", "yellow", "blue", "magenta", "cyan", "white", "bright_black", "bright_red", "bright_green", "bright_yellow", "bright_blue", "bright_magenta", "bright_cyan", "bright_white"} {
-			value, err := g.color("terminal", key)
-			if err != nil {
-				return err
-			}
-			lines = append(lines, fmt.Sprintf("palette = %d=%s", i, value))
-		}
-		path := g.path("ghostty/config")
-		text, err := readText(path)
-		if err != nil {
+		return g.prependColors(name, "ghostty/config",
+			`(?m)^[ \t]*(theme|background|foreground|selection-background|selection-foreground|cursor-color|unfocused-split-fill|palette)[ \t]*=.*\n?`,
+			[]colorField{
+				{"background", "editor", "bg"}, {"foreground", "editor", "fg"},
+				{"selection-background", "ui", "selection"}, {"selection-foreground", "editor", "fg"},
+				{"cursor-color", "common", "accent"}, {"unfocused-split-fill", "editor", "bg"},
+			},
+			func(f string, v string) string { return f + " = " + strings.TrimPrefix(v, "#") },
+			func(i int, v string) string { return fmt.Sprintf("palette = %d=%s", i, v) })
+	case "shitty":
+		// Ключи TOML верхнего уровня обязаны стоять до первой таблицы, поэтому цвета идут в начало.
+		if err := g.prependColors(name, "shitty/shitty.toml",
+			`(?m)^[ \t]*(bg|fg|cr|color[0-9]+)[ \t]*=.*\n?`,
+			[]colorField{{"bg", "editor", "bg"}, {"fg", "editor", "fg"}, {"cr", "common", "accent"}},
+			func(f string, v string) string { return fmt.Sprintf("%s = %q", f, v) },
+			func(i int, v string) string { return fmt.Sprintf("color%d = %q", i, v) }); err != nil {
 			return err
 		}
-		text = replace(text, `(?m)^[ \t]*(theme|background|foreground|selection-background|selection-foreground|cursor-color|unfocused-split-fill|palette)[ \t]*=.*\n?`, "")
-		text = strings.Join(lines, "\n") + "\n" + text
-		if err := os.WriteFile(path, []byte(text), 0666); err != nil {
-			return err
+		// Живой конфиг shitty — сгенерированная копия, а не симлинк на репозиторий.
+		if dots, err := exec.LookPath("dots"); err == nil {
+			_ = exec.Command(dots, "shitty-config").Run()
 		}
-		fmt.Fprintf(g.out, "  ghostty: %s\n", path)
 		return nil
 	default:
 		return g.generateTool(name)
 	}
+}
+
+func (g generator) prependColors(name, relative, stale string, fields []colorField, field func(string, string) string, palette func(int, string) string) error {
+	var lines []string
+	for _, f := range fields {
+		value, err := g.color(f.section, f.key)
+		if err != nil {
+			return err
+		}
+		lines = append(lines, field(f.name, value))
+	}
+	for i, key := range terminalKeys {
+		value, err := g.color("terminal", key)
+		if err != nil {
+			return err
+		}
+		lines = append(lines, palette(i, value))
+	}
+	path := g.path(relative)
+	text, err := readText(path)
+	if err != nil {
+		return err
+	}
+	text = strings.Join(lines, "\n") + "\n" + replace(text, stale, "")
+	if err := os.WriteFile(path, []byte(text), 0666); err != nil {
+		return err
+	}
+	fmt.Fprintf(g.out, "  %s: %s\n", name, path)
+	return nil
 }

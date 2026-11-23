@@ -1,0 +1,1570 @@
+#!/usr/bin/env python3
+"""Vesper Aurora status line and cache-hit monitor for Antigravity CLI."""
+
+from datetime import datetime, timezone
+import fcntl
+import json
+import math
+import os
+import re
+import sqlite3
+import stat
+import subprocess
+import sys
+import time
+from urllib.parse import quote, urlsplit
+import http.client
+import urllib.request
+
+# Vesper dark palette (palette/ayu.toml)
+C_RESET = "\033[0m"
+C_BOLD = "\033[1m"
+C_DIV = "\033[38;2;56;56;56m"
+C_DIM = "\033[38;2;108;108;108m"
+C_MUTED = "\033[38;2;148;148;148m"
+C_FG = "\033[38;2;236;236;236m"
+C_ACCENT = "\033[38;2;255;199;153m"
+C_GREEN = "\033[38;2;143;211;165m"
+C_RED = "\033[38;2;255;128;128m"
+C_CYAN = "\033[38;2;111;209;196m"
+C_MAGENTA = "\033[38;2;200;168;224m"
+C_PILL_HOT = "\033[1;38;2;255;163;163;48;2;58;28;32m"
+C_PILL_DIM = "\033[38;2;160;160;160;48;2;35;35;35m"
+
+# Smooth Vesper Aurora gradient stops (cyan -> green -> peach -> coral).
+_AURORA_STOPS = (
+    (0.00, (111, 209, 196)),
+    (0.38, (143, 211, 165)),
+    (0.72, (255, 199, 153)),
+    (1.00, (255, 128, 128)),
+)
+
+# Window durations (seconds) and minimum elapsed time before extrapolating burn rate.
+_WINDOW_SPECS = {
+    "5h": (5 * 3600, 600),
+    "7d": (7 * 86400, 3600),
+}
+# Manager refreshes quota every 10 min; tolerate a few missed refreshes.
+_MANAGER_MAX_AGE = 30 * 60
+_PROXY_TTL = 60
+_PROXY_RETRY_TTL = 15
+_TPS_MAX_SESSIONS = 32
+_TPS_MAX_GAP = 120.0
+_TPS_SLEEP_DRIFT = 2.0
+_TPS_STREAM_IDLE = 3.0
+_TPS_MIN_DT = 0.2
+_TPS_MIN_TOKENS = 5.0
+_TPS_MAX_VALUE = 5000.0
+_TPS_STALE_SECS = 7 * 86400
+_TRANSCRIPT_TAIL_BYTES = 65536
+
+# Strip ANSI/CSI/OSC/DCS/C0/C1 control sequences from untrusted payload strings.
+_CTRL_RE = re.compile(
+    r"\x1b(?:\[[0-?]*[ -/]*[@-~]|[\]PX^_][^\x07\x1b]*(?:\x07|\x1b\\)|[@-Z\\-_])"
+    r"|\x9b[0-?]*[ -/]*[@-~]"
+    r"|[\x00-\x1f\x7f-\x9f]"
+)
+_SAFE_ID_RE = re.compile(r"^[A-Za-z0-9._-]+$")
+_FRAC_RE = re.compile(r"\.\d+(?=[+-]\d{2}:\d{2}$|$)")
+_EFFORT_TAGS = {"minimal", "low", "medium", "high", "xhigh", "max"}
+
+
+def _clean(value):
+    if value is None:
+        return ""
+    return _CTRL_RE.sub("", str(value)).replace("\x1b", "").strip()
+
+
+def _paint(text, style, no_color):
+    if no_color or not style:
+        return text
+    return f"{style}{text}{C_RESET}"
+
+
+def _pill(text, style, no_color):
+    if no_color:
+        return text
+    return f"{style} {text} {C_RESET}"
+
+
+def _num(value):
+    if isinstance(value, bool) or value is None:
+        return None
+    if isinstance(value, (int, float, str)):
+        try:
+            v = float(value)
+        except (ValueError, OverflowError):
+            return None
+        return v if math.isfinite(v) else None
+    return None
+
+
+def _first_num(mapping, keys):
+    for key in keys:
+        if key in mapping and mapping[key] is not None:
+            val = _num(mapping[key])
+            if val is not None:
+                return val
+    return None
+
+
+def _clamp_pct(value):
+    if math.isnan(value):
+        return None
+    return max(0.0, min(100.0, value))
+
+
+def _ratio_pct(numerator, denominator):
+    if denominator <= 0 or numerator < 0:
+        return None
+    try:
+        return _clamp_pct((numerator / denominator) * 100.0)
+    except OverflowError:
+        return 100.0
+
+
+def _severity(used_pct):
+    if used_pct >= 85:
+        return C_RED
+    if used_pct >= 70:
+        return C_ACCENT
+    return C_GREEN
+
+
+def _cache_color(hit_pct):
+    if hit_pct >= 70:
+        return C_GREEN
+    if hit_pct >= 30:
+        return C_ACCENT
+    return C_RED
+
+
+def _tps_color(tps):
+    if tps >= 40:
+        return C_GREEN
+    if tps >= 15:
+        return C_ACCENT
+    return C_RED
+
+
+def _lerp_rgb(t):
+    t = max(0.0, min(1.0, t))
+    for i in range(len(_AURORA_STOPS) - 1):
+        p0, c0 = _AURORA_STOPS[i]
+        p1, c1 = _AURORA_STOPS[i + 1]
+        if t <= p1:
+            f = (t - p0) / (p1 - p0) if p1 > p0 else 0.0
+            return (
+                int(round(c0[0] + (c1[0] - c0[0]) * f)),
+                int(round(c0[1] + (c1[1] - c0[1]) * f)),
+                int(round(c0[2] + (c1[2] - c0[2]) * f)),
+            )
+    return _AURORA_STOPS[-1][1]
+
+
+def _aurora_bar(used_pct, width, no_color, fill="▰", empty="▱"):
+    clamped = max(0.0, min(100.0, used_pct))
+    filled = int(round((clamped / 100.0) * width))
+    if clamped > 0 and filled == 0:
+        filled = 1
+    if no_color:
+        return fill * filled + empty * (width - filled)
+    parts = []
+    denom = max(1, width - 1)
+    # Shift hue toward hot tones as overall fill crosses 70%/85%.
+    floor_t = 0.72 if clamped >= 85 else (0.45 if clamped >= 70 else 0.0)
+    for i in range(filled):
+        t = max(floor_t, i / denom)
+        r, g, b = _lerp_rgb(t)
+        parts.append(f"\033[38;2;{r};{g};{b}m{fill}")
+    if filled < width:
+        parts.append(f"{C_DIV}{empty * (width - filled)}")
+    parts.append(C_RESET)
+    return "".join(parts)
+
+
+def _fmt_tokens(count):
+    val = _num(count)
+    if val is None or val < 0:
+        return "0"
+    if val >= 1_000_000:
+        return f"{val / 1_000_000:.1f}M"
+    if val >= 1_000:
+        return f"{val / 1_000:.0f}k"
+    return str(int(val))
+
+
+def _fmt_ts(ts):
+    val = _num(ts)
+    if val is None:
+        return "??:??:??"
+    if val > 1e11:
+        val /= 1000.0
+    try:
+        return datetime.fromtimestamp(val).strftime("%H:%M:%S")
+    except (OSError, ValueError, OverflowError):
+        return "??:??:??"
+
+
+def _fmt_duration(secs):
+    if not math.isfinite(secs) or secs <= 0:
+        return ""
+    total = int(secs)
+    days, rem = divmod(total, 86400)
+    hours, rem = divmod(rem, 3600)
+    mins = rem // 60
+    if days > 0:
+        return f"{days}d{hours:02d}h"
+    if hours > 0:
+        return f"{hours}h{mins:02d}m"
+    return f"{max(1, mins)}m"
+
+
+def _parse_iso_epoch(ts_str):
+    if not isinstance(ts_str, str) or not ts_str.strip():
+        return None
+    ts = ts_str.strip()
+    if ts.endswith(("Z", "z")):
+        ts = ts[:-1] + "+00:00"
+    # Python 3.9 fromisoformat requires 3- or 6-digit fractional seconds; pad/truncate to microseconds.
+    ts = _FRAC_RE.sub(lambda m: "." + (m.group(0)[1:] + "000000")[:6], ts, count=1)
+    try:
+        dt = datetime.fromisoformat(ts)
+    except ValueError:
+        return None
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    epoch = dt.timestamp()
+    return epoch if math.isfinite(epoch) else None
+
+
+def _parse_reset_secs(reset_time):
+    epoch = _parse_iso_epoch(reset_time)
+    if epoch is None:
+        return None
+    secs = epoch - time.time()
+    return secs if (math.isfinite(secs) and secs > 0) else None
+
+
+def _forecast_window(label, used_pct, reset_secs):
+    """Estimate end-of-window usage or exhaustion ETA from elapsed burn rate."""
+    spec = _WINDOW_SPECS.get(label)
+    if not spec or reset_secs is None or used_pct < 2.0 or used_pct >= 99.5:
+        return None
+    window_secs, min_elapsed = spec
+    if reset_secs >= window_secs:
+        return None
+    elapsed = window_secs - reset_secs
+    if elapsed < min_elapsed:
+        return None
+    rate = used_pct / elapsed
+    if not math.isfinite(rate) or rate <= 0:
+        return None
+    projected = rate * window_secs
+    if not math.isfinite(projected):
+        return None
+    if projected > 100.0:
+        eta_secs = (100.0 - used_pct) / rate
+        if math.isfinite(eta_secs) and 0.0 < eta_secs < reset_secs:
+            return ("risk", _fmt_duration(eta_secs))
+    if projected >= used_pct + 3.0:
+        return ("proj", min(100, round(projected)))
+    return None
+
+
+def _open_owned_dir(path, dir_fd=None):
+    flags = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW
+    try:
+        fd = os.open(path, flags, dir_fd=dir_fd)
+    except OSError:
+        return None
+    try:
+        info = os.fstat(fd)
+        if not stat.S_ISDIR(info.st_mode) or info.st_uid != os.getuid():
+            os.close(fd)
+            return None
+        return fd
+    except OSError:
+        os.close(fd)
+        return None
+
+
+def _tools_dir():
+    raw = os.environ.get("AGY_TOOLS_DIR") or os.path.expanduser("~/.antigravity_tools")
+    normalized = os.path.normpath(os.path.expanduser(raw))
+    # Collapse POSIX leading "//" so SQLite file: URIs never treat the first segment as host.
+    if normalized.startswith("//"):
+        normalized = "/" + normalized.lstrip("/")
+    fd = _open_owned_dir(normalized)
+    if fd is None:
+        return None
+    os.close(fd)
+    return normalized
+
+
+def _open_stats_db():
+    tools_dir = _tools_dir()
+    if not tools_dir:
+        return None
+    dir_fd = _open_owned_dir(tools_dir)
+    if dir_fd is None:
+        return None
+    try:
+        info = os.lstat("token_stats.db", dir_fd=dir_fd)
+        if not stat.S_ISREG(info.st_mode) or info.st_uid != os.getuid():
+            return None
+    except OSError:
+        return None
+    finally:
+        os.close(dir_fd)
+
+    db_path = os.path.abspath(os.path.join(tools_dir, "token_stats.db"))
+    if db_path.startswith("//"):
+        db_path = "/" + db_path.lstrip("/")
+    encoded = quote(db_path, safe="/")
+
+    # Try strict mode=ro first. Apple libsqlite3 rejects mode=ro on WAL DBs without an active -shm;
+    # fall back to mode=rw + PRAGMA query_only=ON so WAL locking and uncheckpointed commits stay intact.
+    for query in ("mode=ro", "mode=rw"):
+        con = None
+        try:
+            con = sqlite3.connect(f"file:{encoded}?{query}", uri=True, timeout=0.05)
+            con.execute("PRAGMA query_only = ON")
+            con.execute("SELECT 1 FROM sqlite_master LIMIT 1").fetchone()
+            return con
+        except sqlite3.Error as exc:
+            if con is not None:
+                con.close()
+            if query == "mode=ro" and "locked" in str(exc).lower():
+                return None
+    return None
+
+
+def _slugs(text):
+    if not text:
+        return []
+    low = text.lower()
+    s_dot = re.sub(r"[^a-z0-9.]+", "-", low).strip("-")
+    s_hyp = re.sub(r"[^a-z0-9]+", "-", low).strip("-")
+    out = []
+    for s in (s_dot, s_hyp):
+        if s and s not in out:
+            out.append(s)
+    return out
+
+
+def _extract_model(data):
+    model = data.get("model")
+    effort = ""
+    name = ""
+    raw_id = ""
+    if isinstance(model, dict):
+        name = _clean(model.get("display_name") or model.get("name") or model.get("id"))
+        raw_id = _clean(model.get("id") or model.get("name"))
+        effort = _clean(model.get("effort") or model.get("reasoning_effort"))
+    elif isinstance(model, str):
+        name = _clean(model)
+        raw_id = name
+    if not effort:
+        effort = _clean(data.get("effort") or data.get("reasoning_effort"))
+    if not name:
+        return "", "", ""
+    # Split trailing "(Effort)" only when the parenthetical is actually an effort tag.
+    match = re.match(r"^(.*?)\s*\(([^()]+)\)\s*$", name)
+    if match and match.group(1).strip():
+        cand_base = match.group(1).strip()
+        cand_tag = match.group(2).strip()
+        if cand_tag.lower() in _EFFORT_TAGS or (effort and cand_tag.lower() == effort.lower()):
+            return cand_base, cand_tag, raw_id or name
+    tag = effort if (effort and f"({effort.lower()})" not in name.lower() and not name.lower().endswith(f" {effort.lower()}")) else ""
+    full_label = f"{name} ({tag})" if tag else name
+    return name, tag, raw_id or full_label
+
+
+def _extract_context_pct(data):
+    ctx = data.get("context_window")
+    if not isinstance(ctx, dict):
+        ctx = data.get("context")
+    if not isinstance(ctx, dict):
+        return None
+
+    pct = _num(ctx.get("used_percentage"))
+    if pct is not None:
+        return _clamp_pct(pct)
+
+    size = _first_num(ctx, ("context_window_size", "max_tokens"))
+    if size is None or size <= 0:
+        return None
+
+    usage = ctx.get("current_usage")
+    if isinstance(usage, dict):
+        used = 0.0
+        for key in ("input_tokens", "cache_creation_input_tokens", "cache_read_input_tokens"):
+            raw_part = usage.get(key)
+            if raw_part is None:
+                continue
+            part = _num(raw_part)
+            if part is None or part < 0:
+                return None
+            used += part
+            if not math.isfinite(used):
+                return 100.0
+        return _ratio_pct(used, size)
+
+    used = _first_num(ctx, ("used_tokens", "total_input_tokens"))
+    if used is not None:
+        return _ratio_pct(used, size)
+    return None
+
+
+def _extract_cache_hit(data, model_label, model_id):
+    ctx = data.get("context_window")
+    if not isinstance(ctx, dict):
+        ctx = data.get("context")
+    if isinstance(ctx, dict):
+        usage = ctx.get("current_usage")
+        if isinstance(usage, dict):
+            cache_read = _first_num(usage, ("cache_read_input_tokens", "cache_read_tokens"))
+            if cache_read is not None and cache_read >= 0:
+                raw_inp = usage.get("input_tokens")
+                inp_v = 0.0 if raw_inp is None else _num(raw_inp)
+                raw_create = usage.get("cache_creation_input_tokens")
+                if raw_create is None:
+                    raw_create = usage.get("cache_write_tokens")
+                create_v = 0.0 if raw_create is None else _num(raw_create)
+                if inp_v is not None and create_v is not None and inp_v >= 0 and create_v >= 0:
+                    denom = inp_v + cache_read + create_v
+                    if denom > 0 and math.isfinite(denom):
+                        return _ratio_pct(cache_read, denom)
+                return None
+            cached = _num(usage.get("cached_tokens"))
+            inp = _num(usage.get("input_tokens"))
+            if cached is not None and cached >= 0 and inp is not None and inp > 0:
+                return _ratio_pct(cached, max(inp, cached))
+
+    # Fallback: latest turn for the active model in Antigravity Manager token_stats.db.
+    con = _open_stats_db()
+    if con is None:
+        return None
+    try:
+        cutoff = int(time.time()) - 7200
+        exact_candidates = []
+        for cand in _slugs(model_label) + _slugs(model_id):
+            if cand not in exact_candidates:
+                exact_candidates.append(cand)
+        base_candidates = []
+        for raw_base in (
+            re.sub(r"\s*\([^)]*\)\s*$", "", model_label),
+            re.sub(r"\s*\([^)]*\)\s*$", "", model_id),
+        ):
+            for cand in _slugs(raw_base):
+                if cand not in base_candidates:
+                    base_candidates.append(cand)
+
+        type_guard = (
+            "typeof(timestamp) IN ('integer', 'real') "
+            "AND typeof(input_tokens) IN ('integer', 'real') "
+            "AND (cached_tokens IS NULL OR typeof(cached_tokens) IN ('integer', 'real')) "
+            "AND timestamp >= ? AND input_tokens > 0"
+        )
+        row = None
+        if exact_candidates:
+            placeholders = ", ".join("?" for _ in exact_candidates)
+            row = con.execute(
+                f"SELECT input_tokens, cached_tokens FROM token_usage "
+                f"WHERE {type_guard} AND model IN ({placeholders}) "
+                f"ORDER BY id DESC LIMIT 1",
+                (cutoff, *exact_candidates),
+            ).fetchone()
+        if row is None and base_candidates:
+            clauses = " OR ".join("(requested_model = ? OR model LIKE ?)" for _ in base_candidates)
+            params = [cutoff]
+            for base in base_candidates:
+                params.extend((base, f"{base}%"))
+            row = con.execute(
+                f"SELECT input_tokens, cached_tokens FROM token_usage "
+                f"WHERE {type_guard} AND ({clauses}) "
+                f"ORDER BY id DESC LIMIT 1",
+                params,
+            ).fetchone()
+        if row:
+            inp = _num(row[0])
+            cached = _num(row[1]) if row[1] is not None else 0.0
+            if inp is not None and inp > 0 and cached is not None and cached >= 0:
+                return _ratio_pct(cached, inp)
+    except (sqlite3.Error, ValueError, TypeError, OverflowError):
+        return None
+    finally:
+        con.close()
+    return None
+
+
+def _read_owned_json(name, dir_fd):
+    try:
+        fd = os.open(name, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK, dir_fd=dir_fd)
+    except OSError:
+        return None
+    try:
+        info = os.fstat(fd)
+        if not stat.S_ISREG(info.st_mode) or info.st_uid != os.getuid() or info.st_size > 2_000_000:
+            return None
+        with os.fdopen(fd, "rb") as stream:
+            fd = -1
+            data = json.loads(stream.read().decode("utf-8", "replace"))
+        return data if isinstance(data, dict) else None
+    except (OSError, ValueError, RecursionError):
+        return None
+    finally:
+        if fd != -1:
+            os.close(fd)
+
+
+def _pick_quota_group(groups, model_label, model_id):
+    valid = [g for g in groups if isinstance(g, dict) and isinstance(g.get("buckets"), list)]
+    if not valid:
+        return None
+    base = re.sub(r"\s*\([^)]*\)\s*$", "", model_label).strip().lower()
+    if base:
+        for group in valid:
+            desc = str(group.get("description") or "").lower()
+            if base in desc:
+                return group
+    needle = f"{model_label} {model_id}".lower()
+    is_3p = any(tok in needle for tok in ("claude", "opus", "sonnet", "haiku", "gpt"))
+    for group in valid:
+        name = str(group.get("display_name") or "").lower()
+        if is_3p and ("claude" in name or "gpt" in name):
+            return group
+        if not is_3p and "gemini" in name:
+            return group
+    return valid[0]
+
+
+_DNS_LABEL_RE = re.compile(r"^[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?$")
+_MAX_AGY_CONFIG_BYTES = 4096
+
+
+def _valid_ascii_secret(value):
+    return bool(value) and len(value) <= _MAX_AGY_CONFIG_BYTES and all(33 <= ord(c) <= 126 for c in value)
+
+
+def _read_private_agy_file(filename):
+    dir_fd = _open_owned_dir(os.path.expanduser("~/.config/agy"))
+    if dir_fd is None:
+        return None
+    fd = -1
+    try:
+        dinfo = os.fstat(dir_fd)
+        if dinfo.st_mode & 0o077:
+            return None
+        fd = os.open(filename, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK, dir_fd=dir_fd)
+    except OSError:
+        return None
+    finally:
+        os.close(dir_fd)
+    try:
+        with os.fdopen(fd, "rb") as stream:
+            fd = -1
+            info = os.fstat(stream.fileno())
+            if (
+                not stat.S_ISREG(info.st_mode)
+                or info.st_uid != os.getuid()
+                or info.st_mode & 0o077
+                or info.st_size > _MAX_AGY_CONFIG_BYTES + 2
+            ):
+                return None
+            raw_bytes = stream.read(_MAX_AGY_CONFIG_BYTES + 3)
+    except OSError:
+        return None
+    finally:
+        if fd != -1:
+            os.close(fd)
+    if len(raw_bytes) > _MAX_AGY_CONFIG_BYTES + 2:
+        return None
+    try:
+        raw = raw_bytes.decode("ascii")
+    except UnicodeDecodeError:
+        return None
+    if raw.endswith("\r\n"):
+        raw = raw[:-2]
+    elif raw.endswith("\n"):
+        raw = raw[:-1]
+    return raw if _valid_ascii_secret(raw) else None
+
+
+def _proxy_base():
+    raw = _read_private_agy_file("proxy.url")
+    if not raw or any(ch in raw for ch in "@?#"):
+        return None
+    text = raw[:-1] if raw.endswith("/") else raw
+    parsed = urlsplit(text)
+    if parsed.scheme != "https" or parsed.path or parsed.query or parsed.fragment:
+        return None
+    if not parsed.netloc or parsed.netloc.endswith(":"):
+        return None
+    host = parsed.hostname
+    try:
+        port = 443 if parsed.port is None else parsed.port
+    except ValueError:
+        return None
+    if not host or len(host) > 253 or not all(_DNS_LABEL_RE.fullmatch(lbl) for lbl in host.split(".")):
+        return None
+    if not (1 <= port <= 65535):
+        return None
+    return f"https://{host}" if port == 443 else f"https://{host}:{port}"
+
+
+def _proxy_key(proxy_base):
+    # Only reuse GEMINI_API_KEY when agy-manager pointed it at our proxy, never a real Google key.
+    if proxy_base and os.environ.get("GOOGLE_GEMINI_BASE_URL", "").rstrip("/") == proxy_base:
+        key = os.environ.get("GEMINI_API_KEY", "")
+        if _valid_ascii_secret(key):
+            return key
+    return _read_private_agy_file("proxy.key")
+
+
+class _NoRedirect(urllib.request.HTTPRedirectHandler):
+    # urllib re-sends Authorization to any redirect target, including other hosts.
+    def redirect_request(self, *args, **kwargs):
+        return None
+
+
+def _fetch_proxy_quota(proxy_base, key):
+    req = urllib.request.Request(
+        proxy_base + "/agy/quota",
+        headers={"Authorization": f"Bearer {key}", "User-Agent": "agy-statusline"},
+    )
+    try:
+        with urllib.request.build_opener(_NoRedirect).open(req, timeout=3) as resp:
+            data = json.loads(resp.read(1_000_000).decode("utf-8", "replace"))
+    except (OSError, ValueError, RecursionError, http.client.HTTPException):
+        return None
+    return data if isinstance(data, dict) else None
+
+
+def _open_cache_dir():
+    cache_dir = os.path.expanduser("~/.cache/agy-statusline")
+    try:
+        os.makedirs(cache_dir, mode=0o700, exist_ok=True)
+    except OSError:
+        return None
+    dir_fd = _open_owned_dir(cache_dir)
+    if dir_fd is None:
+        return None
+    try:
+        os.fchmod(dir_fd, 0o700)
+    except OSError:
+        os.close(dir_fd)
+        return None
+    return dir_fd
+
+
+def _write_owned_json(name, payload_obj, dir_fd):
+    payload = json.dumps(payload_obj).encode("utf-8")
+    tmp = f".{name}.{os.getpid()}.tmp"
+    try:
+        fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_TRUNC | os.O_NOFOLLOW, 0o600, dir_fd=dir_fd)
+        with os.fdopen(fd, "wb") as out:
+            out.write(payload)
+        os.replace(tmp, name, src_dir_fd=dir_fd, dst_dir_fd=dir_fd)
+    except OSError:
+        try:
+            os.unlink(tmp, dir_fd=dir_fd)
+        except OSError:
+            pass
+
+
+def _quota_has_data(quota):
+    if not isinstance(quota, dict):
+        return False
+    groups = quota.get("quota_groups")
+    if isinstance(groups, list):
+        for g in groups:
+            if not isinstance(g, dict) or not isinstance(g.get("buckets"), list):
+                continue
+            for b in g["buckets"]:
+                if (
+                    isinstance(b, dict)
+                    and b.get("disabled") is not True
+                    and _num(b.get("remaining_fraction")) is not None
+                ):
+                    return True
+    models = quota.get("models")
+    return isinstance(models, list) and any(
+        isinstance(m, dict) and _num(m.get("percentage")) is not None for m in models
+    )
+
+
+def _quota_is_fresh(quota, now=None):
+    if not isinstance(quota, dict):
+        return False
+    updated = _num(quota.get("last_updated"))
+    if updated is None:
+        return False
+    ref = time.time() if now is None else now
+    return abs(ref - updated) <= _MANAGER_MAX_AGE
+
+
+def _quota_is_usable(quota, now=None):
+    return _quota_has_data(quota) and _quota_is_fresh(quota, now)
+
+
+def _proxy_quota():
+    proxy_base = _proxy_base()
+    if not proxy_base:
+        return None
+    key = _proxy_key(proxy_base)
+    if not key:
+        return None
+    dir_fd = _open_cache_dir()
+    if dir_fd is None:
+        return None
+    lock_fd = -1
+    try:
+        now = time.time()
+        cache = _read_owned_json("proxy-quota.json", dir_fd=dir_fd) or {}
+        same_proxy = cache.get("proxy_base") == proxy_base
+        fetched = _num(cache.get("fetched_at")) if same_proxy else None
+        cached_quota = cache.get("quota") if (same_proxy and isinstance(cache.get("quota"), dict)) else None
+        ttl = _PROXY_TTL if _quota_is_usable(cached_quota, now) else _PROXY_RETRY_TTL
+        if fetched is not None and 0 <= now - fetched < ttl:
+            return cached_quota
+
+        try:
+            lock_fd = os.open(".proxy-quota.lock", os.O_CREAT | os.O_RDWR | os.O_NOFOLLOW, 0o600, dir_fd=dir_fd)
+            info = os.fstat(lock_fd)
+            if not stat.S_ISREG(info.st_mode) or info.st_uid != os.getuid():
+                return cached_quota
+            # Non-blocking lock prevents concurrent fetches from stalling or clobbering a fresher cache.
+            fcntl.flock(lock_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            return cached_quota
+        except OSError:
+            return cached_quota
+
+        now = time.time()
+        cache = _read_owned_json("proxy-quota.json", dir_fd=dir_fd) or {}
+        same_proxy = cache.get("proxy_base") == proxy_base
+        fetched = _num(cache.get("fetched_at")) if same_proxy else None
+        cached_quota = cache.get("quota") if (same_proxy and isinstance(cache.get("quota"), dict)) else None
+        ttl = _PROXY_TTL if _quota_is_usable(cached_quota, now) else _PROXY_RETRY_TTL
+        if fetched is not None and 0 <= now - fetched < ttl:
+            return cached_quota
+
+        fresh = _fetch_proxy_quota(proxy_base, key)
+        now = time.time()
+        if _quota_is_usable(fresh, now):
+            quota = fresh
+        elif _quota_is_usable(cached_quota, now):
+            # Keep the last fresh populated snapshot on transient errors until _MANAGER_MAX_AGE drops it.
+            quota = cached_quota
+        else:
+            quota = fresh if _quota_has_data(fresh) else None
+        _write_owned_json("proxy-quota.json", {"proxy_base": proxy_base, "fetched_at": now, "quota": quota}, dir_fd)
+        return quota
+    finally:
+        if lock_fd != -1:
+            os.close(lock_fd)
+        os.close(dir_fd)
+
+
+def _extract_manager_quotas(model_label, model_id):
+    entries = _quotas_from_manager(_proxy_quota(), model_label, model_id)
+    if entries:
+        return entries
+    return _quotas_from_manager(_local_manager_quota(), model_label, model_id)
+
+
+def _local_manager_quota():
+    tools_dir = _tools_dir()
+    if not tools_dir:
+        return None
+    tools_fd = _open_owned_dir(tools_dir)
+    if tools_fd is None:
+        return None
+    try:
+        index = _read_owned_json("accounts.json", dir_fd=tools_fd)
+        if not index:
+            return None
+
+        disabled_ids = set()
+        index_accounts = index.get("accounts") if isinstance(index.get("accounts"), list) else []
+        for item in index_accounts:
+            if not isinstance(item, dict):
+                continue
+            aid = item.get("id")
+            if isinstance(aid, str) and (
+                item.get("disabled")
+                or item.get("proxy_disabled")
+                or item.get("manual_proxy_disabled")
+                or item.get("banned")
+                or item.get("validation_blocked")
+            ):
+                disabled_ids.add(aid)
+
+        candidates = []
+        for raw_id in (
+            index.get("current_agy_account_id"),
+            index.get("current_account_id"),
+            *(a.get("id") for a in index_accounts if isinstance(a, dict)),
+        ):
+            if (
+                isinstance(raw_id, str)
+                and _SAFE_ID_RE.fullmatch(raw_id)
+                and raw_id not in disabled_ids
+                and raw_id not in candidates
+            ):
+                candidates.append(raw_id)
+
+        acc_fd = _open_owned_dir("accounts", dir_fd=tools_fd)
+        if acc_fd is None:
+            return None
+        now = time.time()
+        stale_with_data = None
+        fallback = None
+        try:
+            for account_id in candidates:
+                account = _read_owned_json(f"{account_id}.json", dir_fd=acc_fd)
+                if not account:
+                    continue
+                if (
+                    account.get("disabled")
+                    or account.get("proxy_disabled")
+                    or account.get("manual_proxy_disabled")
+                    or account.get("banned")
+                    or account.get("validation_blocked")
+                ):
+                    continue
+                quota = account.get("quota")
+                if not isinstance(quota, dict) or quota.get("is_forbidden"):
+                    continue
+                if _quota_is_usable(quota, now):
+                    return quota
+                if _quota_has_data(quota):
+                    updated = _num(quota.get("last_updated"))
+                    ts_key = updated if updated is not None else float("-inf")
+                    if stale_with_data is None or ts_key > stale_with_data[0]:
+                        stale_with_data = (ts_key, quota)
+                elif fallback is None:
+                    fallback = quota
+        finally:
+            os.close(acc_fd)
+    finally:
+        os.close(tools_fd)
+
+    return stale_with_data[1] if stale_with_data is not None else fallback
+
+
+def _quotas_from_manager(quota, model_label, model_id):
+    if not isinstance(quota, dict):
+        return []
+    # Manager refreshes every 10 min; an old snapshot (dead Manager or offline proxy) shows wrong usage.
+    updated = _num(quota.get("last_updated"))
+    if updated is None or abs(time.time() - updated) > _MANAGER_MAX_AGE:
+        return []
+
+    groups = quota.get("quota_groups")
+    if isinstance(groups, list):
+        group = _pick_quota_group(groups, model_label, model_id)
+        if group:
+            five_h = None
+            weekly = None
+            for bucket in group["buckets"]:
+                if not isinstance(bucket, dict) or bucket.get("disabled") is True:
+                    continue
+                rf = _num(bucket.get("remaining_fraction"))
+                if rf is None:
+                    continue
+                rem_pct = _clamp_pct(rf * 100.0)
+                if rem_pct is None:
+                    continue
+                used_pct = 100.0 - rem_pct
+                window = str(bucket.get("window") or "").lower()
+                bid = str(bucket.get("bucket_id") or "").lower()
+                reset_secs = _parse_reset_secs(bucket.get("reset_time"))
+                if window == "5h" or bid.endswith("-5h"):
+                    five_h = ("5h", used_pct, reset_secs)
+                elif window == "weekly" or bid.endswith("-weekly"):
+                    weekly = ("7d", used_pct, reset_secs)
+            entries = [item for item in (five_h, weekly) if item is not None]
+            if entries:
+                return entries
+
+    models = quota.get("models")
+    if isinstance(models, list):
+        target_low = {s.lower() for s in (model_label, model_id) if s}
+        matched = None
+        for entry in models:
+            if not isinstance(entry, dict):
+                continue
+            names = {str(entry.get(k) or "").lower() for k in ("name", "display_name")}
+            if target_low & names:
+                matched = entry
+                break
+        if matched is None:
+            pcts = [
+                (p, _parse_reset_secs(m.get("reset_time")))
+                for m in models
+                if isinstance(m, dict)
+                for p in (_num(m.get("percentage")),)
+                if p is not None
+            ]
+            if pcts:
+                low_rem, low_reset = min(pcts, key=lambda x: x[0])
+                clamped = _clamp_pct(low_rem)
+                if clamped is not None:
+                    return [("quota", 100.0 - clamped, low_reset)]
+        else:
+            p = _num(matched.get("percentage"))
+            clamped = _clamp_pct(p) if p is not None else None
+            if clamped is not None:
+                return [("quota", 100.0 - clamped, _parse_reset_secs(matched.get("reset_time")))]
+    return []
+
+
+def _extract_quotas(data, model_label, model_id):
+    quota = data.get("quota")
+    if quota is None:
+        quota = data.get("quotas")
+
+    buckets = []
+    if isinstance(quota, dict):
+        if "remaining_fraction" in quota or "used_percentage" in quota:
+            buckets = [quota]
+        else:
+            buckets = [v for v in quota.values() if isinstance(v, dict)]
+    elif isinstance(quota, list):
+        buckets = [v for v in quota if isinstance(v, dict)]
+
+    five_h = None
+    weekly = None
+    fallback_entries = []
+    for bucket in buckets:
+        if bucket.get("disabled") is True:
+            continue
+        used_pct = None
+        rf = _num(bucket.get("remaining_fraction"))
+        if rf is not None:
+            rem_pct = _clamp_pct(rf * 100.0)
+            if rem_pct is not None:
+                used_pct = 100.0 - rem_pct
+        else:
+            up = _num(bucket.get("used_percentage"))
+            if up is not None:
+                used_pct = _clamp_pct(up)
+        if used_pct is None:
+            continue
+        reset_secs = _parse_reset_secs(bucket.get("reset_time"))
+        window = str(bucket.get("window") or "").lower()
+        bid = str(bucket.get("bucket_id") or "").lower()
+        if window == "5h" or bid.endswith("-5h"):
+            five_h = ("5h", used_pct, reset_secs)
+        elif window in ("weekly", "7d") or bid.endswith("-weekly"):
+            weekly = ("7d", used_pct, reset_secs)
+        else:
+            fallback_entries.append((used_pct, reset_secs))
+    named = [item for item in (five_h, weekly) if item is not None]
+    if named:
+        return named
+    if fallback_entries:
+        high_used, reset_secs = max(fallback_entries, key=lambda x: x[0])
+        return [("quota", high_used, reset_secs)]
+
+    return _extract_manager_quotas(model_label, model_id)
+
+
+def _latest_transcript_turn(transcript_path):
+    """Return (step_index, start_epoch, next_epoch, output_tokens) for the latest PLANNER_RESPONSE."""
+    if not isinstance(transcript_path, str) or not transcript_path:
+        return None
+    path = os.path.expanduser(transcript_path)
+    if not os.path.isabs(path):
+        return None
+    fd = -1
+    try:
+        fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
+        info = os.fstat(fd)
+        if not stat.S_ISREG(info.st_mode) or info.st_uid != os.getuid() or info.st_size <= 0:
+            return None
+        start_offset = max(0, info.st_size - _TRANSCRIPT_TAIL_BYTES)
+        if start_offset > 0:
+            os.lseek(fd, start_offset, os.SEEK_SET)
+        chunks = []
+        remaining = _TRANSCRIPT_TAIL_BYTES
+        while remaining > 0:
+            chunk = os.read(fd, remaining)
+            if not chunk:
+                break
+            chunks.append(chunk)
+            remaining -= len(chunk)
+    except OSError:
+        return None
+    finally:
+        if fd != -1:
+            os.close(fd)
+
+    raw = b"".join(chunks).decode("utf-8", "replace")
+    lines = raw.splitlines()
+    if start_offset > 0 and lines:
+        lines = lines[1:]
+
+    next_epoch = None
+    for line in reversed(lines):
+        if not line.strip():
+            continue
+        try:
+            rec = json.loads(line)
+        except (ValueError, RecursionError):
+            continue
+        if not isinstance(rec, dict):
+            continue
+        rec_type = rec.get("type")
+        rec_ts = _parse_iso_epoch(rec.get("created_at"))
+        if rec_type == "PLANNER_RESPONSE":
+            out_tok = _num(rec.get("output_tokens"))
+            step_idx = _num(rec.get("step_index"))
+            if rec_ts is not None and out_tok is not None and out_tok >= _TPS_MIN_TOKENS:
+                return (int(step_idx) if step_idx is not None else None, rec_ts, next_epoch, out_tok)
+            return None
+        if rec_type == "USER_INPUT":
+            # A newer user prompt already started; any earlier PLANNER_RESPONSE belongs to a prior turn.
+            return None
+        if rec_type == "GENERIC" and rec.get("source") == "MODEL" and rec_ts is not None:
+            next_epoch = rec_ts
+        else:
+            next_epoch = None
+    return None
+
+
+def _valid_live_tps(entry, now_wall):
+    if not isinstance(entry, dict):
+        return None
+    tps = _num(entry.get("tps"))
+    updated = _num(entry.get("updated_wall"))
+    if tps is None or not (0.0 < tps <= _TPS_MAX_VALUE) or updated is None:
+        return None
+    max_age = 30.0 if entry.get("live") is True else 7200.0
+    if abs(now_wall - updated) > max_age:
+        return None
+    return tps, updated
+
+
+def _model_prefix_match(key, base):
+    if key == base:
+        return True
+    if len(key) < 4 or len(base) < 4:
+        return False
+    # Never cross-match "-lite" background models (e.g. flash-lite) with non-lite active models.
+    if ("lite" in key) != ("lite" in base):
+        return False
+    return key.startswith(base + "-") or base.startswith(key + "-")
+
+
+def _extract_live_tps(model_label, model_id, now_wall):
+    raw_path = os.environ.get("AGY_TPS_FILE", "").strip()
+    if not raw_path:
+        return None
+    path = os.path.expanduser(raw_path)
+    if not os.path.isabs(path):
+        return None
+    fd = -1
+    try:
+        fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
+        info = os.fstat(fd)
+        if not stat.S_ISREG(info.st_mode) or info.st_uid != os.getuid() or info.st_size > 262144:
+            return None
+        with os.fdopen(fd, "rb") as stream:
+            fd = -1
+            data = json.loads(stream.read().decode("utf-8", "replace"))
+    except (OSError, ValueError, RecursionError):
+        return None
+    finally:
+        if fd != -1:
+            os.close(fd)
+
+    if not isinstance(data, dict):
+        return None
+    models = data.get("models")
+    if not isinstance(models, dict) or not models:
+        return None
+
+    exact_cands = []
+    for cand in _slugs(model_label) + _slugs(model_id):
+        if cand not in exact_cands:
+            exact_cands.append(cand)
+    base_cands = []
+    for raw_base in (
+        re.sub(r"\s*\([^)]*\)\s*$", "", model_label),
+        re.sub(r"\s*\([^)]*\)\s*$", "", model_id),
+    ):
+        for cand in _slugs(raw_base):
+            if cand not in base_cands:
+                base_cands.append(cand)
+
+    for cand in exact_cands + base_cands:
+        valid = _valid_live_tps(models.get(cand), now_wall)
+        if valid is not None:
+            return valid[0]
+
+    if base_cands:
+        best_ts = float("-inf")
+        best_tps = None
+        for key, entry in models.items():
+            if not isinstance(key, str):
+                continue
+            valid = _valid_live_tps(entry, now_wall)
+            if valid is None:
+                continue
+            if any(_model_prefix_match(key, b) for b in base_cands):
+                tps, ts = valid
+                if ts > best_ts:
+                    best_ts = ts
+                    best_tps = tps
+        return best_tps
+    return None
+
+
+def _extract_tps(data, now_mono=None, now_wall=None):
+    for container in (data, data.get("context_window"), data.get("context"), data.get("metrics")):
+        if isinstance(container, dict):
+            direct = _first_num(container, ("tps", "tokens_per_second", "output_tokens_per_second"))
+            if direct is not None and 0.0 < direct <= _TPS_MAX_VALUE:
+                return direct
+
+    ctx = data.get("context_window")
+    if not isinstance(ctx, dict):
+        ctx = data.get("context")
+    if not isinstance(ctx, dict):
+        return None
+    total_out = _num(ctx.get("total_output_tokens"))
+    if total_out is None or total_out < 0:
+        return None
+
+    session_id = _clean(data.get("conversation_id") or data.get("session_id"))
+    if not session_id:
+        return None
+    agent_state = _clean(data.get("agent_state")).lower()
+    transcript_path = _clean(data.get("transcript_path"))
+
+    if now_mono is None:
+        now_mono = time.monotonic()
+    if now_wall is None:
+        now_wall = time.time()
+
+    dir_fd = _open_cache_dir()
+    if dir_fd is None:
+        return None
+    lock_fd = -1
+    try:
+        try:
+            lock_fd = os.open(".tps-state.lock", os.O_CREAT | os.O_RDWR | os.O_NOFOLLOW, 0o600, dir_fd=dir_fd)
+            info = os.fstat(lock_fd)
+            if not stat.S_ISREG(info.st_mode) or info.st_uid != os.getuid():
+                return None
+            fcntl.flock(lock_fd, fcntl.LOCK_EX)
+        except OSError:
+            return None
+
+        raw_state = _read_owned_json("tps-state.json", dir_fd=dir_fd) or {}
+        raw_sessions = raw_state.get("sessions")
+        sessions = {k: v for k, v in raw_sessions.items() if isinstance(k, str) and isinstance(v, dict)} if isinstance(raw_sessions, dict) else {}
+
+        entry = sessions.get(session_id) or {}
+        prev_updated_at = _num(entry.get("updated_at"))
+        last_mono = _num(entry.get("last_mono"))
+        last_out = _num(entry.get("last_out"))
+        last_out_mono = _num(entry.get("last_out_mono"))
+        work_start_mono = _num(entry.get("work_start_mono"))
+        work_start_out = _num(entry.get("work_start_out"))
+        stream_start_mono = _num(entry.get("stream_start_mono"))
+        stream_start_out = _num(entry.get("stream_start_out"))
+        last_step = entry.get("last_transcript_step")
+        if not isinstance(last_step, int) or isinstance(last_step, bool):
+            last_step = None
+        tps = _num(entry.get("tps"))
+        if tps is not None and not (0.0 < tps <= _TPS_MAX_VALUE):
+            tps = None
+
+        # Delayed concurrent invocation: older timestamp than already-persisted state (not a reboot).
+        if (
+            last_mono is not None
+            and now_mono < last_mono
+            and (last_mono - now_mono) <= _TPS_MAX_GAP
+            and prev_updated_at is not None
+            and abs(now_wall - prev_updated_at) <= _TPS_MAX_GAP
+        ):
+            return tps
+
+        # Check both monotonic and wall clock plus their drift: macOS mach_absolute_time pauses during sleep.
+        wall_gap = prev_updated_at is None or abs(now_wall - prev_updated_at) > _TPS_MAX_GAP
+        mono_gap = last_mono is None or now_mono < last_mono or (now_mono - last_mono) > _TPS_MAX_GAP
+        clock_drift = (
+            prev_updated_at is not None
+            and last_mono is not None
+            and abs((now_wall - prev_updated_at) - (now_mono - last_mono)) > _TPS_SLEEP_DRIFT
+        )
+        if wall_gap or mono_gap or clock_drift:
+            work_start_mono = work_start_out = stream_start_mono = stream_start_out = last_out_mono = None
+        if last_out is not None and total_out < last_out:
+            work_start_mono = work_start_out = stream_start_mono = stream_start_out = last_out_mono = None
+            last_out = total_out
+            last_step = None
+
+        computed_from_transcript = False
+        if transcript_path and ((last_out is not None and total_out > last_out) or tps is None):
+            turn = _latest_transcript_turn(transcript_path)
+            if turn is not None:
+                step_idx, start_ts, next_ts, out_tok = turn
+                is_new_step = step_idx is None or step_idx != last_step
+                if last_out is not None and total_out > last_out and is_new_step:
+                    # Only attribute this transcript step to the current token jump if it just finished.
+                    if next_ts is None or (now_wall - next_ts) <= 5.0:
+                        end_ts = next_ts if (next_ts is not None and next_ts > start_ts and next_ts < now_wall - 1.5) else now_wall
+                        dt = end_ts - start_ts
+                        if _TPS_MIN_DT <= dt <= _TPS_MAX_GAP:
+                            cand = out_tok / dt
+                            if 0.0 < cand <= _TPS_MAX_VALUE:
+                                tps = cand
+                                last_step = step_idx
+                                computed_from_transcript = True
+                elif tps is None and next_ts is not None:
+                    dt = next_ts - start_ts
+                    if _TPS_MIN_DT <= dt <= _TPS_MAX_GAP:
+                        cand = out_tok / dt
+                        if 0.0 < cand <= _TPS_MAX_VALUE:
+                            tps = cand
+                            last_step = step_idx
+                            computed_from_transcript = True
+
+        # A zero-output plateau after tokens in the same "working" cycle (e.g. tool execution)
+        # makes monotonic turn start unknown; clear anchors and wait for transcript or new stream.
+        in_plateau = (
+            agent_state == "working"
+            and last_out is not None
+            and total_out == last_out
+            and last_out_mono is not None
+            and (now_mono - last_out_mono) > _TPS_STREAM_IDLE
+        )
+        if in_plateau:
+            work_start_mono = work_start_out = stream_start_mono = stream_start_out = None
+
+        if last_out is not None and total_out > last_out:
+            if not computed_from_transcript:
+                if (
+                    stream_start_mono is not None
+                    and stream_start_out is not None
+                    and last_out_mono is not None
+                    and (now_mono - last_out_mono) <= _TPS_STREAM_IDLE
+                ):
+                    s_dt = now_mono - stream_start_mono
+                    s_tok = total_out - stream_start_out
+                    if s_dt >= _TPS_MIN_DT and s_tok >= _TPS_MIN_TOKENS:
+                        cand = s_tok / s_dt
+                        if 0.0 < cand <= _TPS_MAX_VALUE:
+                            tps = cand
+                else:
+                    if (
+                        stream_start_mono is None
+                        and last_out_mono is None
+                        and work_start_mono is not None
+                        and work_start_out is not None
+                    ):
+                        w_dt = now_mono - work_start_mono
+                        w_tok = total_out - work_start_out
+                        if w_dt >= _TPS_MIN_DT and w_tok >= _TPS_MIN_TOKENS:
+                            cand = w_tok / w_dt
+                            if 0.0 < cand <= _TPS_MAX_VALUE:
+                                tps = cand
+                    if agent_state == "working":
+                        stream_start_mono = now_mono
+                        stream_start_out = total_out
+            elif agent_state == "working":
+                stream_start_mono = now_mono
+                stream_start_out = total_out
+            last_out_mono = now_mono
+
+        if agent_state == "working":
+            if work_start_mono is None and not in_plateau and last_out_mono is None:
+                work_start_mono = now_mono
+                work_start_out = total_out
+                stream_start_mono = stream_start_out = None
+        else:
+            work_start_mono = work_start_out = stream_start_mono = stream_start_out = last_out_mono = None
+
+        sessions[session_id] = {
+            "updated_at": now_wall,
+            "last_mono": now_mono,
+            "last_out": total_out,
+            "last_out_mono": last_out_mono,
+            "work_start_mono": work_start_mono,
+            "work_start_out": work_start_out,
+            "stream_start_mono": stream_start_mono,
+            "stream_start_out": stream_start_out,
+            "last_transcript_step": last_step,
+            "tps": tps,
+        }
+
+        cutoff = now_wall - _TPS_STALE_SECS
+        kept = [
+            (sid, st)
+            for sid, st in sessions.items()
+            if (_num(st.get("updated_at")) or 0.0) >= cutoff
+        ]
+        kept.sort(key=lambda pair: _num(pair[1].get("updated_at")) or 0.0, reverse=True)
+        _write_owned_json("tps-state.json", {"sessions": dict(kept[:_TPS_MAX_SESSIONS])}, dir_fd)
+        return tps
+    finally:
+        if lock_fd != -1:
+            os.close(lock_fd)
+        os.close(dir_fd)
+
+
+def _extract_git(data):
+    vcs = data.get("vcs")
+    if not isinstance(vcs, dict):
+        vcs = data.get("git")
+    if isinstance(vcs, dict):
+        branch = _clean(vcs.get("branch") or vcs.get("branch_name"))
+        dirty = bool(vcs.get("dirty"))
+        if branch:
+            return branch, dirty
+
+    ws = data.get("workspace")
+    cwd = ""
+    if isinstance(ws, dict):
+        cwd = _clean(ws.get("current_dir") or ws.get("project_dir") or ws.get("cwd"))
+    if not cwd:
+        cwd = _clean(data.get("cwd"))
+    if not cwd or not os.path.isdir(cwd):
+        return "", False
+
+    try:
+        res = subprocess.run(
+            ["git", "-C", cwd, "rev-parse", "--abbrev-ref", "HEAD"],
+            capture_output=True,
+            timeout=0.15,
+            check=False,
+        )
+        if res.returncode == 0:
+            return _clean(res.stdout.decode("utf-8", "replace")), False
+    except (OSError, subprocess.SubprocessError):
+        pass
+    return "", False
+
+
+def _extract_cost(data):
+    cost = data.get("cost")
+    if isinstance(cost, dict):
+        return _first_num(cost, ("total_usd", "total_cost_usd", "usd", "total"))
+    return _num(cost)
+
+
+def _extract_mode(data):
+    mode = _clean(data.get("mode") or data.get("cycle_mode") or data.get("permission_mode"))
+    if not mode and isinstance(data.get("agent"), dict):
+        mode = _clean(data["agent"].get("mode"))
+    return mode
+
+
+def _extract_activity(data):
+    parts = []
+    subs = data.get("subagents")
+    if isinstance(subs, list) and len(subs) > 0:
+        n = len(subs)
+        parts.append(f"{n} subagent" if n == 1 else f"{n} subagents")
+    tasks = _num(data.get("task_count"))
+    if tasks is not None:
+        n = int(tasks)
+        if n > 0:
+            parts.append(f"{n} task" if n == 1 else f"{n} tasks")
+    return parts
+
+
+def _render_quota_segment(label, used_pct, reset_secs, no_color):
+    pct_color = _severity(used_pct)
+    parts = [
+        _paint(label, C_MUTED, no_color),
+        _aurora_bar(used_pct, 6, no_color),
+        _paint(f"{round(used_pct):.0f}%", C_BOLD + pct_color, no_color),
+    ]
+    reset_str = _fmt_duration(reset_secs) if reset_secs is not None else ""
+    if reset_str:
+        parts.append(_paint(f"↻{reset_str}", C_DIM, no_color))
+
+    forecast = _forecast_window(label, used_pct, reset_secs)
+    if forecast:
+        kind, value = forecast
+        if kind == "risk" and value:
+            parts.append(_pill(f"⚠{value}", C_PILL_HOT, no_color))
+        elif kind == "proj":
+            proj_color = _severity(value) if value >= 70 else C_DIM
+            parts.append(_paint(f"→{value:.0f}%", proj_color, no_color))
+    return " ".join(parts)
+
+
+def _print_stats(hours, no_color):
+    con = _open_stats_db()
+    if con is None:
+        print("agy-statusline: ~/.antigravity_tools/token_stats.db не найдена", file=sys.stderr)
+        return 1
+    try:
+        cutoff = int(time.time()) - hours * 3600
+        num_guard = (
+            "typeof(timestamp) IN ('integer', 'real') "
+            "AND typeof(input_tokens) IN ('integer', 'real') "
+            "AND (cached_tokens IS NULL OR typeof(cached_tokens) IN ('integer', 'real'))"
+        )
+        models = con.execute(
+            f"SELECT model, COUNT(*), COALESCE(SUM(input_tokens), 0), COALESCE(SUM(cached_tokens), 0) "
+            f"FROM token_usage WHERE {num_guard} AND timestamp >= ? "
+            f"GROUP BY model ORDER BY SUM(input_tokens) DESC",
+            (cutoff,),
+        ).fetchall()
+        recent = con.execute(
+            f"SELECT timestamp, model, COALESCE(input_tokens, 0), COALESCE(cached_tokens, 0) "
+            f"FROM token_usage WHERE {num_guard} AND timestamp >= ? AND input_tokens > 0 "
+            f"ORDER BY id DESC LIMIT 10",
+            (cutoff,),
+        ).fetchall()
+    except sqlite3.Error as exc:
+        print(f"agy-statusline: ошибка чтения БД: {_clean(exc)}", file=sys.stderr)
+        return 1
+    finally:
+        con.close()
+
+    print(_paint(f"◆ Cache hit за последние {hours}ч", C_BOLD + C_ACCENT, no_color))
+    if not models:
+        print(_paint("  нет запросов за выбранный период", C_DIM, no_color))
+        return 0
+
+    for model, reqs, raw_inp, raw_cached in models:
+        inp = _num(raw_inp) or 0.0
+        cached = _num(raw_cached) or 0.0
+        hit = _ratio_pct(cached, inp) if (inp > 0 and cached >= 0) else 0.0
+        if hit is None:
+            hit = 0.0
+        filled = int(round(hit / 100.0 * 6))
+        hit_bar = _paint("▰" * filled, _cache_color(hit), no_color) + _paint("▱" * (6 - filled), C_DIV, no_color)
+        pct_s = _paint(f"{hit:5.1f}%", C_BOLD + _cache_color(hit), no_color)
+        name = _clean(model)
+        req_count = int(_num(reqs) or 0)
+        print(f"  {name:<26} {hit_bar} {pct_s}  {_fmt_tokens(cached):>6}/{_fmt_tokens(inp):<6}  ({req_count} req)")
+
+    if recent:
+        print(_paint("\nПоследние запросы", C_DIM, no_color))
+        for ts, model, raw_inp, raw_cached in recent:
+            inp = _num(raw_inp) or 0.0
+            cached = _num(raw_cached) or 0.0
+            hit = _ratio_pct(cached, inp) if (inp > 0 and cached >= 0) else 0.0
+            if hit is None:
+                hit = 0.0
+            when = _fmt_ts(ts)
+            pct_s = _paint(f"{hit:5.1f}%", _cache_color(hit), no_color)
+            name = _clean(model)
+            print(f"  {_paint(when, C_DIM, no_color)}  {name:<24} {pct_s}  {_fmt_tokens(cached):>6}/{_fmt_tokens(inp):<6}")
+    return 0
+
+
+def main():
+    no_color = bool(os.environ.get("NO_COLOR"))
+
+    if len(sys.argv) >= 2 and sys.argv[1] == "--stats":
+        hours = 24
+        if len(sys.argv) == 3:
+            try:
+                hours = int(sys.argv[2])
+                if hours <= 0 or hours > 8760:
+                    raise ValueError()
+            except ValueError:
+                print("Использование: agy-statusline --stats [часы: 1..8760]", file=sys.stderr)
+                sys.exit(2)
+        elif len(sys.argv) > 3:
+            print("Использование: agy-statusline --stats [часы: 1..8760]", file=sys.stderr)
+            sys.exit(2)
+        sys.exit(_print_stats(hours, no_color))
+
+    raw_bytes = sys.stdin.buffer.read(1048576)
+    # Sample timestamps before any network or subprocess calls so TPS timing stays unskewed.
+    now_mono = time.monotonic()
+    now_wall = time.time()
+    if not raw_bytes.strip():
+        return
+    try:
+        data = json.loads(raw_bytes.decode("utf-8", "replace"))
+    except (ValueError, RecursionError):
+        return
+    if not isinstance(data, dict):
+        return
+
+    sep = _paint("  │  ", C_DIV, no_color)
+    base_name, effort_tag, model_id = _extract_model(data)
+    full_model = f"{base_name} ({effort_tag})" if (base_name and effort_tag) else base_name
+    tps = _extract_live_tps(full_model, model_id, now_wall)
+    if tps is None:
+        tps = _extract_tps(data, now_mono=now_mono, now_wall=now_wall)
+
+    # Line 1: quota bars, reset countdowns, and burn-rate forecast.
+    quota_segments = [
+        _render_quota_segment(label, used_pct, reset_secs, no_color)
+        for label, used_pct, reset_secs in _extract_quotas(data, full_model, model_id)
+    ]
+
+    # Line 2: model identity, context gauge, cache hit, git branch, and activity.
+    info_segments = []
+    if base_name:
+        model_seg = _paint("◆ ", C_ACCENT, no_color) + _paint(base_name, C_BOLD + C_FG, no_color)
+        if effort_tag:
+            model_seg += " " + _paint(effort_tag, C_MUTED, no_color)
+        info_segments.append(model_seg)
+
+    ctx_pct = _extract_context_pct(data)
+    if ctx_pct is not None:
+        ctx_color = _severity(ctx_pct)
+        info_segments.append(
+            _paint("ctx ", C_DIM, no_color)
+            + _aurora_bar(ctx_pct, 5, no_color)
+            + " "
+            + _paint(f"{round(ctx_pct):.0f}%", C_BOLD + ctx_color, no_color)
+        )
+
+    cache_hit = _extract_cache_hit(data, full_model, model_id)
+    if cache_hit is not None:
+        if cache_hit < 30.0:
+            cache_val = _pill(f"{round(cache_hit):.0f}%", C_PILL_HOT, no_color)
+        else:
+            cache_val = _paint(f"{round(cache_hit):.0f}%", C_BOLD + _cache_color(cache_hit), no_color)
+        info_segments.append(_paint("cache ", C_DIM, no_color) + cache_val)
+
+    if tps is not None:
+        tps_str = f"{tps:.1f}" if tps < 10.0 else f"{round(tps):.0f}"
+        info_segments.append(_paint("tps ", C_DIM, no_color) + _paint(tps_str, C_BOLD + _tps_color(tps), no_color))
+
+    branch, dirty = _extract_git(data)
+    if branch:
+        seg = _paint("⎇ ", C_DIM, no_color) + _paint(branch, C_CYAN, no_color)
+        if dirty:
+            seg += _paint("*", C_ACCENT, no_color)
+        info_segments.append(seg)
+
+    cost = _extract_cost(data)
+    if cost is not None and cost >= 0.005:
+        info_segments.append(_paint(f"${cost:.2f}", C_MUTED, no_color))
+
+    for act in _extract_activity(data):
+        info_segments.append(_paint(f"● {act}", C_MAGENTA, no_color))
+
+    mode = _extract_mode(data)
+    if mode and mode.lower() not in ("default", "normal"):
+        info_segments.append(_pill(mode, C_PILL_DIM, no_color))
+
+    lines = []
+    if quota_segments:
+        lines.append(sep.join(quota_segments))
+    if info_segments:
+        lines.append(sep.join(info_segments))
+    if lines:
+        sys.stdout.write("\n".join(lines) + "\n")
+
+
+if __name__ == "__main__":
+    main()

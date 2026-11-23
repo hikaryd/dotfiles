@@ -1,0 +1,11 @@
+- link:
+    ~/.config/dots/mattpocock-skills-update.sh:
+      path: scripts/mattpocock-skills-update.sh
+      create: true
+      force: false
+
+- shell:
+    - command: test "$HOME/.config/dots/mattpocock-skills-update.sh" -ef scripts/mattpocock-skills-update.sh && bash scripts/mattpocock-skills-schedule.sh
+      description: Расписание автообновления mattpocock/skills
+      stdout: true
+      stderr: true

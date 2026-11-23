@@ -127,6 +127,7 @@ const helpText = `
   dots private init|check    приватные файлы, без вывода секретов
   dots tmux-style --current  применить профиль к tmux
   dots ghostty-reload        перечитать конфиг Ghostty
+  dots shitty-config         собрать конфиг Shitty под текущий профиль
   dots notify --test         тестовое уведомление
   dots nu [args...]          запустить Nushell
 

@@ -5,8 +5,13 @@
       force: false
 
 - shell:
-    - command: DISABLE_TELEMETRY=1 npx --yes skills@1.7.4 add https://github.com/DietrichGebert/ponytail/tree/v5.3.2 --global --agent universal --skill '*' --yes
-      description: Навыки Ponytail для Jcode
+    - command: |
+        set -eu
+        if ls -d "$HOME/.agents/skills"/ponytail "$HOME/.agents/skills"/ponytail-* >/dev/null 2>&1; then
+          DISABLE_TELEMETRY=1 npx --yes skills@1.7.4 remove ponytail ponytail-audit ponytail-debt ponytail-gain ponytail-help ponytail-review --global --yes
+        fi
+        DISABLE_TELEMETRY=1 npx --yes skills@1.7.4 add https://github.com/JayPokale/Chisle/tree/v3.14.2 --global --agent universal --skill '*' --yes
+      description: Навыки Chisle для Jcode
       stdout: true
       stderr: true
     - command: DISABLE_TELEMETRY=1 npx --yes skills@1.7.4 add https://github.com/heydamir/unslop/tree/a6f121eee5f29c2f74976b75456feae8b66afb3a --global --agent universal --skill unslop --yes
@@ -16,11 +21,46 @@
     - command: |
         set -eu
         umask 077
-        config_dir="${JCODE_HOME:-$HOME/.jcode}"
-        mkdir -p "$config_dir"
-        guidance='At the start of every new Jcode session, before responding or starting task work, load the installed `ponytail` skill with `skill_manage` (`action: "load", name: "ponytail"`). Apply `full` mode unless the user chooses another level or disables Ponytail. This also applies to swarm workers.'
-        grep -Fqx "$guidance" "$config_dir/prompt-overlay.md" 2>/dev/null || printf '\n%s\n' "$guidance" >> "$config_dir/prompt-overlay.md"
-      description: Ponytail в каждой сессии Jcode
+        python3 -I - <<'PY'
+        import os
+        import pathlib
+        import tempfile
+
+        config_dir = pathlib.Path(os.environ.get("JCODE_HOME") or (pathlib.Path.home() / ".jcode"))
+        config_dir.mkdir(parents=True, exist_ok=True)
+        overlay = config_dir / "prompt-overlay.md"
+        old = (
+            'At the start of every new Jcode session, before responding or starting task work, '
+            'load the installed `ponytail` skill with `skill_manage` (`action: "load", name: "ponytail"`). '
+            'Apply `full` mode unless the user chooses another level or disables Ponytail. '
+            'This also applies to swarm workers.'
+        )
+        new = (
+            'At the start of every new Jcode session, before responding or starting task work, '
+            'load the installed `chisle` skill with `skill_manage` (`action: "load", name: "chisle"`). '
+            'Keep it active unless the user disables Chisle. '
+            'This also applies to swarm workers.'
+        )
+        lines = overlay.read_text(encoding="utf-8").splitlines() if overlay.exists() else []
+        if new in lines:
+            updated = [line for line in lines if line != old]
+        elif old in lines:
+            updated = [new if line == old else line for line in lines]
+        else:
+            updated = lines + ([""] if lines and lines[-1] != "" else []) + [new]
+        content = "\n".join(updated) + "\n"
+        if not overlay.exists() or overlay.read_text(encoding="utf-8") != content:
+            fd, tmp_name = tempfile.mkstemp(prefix=".prompt-overlay-", dir=config_dir)
+            tmp = pathlib.Path(tmp_name)
+            try:
+                with os.fdopen(fd, "w", encoding="utf-8") as stream:
+                    stream.write(content)
+                tmp.chmod(0o600)
+                tmp.replace(overlay)
+            finally:
+                tmp.unlink(missing_ok=True)
+        PY
+      description: Chisle в каждой сессии Jcode
       stdout: true
       stderr: true
     - command: scripts/jcode-install.sh

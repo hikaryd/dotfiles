@@ -1,0 +1,30 @@
+{
+  "mcpServers": {
+    "firecrawl": {
+      "url": "https://mcp.firecrawl.dev/v2/mcp-oauth"
+    },
+    "serena": {
+      "command": "@JCODE_DATA@/python/serena-agent/bin/serena",
+      "args": [
+        "start-mcp-server",
+        "--context",
+        "antigravity",
+        "--agent-interface",
+        "tools",
+        "--language-backend",
+        "LSP",
+        "--project-from-cwd",
+        "--enable-web-dashboard",
+        "false",
+        "--open-web-dashboard",
+        "false",
+        "--enable-gui-log-window",
+        "false"
+      ],
+      "env": {
+        "SERENA_HOME": "@JCODE_DATA@/serena",
+        "PATH": "@HOME@/.cargo/bin:/opt/homebrew/bin:@HOME@/.local/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+      }
+    }
+  }
+}

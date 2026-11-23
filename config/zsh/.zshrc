@@ -180,10 +180,14 @@ if [[ -o interactive && -t 0 && -t 1 ]]; then
 fi
 
 # opencode
-export PATH=/Users/tronin.egor/.opencode/bin:$PATH
+export PATH="$HOME/.opencode/bin:$PATH"
 
 # >>> lig post >>>
 if [[ -o interactive && -t 0 && -t 1 ]] && (( $+commands[lig] )); then
   eval "$(lig init zsh post)"
 fi
 # <<< lig post <<<
+
+
+# Added by Antigravity CLI installer
+export PATH="$HOME/.local/bin:$PATH"

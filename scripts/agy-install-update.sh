@@ -8,6 +8,4 @@ if [[ -f "$bin" && ! -L "$bin" ]] && codesign --verify --strict \
 else
   echo 'agy: not a verified Google CLI, skipping update' >&2
 fi
-export HOMEBREW_NO_INSTALL_CLEANUP=1 HOMEBREW_NO_ENV_HINTS=1 NONINTERACTIVE=1
-python3 "$HOME/.config/dots/agy-install-manager-update.py" || status=1
 exit "$status"

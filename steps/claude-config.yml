@@ -1,0 +1,36 @@
+- shell:
+    - command: bash scripts/claude-config.sh
+      description: Настройки, правила, субагент, навыки и MCP Claude
+      stdout: true
+      stderr: true
+    - command: |
+        set -eu
+        claude_bin="$HOME/.local/bin/claude"
+        profile_dir="$HOME/.local/share/claude-guard/home/.claude"
+        [ -x "$claude_bin" ] && [ -d "$profile_dir" ] || exit 0
+        python3 -I - "$claude_bin" "$profile_dir/plugins" <<'PY'
+        import json
+        import pathlib
+        import subprocess
+        import sys
+
+        claude_bin = sys.argv[1]
+        plugins_dir = pathlib.Path(sys.argv[2])
+
+        def read_json(path):
+            if not path.is_file():
+                return {}
+            data = json.loads(path.read_text(encoding="utf-8"))
+            return data if isinstance(data, dict) else {}
+
+        installed = read_json(plugins_dir / "installed_plugins.json").get("plugins")
+        if isinstance(installed, dict) and "chisle@chisle" in installed:
+            sys.exit(0)
+        marketplaces = read_json(plugins_dir / "known_marketplaces.json")
+        if "chisle" not in marketplaces:
+            subprocess.run([claude_bin, "plugin", "marketplace", "add", "JayPokale/Chisle"], check=True)
+        subprocess.run([claude_bin, "plugin", "install", "chisle@chisle"], check=True)
+        PY
+      description: Плагин Chisle для Claude Code
+      stdout: true
+      stderr: true

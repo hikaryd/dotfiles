@@ -1,0 +1,36 @@
+{
+  "model": "fable",
+  "modelSettings": {
+    "claude-opus-5-5": {
+      "effortLevel": "high"
+    },
+    "claude-fable-5-2": {
+      "effortLevel": "medium"
+    }
+  },
+  "theme": "auto",
+  "env": {
+    "CHISLE_UPDATE_CHECK": "0"
+  },
+  "enabledPlugins": {
+    "gopls-lsp@claude-plugins-official": true,
+    "pyright-lsp@claude-plugins-official": true,
+    "typescript-lsp@claude-plugins-official": true,
+    "rust-analyzer-lsp@claude-plugins-official": true,
+    "chisle@chisle": true
+  },
+  "extraKnownMarketplaces": {
+    "lot-map": {
+      "source": {
+        "source": "github",
+        "repo": "alexeyw/lot-map"
+      }
+    },
+    "chisle": {
+      "source": {
+        "source": "github",
+        "repo": "JayPokale/Chisle"
+      }
+    }
+  }
+}

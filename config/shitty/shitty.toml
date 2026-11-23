@@ -1,0 +1,31 @@
+bg = "#101010"
+fg = "#ececec"
+cr = "#ffc799"
+color0 = "#1c1c1c"
+color1 = "#ff8080"
+color2 = "#8fd3a5"
+color3 = "#ffc799"
+color4 = "#8fb4e0"
+color5 = "#c8a8e0"
+color6 = "#6fd1c4"
+color7 = "#cfcfcf"
+color8 = "#5c5c5c"
+color9 = "#ffa3a3"
+color10 = "#b3e8c2"
+color11 = "#ffd9b8"
+color12 = "#b0cdef"
+color13 = "#dcc5ef"
+color14 = "#99ffe4"
+color15 = "#ffffff"
+# Цвета выше генерирует dots-tools palette.
+# В ~/.config/shitty файл попадает через dots shitty-config (./install, dots style).
+# Shell не задан: Shitty.app передаёт dots-terminal через SHELL, а st из CLI берёт обычный shell.
+
+font = ["JetBrainsMono Nerd Font Mono", "JetBrains Mono", "monospace"]
+fontsize = 15
+border = 16
+# Без заголовка; rift раскладывает такое окно только с manage = true в app_rules.
+no-decorations = true
+# Ctrl+цифры и Ctrl+Shift всегда расширенным кодом: иначе после сброса режима
+# программой Ctrl+2..8 уходят как NUL/ESC/FS..., tmux их не узнаёт, а ESC дёргает Claude CLI.
+modifyOtherKeys = 2

@@ -1,0 +1,6 @@
+{
+  "name": "migrated-settings",
+  "displayName": "Migrated settings",
+  "version": "1.0.0",
+  "description": "MCP servers, skills, subagents, and rules managed by dots."
+}
