@@ -6,9 +6,10 @@
     - command: |
         set -eu
         claude_bin="$HOME/.local/bin/claude"
-        profile_dir="$HOME/.local/share/claude-guard/home/.claude"
-        [ -x "$claude_bin" ] && [ -d "$profile_dir" ] || exit 0
-        python3 -I - "$claude_bin" "$profile_dir/plugins" <<'PY'
+        guard_base="$HOME/.local/share/claude-guard"
+        guard_cfg="$HOME/.config/claude-guard/settings.json"
+        [ -x "$claude_bin" ] && [ -x "$guard_base/current/node_modules/.bin/claude" ] && [ -d "$guard_base/home/.claude" ] || exit 0
+        python3 -I - "$claude_bin" "$guard_base/home/.claude/plugins" "$guard_cfg" <<'PY'
         import json
         import pathlib
         import subprocess
@@ -16,6 +17,7 @@
 
         claude_bin = sys.argv[1]
         plugins_dir = pathlib.Path(sys.argv[2])
+        guard_cfg = pathlib.Path(sys.argv[3])
 
         def read_json(path):
             if not path.is_file():
@@ -23,8 +25,12 @@
             data = json.loads(path.read_text(encoding="utf-8"))
             return data if isinstance(data, dict) else {}
 
+        if not str(read_json(guard_cfg).get("proxy_url") or "").strip():
+            sys.exit(0)
+
         installed = read_json(plugins_dir / "installed_plugins.json").get("plugins")
-        if isinstance(installed, dict) and "chisle@chisle" in installed:
+        records = installed.get("chisle@chisle") if isinstance(installed, dict) else None
+        if isinstance(records, list) and any(isinstance(r, dict) and r.get("scope") == "user" for r in records):
             sys.exit(0)
         marketplaces = read_json(plugins_dir / "known_marketplaces.json")
         if "chisle" not in marketplaces:

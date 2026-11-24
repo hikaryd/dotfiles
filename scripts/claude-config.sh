@@ -123,12 +123,12 @@ def main():
     # Chisle ships its own skills via the Claude plugin; linking them too duplicates them.
     plugin_skills = {"chisle", "chisle-audit", "chisle-help", "chisle-review"}
     skills = directory(profile / "skills")
-    managed_bases = (home / ".agents/skills", home / ".jcode/skills")
+    managed_bases = tuple(pathlib.Path(os.path.normpath(b)) for b in (home / ".agents/skills", home / ".jcode/skills"))
     for entry in sorted(skills.iterdir()):
         if not entry.is_symlink():
             continue
-        target = pathlib.Path(os.readlink(entry))
-        if not any(target.parent == base for base in managed_bases):
+        target = pathlib.Path(os.path.normpath(os.path.join(entry.parent, os.readlink(entry))))
+        if target.parent not in managed_bases:
             continue
         if entry.name in plugin_skills or not (target / "SKILL.md").is_file():
             entry.unlink()

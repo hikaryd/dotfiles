@@ -7,8 +7,18 @@
 - shell:
     - command: |
         set -eu
-        if ls -d "$HOME/.agents/skills"/ponytail "$HOME/.agents/skills"/ponytail-* >/dev/null 2>&1; then
+        has_ponytail=0
+        for name in ponytail ponytail-audit ponytail-debt ponytail-gain ponytail-help ponytail-review; do
+          if [ -e "$HOME/.agents/skills/$name" ] || [ -L "$HOME/.agents/skills/$name" ]; then
+            has_ponytail=1
+            break
+          fi
+        done
+        if [ "$has_ponytail" -eq 1 ]; then
           DISABLE_TELEMETRY=1 npx --yes skills@1.7.4 remove ponytail ponytail-audit ponytail-debt ponytail-gain ponytail-help ponytail-review --global --yes
+          for name in ponytail ponytail-audit ponytail-debt ponytail-gain ponytail-help ponytail-review; do
+            rm -rf -- "$HOME/.agents/skills/$name"
+          done
         fi
         DISABLE_TELEMETRY=1 npx --yes skills@1.7.4 add https://github.com/JayPokale/Chisle/tree/v3.14.2 --global --agent universal --skill '*' --yes
       description: Навыки Chisle для Jcode
