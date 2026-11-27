@@ -27,9 +27,14 @@ command = shell:"$HOME/.local/bin/dots-terminal"
 shell-integration = none
 
 
-# Встроенный JetBrains Mono с Nerd-иконками: отдельный шрифт не нужен.
+# Monaspace (Argon + рукописный Radon для курсива; в каске также Neon, Xenon, Krypton).
+font-family = Monaspace Argon
+font-family-italic = Monaspace Radon
+font-family-bold-italic = Monaspace Radon
 font-size = 15
 adjust-cell-height = 12%
+font-thicken = true
+font-thicken-strength = 128
 # Операторы остаются отдельными символами, без декоративных лигатур.
 font-feature = -calt, -liga, -dlig
 

@@ -10,6 +10,10 @@
       command: build/bin/dots-tools setup tinycast-hotkey
     - description: "Батарея и звук в Vorssaint"
       command: scripts/vorssaint-defaults.sh
+    - description: "SpellcheckMac.app в Applications + автозапуск"
+      command: scripts/spellcheck-app.sh
+      stdout: true
+      stderr: true
     - description: "Повтор клавиш вместо меню акцентов"
       command: >-
         defaults write NSGlobalDomain ApplePressAndHoldEnabled -bool false

@@ -1,12 +1,17 @@
 package desktop
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"strings"
+	"syscall"
+
+	"dots/native/internal/tui"
 )
 
 type session struct {
@@ -107,15 +112,54 @@ func sessionsRun(args []string) int {
 	if len(args) == 0 {
 		args = []string{"open"}
 	}
-	o, e := parse(args[1:], "--json --all", "")
-	if e != nil || !has(args[0], "open", "list") || args[0] == "list" && (len(o.pos) > 0 || o.flag("--all")) || args[0] == "open" && (len(o.pos) > 1 || o.flag("--json")) {
+	o, e := parse(args[1:], "--json --all --auto --quiet --print-active", "")
+	if e != nil || !has(args[0], "open", "list", "save", "restore") {
 		return usageError("sessions")
 	}
-	entries, e := sessionInventory()
-	if e != nil {
-		return fail("dots sessions", e)
-	}
-	if args[0] == "list" {
+	switch args[0] {
+	case "save":
+		if len(o.pos) > 0 || o.flag("--json") || o.flag("--all") || o.flag("--print-active") {
+			return usageError("sessions")
+		}
+		if err := saveMuxState(o.flag("--auto")); err != nil {
+			if o.flag("--quiet") {
+				return 1
+			}
+			return fail("dots sessions save", err)
+		}
+		if !o.flag("--quiet") {
+			fmt.Println("Sessions saved.")
+		}
+		return 0
+	case "restore":
+		if len(o.pos) > 0 || o.flag("--json") || o.flag("--all") || o.flag("--auto") {
+			return usageError("sessions")
+		}
+		n, active, err := restoreMuxState()
+		if err != nil {
+			if o.flag("--quiet") || o.flag("--print-active") {
+				return 1
+			}
+			return fail("dots sessions restore", err)
+		}
+		if o.flag("--print-active") {
+			if active != "" {
+				fmt.Println(active)
+			}
+			return 0
+		}
+		if !o.flag("--quiet") {
+			fmt.Printf("Restored sessions: %d\n", n)
+		}
+		return 0
+	case "list":
+		if len(o.pos) > 0 || o.flag("--all") || o.flag("--auto") || o.flag("--quiet") || o.flag("--print-active") {
+			return usageError("sessions")
+		}
+		entries, err := sessionInventory()
+		if err != nil {
+			return fail("dots sessions", err)
+		}
 		if o.flag("--json") {
 			return jsonExit(entries, true)
 		}
@@ -128,13 +172,19 @@ func sessionsRun(args []string) int {
 		}
 		return 0
 	}
-	projects, e := devProjects()
-	if e != nil {
-		return fail("dots sessions", e)
+	if len(o.pos) > 1 || o.flag("--json") || o.flag("--auto") || o.flag("--quiet") || o.flag("--print-active") {
+		return usageError("sessions")
 	}
-	entries = append(entries, projects...)
-	selected := -1
 	if len(o.pos) > 0 {
+		entries, err := sessionInventory()
+		if err != nil {
+			return fail("dots sessions", err)
+		}
+		projects, err := devProjects()
+		if err != nil {
+			return fail("dots sessions", err)
+		}
+		entries = append(entries, projects...)
 		matches := []int{}
 		for i, s := range entries {
 			if has(o.pos[0], s.ID, s.Name, ptrText(s.Path)) {
@@ -151,7 +201,6 @@ func sessionsRun(args []string) int {
 			if len(live) == 1 {
 				matches = live
 			} else if len(live) == 0 {
-				// У проекта может быть и запись sesh/zoxide с тем же путём.
 				for _, i := range matches {
 					if entries[i].Source != "project" {
 						continue
@@ -172,11 +221,37 @@ func sessionsRun(args []string) int {
 		if len(matches) != 1 {
 			return fail("dots sessions", errors.New("Сессия не найдена или имя неоднозначно; используйте id из list"))
 		}
-		selected = matches[0]
-	} else {
+		if err = openEntry(entries[matches[0]]); err != nil {
+			return fail("dots sessions", err)
+		}
+		return 0
+	}
+	return sessionsInteractive(o.flag("--all"))
+}
+
+func sessionsInteractive(showAll bool) int {
+	endScreen := tui.HoldScreen()
+	defer endScreen()
+	die := func(err error) int {
+		tui.ReleaseScreen()
+		return fail("dots sessions", err)
+	}
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+	notice := ""
+	for {
+		entries, err := sessionInventory()
+		if err != nil {
+			return die(err)
+		}
+		projects, err := devProjects()
+		if err != nil {
+			return die(err)
+		}
+		entries = append(entries, projects...)
 		frame := desktopFrame("Session / workspace")
-		if !o.flag("--all") {
-			// Сначала живые сессии, новые проекты — при поиске. Импорт и история — через --all.
+		frame.Footer = "Enter открыть · Ctrl+R переименовать · Ctrl+X закрыть · Esc назад"
+		if !showAll {
 			live := []session{}
 			for _, s := range entries {
 				if s.Source == "tmux" {
@@ -199,10 +274,18 @@ func sessionsRun(args []string) int {
 			}
 			entries = live
 		}
-		if len(entries) == 0 {
-			return fail("dots sessions", errors.New("Нет живых сессий; используйте dots sessions open --all для импорта"))
+		if notice != "" {
+			if frame.Intro != "" {
+				frame.Intro = notice + "\n" + frame.Intro
+			} else {
+				frame.Intro = notice
+			}
+			notice = ""
 		}
-		labels := []string{}
+		if len(entries) == 0 {
+			return die(errors.New("Нет живых сессий; используйте dots sessions open --all для импорта"))
+		}
+		labels := make([]string, 0, len(entries))
 		for _, s := range entries {
 			detail := s.Source + " · fresh shell"
 			if s.Source == "tmux" {
@@ -212,15 +295,72 @@ func sessionsRun(args []string) int {
 			}
 			labels = append(labels, fmt.Sprintf("%s  [%s]  %s", s.Name, detail, ptrText(s.Path)))
 		}
-		selected, e = selectFrame(labels, frame)
-		if e != nil {
-			return fail("dots sessions", e)
+		selected, action, err := tui.SelectKey(ctx, frame, labels, "", []string{"ctrl-r", "ctrl-x"})
+		if errors.Is(err, tui.ErrCanceled) || errors.Is(err, context.Canceled) {
+			return 0
+		}
+		if err != nil {
+			return die(err)
+		}
+		entry := entries[selected]
+		switch action {
+		case "enter":
+			tui.ReleaseScreen()
+			if err = openEntry(entry); err != nil {
+				return fail("dots sessions", err)
+			}
+			return 0
+		case "ctrl-r":
+			if entry.Source != "tmux" {
+				notice = "Переименовать можно только живую сессию tmux."
+				continue
+			}
+			inFrame := desktopFrame("Переименовать сессию")
+			inFrame.Mode = "MUTATE"
+			inFrame.Tone = tui.Yellow
+			inFrame.Prompt = "Новое имя"
+			inFrame.Intro = fmt.Sprintf("Текущее имя: %s (%s)", entry.Name, entry.Workspace)
+			newName, err := tui.Input(ctx, inFrame, entry.Name)
+			if errors.Is(err, tui.ErrCanceled) || errors.Is(err, context.Canceled) {
+				continue
+			}
+			if err != nil {
+				return die(err)
+			}
+			if strings.TrimSpace(newName) == entry.Name {
+				continue
+			}
+			if err := tmuxRenameSession(entry.Workspace, newName); err != nil {
+				notice = "Не удалось переименовать: " + err.Error()
+			} else {
+				notice = "Переименовано: " + strings.TrimSpace(newName)
+			}
+		case "ctrl-x":
+			if entry.Source != "tmux" {
+				notice = "Закрыть можно только живую сессию tmux."
+				continue
+			}
+			cf := desktopFrame("Закрыть сессию")
+			cf.Mode = "KILL"
+			cf.Tone = tui.Red
+			tabs, panes := 0, 0
+			if entry.Tabs != nil {
+				tabs = *entry.Tabs
+			}
+			if entry.Panes != nil {
+				panes = *entry.Panes
+			}
+			cf.Intro = fmt.Sprintf("Закрыть сессию %s (%s, %d вкладок, %d панелей)?", entry.Name, entry.Workspace, tabs, panes)
+			if err := tui.Confirm(ctx, cf); errors.Is(err, tui.ErrCanceled) || errors.Is(err, context.Canceled) {
+				continue
+			} else if err != nil {
+				return die(err)
+			}
+			if err := tmuxKillSession(entry.Workspace); err != nil {
+				notice = "Не удалось закрыть: " + err.Error()
+			} else {
+				notice = "Сессия закрыта: " + entry.Name
+			}
 		}
 	}
-	if selected >= 0 {
-		if e = openEntry(entries[selected]); e != nil {
-			return fail("dots sessions", e)
-		}
-	}
-	return 0
 }

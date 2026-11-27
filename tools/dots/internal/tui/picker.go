@@ -48,14 +48,33 @@ func table(rows []string) []string {
 // Select возвращает исходные индексы. Метки только для показа и не становятся
 // командами; поиск и мультивыбор не меняют порядок данных.
 func Select(ctx context.Context, frame Frame, rows []string, query string, multi bool) ([]int, error) {
+	indexes, _, err := selectRows(ctx, frame, rows, query, multi, nil)
+	return indexes, err
+}
+
+// SelectKey как Select для одиночного выбора, но additionally возвращает имя
+// нажатого действия ("enter" или одну из клавиш из actions) для текущей строки.
+func SelectKey(ctx context.Context, frame Frame, rows []string, query string, actions []string) (int, string, error) {
+	indexes, action, err := selectRows(ctx, frame, rows, query, false, actions)
+	if err != nil {
+		return -1, "", err
+	}
+	return indexes[0], action, nil
+}
+
+func selectRows(ctx context.Context, frame Frame, rows []string, query string, multi bool, actions []string) ([]int, string, error) {
+	actionSet := map[string]bool{}
+	for _, a := range actions {
+		actionSet[a] = true
+	}
 	terminal, err := Open()
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 	defer terminal.Close()
 	restore, err := Raw(terminal)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 	defer restore()
 	closeScreen := Screen(terminal)
@@ -170,18 +189,21 @@ func Select(ctx context.Context, frame Frame, rows []string, query string, multi
 		case <-ticker.C:
 			continue
 		case <-ctx.Done():
-			return nil, ctx.Err()
+			return nil, "", ctx.Err()
 		case key, ok := <-keys:
 			if !ok {
-				return nil, ErrCanceled
+				return nil, "", ErrCanceled
+			}
+			if actionSet[key.Name] && len(visible) > 0 {
+				return []int{visible[cursor]}, key.Name, nil
 			}
 			switch key.Name {
 			case "ctrl-o":
 				if frame.Action != "" {
-					return nil, ErrAction
+					return nil, "", ErrAction
 				}
 			case "esc", "ctrl-c", "ctrl-d":
-				return nil, ErrCanceled
+				return nil, "", ErrCanceled
 			case "up":
 				cursor = max(0, cursor-1)
 			case "down":
@@ -254,7 +276,7 @@ func Select(ctx context.Context, frame Frame, rows []string, query string, multi
 					continue
 				}
 				if !multi {
-					return []int{visible[cursor]}, nil
+					return []int{visible[cursor]}, "enter", nil
 				}
 				if len(selected) == 0 {
 					selected[visible[cursor]] = true
@@ -265,7 +287,177 @@ func Select(ctx context.Context, frame Frame, rows []string, query string, multi
 						result = append(result, i)
 					}
 				}
-				return result, nil
+				return result, "enter", nil
+			}
+		}
+	}
+}
+
+// SelectHint открывает список в режиме одноклавишных хинтов: строчная буква
+// немедленно возвращает action="copy", заглавная — "open", '/' включает поиск.
+func SelectHint(ctx context.Context, frame Frame, rows []string, hints []rune, fold func(rune) (rune, bool)) (int, string, error) {
+	terminal, err := Open()
+	if err != nil {
+		return -1, "", err
+	}
+	defer terminal.Close()
+	restore, err := Raw(terminal)
+	if err != nil {
+		return -1, "", err
+	}
+	defer restore()
+	closeScreen := Screen(terminal)
+	defer closeScreen()
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+	keys := Keys(ctx, terminal)
+	painter := NewPainter(terminal)
+	ticker := time.NewTicker(150 * time.Millisecond)
+	defer ticker.Stop()
+
+	hintByRune := map[rune]int{}
+	for i := 0; i < len(rows) && i < len(hints); i++ {
+		hintByRune[hints[i]] = i
+	}
+	display := table(rows)
+	searching := false
+	query := ""
+	cursor := 0
+	last := ""
+	for {
+		width, height := Size(terminal)
+		visible := []int{}
+		for i, row := range rows {
+			if !searching || matches(row, query) {
+				visible = append(visible, i)
+			}
+		}
+		cursor = max(0, min(cursor, len(visible)-1))
+		count := max(1, height-8)
+		start := max(0, cursor-count+1)
+		end := min(len(visible), start+count)
+		color := ColorEnabled(terminal)
+		var body strings.Builder
+		if searching {
+			fmt.Fprintf(&body, "Поиск › %s\n\n", Clean(query))
+		} else {
+			body.WriteString(Paint("Хинт › буква = копировать · Shift+буква = открыть · / = поиск", Dim, color) + "\n\n")
+		}
+		if len(visible) == 0 {
+			body.WriteString(Paint("Нет совпадений. Измените поиск.", Dim, color) + "\n")
+		}
+		for pos := start; pos < end; pos++ {
+			index := visible[pos]
+			badge := "    "
+			if !searching && index < len(hints) {
+				tag := fmt.Sprintf("[%c] ", hints[index])
+				if pos == cursor {
+					badge = tag
+				} else {
+					badge = Paint(tag, Green+Bold, color)
+				}
+			}
+			marker := "  "
+			if pos == cursor {
+				marker = "› "
+			}
+			row := marker + badge + display[index]
+			if pos == cursor {
+				row = Paint(marker+fmt.Sprintf("%-4s", strings.TrimRight(Plain(badge), " "))+display[index], Accent+Bold, color)
+			}
+			body.WriteString(row + "\n")
+		}
+		footer := fmt.Sprintf("%d/%d · буква copy · Shift+буква open · / поиск · Enter copy · Ctrl+O open · Esc", len(visible), len(rows))
+		if searching {
+			footer = fmt.Sprintf("%d/%d · ввод фильтр · Enter copy · Ctrl+O open · Esc хинты", len(visible), len(rows))
+		}
+		frame.Width, frame.Height, frame.Color = width, height, color
+		frame.Body = body.String()
+		frame.Footer = footer
+		rendered := frame.Render()
+		if rendered != last {
+			painter.Draw(frame)
+			last = rendered
+		}
+		select {
+		case <-ticker.C:
+			continue
+		case <-ctx.Done():
+			return -1, "", ctx.Err()
+		case key, ok := <-keys:
+			if !ok {
+				return -1, "", ErrCanceled
+			}
+			switch key.Name {
+			case "esc":
+				if searching {
+					searching = false
+					query = ""
+					cursor = 0
+					continue
+				}
+				return -1, "", ErrCanceled
+			case "ctrl-c", "ctrl-d":
+				return -1, "", ErrCanceled
+			case "up":
+				cursor = max(0, cursor-1)
+			case "down":
+				cursor = min(len(visible)-1, cursor+1)
+			case "page-up":
+				cursor = max(0, cursor-count)
+			case "page-down":
+				cursor = min(len(visible)-1, cursor+count)
+			case "home":
+				cursor = 0
+			case "end":
+				cursor = len(visible) - 1
+			case "backspace":
+				if searching {
+					runes := []rune(query)
+					if len(runes) > 0 {
+						query = string(runes[:len(runes)-1])
+						cursor = 0
+					}
+				}
+			case "ctrl-l":
+				query = ""
+				cursor = 0
+			case "enter":
+				if len(visible) > 0 {
+					return visible[cursor], "copy", nil
+				}
+			case "ctrl-o":
+				if len(visible) > 0 {
+					return visible[cursor], "open", nil
+				}
+			case "paste":
+				if searching {
+					query += Clean(key.Text)
+					cursor = 0
+				}
+			case "text":
+				if searching {
+					query += Clean(key.Text)
+					cursor = 0
+					continue
+				}
+				if key.Text == "/" || key.Text == "." {
+					searching = true
+					query = ""
+					cursor = 0
+					continue
+				}
+				runes := []rune(key.Text)
+				if len(runes) == 1 && fold != nil {
+					if letter, upper := fold(runes[0]); letter != 0 {
+						if index, ok := hintByRune[letter]; ok {
+							if upper {
+								return index, "open", nil
+							}
+							return index, "copy", nil
+						}
+					}
+				}
 			}
 		}
 	}

@@ -11,6 +11,8 @@ import (
 	"dots/native/internal/mux"
 )
 
+const scratchSession = "_scratch"
+
 var tmuxSessionID = regexp.MustCompile(`^\$[0-9]+$`)
 
 func noTmuxServer(r commandResult) bool {
@@ -56,6 +58,9 @@ func tmuxSessions() ([]session, error) {
 		windows, e := strconv.Atoi(f[1])
 		if e != nil || !tmuxSessionID.MatchString(f[0]) || !cleanText(f[2]) || windows < 1 {
 			return nil, errors.New("Некорректная сессия tmux")
+		}
+		if f[2] == scratchSession {
+			continue
 		}
 		var path *string
 		if value := paths[f[0]]; value != "" {
@@ -117,4 +122,47 @@ func openEntry(entry session) error {
 		return errors.New("Некорректный идентификатор tmux")
 	}
 	return tmuxFocus(id)
+}
+
+func validateSessionName(name string) error {
+	name = strings.TrimSpace(name)
+	if name == "" || !cleanText(name) || len([]rune(name)) > 64 {
+		return errors.New("Некорректное имя сессии")
+	}
+	if name == scratchSession || strings.HasPrefix(name, "-") || strings.ContainsAny(name, ":.") {
+		return errors.New("Имя не может быть _scratch, начинаться с '-' или содержать ':'/'.'")
+	}
+	return nil
+}
+
+func tmuxRenameSession(id, name string) error {
+	if !tmuxSessionID.MatchString(id) {
+		return errors.New("Некорректный идентификатор tmux")
+	}
+	name = strings.TrimSpace(name)
+	if err := validateSessionName(name); err != nil {
+		return err
+	}
+	_, err := command(mux.Argv("rename-session", "-t", id, name)...)
+	return err
+}
+
+func tmuxKillSession(id string) error {
+	if !tmuxSessionID.MatchString(id) {
+		return errors.New("Некорректный идентификатор tmux")
+	}
+	_, err := command(mux.Argv("kill-session", "-t", id)...)
+	return err
+}
+
+func tmuxDisplayMessage(msg string) {
+	if msg == "" || strings.ContainsFunc(msg, control) {
+		return
+	}
+	args := []string{"display-message", "-l"}
+	if client := os.Getenv("DOTS_MUX_CLIENT"); client != "" {
+		args = append(args, "-c", client)
+	}
+	args = append(args, "--", msg)
+	_, _ = captureCommand(2*time.Second, 1024, "", nil, mux.Argv(args...)...)
 }

@@ -130,8 +130,6 @@ app_rules = [
 
   # "d": терминал
   { app_name = "Ghostty", workspace = "d" },
-  # Окно Shitty без рамки rift по умолчанию считает нестандартным и не раскладывает.
-  { app_name = "Shitty", workspace = "d", manage = true },
 ]
 
 [modifier_combinations]

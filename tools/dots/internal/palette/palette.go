@@ -14,7 +14,7 @@ import (
 	"github.com/pelletier/go-toml/v2"
 )
 
-var toolNames = []string{"ghostty", "shitty", "starship", "nushell", "tmux", "lazygit", "yazi", "jcode", "nvim", "zsh", "gitk", "fastfetch"}
+var toolNames = []string{"ghostty", "starship", "nushell", "tmux", "lazygit", "yazi", "jcode", "nvim", "zsh", "gitk", "fastfetch"}
 
 type palette map[string]map[string]string
 
@@ -190,20 +190,6 @@ func (g generator) generate(name string) error {
 			},
 			func(f string, v string) string { return f + " = " + strings.TrimPrefix(v, "#") },
 			func(i int, v string) string { return fmt.Sprintf("palette = %d=%s", i, v) })
-	case "shitty":
-		// Ключи TOML верхнего уровня обязаны стоять до первой таблицы, поэтому цвета идут в начало.
-		if err := g.prependColors(name, "shitty/shitty.toml",
-			`(?m)^[ \t]*(bg|fg|cr|color[0-9]+)[ \t]*=.*\n?`,
-			[]colorField{{"bg", "editor", "bg"}, {"fg", "editor", "fg"}, {"cr", "common", "accent"}},
-			func(f string, v string) string { return fmt.Sprintf("%s = %q", f, v) },
-			func(i int, v string) string { return fmt.Sprintf("color%d = %q", i, v) }); err != nil {
-			return err
-		}
-		// Живой конфиг shitty — сгенерированная копия, а не симлинк на репозиторий.
-		if dots, err := exec.LookPath("dots"); err == nil {
-			_ = exec.Command(dots, "shitty-config").Run()
-		}
-		return nil
 	default:
 		return g.generateTool(name)
 	}

@@ -104,9 +104,10 @@ func printHelp() {
 const helpText = `
 Работа
   dots menu                  поиск действий
-  dots sessions open         живые сессии и проекты из ~/Documents/dev
+  dots sessions open         живые сессии и проекты (Ctrl+R переименовать, Ctrl+X закрыть)
   dots sessions open NAME    открыть или создать сессию проекта
   dots sessions open --all   ещё tmux, сохранённые и история каталогов
+  dots sessions save|restore сохранить или восстановить раскладку сессий tmux
   dots projects open         проекты и worktree
   dots projects list         список проектов; --json для скриптов
   dots projects refresh      обновить приватный список
@@ -127,7 +128,6 @@ const helpText = `
   dots private init|check    приватные файлы, без вывода секретов
   dots tmux-style --current  применить профиль к tmux
   dots ghostty-reload        перечитать конфиг Ghostty
-  dots shitty-config         собрать конфиг Shitty под текущий профиль
   dots notify --test         тестовое уведомление
   dots nu [args...]          запустить Nushell
 

@@ -157,6 +157,9 @@ func livePanesContext(ctx context.Context) ([]pane, error) {
 	for _, line := range strings.Split(r.out, "\n") {
 		f := strings.SplitN(line, "\t", 9)
 		if len(f) == 9 {
+			if f[1] == scratchSession {
+				continue
+			}
 			pid, err := strconv.Atoi(f[7])
 			if err != nil || pid <= 1 {
 				pid = 0

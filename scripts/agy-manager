@@ -13,6 +13,7 @@ import re
 import secrets
 import select
 import signal
+import socket
 import ssl
 import stat
 import sys
@@ -25,6 +26,10 @@ import warnings
 KEY_DIR = '.config/agy'
 URL_FILE = 'proxy.url'
 KEY_FILE = 'proxy.key'
+CONNECT_FILE = 'proxy.connect'
+SSH_FILE = 'proxy.ssh'
+CONNECT_RE = re.compile(r'^127\.0\.0\.1:([0-9]{1,5})$')
+SSH_DEST_RE = re.compile(r'^(?:[A-Za-z0-9._-]+@)?[A-Za-z0-9][A-Za-z0-9.-]*$')
 MAX_CONFIG_FILE_BYTES = 4096
 TPS_CACHE_DIR = '.cache/agy-statusline'
 MAX_REQUEST_BODY = 64 * 1024 * 1024
@@ -157,6 +162,33 @@ def load_key(home):
     if not valid_key(key):
         raise ValueError(f'Invalid API key in ~/.config/agy/{KEY_FILE}')
     return key
+
+
+def load_connect(home):
+    # Optional loopback endpoint (ssh -L tunnel) dialed instead of the proxy host; TLS still verifies the proxy host.
+    raw = _read_private_file(home, CONNECT_FILE)
+    if raw is None:
+        return None
+    m = CONNECT_RE.fullmatch(raw)
+    if not m or not 1 <= int(m.group(1)) <= 65535:
+        raise ValueError(f'~/.config/agy/{CONNECT_FILE} must be 127.0.0.1:<port>')
+    return '127.0.0.1', int(m.group(1))
+
+
+def run_tunnel(home):
+    dest = _read_private_file(home, SSH_FILE)
+    connect = load_connect(home)
+    proxy = load_proxy_url(home)
+    if dest is None or connect is None or proxy is None:
+        return
+    if not SSH_DEST_RE.fullmatch(dest):
+        raise ValueError(f'Invalid ssh destination in ~/.config/agy/{SSH_FILE}')
+    _, host, port = proxy
+    os.execv('/usr/bin/ssh', [
+        'ssh', '-N', '-o', 'BatchMode=yes', '-o', 'ExitOnForwardFailure=yes',
+        '-o', 'ServerAliveInterval=15', '-o', 'ServerAliveCountMax=3',
+        '-L', f'{connect[0]}:{connect[1]}:{host}:{port}', '--', dest,
+    ])
 
 
 def configure_proxy(home, install=False):
@@ -602,7 +634,7 @@ def _read_request_body(handler):
     return body if len(body) == length else None
 
 
-def _start_meter_sidecar(home, upstream_host, upstream_port, upstream_key, local_token, agy_pid):
+def _start_meter_sidecar(home, upstream_host, upstream_port, upstream_key, local_token, agy_pid, connect_addr=None):
     cache_dir = _ensure_tps_dir(home)
     _cleanup_stale_live_files(cache_dir)
     tps_filename = f'live-{agy_pid}.json'
@@ -782,6 +814,8 @@ def _start_meter_sidecar(home, upstream_host, upstream_port, upstream_key, local
 
                 t_req = time.monotonic()
                 conn = http.client.HTTPSConnection(upstream_host, upstream_port, timeout=300, context=ssl_ctx)
+                if connect_addr:
+                    conn._create_connection = lambda _addr, *a, **kw: socket.create_connection(connect_addr, *a, **kw)
                 try:
                     conn.request(method, upstream_target, body=body if body else None, headers=fwd_headers)
                     resp = conn.getresponse()
@@ -941,11 +975,14 @@ def launch(home, proxy_info, key, arguments):
         env.pop(conflict, None)
 
     local_token = secrets.token_urlsafe(32)
+    connect_addr = load_connect(home)
     port, tps_path = None, None
     try:
-        port, tps_path = _start_meter_sidecar(home, upstream_host, upstream_port, key, local_token, os.getpid())
+        port, tps_path = _start_meter_sidecar(home, upstream_host, upstream_port, key, local_token, os.getpid(), connect_addr)
     except OSError:
         port, tps_path = None, None
+    if connect_addr and port is None:
+        raise ValueError('Local proxy failed to start; direct path bypasses ~/.config/agy/proxy.connect')
 
     if port is not None and tps_path is not None:
         env['GEMINI_API_KEY'] = local_token
@@ -963,6 +1000,9 @@ def launch(home, proxy_info, key, arguments):
 def main():
     home = Path.home()
     if sys.argv[1:] == ['--dots-service']:
+        return
+    if sys.argv[1:] == ['--dots-tunnel']:
+        run_tunnel(home)
         return
     if sys.argv[1:] == ['--dots-init-proxy']:
         configure_proxy(home, install=True)

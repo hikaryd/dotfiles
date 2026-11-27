@@ -172,18 +172,6 @@
       stdout: true
       stderr: true
     - command: |
-        if [[ ! -d "$HOME/.tmux/plugins/tpm" ]]; then
-          echo "Installing TPM (tmux plugin manager)..."
-          mkdir -p "$HOME/.tmux/plugins"
-          git clone https://github.com/tmux-plugins/tpm "$HOME/.tmux/plugins/tpm"
-        else
-          echo "TPM already present; updating..."
-          git -C "$HOME/.tmux/plugins/tpm" pull --ff-only || true
-        fi
-      description: Менеджер плагинов tmux (TPM)
-      stdout: true
-      stderr: true
-    - command: |
         if ! grep -q "/opt/homebrew/bin/zsh" /etc/shells 2>/dev/null; then
           echo "Adding Homebrew zsh to /etc/shells..."
           sudo sh -c 'echo "/opt/homebrew/bin/zsh" >> /etc/shells'

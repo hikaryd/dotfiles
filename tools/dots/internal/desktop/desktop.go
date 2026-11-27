@@ -41,14 +41,6 @@ func Run(root string, args []string) int {
 		return privateRun(root, args)
 	case "style":
 		return styleRun(root, args)
-	case "shitty-config":
-		if len(args) > 0 {
-			return usageError(command)
-		}
-		if e := writeShittyConfig(root, readStyle()); e != nil {
-			return fail("Shitty", e)
-		}
-		return 0
 	case "tmux-style":
 		return tmuxStyleRun(args)
 	case "open-url":
@@ -84,7 +76,7 @@ func commandHelp(command string) int {
 		printMenuHelp()
 		return 0
 	}
-	help := map[string]string{"projects": "list [--json] | refresh | open [target]", "sessions": "list [--json] | open [target]", "clip": "[json|compact|base64|jwt|time|redact] [--stdin] [--stdout|--write] [--keys KEY,...]", "refs": "[--pane ID] [--lines 1..5000] [--stdin] [--list|--json]", "private": "[init|check]", "style": "[glass|focus|presentation|status]", "tmux-style": "glass|focus|presentation|--current", "status": "[--all] [--json|--interactive]", "doctor": "[--json] [--strict]", "notify": "[--test] [--status 0..255] [--seconds N] [--pane ID]", "open-url": "--pane %ID --at X,Y,SCROLL", "ghostty-reload": "", "shitty-config": "", "menu": "", "ports": ""}
+	help := map[string]string{"projects": "list [--json] | refresh | open [target]", "sessions": "list [--json] | open [--all] [target] | save [--auto] [--quiet] | restore [--quiet]", "clip": "[json|compact|base64|jwt|time|redact] [--stdin] [--stdout|--write] [--keys KEY,...]", "refs": "[--pane ID] [--lines 1..5000] [--stdin] [--list|--json]", "private": "[init|check]", "style": "[glass|focus|presentation|status]", "tmux-style": "glass|focus|presentation|--current", "status": "[--all] [--json|--interactive]", "doctor": "[--json] [--strict]", "notify": "[--test] [--status 0..255] [--seconds N] [--pane ID]", "open-url": "--pane %ID --at X,Y,SCROLL", "ghostty-reload": "", "menu": "", "ports": ""}
 	if s, ok := help[command]; ok {
 		fmt.Printf("Использование: dots %s %s\n", command, s)
 		return 0

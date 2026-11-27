@@ -136,8 +136,7 @@ brew "kcat"
 cask "1password"
 cask "1password-cli"
 cask "ghostty"
-brew "pg83/tap/shitty" # Терминал; Shitty.app собирает scripts/shitty-app.sh
-cask "font-jetbrains-mono-nerd-font" # Ghostty встраивает этот шрифт, shitty берёт системный
+cask "font-monaspace"
 cask "mos"       
 cask "karabiner-elements"
 cask "duongductrong/snapzy/snapzy"

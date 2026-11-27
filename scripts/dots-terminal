@@ -11,6 +11,19 @@ done
 PATH="$HOME/.local/bin:/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:${PATH:-/usr/bin:/bin}"
 export PATH
 if [ "$#" -gt 0 ]; then exec tmux "$@"; fi
-# Attach the most recent session; "main" exists only to start an empty server.
-if tmux has-session 2>/dev/null; then exec tmux attach-session; fi
+# Attach a live non-scratch session; restore saved snapshot on fresh server.
+pick_live() {
+  tmux list-sessions -F '#{session_last_attached}	#{session_activity}	#{session_id}	#{session_name}' 2>/dev/null \
+    | awk -F'\t' '$4 != "_scratch" { sub(/^\$/, "", $3); printf "%d\t%d\t%d\t%s\n", $1, $2, $3, $4 }' \
+    | sort -t '	' -k1,1nr -k2,2nr -k3,3nr \
+    | awk -F'\t' 'NR==1 { print $4 }'
+}
+target=$(pick_live)
+if [ -z "$target" ]; then
+  target=$("$HOME/.local/bin/dots" sessions restore --print-active 2>/dev/null || true)
+  if [ -z "$target" ] || ! tmux has-session -t "=$target" 2>/dev/null; then
+    target=$(pick_live)
+  fi
+fi
+if [ -n "$target" ]; then exec tmux attach-session -t "=$target"; fi
 exec tmux new-session -s main

@@ -63,15 +63,6 @@
       create: true
       force: true
 - shell:
-    - command: scripts/shitty-app.sh
-      description: Shitty.app в Applications
-      stdout: true
-      stderr: true
-    # Не симлинк: dots style добавляет к базе переопределения профиля.
-    - command: ~/.local/bin/dots shitty-config
-      description: Конфиг Shitty под текущий профиль dots style
-      stdout: true
-      stderr: true
     - command: bash scripts/claude-statusbar-install.sh
       description: Статусбар Claude во всех профилях
       stdout: true

@@ -116,9 +116,9 @@ func Keys(ctx context.Context, input *os.File) <-chan Key {
 						}
 					}
 					switch sequence.String() {
-					case "A", "112;5u":
+					case "A", "112;5u", "1079;5u":
 						send(Key{Name: "up"})
-					case "B", "110;5u":
+					case "B", "110;5u", "1090;5u":
 						send(Key{Name: "down"})
 					case "27;5;112~":
 						if second == '[' {
@@ -128,6 +128,16 @@ func Keys(ctx context.Context, input *os.File) <-chan Key {
 						if second == '[' {
 							send(Key{Name: "down"})
 						}
+					case "101;5u", "1091;5u", "27;5;101~":
+						send(Key{Name: "ctrl-e"})
+					case "108;5u", "1076;5u", "27;5;108~":
+						send(Key{Name: "ctrl-l"})
+					case "111;5u", "1097;5u", "27;5;111~":
+						send(Key{Name: "ctrl-o"})
+					case "114;5u", "1082;5u", "27;5;114~":
+						send(Key{Name: "ctrl-r"})
+					case "120;5u", "1095;5u", "27;5;120~":
+						send(Key{Name: "ctrl-x"})
 					case "C":
 						send(Key{Name: "right"})
 					case "D":
@@ -191,6 +201,10 @@ func Keys(ctx context.Context, input *os.File) <-chan Key {
 					name = "ctrl-o"
 				case 16:
 					name = "up"
+				case 18:
+					name = "ctrl-r"
+				case 24:
+					name = "ctrl-x"
 				}
 				if name != "text" || unicode.IsPrint(r) {
 					if !send(Key{Name: name, Text: string(r)}) {
@@ -242,6 +256,9 @@ func HoldScreen() func() {
 		once.Do(func() {
 			screenOwner.Lock()
 			defer screenOwner.Unlock()
+			if screenOwner.output != terminal {
+				return
+			}
 			if screenOwner.active {
 				io.WriteString(terminal, "\x1b[0m\x1b[?2004l\x1b[?25h\x1b[?1049l")
 			}
@@ -249,6 +266,20 @@ func HoldScreen() func() {
 			terminal.Close()
 		})
 	}
+}
+
+// ReleaseScreen выходит из alternate screen, даже если его открыл вызывающий (dots menu).
+func ReleaseScreen() {
+	screenOwner.Lock()
+	defer screenOwner.Unlock()
+	if screenOwner.output == nil {
+		return
+	}
+	if screenOwner.active {
+		io.WriteString(screenOwner.output, "\x1b[0m\x1b[?2004l\x1b[?25h\x1b[?1049l")
+	}
+	screenOwner.output.Close()
+	screenOwner.output, screenOwner.active = nil, false
 }
 
 func Screen(output *os.File) func() {

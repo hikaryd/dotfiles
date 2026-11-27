@@ -39,6 +39,7 @@ func envOr(key, fallback string) string {
 	return fallback
 }
 func configHome() string { return envOr("XDG_CONFIG_HOME", filepath.Join(home(), ".config")) }
+func dataHome() string   { return envOr("XDG_DATA_HOME", filepath.Join(home(), ".local/share")) }
 func expand(s string) string {
 	if s == "~" {
 		return home()

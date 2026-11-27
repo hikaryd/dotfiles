@@ -8,36 +8,32 @@ import math
 import os
 import re
 import sqlite3
+import socket
 import stat
 import subprocess
 import sys
 import time
 from urllib.parse import quote, urlsplit
 import http.client
-import urllib.request
 
 # Vesper dark palette (palette/ayu.toml)
 C_RESET = "\033[0m"
 C_BOLD = "\033[1m"
 C_DIV = "\033[38;2;56;56;56m"
 C_DIM = "\033[38;2;108;108;108m"
-C_MUTED = "\033[38;2;148;148;148m"
+C_MUTED = "\033[38;2;160;160;160m"
+C_SOFT = "\033[38;2;207;207;207m"
 C_FG = "\033[38;2;236;236;236m"
 C_ACCENT = "\033[38;2;255;199;153m"
-C_GREEN = "\033[38;2;143;211;165m"
-C_RED = "\033[38;2;255;128;128m"
 C_CYAN = "\033[38;2;111;209;196m"
-C_MAGENTA = "\033[38;2;200;168;224m"
-C_PILL_HOT = "\033[1;38;2;255;163;163;48;2;58;28;32m"
-C_PILL_DIM = "\033[38;2;160;160;160;48;2;35;35;35m"
+C_BLUE = "\033[38;2;143;180;224m"
+C_LAVENDER = "\033[38;2;200;168;224m"
+C_RED = "\033[38;2;255;128;128m"
 
-# Smooth Vesper Aurora gradient stops (cyan -> green -> peach -> coral).
-_AURORA_STOPS = (
-    (0.00, (111, 209, 196)),
-    (0.38, (143, 211, 165)),
-    (0.72, (255, 199, 153)),
-    (1.00, (255, 128, 128)),
-)
+# State-driven Vesper bar gradients (palette/ayu.toml normal -> bright pairs).
+_BAR_OK = ((111, 209, 196), (153, 255, 228))
+_BAR_WARN = ((255, 199, 153), (255, 217, 184))
+_BAR_CRIT = ((255, 128, 128), (255, 163, 163))
 
 # Window durations (seconds) and minimum elapsed time before extrapolating burn rate.
 _WINDOW_SPECS = {
@@ -76,15 +72,9 @@ def _clean(value):
 
 
 def _paint(text, style, no_color):
-    if no_color or not style:
+    if not text or no_color or not style:
         return text
     return f"{style}{text}{C_RESET}"
-
-
-def _pill(text, style, no_color):
-    if no_color:
-        return text
-    return f"{style} {text} {C_RESET}"
 
 
 def _num(value):
@@ -123,62 +113,56 @@ def _ratio_pct(numerator, denominator):
         return 100.0
 
 
-def _severity(used_pct):
+def _usage_color(used_pct):
     if used_pct >= 85:
-        return C_RED
+        return C_BOLD + C_RED
     if used_pct >= 70:
-        return C_ACCENT
-    return C_GREEN
+        return C_BOLD + C_ACCENT
+    return C_SOFT
 
 
 def _cache_color(hit_pct):
-    if hit_pct >= 70:
-        return C_GREEN
-    if hit_pct >= 30:
+    if hit_pct < 30:
+        return C_BOLD + C_RED
+    if hit_pct < 70:
         return C_ACCENT
-    return C_RED
+    return C_SOFT
+
+
+def _cache_bar_color(hit_pct):
+    if hit_pct < 30:
+        return C_RED
+    if hit_pct < 70:
+        return C_ACCENT
+    return C_CYAN
 
 
 def _tps_color(tps):
-    if tps >= 40:
-        return C_GREEN
-    if tps >= 15:
+    if tps < 15:
+        return C_BOLD + C_RED
+    if tps < 40:
         return C_ACCENT
-    return C_RED
+    return C_SOFT
 
 
-def _lerp_rgb(t):
-    t = max(0.0, min(1.0, t))
-    for i in range(len(_AURORA_STOPS) - 1):
-        p0, c0 = _AURORA_STOPS[i]
-        p1, c1 = _AURORA_STOPS[i + 1]
-        if t <= p1:
-            f = (t - p0) / (p1 - p0) if p1 > p0 else 0.0
-            return (
-                int(round(c0[0] + (c1[0] - c0[0]) * f)),
-                int(round(c0[1] + (c1[1] - c0[1]) * f)),
-                int(round(c0[2] + (c1[2] - c0[2]) * f)),
-            )
-    return _AURORA_STOPS[-1][1]
-
-
-def _aurora_bar(used_pct, width, no_color, fill="▰", empty="▱"):
+def _bar(used_pct, width, no_color):
     clamped = max(0.0, min(100.0, used_pct))
     filled = int(round((clamped / 100.0) * width))
     if clamped > 0 and filled == 0:
         filled = 1
     if no_color:
-        return fill * filled + empty * (width - filled)
+        return "━" * filled + "─" * (width - filled)
+    c0, c1 = _BAR_CRIT if clamped >= 85 else (_BAR_WARN if clamped >= 70 else _BAR_OK)
     parts = []
-    denom = max(1, width - 1)
-    # Shift hue toward hot tones as overall fill crosses 70%/85%.
-    floor_t = 0.72 if clamped >= 85 else (0.45 if clamped >= 70 else 0.0)
+    denom = max(1, filled - 1)
     for i in range(filled):
-        t = max(floor_t, i / denom)
-        r, g, b = _lerp_rgb(t)
-        parts.append(f"\033[38;2;{r};{g};{b}m{fill}")
+        f = i / denom if filled > 1 else 0.0
+        r = int(round(c0[0] + (c1[0] - c0[0]) * f))
+        g = int(round(c0[1] + (c1[1] - c0[1]) * f))
+        b = int(round(c0[2] + (c1[2] - c0[2]) * f))
+        parts.append(f"\033[38;2;{r};{g};{b}m━")
     if filled < width:
-        parts.append(f"{C_DIV}{empty * (width - filled)}")
+        parts.append(f"{C_DIV}{'─' * (width - filled)}")
     parts.append(C_RESET)
     return "".join(parts)
 
@@ -623,22 +607,29 @@ def _proxy_key(proxy_base):
     return _read_private_agy_file("proxy.key")
 
 
-class _NoRedirect(urllib.request.HTTPRedirectHandler):
-    # urllib re-sends Authorization to any redirect target, including other hosts.
-    def redirect_request(self, *args, **kwargs):
-        return None
+def _proxy_connect():
+    raw = _read_private_agy_file("proxy.connect")
+    m = re.fullmatch(r"127\.0\.0\.1:([0-9]{1,5})", raw or "")
+    return ("127.0.0.1", int(m.group(1))) if m and 1 <= int(m.group(1)) <= 65535 else None
 
 
 def _fetch_proxy_quota(proxy_base, key):
-    req = urllib.request.Request(
-        proxy_base + "/agy/quota",
-        headers={"Authorization": f"Bearer {key}", "User-Agent": "agy-statusline"},
-    )
+    parsed = urlsplit(proxy_base)
+    # http.client never follows redirects, so the bearer key cannot leak to another host.
+    conn = http.client.HTTPSConnection(parsed.hostname, parsed.port or 443, timeout=3)
+    connect = _proxy_connect()
+    if connect:
+        conn._create_connection = lambda _addr, *a, **kw: socket.create_connection(connect, *a, **kw)
     try:
-        with urllib.request.build_opener(_NoRedirect).open(req, timeout=3) as resp:
-            data = json.loads(resp.read(1_000_000).decode("utf-8", "replace"))
+        conn.request("GET", "/agy/quota", headers={"Authorization": f"Bearer {key}", "User-Agent": "agy-statusline"})
+        resp = conn.getresponse()
+        if not 200 <= resp.status < 300:
+            return None
+        data = json.loads(resp.read(1_000_000).decode("utf-8", "replace"))
     except (OSError, ValueError, RecursionError, http.client.HTTPException):
         return None
+    finally:
+        conn.close()
     return data if isinstance(data, dict) else None
 
 
@@ -1381,23 +1372,22 @@ def _extract_activity(data):
 
 
 def _render_quota_segment(label, used_pct, reset_secs, no_color):
-    pct_color = _severity(used_pct)
     parts = [
-        _paint(label, C_MUTED, no_color),
-        _aurora_bar(used_pct, 6, no_color),
-        _paint(f"{round(used_pct):.0f}%", C_BOLD + pct_color, no_color),
+        _paint(label, C_DIM, no_color),
+        _bar(used_pct, 8, no_color),
+        _paint(f"{round(used_pct):.0f}%", _usage_color(used_pct), no_color),
     ]
     reset_str = _fmt_duration(reset_secs) if reset_secs is not None else ""
     if reset_str:
-        parts.append(_paint(f"↻{reset_str}", C_DIM, no_color))
+        parts.append(_paint(f"↺{reset_str}", C_DIM, no_color))
 
     forecast = _forecast_window(label, used_pct, reset_secs)
     if forecast:
         kind, value = forecast
         if kind == "risk" and value:
-            parts.append(_pill(f"⚠{value}", C_PILL_HOT, no_color))
+            parts.append(_paint(f"!{value}", C_BOLD + C_RED, no_color))
         elif kind == "proj":
-            proj_color = _severity(value) if value >= 70 else C_DIM
+            proj_color = _usage_color(value) if value >= 70 else C_DIM
             parts.append(_paint(f"→{value:.0f}%", proj_color, no_color))
     return " ".join(parts)
 
@@ -1443,9 +1433,11 @@ def _print_stats(hours, no_color):
         hit = _ratio_pct(cached, inp) if (inp > 0 and cached >= 0) else 0.0
         if hit is None:
             hit = 0.0
-        filled = int(round(hit / 100.0 * 6))
-        hit_bar = _paint("▰" * filled, _cache_color(hit), no_color) + _paint("▱" * (6 - filled), C_DIV, no_color)
-        pct_s = _paint(f"{hit:5.1f}%", C_BOLD + _cache_color(hit), no_color)
+        filled = int(round(hit / 100.0 * 8))
+        if hit > 0 and filled == 0:
+            filled = 1
+        hit_bar = _paint("━" * filled, _cache_bar_color(hit), no_color) + _paint("─" * (8 - filled), C_DIV, no_color)
+        pct_s = _paint(f"{hit:5.1f}%", _cache_color(hit), no_color)
         name = _clean(model)
         req_count = int(_num(reqs) or 0)
         print(f"  {name:<26} {hit_bar} {pct_s}  {_fmt_tokens(cached):>6}/{_fmt_tokens(inp):<6}  ({req_count} req)")
@@ -1496,52 +1488,46 @@ def main():
     if not isinstance(data, dict):
         return
 
-    sep = _paint("  │  ", C_DIV, no_color)
+    sep = _paint("  ·  ", C_DIV, no_color)
     base_name, effort_tag, model_id = _extract_model(data)
     full_model = f"{base_name} ({effort_tag})" if (base_name and effort_tag) else base_name
     tps = _extract_live_tps(full_model, model_id, now_wall)
     if tps is None:
         tps = _extract_tps(data, now_mono=now_mono, now_wall=now_wall)
 
-    # Line 1: quota bars, reset countdowns, and burn-rate forecast.
-    quota_segments = [
-        _render_quota_segment(label, used_pct, reset_secs, no_color)
-        for label, used_pct, reset_secs in _extract_quotas(data, full_model, model_id)
-    ]
-
-    # Line 2: model identity, context gauge, cache hit, git branch, and activity.
+    # Line 1: model identity, context gauge, cache hit, speed, git, and state.
     info_segments = []
     if base_name:
         model_seg = _paint("◆ ", C_ACCENT, no_color) + _paint(base_name, C_BOLD + C_FG, no_color)
         if effort_tag:
-            model_seg += " " + _paint(effort_tag, C_MUTED, no_color)
+            model_seg += " " + _paint(effort_tag, C_DIM, no_color)
         info_segments.append(model_seg)
 
     ctx_pct = _extract_context_pct(data)
     if ctx_pct is not None:
-        ctx_color = _severity(ctx_pct)
         info_segments.append(
             _paint("ctx ", C_DIM, no_color)
-            + _aurora_bar(ctx_pct, 5, no_color)
+            + _bar(ctx_pct, 6, no_color)
             + " "
-            + _paint(f"{round(ctx_pct):.0f}%", C_BOLD + ctx_color, no_color)
+            + _paint(f"{round(ctx_pct):.0f}%", _usage_color(ctx_pct), no_color)
         )
 
     cache_hit = _extract_cache_hit(data, full_model, model_id)
     if cache_hit is not None:
-        if cache_hit < 30.0:
-            cache_val = _pill(f"{round(cache_hit):.0f}%", C_PILL_HOT, no_color)
-        else:
-            cache_val = _paint(f"{round(cache_hit):.0f}%", C_BOLD + _cache_color(cache_hit), no_color)
-        info_segments.append(_paint("cache ", C_DIM, no_color) + cache_val)
+        info_segments.append(
+            _paint("cache ", C_DIM, no_color)
+            + _paint(f"{round(cache_hit):.0f}%", _cache_color(cache_hit), no_color)
+        )
 
     if tps is not None:
         tps_str = f"{tps:.1f}" if tps < 10.0 else f"{round(tps):.0f}"
-        info_segments.append(_paint("tps ", C_DIM, no_color) + _paint(tps_str, C_BOLD + _tps_color(tps), no_color))
+        info_segments.append(
+            _paint(tps_str, _tps_color(tps), no_color) + _paint(" t/s", C_DIM, no_color)
+        )
 
     branch, dirty = _extract_git(data)
     if branch:
-        seg = _paint("⎇ ", C_DIM, no_color) + _paint(branch, C_CYAN, no_color)
+        seg = _paint("⎇ ", C_DIM, no_color) + _paint(branch, C_LAVENDER, no_color)
         if dirty:
             seg += _paint("*", C_ACCENT, no_color)
         info_segments.append(seg)
@@ -1551,17 +1537,23 @@ def main():
         info_segments.append(_paint(f"${cost:.2f}", C_MUTED, no_color))
 
     for act in _extract_activity(data):
-        info_segments.append(_paint(f"● {act}", C_MAGENTA, no_color))
+        info_segments.append(_paint("• ", C_BLUE, no_color) + _paint(act, C_MUTED, no_color))
 
     mode = _extract_mode(data)
     if mode and mode.lower() not in ("default", "normal"):
-        info_segments.append(_pill(mode, C_PILL_DIM, no_color))
+        info_segments.append(_paint(mode, C_BLUE, no_color))
+
+    # Line 2: quota rails, reset countdowns, and burn-rate forecast.
+    quota_segments = [
+        _render_quota_segment(label, used_pct, reset_secs, no_color)
+        for label, used_pct, reset_secs in _extract_quotas(data, full_model, model_id)
+    ]
 
     lines = []
-    if quota_segments:
-        lines.append(sep.join(quota_segments))
     if info_segments:
         lines.append(sep.join(info_segments))
+    if quota_segments:
+        lines.append(sep.join(quota_segments))
     if lines:
         sys.stdout.write("\n".join(lines) + "\n")
 
